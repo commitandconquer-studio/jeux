@@ -23,6 +23,13 @@ Dans le code, utilisez les constantes de `game_common::sounds`.
 | `sfx/turn.wav` | 0.03 s | Petit tic discret (virage, déplacement) |
 | `sfx/tock.wav` | 0.20 s | « Toc » de bloc de bois posé |
 | `sfx/push.wav` | 0.22 s | Raclement d'une caisse poussée |
+| `sfx/laser.wav` | 0.45 s | Tir de canon à ions (« piou » descendant) |
+| `sfx/blip.wav` | 0.06 s | « Bip » électronique court (rotation) |
+| `sfx/clunk.wav` | 0.25 s | « Clac » métallique (bloc verrouillé) |
+| `sfx/charge.wav` | 0.70 s | Scintillement montant (énergie chargée) |
+| `sfx/alarm.wav` | 1.00 s | Alarme à deux tons |
+| `sfx/explosion.wav` | 2.20 s | Grosse explosion lointaine |
+| `music/nova.wav` | 15.48 s | Musique épique de space opera, la mineur, 124 BPM |
 | `music/zen.wav` | 22.86 s | Musique zen (marimba, nappes), ré majeur, 84 BPM |
 | `music/campagne.wav` | 17.14 s | Musique guillerette, do majeur, 112 BPM |
 | `music/prairie.wav` | 16.00 s | Musique joyeuse, sol majeur, 120 BPM |

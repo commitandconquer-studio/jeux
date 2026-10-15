@@ -14,6 +14,7 @@ games/snake/          Snake en 3D low-poly
 games/traversee/      Traversée : un crapaud traverse routes, rivières et voies ferrées
 games/tour/           Tour de blocs : empiler des blocs le plus haut possible
 games/pousse-caisses/ Pousse-caisses : le crapaud range les caisses (12 niveaux)
+games/nova/           NOVA — Le Dernier Rempart : blocs d'énergie contre l'Hégémonie
 tools/sfx-gen/        fabrique les sons et musiques de la bibliothèque
 ```
 
@@ -86,6 +87,19 @@ cargo run -p pousse-caisses
   cargo test --release -p pousse-caisses -- --nocapture
   ```
 - Captures automatiques : `CAISSES_CAPTURE=captures cargo run -p pousse-caisses`.
+
+### NOVA — Le Dernier Rempart
+
+```bash
+cargo run -p nova
+```
+
+- **L'histoire** : la colonie libre de Nova résiste à l'Hégémonie. Isa Valen, ingénieure en chef, bâtit le Bouclier de Nova bloc par bloc ; Boulon, petit drone de maintenance, commente (et tremble). Univers original Commit & Conquer.
+- **Le jeu** : les blocs d'énergie tombent dans le bouclier (12 × 20). Chaque rangée complète tire le canon à ions sur le croiseur ennemi (plus de rangées d'un coup = tir plus puissant). Le croiseur riposte en ajoutant des rangées endommagées par le bas.
+- **Campagne** en 5 chapitres (Nova Prime, Kessa, Hélion, Thalassa, La Forge), avec dialogues ; **mode infini** pour le record. Progression sauvegardée.
+- Commandes : flèches ou ZQSD (gauche/droite déplacer, haut tourner, bas accélérer), Espace poser, C réserve, M son, Échap menu. Tactile : glisser pour déplacer, toucher pour tourner, glisser vers le bas pour poser, vers le haut pour la réserve.
+- Les règles (`games/nova/src/board.rs`) ont leurs tests : `cargo test -p nova`.
+- Captures automatiques (le pilote automatique joue le chapitre 1) : `NOVA_CAPTURE=captures cargo run -p nova`.
 
 ## Bibliothèque commune (`assets/`)
 

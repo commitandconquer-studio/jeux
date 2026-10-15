@@ -20,6 +20,7 @@ GAMES=(
   "traversee|Traversée|Aidez le crapaud à traverser routes, rivières et voies ferrées"
   "tour|Tour de blocs|Empilez les blocs le plus haut possible"
   "pousse-caisses|Pousse-caisses|Le crapaud range les caisses sur les cibles, en 12 niveaux"
+  "nova|NOVA — Le Dernier Rempart|Bâtissez le bouclier de Nova et abattez le croiseur de l'Hégémonie"
 )
 
 if [[ "${1:-}" == "--desinstaller" ]]; then

@@ -404,6 +404,87 @@ fn win() -> Buf {
     b
 }
 
+// ---------------------------------------------------------- Espace ----
+
+/// Tir de canon à ions : « piou » descendant, avec souffle.
+fn laser() -> Buf {
+    let mut b = Buf::new(0.45);
+    let mut n = Noise(1_977);
+    let mut lp = LowPass::default();
+    b.add(0.0, 0.45, |t| {
+        let p = sweep_phase(t, 1_800.0, 180.0, 0.45);
+        let saw = 2.0 * ((p / TAU) % 1.0) - 1.0;
+        let hiss = lp.run(n.next(), 3_000.0) * 0.4;
+        (saw * 0.7 + p.sin() * 0.5 + hiss) * env(t, 0.003, 0.12)
+    });
+    b.normalize(0.65);
+    b
+}
+
+/// « Bip » de rotation.
+fn blip() -> Buf {
+    let mut b = Buf::new(0.06);
+    b.add(0.0, 0.06, |t| ((3.0 * (TAU * 1_320.0 * t).sin()).tanh()) * env(t, 0.002, 0.018));
+    b.normalize(0.4);
+    b
+}
+
+/// Verrouillage d'un bloc : « clac » métallique.
+fn clunk() -> Buf {
+    let mut b = Buf::new(0.25);
+    let mut n = Noise(66);
+    let mut lp = LowPass::default();
+    b.add(0.0, 0.25, |t| {
+        let x = n.next();
+        let click = (x - lp.run(x, 2_500.0)) * env(t, 0.0005, 0.01);
+        let ring = ((TAU * 640.0 * t).sin() + 0.6 * (TAU * 1_510.0 * t).sin()) * env(t, 0.001, 0.05) * 0.4;
+        let thud = sweep_phase(t, 160.0, 70.0, 0.15).sin() * env(t, 0.001, 0.04) * 0.8;
+        click + ring + thud
+    });
+    b.normalize(0.6);
+    b
+}
+
+/// Ligne d'énergie complète : scintillement montant.
+fn charge() -> Buf {
+    let mut b = Buf::new(0.7);
+    b.add(0.0, 0.7, |t| {
+        let p = sweep_phase(t, 400.0, 1_600.0, 0.5);
+        let shimmer = 0.6 + 0.4 * (TAU * 24.0 * t).sin();
+        (p.sin() + 0.4 * (2.0 * p).sin()) * shimmer * (t / 0.05).min(1.0) * (-t / 0.25).exp()
+    });
+    b.normalize(0.6);
+    b
+}
+
+/// Alarme : sirène à deux tons, deux fois.
+fn alarm() -> Buf {
+    let mut b = Buf::new(1.0);
+    for k in 0..4 {
+        let f = if k % 2 == 0 { 880.0 } else { 660.0 };
+        b.add(k as f32 * 0.25, 0.24, |t| {
+            let gate = (t / 0.01).min(1.0) * ((0.24 - t) / 0.02).clamp(0.0, 1.0);
+            (2.5 * (TAU * f * t).sin()).tanh() * gate * 0.5
+        });
+    }
+    b.normalize(0.55);
+    b
+}
+
+/// Grosse explosion lointaine.
+fn explosion() -> Buf {
+    let mut b = Buf::new(2.2);
+    let mut n = Noise(31_337);
+    let mut lp = LowPass::default();
+    b.add(0.0, 2.2, |t| {
+        let cutoff = 150.0 + 2_500.0 * (-t / 0.25).exp();
+        lp.run(n.next(), cutoff) * env(t, 0.005, 0.6) * 3.0
+    });
+    b.add(0.0, 0.8, |t| sweep_phase(t, 90.0, 30.0, 0.8).sin() * env(t, 0.003, 0.3));
+    b.normalize(0.9);
+    b
+}
+
 #[derive(Clone, Copy)]
 enum Lead {
     Pluck,
@@ -411,6 +492,8 @@ enum Lead {
     Oud,
     Marimba,
     Square,
+    /// Synthé en dents de scie (ambiance spatiale).
+    Saw,
 }
 
 impl Lead {
@@ -422,6 +505,7 @@ impl Lead {
             Lead::Oud => (1..=6).map(|k| s(k as f32) / k as f32 * (-t * (3.0 + 2.0 * k as f32)).exp()).sum::<f32>() * env(t, 0.003, 10.0),
             Lead::Marimba => s(1.0) * env(t, 0.002, 0.25) + 0.3 * s(4.0) * env(t, 0.001, 0.04),
             Lead::Square => (3.0 * s(1.0)).tanh() * env(t, 0.01, 0.3) * 0.6,
+            Lead::Saw => (1..=8).map(|k| s(k as f32) / k as f32).sum::<f32>() * env(t, 0.015, 0.45) * 0.5,
         }
     }
 }
@@ -645,6 +729,23 @@ fn zen_music() -> Buf {
     })
 }
 
+/// Musique épique de space opera (NOVA) : la mineur, basse en croches, toms.
+fn nova_music() -> Buf {
+    theme(&Theme {
+        bpm: 124.0,
+        chords: [[57.0, 60.0, 64.0], [53.0, 57.0, 60.0], [48.0, 52.0, 55.0], [55.0, 59.0, 62.0]],
+        bass: &[0.0, 0.5, 1.0, 1.5, 2.0, 2.5, 3.0, 3.5],
+        pad: true,
+        lead: Lead::Saw,
+        melody: [
+            69.0, 0.0, 0.0, 72.0, 76.0, 0.0, 74.0, 72.0, 77.0, 0.0, 76.0, 0.0, 72.0, 0.0, 0.0, 0.0, //
+            72.0, 0.0, 74.0, 76.0, 79.0, 0.0, 77.0, 76.0, 74.0, 0.0, 71.0, 0.0, 69.0, 0.0, 0.0, 0.0,
+        ],
+        drums: Drums::Toms,
+        waves: false,
+    })
+}
+
 fn main() -> std::io::Result<()> {
     // Racine du projet (par défaut : le dossier courant).
     let root = std::env::args().nth(1).unwrap_or_else(|| ".".into());
@@ -670,6 +771,13 @@ fn main() -> std::io::Result<()> {
         ("sfx/turn", "Petit tic discret (virage, déplacement)", turn()),
         ("sfx/tock", "« Toc » de bloc de bois posé", tock()),
         ("sfx/push", "Raclement d'une caisse poussée", push()),
+        ("sfx/laser", "Tir de canon à ions (« piou » descendant)", laser()),
+        ("sfx/blip", "« Bip » électronique court (rotation)", blip()),
+        ("sfx/clunk", "« Clac » métallique (bloc verrouillé)", clunk()),
+        ("sfx/charge", "Scintillement montant (énergie chargée)", charge()),
+        ("sfx/alarm", "Alarme à deux tons", alarm()),
+        ("sfx/explosion", "Grosse explosion lointaine", explosion()),
+        ("music/nova", "Musique épique de space opera, la mineur, 124 BPM", nova_music()),
         ("music/zen", "Musique zen (marimba, nappes), ré majeur, 84 BPM", zen_music()),
         ("music/campagne", "Musique guillerette, do majeur, 112 BPM", music()),
     ];

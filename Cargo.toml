@@ -6,6 +6,7 @@ members = [
     "games/traversee",
     "games/tour",
     "games/pousse-caisses",
+    "games/nova",
     "tools/sfx-gen",
 ]
 

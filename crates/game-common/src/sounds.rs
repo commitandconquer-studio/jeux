@@ -23,6 +23,12 @@ pub const EAT: &str = "sounds/sfx/eat.wav";
 pub const TURN: &str = "sounds/sfx/turn.wav";
 pub const TOCK: &str = "sounds/sfx/tock.wav";
 pub const PUSH: &str = "sounds/sfx/push.wav";
+pub const LASER: &str = "sounds/sfx/laser.wav";
+pub const BLIP: &str = "sounds/sfx/blip.wav";
+pub const CLUNK: &str = "sounds/sfx/clunk.wav";
+pub const CHARGE: &str = "sounds/sfx/charge.wav";
+pub const ALARM: &str = "sounds/sfx/alarm.wav";
+pub const EXPLOSION: &str = "sounds/sfx/explosion.wav";
 
 // Musiques (en boucle)
 pub const MUSIC_CAMPAGNE: &str = "sounds/music/campagne.wav";
@@ -32,6 +38,7 @@ pub const MUSIC_BANQUISE: &str = "sounds/music/banquise.wav";
 pub const MUSIC_OCEAN: &str = "sounds/music/ocean.wav";
 pub const MUSIC_VOLCAN: &str = "sounds/music/volcan.wav";
 pub const MUSIC_ZEN: &str = "sounds/music/zen.wav";
+pub const MUSIC_NOVA: &str = "sounds/music/nova.wav";
 
 // Police commune
 pub const FONT: &str = "fonts/NotoSans-Bold.ttf";
