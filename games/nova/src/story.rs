@@ -21,8 +21,8 @@ impl Speaker {
 
     pub fn color(self) -> Color {
         match self {
-            Speaker::Isa => Color::srgb(0.20, 0.45, 0.80),
-            Speaker::Boulon => Color::srgb(0.85, 0.50, 0.10),
+            Speaker::Isa => Color::srgb(0.45, 0.78, 1.0),
+            Speaker::Boulon => Color::srgb(1.0, 0.70, 0.30),
         }
     }
 }

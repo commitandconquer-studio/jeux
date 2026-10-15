@@ -14,7 +14,7 @@ pub struct UiPlugin;
 
 impl Plugin for UiPlugin {
     fn build(&self, app: &mut App) {
-        app.add_plugins(UiKitPlugin { font_path: game_common::sounds::FONT })
+        app.add_plugins(UiKitPlugin { universe: game_common::universe::Universe::Croa })
             .add_systems(OnEnter(GameState::Menu), spawn_menu)
             .add_systems(OnEnter(GameState::Levels), spawn_levels)
             .add_systems(OnEnter(GameState::Playing), spawn_hud)

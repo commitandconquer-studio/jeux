@@ -1,0 +1,11 @@
+[package]
+name = "eureka-2048"
+description = "2048 — univers Eurêka : fusionnez les puissances de 2"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+authors.workspace = true
+
+[dependencies]
+bevy.workspace = true
+game-common.workspace = true

@@ -40,5 +40,10 @@ pub const MUSIC_VOLCAN: &str = "sounds/music/volcan.wav";
 pub const MUSIC_ZEN: &str = "sounds/music/zen.wav";
 pub const MUSIC_NOVA: &str = "sounds/music/nova.wav";
 
-// Police commune
+// Polices (une par univers ; toutes sous licence OFL, voir assets/fonts/)
+/// Croâ & Cie : Noto Sans, ronde et lisible.
 pub const FONT: &str = "fonts/NotoSans-Bold.ttf";
+/// Nova : Space Grotesk, plus technique.
+pub const FONT_NOVA: &str = "fonts/SpaceGrotesk-Bold.ttf";
+/// Eurêka : Comic Relief, façon écriture à la main.
+pub const FONT_EUREKA: &str = "fonts/ComicRelief-Bold.ttf";

@@ -7,7 +7,9 @@ pub mod audio;
 pub mod models;
 pub mod save;
 pub mod sounds;
+pub mod space;
 pub mod ui;
+pub mod universe;
 
 /// Fait pointer le jeu vers la bibliothèque d'assets commune (`assets/` à la
 /// racine du projet) : sons, musiques, polices partagés par tous les jeux.

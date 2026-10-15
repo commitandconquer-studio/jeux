@@ -2,7 +2,7 @@
 use bevy::prelude::*;
 use game_common::audio::SoundOn;
 use game_common::ui::{
-    PANEL, UiButton, UiKitPlugin, spawn_button, spawn_button_sized, spawn_gap, spawn_panel, spawn_panel_bottom,
+    PANEL, ThemedPanel, UiButton, UiKitPlugin, spawn_button, spawn_button_sized, spawn_gap, spawn_panel, spawn_panel_bottom,
     spawn_panel_left, spawn_text,
 };
 
@@ -20,7 +20,7 @@ impl Plugin for UiPlugin {
     fn build(&self, app: &mut App) {
         let unlocked = game_common::save::load(SAVE, "chapitres").and_then(|s| s.parse().ok()).unwrap_or(1usize).clamp(1, CHAPTERS.len());
         let record = game_common::save::load(SAVE, "record").and_then(|s| s.parse().ok()).unwrap_or(0u32);
-        app.add_plugins(UiKitPlugin { font_path: game_common::sounds::FONT })
+        app.add_plugins(UiKitPlugin { universe: game_common::universe::Universe::Nova })
             .insert_resource(Progress { unlocked, record })
             .insert_resource(Dialog::default())
             .add_systems(OnEnter(GameState::Menu), spawn_menu)
@@ -147,6 +147,7 @@ fn spawn_dialog_box(c: &mut Commands, scope: impl Bundle) {
         row_gap: Val::Px(10.0),
         padding: UiRect::axes(Val::Px(32.0), Val::Px(22.0)),
         width: Val::Px(760.0),
+        border: UiRect::all(Val::Px(2.0)),
         max_width: Val::Percent(95.0),
         border_radius: BorderRadius::all(Val::Px(20.0)),
         ..default()
@@ -224,6 +225,7 @@ fn spawn_hud(mut c: Commands, mode: Option<Res<NextMode>>) {
                 ..default()
             },
             BackgroundColor(PANEL),
+            ThemedPanel,
             scope(),
         ))
         .id();
@@ -353,6 +355,7 @@ fn boulon_remarks(mut c: Commands, mut events: MessageReader<NovaEvent>, mut gam
                 ..default()
             },
             BackgroundColor(PANEL),
+            ThemedPanel,
             Pickable::IGNORE,
             Toast(3.5),
             DespawnOnExit(GameState::Playing),

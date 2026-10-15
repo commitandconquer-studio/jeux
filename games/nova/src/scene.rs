@@ -4,6 +4,7 @@ use std::f32::consts::FRAC_PI_2;
 
 use bevy::light::NotShadowCaster;
 use bevy::prelude::*;
+use game_common::space::{SpaceBackdropPlugin, SpaceView};
 use game_common::{Rng, flat_material, iso_projection};
 
 use crate::GameState;
@@ -25,6 +26,8 @@ pub struct ScenePlugin;
 impl Plugin for ScenePlugin {
     fn build(&self, app: &mut App) {
         app.init_resource::<Look>()
+            .add_plugins(SpaceBackdropPlugin)
+            .insert_resource(SpaceView { center: LOOK, size: Vec2::new(64.0, 40.0) })
             .add_systems(Startup, setup)
             .add_systems(
                 Update,
@@ -150,26 +153,11 @@ struct HitFlash(f32);
 fn setup(mut commands: Commands, look: Res<Look>, mut meshes: ResMut<Assets<Mesh>>, mut mats: ResMut<Assets<StandardMaterial>>) {
     commands.insert_resource(Shake::default());
     commands.insert_resource(HitFlash::default());
-    commands.insert_resource(ClearColor(Color::srgb(0.02, 0.03, 0.07)));
     commands.insert_resource(GlobalAmbientLight { color: Color::srgb(0.8, 0.85, 1.0), brightness: 500.0, ..default() });
     // Zone visible : le bouclier, les aperçus, et le croiseur avec de la marge au-dessus.
     commands.spawn((Camera3d::default(), iso_projection(34.0, 36.0), Transform::from_translation(LOOK + CAM_OFFSET).looking_at(LOOK, Vec3::Y)));
 
-    let mut rng = Rng::new(2024);
-    let mut rand = |a: f32, b: f32| a + (b - a) * rng.below(10_000) as f32 / 10_000.0;
-
-    // Étoiles
-    let star = mats.add(StandardMaterial { base_color: Color::WHITE, emissive: LinearRgba::rgb(3.0, 3.0, 3.5), unlit: true, ..default() });
-    for _ in 0..260 {
-        let s = rand(0.05, 0.18);
-        commands.spawn((
-            Mesh3d(look.ball.clone()),
-            MeshMaterial3d(star.clone()),
-            Transform::from_xyz(rand(-45.0, 45.0), rand(-20.0, 50.0), rand(-80.0, -60.0)).with_scale(Vec3::splat(s)),
-            NotShadowCaster,
-        ));
-    }
-    // Planète à défendre
+    // Planète à défendre (le fond étoilé vient de `game_common::space`)
     commands.spawn((
         Mesh3d(meshes.add(Sphere::new(0.5).mesh().ico(4).unwrap())),
         MeshMaterial3d(look.planet.clone()),

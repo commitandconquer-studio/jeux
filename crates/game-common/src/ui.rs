@@ -1,24 +1,26 @@
 //! Interface commune à tous les jeux : panneaux, boutons, police, survol.
+//! Le style (couleurs, police) vient de l'univers du jeu (`Universe`).
 use bevy::prelude::*;
 
 use crate::palette;
+use crate::universe::{UiStyle, Universe};
 
+/// Fond de panneau de l'univers Croâ & Cie (pour les éléments sans thème).
 pub const PANEL: Color = Color::srgba(0.98, 0.97, 0.94, 0.93);
-const BUTTON: Color = Color::srgb(0.98, 0.97, 0.93);
-const BUTTON_HOVER: Color = Color::srgb(1.0, 0.86, 0.40);
 
-/// Ajoute la police de l'interface et l'effet de survol des boutons.
-///
-/// `font_path` est relatif au dossier `assets/` du jeu.
+/// Ajoute la police et le style de l'univers, et l'effet de survol des boutons.
 pub struct UiKitPlugin {
-    pub font_path: &'static str,
+    pub universe: Universe,
 }
 
 impl Plugin for UiKitPlugin {
     fn build(&self, app: &mut App) {
-        let font = app.world().resource::<AssetServer>().load(self.font_path);
+        let style = self.universe.style();
+        let font = app.world().resource::<AssetServer>().load(style.font);
         app.insert_resource(UiFont(font))
-            .add_systems(PostUpdate, apply_font)
+            .insert_resource(UiTheme(style))
+            .insert_resource(self.universe)
+            .add_systems(PostUpdate, (apply_font, apply_theme))
             .add_observer(on_over)
             .add_observer(on_out);
     }
@@ -29,9 +31,21 @@ impl Plugin for UiKitPlugin {
 #[derive(Resource)]
 pub struct UiFont(pub Handle<Font>);
 
-/// Marque un bouton : couleur au survol.
+/// Style de l'univers du jeu en cours.
+#[derive(Resource)]
+pub struct UiTheme(pub UiStyle);
+
+/// Marque un bouton : couleurs de l'univers et survol.
 #[derive(Component)]
 pub struct UiButton;
+
+/// Marque un panneau : fond et bordure de l'univers.
+#[derive(Component)]
+pub struct ThemedPanel;
+
+/// Marque un texte : couleur de l'univers (s'il n'a pas reçu d'autre couleur).
+#[derive(Component)]
+pub struct ThemedText;
 
 fn apply_font(font: Res<UiFont>, mut texts: Query<&mut TextFont, Added<TextFont>>) {
     for mut tf in &mut texts {
@@ -39,15 +53,39 @@ fn apply_font(font: Res<UiFont>, mut texts: Query<&mut TextFont, Added<TextFont>
     }
 }
 
-fn on_over(over: On<PointerOver>, mut q: Query<&mut BackgroundColor, With<UiButton>>) {
-    if let Ok(mut bg) = q.get_mut(over.entity) {
-        bg.0 = BUTTON_HOVER;
+#[allow(clippy::type_complexity)]
+fn apply_theme(
+    theme: Res<UiTheme>,
+    mut panels: Query<(&mut BackgroundColor, &mut BorderColor), (Added<ThemedPanel>, Without<UiButton>)>,
+    mut buttons: Query<(&mut BackgroundColor, &mut BorderColor), (Added<UiButton>, Without<ThemedPanel>)>,
+    mut texts: Query<&mut TextColor, Added<ThemedText>>,
+) {
+    let s = &theme.0;
+    for (mut bg, mut border) in &mut panels {
+        bg.0 = s.panel;
+        *border = BorderColor::all(s.panel_border);
+    }
+    for (mut bg, mut border) in &mut buttons {
+        bg.0 = s.button;
+        *border = BorderColor::all(s.button_border);
+    }
+    for mut color in &mut texts {
+        // Un texte recoloré exprès par le jeu garde sa couleur.
+        if color.0 == palette::TEXT_DARK {
+            color.0 = s.text;
+        }
     }
 }
 
-fn on_out(out: On<PointerOut>, mut q: Query<&mut BackgroundColor, With<UiButton>>) {
+fn on_over(over: On<PointerOver>, theme: Res<UiTheme>, mut q: Query<&mut BackgroundColor, With<UiButton>>) {
+    if let Ok(mut bg) = q.get_mut(over.entity) {
+        bg.0 = theme.0.button_hover;
+    }
+}
+
+fn on_out(out: On<PointerOut>, theme: Res<UiTheme>, mut q: Query<&mut BackgroundColor, With<UiButton>>) {
     if let Ok(mut bg) = q.get_mut(out.entity) {
-        bg.0 = BUTTON;
+        bg.0 = theme.0.button;
     }
 }
 
@@ -88,10 +126,13 @@ fn panel_at(commands: &mut Commands, scope: impl Bundle, horizontal: JustifyCont
                 align_items: AlignItems::Center,
                 row_gap: Val::Px(14.0),
                 padding: UiRect::axes(Val::Px(48.0), Val::Px(32.0)),
+                border: UiRect::all(Val::Px(2.0)),
                 border_radius: BorderRadius::all(Val::Px(24.0)),
                 ..default()
             },
             BackgroundColor(PANEL),
+            BorderColor::all(Color::NONE),
+            ThemedPanel,
             ChildOf(root),
         ))
         .id()
@@ -105,6 +146,7 @@ pub fn spawn_text(commands: &mut Commands, parent: Entity, text: impl Into<Strin
             TextColor(palette::TEXT_DARK),
             TextLayout::justify(Justify::Center),
             Pickable::IGNORE,
+            ThemedText,
             ChildOf(parent),
         ))
         .id()
@@ -141,7 +183,7 @@ pub fn spawn_button_sized(
                 border_radius: BorderRadius::all(Val::Px(14.0)),
                 ..default()
             },
-            BackgroundColor(BUTTON),
+            BackgroundColor(Color::srgb(0.98, 0.97, 0.93)),
             BorderColor::all(palette::TEXT_DARK),
             UiButton,
             ChildOf(parent),
@@ -160,10 +202,13 @@ pub fn spawn_hud(commands: &mut Commands) -> (Entity, Entity) {
                 top: Val::Px(14.0),
                 left: Val::Px(14.0),
                 padding: UiRect::axes(Val::Px(18.0), Val::Px(8.0)),
+                border: UiRect::all(Val::Px(2.0)),
                 border_radius: BorderRadius::all(Val::Px(20.0)),
                 ..default()
             },
             BackgroundColor(PANEL),
+            BorderColor::all(Color::NONE),
+            ThemedPanel,
         ))
         .id();
     let text = spawn_text(commands, hud, "", 24.0);

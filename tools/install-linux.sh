@@ -21,6 +21,7 @@ GAMES=(
   "tour|Tour de blocs|Empilez les blocs le plus haut possible"
   "pousse-caisses|Pousse-caisses|Le crapaud range les caisses sur les cibles, en 12 niveaux"
   "nova|NOVA — Le Dernier Rempart|Bâtissez le bouclier de Nova et abattez le croiseur de l'Hégémonie"
+  "eureka-2048|2048 — Eurêka|Fusionnez les puissances de 2 jusqu'à 2048"
 )
 
 if [[ "${1:-}" == "--desinstaller" ]]; then

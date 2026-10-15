@@ -4,6 +4,16 @@ Studio de jeux vidéo libres et gratuits. Ce dépôt réunit tous nos jeux, écr
 
 Style maison : 3D low-poly en vue plongeante, couleurs unies, matériaux mats et ombres douces.
 
+## Les univers
+
+Les jeux ne sont pas reliés par une histoire, mais chacun appartient à un **univers** qui lui donne son identité (police, couleurs de l'interface, ambiance). Dans le code : `UiKitPlugin { universe: Universe::… }` (`crates/game-common/src/universe.rs`).
+
+| Univers | Ambiance | Interface | Jeux |
+|---|---|---|---|
+| 🐸 **Croâ & Cie** | Enfantin et sympa : jouets en bois, pastels, animaux (le crapaud en mascotte) | Panneaux crème, police Noto Sans | Snake, Traversée, Tour de blocs, Pousse-caisses |
+| 🚀 **Nova** | Science-fiction : espace profond, néons, vaisseaux | Panneaux sombres à bordure cyan, police Space Grotesk, fond spatial commun (`game_common::space`) | NOVA — Le Dernier Rempart |
+| 🔬 **Eurêka** | Sciences et maths : cahier quadrillé, feutres, laboratoire | Fiches bristol à bordure bleue, police Comic Relief | 2048 |
+
 ## Structure
 
 ```
@@ -15,6 +25,7 @@ games/traversee/      Traversée : un crapaud traverse routes, rivières et voie
 games/tour/           Tour de blocs : empiler des blocs le plus haut possible
 games/pousse-caisses/ Pousse-caisses : le crapaud range les caisses (12 niveaux)
 games/nova/           NOVA — Le Dernier Rempart : blocs d'énergie contre l'Hégémonie
+games/eureka-2048/    2048 (univers Eurêka) : fusionner les puissances de 2
 tools/sfx-gen/        fabrique les sons et musiques de la bibliothèque
 ```
 
@@ -101,12 +112,26 @@ cargo run -p nova
 - Les règles (`games/nova/src/board.rs`) ont leurs tests : `cargo test -p nova`.
 - Captures automatiques (le pilote automatique joue le chapitre 1) : `NOVA_CAPTURE=captures cargo run -p nova`.
 
+### 2048 — Eurêka
+
+```bash
+cargo run -p eureka-2048
+```
+
+- Faites glisser les tuiles : deux nombres égaux fusionnent et doublent. Atteindrez-vous 2048 ?
+- Sur un bureau de scientifique : papier quadrillé, fiole, atome, crayon, règle. Tuiles 3D aux couleurs de feutres, plus épaisses pour les grands nombres ; animations de glissement, de fusion et d'apparition.
+- À chaque nouvelle puissance de 2 (8, 16… 4096), une fiche « Eurêka ! » donne un petit fait scientifique.
+- Commandes : flèches ou ZQSD, glisser du doigt ; U ou Retour arrière : annuler le dernier coup ; Échap : menu. Record sauvegardé.
+- Règles testées (`games/eureka-2048/src/grid.rs`) : `cargo test -p eureka-2048`.
+- Captures automatiques (pilote automatique) : `EUREKA_CAPTURE=captures cargo run -p eureka-2048`.
+
 ## Bibliothèque commune (`assets/`)
 
 Tous les jeux partagent le même dossier `assets/` : un son créé pour un jeu est utilisable par tous les autres.
 
 ```
-assets/fonts/          police Noto Sans (SIL Open Font License 1.1, voir OFL.txt)
+assets/fonts/          polices des univers : Noto Sans, Space Grotesk, Comic Relief
+                       (SIL Open Font License 1.1, voir les fichiers OFL*.txt)
 assets/sounds/ui/      clic, départ, carillon, défaite
 assets/sounds/sfx/     saut, coassement, plouf, crash, klaxons, train, croque, tic…
 assets/sounds/music/   campagne, prairie, désert, banquise, océan, volcan
