@@ -4,6 +4,8 @@ Studio de jeux vidéo libres et gratuits. Ce dépôt réunit tous nos jeux, écr
 
 Style maison : 3D low-poly en vue plongeante, couleurs unies, matériaux mats et ombres douces.
 
+Chaque jeu s'ouvre sur l'écran de démarrage du studio (illustration, barre de chargement, fondu ; un clic le passe). La charte (couleurs, logo, police Russo One) est dans [packaging/branding/CHARTE.md](packaging/branding/CHARTE.md).
+
 ## Les univers
 
 Les jeux ne sont pas reliés par une histoire, mais chacun appartient à un **univers** qui lui donne son identité (police, couleurs de l'interface, ambiance). Dans le code : `UiKitPlugin { universe: Universe::… }` (`crates/game-common/src/universe.rs`).
@@ -12,7 +14,7 @@ Les jeux ne sont pas reliés par une histoire, mais chacun appartient à un **un
 |---|---|---|---|
 | 🐸 **Croâ & Cie** | Enfantin et sympa : jouets en bois, pastels, animaux (le crapaud en mascotte) | Panneaux crème, police Noto Sans | Snake, Traversée, Tour de blocs, Pousse-caisses |
 | 🚀 **Nova** | Science-fiction : espace profond, néons, vaisseaux | Panneaux sombres à bordure cyan, police Space Grotesk, fond spatial commun (`game_common::space`) | NOVA — Le Dernier Rempart |
-| 🔬 **Eurêka** | Sciences et maths : cahier quadrillé, feutres, laboratoire | Fiches bristol à bordure bleue, police Gelasio | 2048 |
+| 🔬 **Eurêka** | Sciences et maths : cahier quadrillé, feutres, laboratoire | Fiches bristol à bordure bleue, police Gelasio | 2048, Le Concile des Évêques |
 
 ## Structure
 
@@ -26,7 +28,12 @@ games/tour/           Tour de blocs : empiler des blocs le plus haut possible
 games/pousse-caisses/ Pousse-caisses : le crapaud range les caisses (12 niveaux)
 games/nova/           NOVA — Le Dernier Rempart : blocs d'énergie contre l'Hégémonie
 games/eureka-2048/    2048 (univers Eurêka) : fusionner les puissances de 2
+games/concile/        Le Concile des Évêques (univers Eurêka) : un évêque par diocèse
+crates/concile-core/  grilles, solveurs et générateur du Concile (sans Bevy)
+tools/concile-gen/    génère le Livre des Conciles (games/concile/puzzles.txt)
+tools/logo-gen/       rend l'emblème du studio en PNG (assets/branding/)
 tools/sfx-gen/        fabrique les sons et musiques de la bibliothèque
+packaging/            icônes des jeux et charte du studio
 ```
 
 Chaque jeu est un crate indépendant dans `games/`.
@@ -125,16 +132,33 @@ cargo run -p eureka-2048
 - Règles testées (`games/eureka-2048/src/grid.rs`) : `cargo test -p eureka-2048`.
 - Captures automatiques (pilote automatique) : `EUREKA_CAPTURE=captures cargo run -p eureka-2048`.
 
+### Le Concile des Évêques — Eurêka
+
+```bash
+cargo run -p concile
+```
+
+- **La règle** : placez un évêque par diocèse (région de couleur), par rangée et par colonne. Deux évêques ne se touchent jamais, même en diagonale.
+- Sur une carte des diocèses en parchemin : les évêques sont des sceaux de cire, les croix sont tracées à la plume. Clic sur une case : croix, puis évêque, puis vide ; glisser pour barrer plusieurs cases.
+- **Mode Novice** : poser un évêque hachure d'office son diocèse, sa rangée, sa colonne et les cases voisines. **Mode Normal** : rien d'automatique.
+- **Livre des Conciles** : 120 grilles de 5 × 5 à 10 × 10, classées par difficulté. **Défi du jour** : une grille tirée de la date, la même pour tous ; la série de jours réussis est comptée.
+- **Indice** : explique la prochaine déduction logique (case seule, diocèse confiné, groupe…).
+- **Calendrier des fêtes** : décorations à Noël, pendant l'Avent, à l'Épiphanie, aux Rameaux, à Pâques, à Halloween et à la Saint-Nicolas ; pendant la semaine sainte, les cloches se taisent. Option pour masquer les décorations. Pour voir une autre date : `CC_DATE=2026-12-25 cargo run -p concile`.
+- Commandes : souris ou doigt ; U ou Retour arrière : annuler ; H : indice ; Échap : menu. Progression sauvegardée.
+- Les grilles sont générées à l'avance (solution unique, résolubles par la logique) : `cargo run --release -p concile-gen` (environ 2 minutes). Tests : `cargo test -p concile-core`.
+- Captures automatiques : `CONCILE_CAPTURE=captures cargo run -p concile`.
+
 ## Bibliothèque commune (`assets/`)
 
 Tous les jeux partagent le même dossier `assets/` : un son créé pour un jeu est utilisable par tous les autres.
 
 ```
-assets/fonts/          polices des univers : Noto Sans, Space Grotesk, Gelasio
+assets/branding/       écran de démarrage et emblème du studio
+assets/fonts/          polices : Noto Sans, Space Grotesk, Gelasio, Russo One (logo)
                        (SIL Open Font License 1.1, voir les fichiers OFL*.txt)
 assets/sounds/ui/      clic, départ, carillon, défaite
 assets/sounds/sfx/     saut, coassement, plouf, crash, klaxons, train, croque, tic…
-assets/sounds/music/   campagne, prairie, désert, banquise, océan, volcan
+assets/sounds/music/   campagne, prairie, désert, banquise, océan, volcan, zen, nova, orgue
 assets/sounds/CATALOGUE.md   liste de tous les sons avec durée et description
 ```
 
@@ -148,7 +172,7 @@ Dans un jeu : `asset_server.load(game_common::sounds::HOP)`. Les jeux trouvent l
 
 ## Code commun
 
-`crates/game-common` fournit à tous les jeux : palette, lumière et ombres, caméra isométrique, score, aléatoire, l'interface (`ui` : panneaux, boutons, police, survol), le son (`audio` : activé/coupé, touche M), les noms des sons (`sounds`), le crapaud (`models`) et une sauvegarde simple (`save`).
+`crates/game-common` fournit à tous les jeux : palette, lumière et ombres, caméra isométrique, score, aléatoire, l'interface (`ui` : panneaux, boutons, police, survol), le son (`audio` : activé/coupé, touche M), les noms des sons (`sounds`), le crapaud (`models`), une sauvegarde simple (`save`), le calendrier et les fêtes (`calendar`, date forcée par `CC_DATE=AAAA-MM-JJ`), l'identité du studio (`brand`) et l'écran de démarrage (`splash`, désactivé par `CC_NO_SPLASH=1`).
 
 ## Installer les jeux sur son PC (Linux)
 
@@ -187,7 +211,7 @@ bevy.workspace = true
 game-common.workspace = true
 ```
 
-Dans le code : `DefaultPlugins.set(game_common::shared_assets())` pour la bibliothèque commune, `LowPolyStylePlugin` et `iso_camera(...)` pour le style maison, `UiKitPlugin` et `AudioKitPlugin` pour les menus et le son.
+Dans le code : `DefaultPlugins.set(game_common::shared_assets())` pour la bibliothèque commune, `LowPolyStylePlugin` et `iso_camera(...)` pour le style maison, `splash::SplashPlugin` pour l'écran de démarrage, `UiKitPlugin` et `AudioKitPlugin` pour les menus et le son.
 
 ## Licence
 

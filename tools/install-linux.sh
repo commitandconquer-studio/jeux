@@ -22,6 +22,7 @@ GAMES=(
   "pousse-caisses|Pousse-caisses|Le crapaud range les caisses sur les cibles, en 12 niveaux"
   "nova|NOVA — Le Dernier Rempart|Bâtissez le bouclier de Nova et abattez le croiseur de l'Hégémonie"
   "eureka-2048|2048 — Eurêka|Fusionnez les puissances de 2 jusqu'à 2048"
+  "concile|Le Concile des Évêques|Un évêque par diocèse, par rangée et par colonne, et jamais de voisin"
 )
 
 if [[ "${1:-}" == "--desinstaller" ]]; then
