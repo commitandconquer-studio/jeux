@@ -94,6 +94,20 @@ Dans un jeu : `asset_server.load(game_common::sounds::HOP)`. Les jeux trouvent l
 
 `crates/game-common` fournit à tous les jeux : palette, lumière et ombres, caméra isométrique, score, aléatoire, l'interface (`ui` : panneaux, boutons, police, survol), le son (`audio` : activé/coupé, touche M) et les noms des sons (`sounds`).
 
+## Installer les jeux sur son PC (Linux)
+
+```bash
+tools/install-linux.sh
+```
+
+Compile les jeux en version optimisée, les copie avec la bibliothèque `assets/` dans `~/.local/share/commit-and-conquer/` et ajoute chaque jeu (avec son icône, `packaging/icons/`) au menu d'applications, catégorie Jeux. Aucun droit administrateur n'est nécessaire. Relancer le script après une modification pour mettre à jour les jeux installés.
+
+Pour tout retirer :
+
+```bash
+tools/install-linux.sh --desinstaller
+```
+
 ## Plateformes visées
 
 Linux, Windows, macOS, Android (et web). Les builds Windows/macOS/Android seront automatisés via GitHub Actions.
