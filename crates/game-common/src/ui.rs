@@ -54,13 +54,28 @@ fn on_out(out: On<PointerOut>, mut q: Query<&mut BackgroundColor, With<UiButton>
 /// Fond plein écran centré avec un panneau arrondi ; renvoie le panneau.
 /// `scope` est ajouté à la racine, typiquement `DespawnOnExit(état)`.
 pub fn spawn_panel(commands: &mut Commands, scope: impl Bundle) -> Entity {
+    panel_at(commands, scope, JustifyContent::Center, AlignItems::Center)
+}
+
+/// Comme `spawn_panel`, mais en bas de l'écran (laisse voir la scène).
+pub fn spawn_panel_bottom(commands: &mut Commands, scope: impl Bundle) -> Entity {
+    panel_at(commands, scope, JustifyContent::Center, AlignItems::FlexEnd)
+}
+
+/// Comme `spawn_panel`, mais à gauche de l'écran (la scène reste visible à droite).
+pub fn spawn_panel_left(commands: &mut Commands, scope: impl Bundle) -> Entity {
+    panel_at(commands, scope, JustifyContent::FlexStart, AlignItems::Center)
+}
+
+fn panel_at(commands: &mut Commands, scope: impl Bundle, horizontal: JustifyContent, vertical: AlignItems) -> Entity {
     let root = commands
         .spawn((
             Node {
                 width: Val::Percent(100.0),
                 height: Val::Percent(100.0),
-                justify_content: JustifyContent::Center,
-                align_items: AlignItems::Center,
+                justify_content: horizontal,
+                align_items: vertical,
+                padding: UiRect::all(Val::Px(24.0)),
                 ..default()
             },
             scope,

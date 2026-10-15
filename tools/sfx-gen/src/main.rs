@@ -356,6 +356,20 @@ fn game_over() -> Buf {
     b
 }
 
+/// « Toc » de bloc de bois posé.
+fn tock() -> Buf {
+    let mut b = Buf::new(0.2);
+    let mut n = Noise(808);
+    b.add(0.0, 0.01, |t| n.next() * env(t, 0.0003, 0.002) * 0.5);
+    b.add(0.0, 0.2, |t| {
+        let body = (TAU * 880.0 * t).sin() + 0.5 * (TAU * 1_870.0 * t).sin() * (-t / 0.015).exp();
+        let thump = sweep_phase(t, 240.0, 120.0, 0.1).sin() * 0.6;
+        (body + thump) * env(t, 0.001, 0.04)
+    });
+    b.normalize(0.75);
+    b
+}
+
 #[derive(Clone, Copy)]
 enum Lead {
     Pluck,
@@ -580,6 +594,23 @@ fn snake_musics() -> [(&'static str, Buf); 5] {
     ]
 }
 
+/// Musique calme pour les jeux de concentration (Tour de blocs).
+fn zen_music() -> Buf {
+    theme(&Theme {
+        bpm: 84.0,
+        chords: [[50.0, 54.0, 57.0], [47.0, 50.0, 54.0], [43.0, 47.0, 50.0], [45.0, 49.0, 52.0]],
+        bass: &[0.0, 2.0],
+        pad: true,
+        lead: Lead::Marimba,
+        melody: [
+            74.0, 0.0, 78.0, 81.0, 0.0, 78.0, 76.0, 0.0, 74.0, 0.0, 71.0, 0.0, 69.0, 0.0, 0.0, 0.0, //
+            74.0, 0.0, 78.0, 83.0, 0.0, 81.0, 78.0, 0.0, 76.0, 0.0, 78.0, 76.0, 74.0, 0.0, 0.0, 0.0,
+        ],
+        drums: Drums::None,
+        waves: false,
+    })
+}
+
 fn main() -> std::io::Result<()> {
     // Racine du projet (par défaut : le dossier courant).
     let root = std::env::args().nth(1).unwrap_or_else(|| ".".into());
@@ -602,6 +633,8 @@ fn main() -> std::io::Result<()> {
         ("sfx/train", "Klaxon et grondement de train", train()),
         ("sfx/eat", "Croque / ramasser un objet", eat()),
         ("sfx/turn", "Petit tic discret (virage, déplacement)", turn()),
+        ("sfx/tock", "« Toc » de bloc de bois posé", tock()),
+        ("music/zen", "Musique zen (marimba, nappes), ré majeur, 84 BPM", zen_music()),
         ("music/campagne", "Musique guillerette, do majeur, 112 BPM", music()),
     ];
     let descriptions = [

@@ -4,6 +4,7 @@ members = [
     "crates/game-common",
     "games/snake",
     "games/traversee",
+    "games/tour",
     "tools/sfx-gen",
 ]
 

@@ -12,6 +12,7 @@ assets/               bibliothèque commune à tous les jeux : sons, musiques, p
 crates/game-common/   code commun : style, caméra, interface, son, noms des sons
 games/snake/          Snake en 3D low-poly
 games/traversee/      Traversée : un crapaud traverse routes, rivières et voies ferrées
+games/tour/           Tour de blocs : empiler des blocs le plus haut possible
 tools/sfx-gen/        fabrique les sons et musiques de la bibliothèque
 ```
 
@@ -57,6 +58,17 @@ cargo run -p traversee
 - Commandes : flèches ou ZQSD, Espace ou clic pour avancer, ou glisser du doigt (tactile).
 - Son : musique, saut, coassement, plouf, crash, klaxons, cloche et passage du train. Touche M ou bouton du menu pour couper.
 - Captures automatiques : `TRAVERSEE_CAPTURE=captures cargo run -p traversee`.
+
+### Tour de blocs
+
+```bash
+cargo run -p tour
+```
+
+- Empilez les blocs le plus haut possible : chaque bloc glisse d'avant en arrière, posez-le au bon moment. Ce qui dépasse est coupé et tombe.
+- « Parfait ! » quand le bloc tombe pile : trois d'affilée et le bloc regrandit.
+- Commandes : Espace, clic ou toucher l'écran. Échap : menu. M : son.
+- Captures automatiques : `TOUR_CAPTURE=captures cargo run -p tour`.
 
 ## Bibliothèque commune (`assets/`)
 

@@ -20,6 +20,8 @@ Dans le code, utilisez les constantes de `game_common::sounds`.
 | `sfx/train.wav` | 2.40 s | Klaxon et grondement de train |
 | `sfx/eat.wav` | 0.14 s | Croque / ramasser un objet |
 | `sfx/turn.wav` | 0.03 s | Petit tic discret (virage, déplacement) |
+| `sfx/tock.wav` | 0.20 s | « Toc » de bloc de bois posé |
+| `music/zen.wav` | 22.86 s | Musique zen (marimba, nappes), ré majeur, 84 BPM |
 | `music/campagne.wav` | 17.14 s | Musique guillerette, do majeur, 112 BPM |
 | `music/prairie.wav` | 16.00 s | Musique joyeuse, sol majeur, 120 BPM |
 | `music/desert.wav` | 20.00 s | Musique orientale (oud, darbouka), 96 BPM |

@@ -20,6 +20,7 @@ pub const BELL: &str = "sounds/sfx/bell.wav";
 pub const TRAIN: &str = "sounds/sfx/train.wav";
 pub const EAT: &str = "sounds/sfx/eat.wav";
 pub const TURN: &str = "sounds/sfx/turn.wav";
+pub const TOCK: &str = "sounds/sfx/tock.wav";
 
 // Musiques (en boucle)
 pub const MUSIC_CAMPAGNE: &str = "sounds/music/campagne.wav";
@@ -28,6 +29,7 @@ pub const MUSIC_DESERT: &str = "sounds/music/desert.wav";
 pub const MUSIC_BANQUISE: &str = "sounds/music/banquise.wav";
 pub const MUSIC_OCEAN: &str = "sounds/music/ocean.wav";
 pub const MUSIC_VOLCAN: &str = "sounds/music/volcan.wav";
+pub const MUSIC_ZEN: &str = "sounds/music/zen.wav";
 
 // Police commune
 pub const FONT: &str = "fonts/NotoSans-Bold.ttf";

@@ -1,0 +1,11 @@
+[package]
+name = "tour"
+description = "Tour de blocs : empilez les blocs le plus haut possible"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+authors.workspace = true
+
+[dependencies]
+bevy.workspace = true
+game-common.workspace = true
