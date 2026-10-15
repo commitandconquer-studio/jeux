@@ -9,6 +9,7 @@ mod models;
 mod ui;
 
 use bevy::prelude::*;
+use game_common::models::{FrogKit, spawn_frog};
 use game_common::{LowPolyStylePlugin, Rng, Score, iso_camera};
 
 use frog::{Cause, Death, Frog, FrogModel};
@@ -55,6 +56,7 @@ fn main() {
     .insert_resource(ClearColor(Color::srgb(0.80, 0.90, 0.95)))
     .init_state::<GameState>()
     .init_resource::<Kit>()
+    .init_resource::<FrogKit>()
     .init_resource::<Score>()
     .init_resource::<Frog>()
     .init_resource::<Death>()
@@ -85,9 +87,9 @@ fn main() {
         .run();
 }
 
-fn setup(mut commands: Commands, kit: Res<Kit>) {
+fn setup(mut commands: Commands, frog_kit: Res<FrogKit>) {
     commands.spawn(iso_camera(Vec3::new(0.0, 0.0, -LOOK_AHEAD), 15.0, 13.0));
-    let frog = models::spawn_frog(&mut commands, &kit);
+    let frog = spawn_frog(&mut commands, &frog_kit);
     commands.entity(frog).insert(FrogModel);
 }
 

@@ -370,6 +370,40 @@ fn tock() -> Buf {
     b
 }
 
+/// Raclement d'une caisse qu'on pousse.
+fn push() -> Buf {
+    let mut b = Buf::new(0.22);
+    let mut n = Noise(4_711);
+    let mut lp = LowPass::default();
+    b.add(0.0, 0.22, |t| {
+        // Bruit grave haché : le bois qui accroche le sol.
+        let grain = 0.6 + 0.4 * (TAU * 38.0 * t).sin().signum();
+        let gate = (t / 0.02).min(1.0) * ((0.22 - t) / 0.06).clamp(0.0, 1.0);
+        lp.run(n.next(), 700.0) * grain * gate * 3.0
+    });
+    b.normalize(0.6);
+    b
+}
+
+/// Petite fanfare de victoire : arpège puis accord tenu.
+fn win() -> Buf {
+    let mut b = Buf::new(1.6);
+    let notes = [72.0, 76.0, 79.0];
+    for (i, m) in notes.iter().enumerate() {
+        let f = note(*m);
+        b.add(i as f32 * 0.11, 0.3, |t| ((3.0 * (TAU * f * t).sin()).tanh() * 0.6) * env(t, 0.004, 0.12));
+    }
+    for m in [72.0, 76.0, 79.0, 84.0] {
+        let f = note(m);
+        b.add(0.36, 1.2, |t| {
+            let tone = (TAU * f * t).sin() + 0.4 * (TAU * 2.0 * f * t).sin() + 0.15 * (TAU * 3.0 * f * t).sin();
+            tone * (t / 0.02).min(1.0) * (-t / 0.45).exp()
+        });
+    }
+    b.normalize(0.65);
+    b
+}
+
 #[derive(Clone, Copy)]
 enum Lead {
     Pluck,
@@ -623,6 +657,7 @@ fn main() -> std::io::Result<()> {
         ("ui/start", "Arpège montant de début de partie", start()),
         ("ui/chime", "Carillon de récompense (palier atteint)", chime()),
         ("ui/gameover", "« Wah wah waaah » de défaite", game_over()),
+        ("ui/win", "Petite fanfare de victoire (niveau réussi)", win()),
         ("sfx/hop", "Petit « bloup » de saut", hop()),
         ("sfx/croak", "Coassement de crapaud", croak()),
         ("sfx/splash", "Plouf dans l'eau", splash()),
@@ -634,6 +669,7 @@ fn main() -> std::io::Result<()> {
         ("sfx/eat", "Croque / ramasser un objet", eat()),
         ("sfx/turn", "Petit tic discret (virage, déplacement)", turn()),
         ("sfx/tock", "« Toc » de bloc de bois posé", tock()),
+        ("sfx/push", "Raclement d'une caisse poussée", push()),
         ("music/zen", "Musique zen (marimba, nappes), ré majeur, 84 BPM", zen_music()),
         ("music/campagne", "Musique guillerette, do majeur, 112 BPM", music()),
     ];

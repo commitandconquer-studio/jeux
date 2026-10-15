@@ -13,6 +13,7 @@ crates/game-common/   code commun : style, caméra, interface, son, noms des son
 games/snake/          Snake en 3D low-poly
 games/traversee/      Traversée : un crapaud traverse routes, rivières et voies ferrées
 games/tour/           Tour de blocs : empiler des blocs le plus haut possible
+games/pousse-caisses/ Pousse-caisses : le crapaud range les caisses (12 niveaux)
 tools/sfx-gen/        fabrique les sons et musiques de la bibliothèque
 ```
 
@@ -70,6 +71,22 @@ cargo run -p tour
 - Commandes : Espace, clic ou toucher l'écran. Échap : menu. M : son.
 - Captures automatiques : `TOUR_CAPTURE=captures cargo run -p tour`.
 
+### Pousse-caisses
+
+```bash
+cargo run -p pousse-caisses
+```
+
+- Le crapaud pousse les caisses sur les cibles. 12 niveaux de difficulté croissante, à travers les 5 univers (et leurs musiques).
+- Commandes : flèches ou ZQSD, glisser du doigt ; U ou Retour arrière : annuler ; R : recommencer ; Échap : menu. Boutons à l'écran pour le tactile.
+- La progression est sauvegardée (`~/.local/share/commit-and-conquer/save/`).
+- Les niveaux sont dans `games/pousse-caisses/levels.txt` (format texte : `#` mur, `$` caisse, `.` cible, `@` crapaud). Un test vérifie qu'ils ont tous une solution et affiche le nombre minimal de poussées :
+
+  ```bash
+  cargo test --release -p pousse-caisses -- --nocapture
+  ```
+- Captures automatiques : `CAISSES_CAPTURE=captures cargo run -p pousse-caisses`.
+
 ## Bibliothèque commune (`assets/`)
 
 Tous les jeux partagent le même dossier `assets/` : un son créé pour un jeu est utilisable par tous les autres.
@@ -92,7 +109,7 @@ Dans un jeu : `asset_server.load(game_common::sounds::HOP)`. Les jeux trouvent l
 
 ## Code commun
 
-`crates/game-common` fournit à tous les jeux : palette, lumière et ombres, caméra isométrique, score, aléatoire, l'interface (`ui` : panneaux, boutons, police, survol), le son (`audio` : activé/coupé, touche M) et les noms des sons (`sounds`).
+`crates/game-common` fournit à tous les jeux : palette, lumière et ombres, caméra isométrique, score, aléatoire, l'interface (`ui` : panneaux, boutons, police, survol), le son (`audio` : activé/coupé, touche M), les noms des sons (`sounds`), le crapaud (`models`) et une sauvegarde simple (`save`).
 
 ## Installer les jeux sur son PC (Linux)
 

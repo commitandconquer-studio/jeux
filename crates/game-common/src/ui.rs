@@ -118,11 +118,23 @@ pub fn spawn_gap(commands: &mut Commands, parent: Entity, height: f32) {
 /// Crée un bouton ; renvoie `(bouton, texte)`. Ajoutez votre composant
 /// d'action sur le bouton.
 pub fn spawn_button(commands: &mut Commands, parent: Entity, label: impl Into<String>) -> (Entity, Entity) {
+    spawn_button_sized(commands, parent, label, 320.0, 56.0, 26.0)
+}
+
+/// Bouton de taille libre (grilles de niveaux, petits boutons de jeu).
+pub fn spawn_button_sized(
+    commands: &mut Commands,
+    parent: Entity,
+    label: impl Into<String>,
+    width: f32,
+    height: f32,
+    font_size: f32,
+) -> (Entity, Entity) {
     let button = commands
         .spawn((
             Node {
-                width: Val::Px(320.0),
-                height: Val::Px(56.0),
+                width: Val::Px(width),
+                height: Val::Px(height),
                 justify_content: JustifyContent::Center,
                 align_items: AlignItems::Center,
                 border: UiRect::all(Val::Px(3.0)),
@@ -135,7 +147,7 @@ pub fn spawn_button(commands: &mut Commands, parent: Entity, label: impl Into<St
             ChildOf(parent),
         ))
         .id();
-    let text = spawn_text(commands, button, label, 26.0);
+    let text = spawn_text(commands, button, label, font_size);
     (button, text)
 }
 

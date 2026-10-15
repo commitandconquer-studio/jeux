@@ -1,0 +1,112 @@
+; Niveaux de Pousse-caisses — créations originales Commit & Conquer (GPL-3.0-or-later).
+; Format : # mur, espace sol, . cible, $ caisse, * caisse sur cible,
+;          @ crapaud, + crapaud sur cible. Chaque niveau commence par « = Nom ».
+; Le test `tous_les_niveaux_ont_une_solution` vérifie qu'ils sont faisables.
+
+= Premiers pas
+#######
+#@ $ .#
+#######
+
+= Le virage
+######
+#@   #
+# $  #
+##  ##
+ #. #
+ ####
+
+= Deux caisses
+########
+#      #
+# $  $ #
+#  @   #
+#.    .#
+########
+
+= La rangée
+#########
+#       #
+# $ $ $ #
+#   @   #
+#  ...  #
+#########
+
+= Le détour
+########
+#@ #   #
+# $$ . #
+#  # . #
+## #  ##
+ #    #
+ ######
+
+= Les quatre vents
+##########
+#.  ##  .#
+# $    $ #
+#  #  #  #
+#   @    #
+#  #  #  #
+# $    $ #
+#.  ##  .#
+##########
+
+= La place
+ #######
+ #     #
+## ### #
+#  $ $ #
+# .@.  #
+#  $   #
+## . ###
+ #####
+
+= Les quatre coins
+#########
+#.  #  .#
+# $   $ #
+## # # ##
+#  $@$  #
+#.     .#
+#########
+
+= La croix
+#########
+#   .   #
+# $ # $ #
+#  .@.  #
+# $ # $ #
+#   .   #
+#########
+
+= L'entrepôt
+ ########
+ # @#   #
+ # $  $ #
+## #### #
+#  .  . #
+# $##$  #
+#  .  . #
+#########
+
+= Le serpentin
+#########
+#@  #   #
+# $ # $ #
+#   $   #
+### # ###
+#. .  . #
+# $ .   #
+###   ###
+  #####
+
+= Le grand final
+##########
+#@   #   #
+# $$ #   #
+#    # $ #
+#.  $    #
+#..  #   #
+#.   #   #
+##########

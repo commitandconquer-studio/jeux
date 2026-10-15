@@ -1,5 +1,6 @@
 //! Modèles 3D low-poly construits à partir de formes simples :
-//! crapaud, voitures, camions, train, rondins, nénuphars, arbres, rochers.
+//! voitures, camions, train, rondins, nénuphars, arbres, rochers.
+//! Le crapaud, lui, vient de `game_common::models` (partagé entre les jeux).
 use std::f32::consts::FRAC_PI_2;
 
 use bevy::prelude::*;
@@ -34,11 +35,6 @@ pub struct Mats {
     pub sleeper: Handle<StandardMaterial>,
     pub rail: Handle<StandardMaterial>,
     pub dark: Handle<StandardMaterial>,
-    pub white: Handle<StandardMaterial>,
-    pub black: Handle<StandardMaterial>,
-    pub frog: Handle<StandardMaterial>,
-    pub frog_dark: Handle<StandardMaterial>,
-    pub frog_belly: Handle<StandardMaterial>,
     pub glass: Handle<StandardMaterial>,
     pub tire: Handle<StandardMaterial>,
     pub hub: Handle<StandardMaterial>,
@@ -93,11 +89,6 @@ impl FromWorld for Kit {
             sleeper: flat(0.45, 0.33, 0.24),
             rail: flat(0.70, 0.72, 0.76),
             dark: flat(0.18, 0.18, 0.22),
-            white: flat(0.97, 0.97, 0.97),
-            black: flat(0.06, 0.06, 0.08),
-            frog: flat(0.36, 0.72, 0.30),
-            frog_dark: flat(0.22, 0.50, 0.20),
-            frog_belly: flat(0.86, 0.90, 0.55),
             glass: flat(0.26, 0.38, 0.52),
             tire: flat(0.12, 0.12, 0.14),
             hub: flat(0.75, 0.76, 0.80),
@@ -168,34 +159,6 @@ fn wheel(c: &mut Commands, k: &Kit, parent: Entity, pos: Vec3, radius: f32) {
     part_rot(c, parent, &k.cyl, &k.m.tire, pos, Vec3::new(d, 0.14, d), axis_z);
     let out = pos + Vec3::Z * pos.z.signum() * 0.075;
     part_rot(c, parent, &k.cyl, &k.m.hub, out, Vec3::new(d * 0.45, 0.02, d * 0.45), axis_z);
-}
-
-/// Le crapaud, tête vers -Z. Renvoie l'entité racine.
-pub fn spawn_frog(c: &mut Commands, k: &Kit) -> Entity {
-    let root = c.spawn((Transform::default(), Visibility::default())).id();
-    let m = &k.m;
-    // Corps trapu, ventre clair, tête plate
-    part(c, root, &k.cube, &m.frog, Vec3::new(0.0, 0.27, 0.05), Vec3::new(0.62, 0.32, 0.62));
-    part(c, root, &k.cube, &m.frog_belly, Vec3::new(0.0, 0.12, 0.0), Vec3::new(0.56, 0.1, 0.62));
-    part(c, root, &k.cube, &m.frog, Vec3::new(0.0, 0.32, -0.3), Vec3::new(0.56, 0.24, 0.3));
-    // Bouche
-    part(c, root, &k.cube, &m.frog_dark, Vec3::new(0.0, 0.24, -0.452), Vec3::new(0.42, 0.03, 0.02));
-    // Gros yeux ronds qui dépassent
-    for s in [-1.0, 1.0] {
-        part(c, root, &k.ball, &m.frog, Vec3::new(0.17 * s, 0.45, -0.3), Vec3::splat(0.22));
-        part(c, root, &k.ball, &m.white, Vec3::new(0.17 * s, 0.49, -0.34), Vec3::splat(0.18));
-        part(c, root, &k.ball, &m.black, Vec3::new(0.17 * s, 0.5, -0.42), Vec3::splat(0.08));
-        // Pattes arrière repliées et pattes avant
-        part(c, root, &k.cube, &m.frog_dark, Vec3::new(0.36 * s, 0.12, 0.18), Vec3::new(0.2, 0.18, 0.42));
-        part(c, root, &k.cube, &m.frog_dark, Vec3::new(0.42 * s, 0.03, -0.02), Vec3::new(0.22, 0.05, 0.18));
-        part(c, root, &k.cube, &m.frog, Vec3::new(0.26 * s, 0.1, -0.34), Vec3::new(0.11, 0.2, 0.11));
-        part(c, root, &k.cube, &m.frog_dark, Vec3::new(0.27 * s, 0.02, -0.4), Vec3::new(0.16, 0.04, 0.12));
-    }
-    // Taches sur le dos
-    for (x, z, s) in [(-0.13, 0.12, 0.12), (0.12, 0.22, 0.1), (0.06, -0.02, 0.08)] {
-        part(c, root, &k.cube, &m.frog_dark, Vec3::new(x, 0.435, z), Vec3::new(s, 0.02, s));
-    }
-    root
 }
 
 /// Voiture orientée vers +X. Longueur 1,6.

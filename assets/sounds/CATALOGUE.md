@@ -10,6 +10,7 @@ Dans le code, utilisez les constantes de `game_common::sounds`.
 | `ui/start.wav` | 0.70 s | Arpège montant de début de partie |
 | `ui/chime.wav` | 0.90 s | Carillon de récompense (palier atteint) |
 | `ui/gameover.wav` | 1.60 s | « Wah wah waaah » de défaite |
+| `ui/win.wav` | 1.60 s | Petite fanfare de victoire (niveau réussi) |
 | `sfx/hop.wav` | 0.12 s | Petit « bloup » de saut |
 | `sfx/croak.wav` | 0.42 s | Coassement de crapaud |
 | `sfx/splash.wav` | 0.80 s | Plouf dans l'eau |
@@ -21,6 +22,7 @@ Dans le code, utilisez les constantes de `game_common::sounds`.
 | `sfx/eat.wav` | 0.14 s | Croque / ramasser un objet |
 | `sfx/turn.wav` | 0.03 s | Petit tic discret (virage, déplacement) |
 | `sfx/tock.wav` | 0.20 s | « Toc » de bloc de bois posé |
+| `sfx/push.wav` | 0.22 s | Raclement d'une caisse poussée |
 | `music/zen.wav` | 22.86 s | Musique zen (marimba, nappes), ré majeur, 84 BPM |
 | `music/campagne.wav` | 17.14 s | Musique guillerette, do majeur, 112 BPM |
 | `music/prairie.wav` | 16.00 s | Musique joyeuse, sol majeur, 120 BPM |

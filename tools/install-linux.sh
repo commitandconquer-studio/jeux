@@ -19,6 +19,7 @@ GAMES=(
   "snake|Snake|Le serpent classique en 3D low-poly, dans 5 univers"
   "traversee|Traversée|Aidez le crapaud à traverser routes, rivières et voies ferrées"
   "tour|Tour de blocs|Empilez les blocs le plus haut possible"
+  "pousse-caisses|Pousse-caisses|Le crapaud range les caisses sur les cibles, en 12 niveaux"
 )
 
 if [[ "${1:-}" == "--desinstaller" ]]; then
@@ -58,7 +59,7 @@ Exec="$DEST/$id"
 Path=$DEST
 Icon=$DEST/$id.png
 Terminal=false
-Categories=Game;ArcadeGame;
+Categories=Game;
 EOF
   echo "  ✓ $name"
 done

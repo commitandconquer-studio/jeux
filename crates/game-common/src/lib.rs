@@ -4,6 +4,8 @@
 //! matériaux mats et ombres douces.
 
 pub mod audio;
+pub mod models;
+pub mod save;
 pub mod sounds;
 pub mod ui;
 

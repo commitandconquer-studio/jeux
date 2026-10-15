@@ -8,6 +8,7 @@ pub const CLICK: &str = "sounds/ui/click.wav";
 pub const START: &str = "sounds/ui/start.wav";
 pub const CHIME: &str = "sounds/ui/chime.wav";
 pub const GAME_OVER: &str = "sounds/ui/gameover.wav";
+pub const WIN: &str = "sounds/ui/win.wav";
 
 // Effets
 pub const HOP: &str = "sounds/sfx/hop.wav";
@@ -21,6 +22,7 @@ pub const TRAIN: &str = "sounds/sfx/train.wav";
 pub const EAT: &str = "sounds/sfx/eat.wav";
 pub const TURN: &str = "sounds/sfx/turn.wav";
 pub const TOCK: &str = "sounds/sfx/tock.wav";
+pub const PUSH: &str = "sounds/sfx/push.wav";
 
 // Musiques (en boucle)
 pub const MUSIC_CAMPAGNE: &str = "sounds/music/campagne.wav";
