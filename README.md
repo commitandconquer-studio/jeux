@@ -12,7 +12,7 @@ Les jeux ne sont pas reliés par une histoire, mais chacun appartient à un **un
 |---|---|---|---|
 | 🐸 **Croâ & Cie** | Enfantin et sympa : jouets en bois, pastels, animaux (le crapaud en mascotte) | Panneaux crème, police Noto Sans | Snake, Traversée, Tour de blocs, Pousse-caisses |
 | 🚀 **Nova** | Science-fiction : espace profond, néons, vaisseaux | Panneaux sombres à bordure cyan, police Space Grotesk, fond spatial commun (`game_common::space`) | NOVA — Le Dernier Rempart |
-| 🔬 **Eurêka** | Sciences et maths : cahier quadrillé, feutres, laboratoire | Fiches bristol à bordure bleue, police Comic Relief | 2048 |
+| 🔬 **Eurêka** | Sciences et maths : cahier quadrillé, feutres, laboratoire | Fiches bristol à bordure bleue, police Gelasio | 2048 |
 
 ## Structure
 
@@ -130,7 +130,7 @@ cargo run -p eureka-2048
 Tous les jeux partagent le même dossier `assets/` : un son créé pour un jeu est utilisable par tous les autres.
 
 ```
-assets/fonts/          polices des univers : Noto Sans, Space Grotesk, Comic Relief
+assets/fonts/          polices des univers : Noto Sans, Space Grotesk, Gelasio
                        (SIL Open Font License 1.1, voir les fichiers OFL*.txt)
 assets/sounds/ui/      clic, départ, carillon, défaite
 assets/sounds/sfx/     saut, coassement, plouf, crash, klaxons, train, croque, tic…

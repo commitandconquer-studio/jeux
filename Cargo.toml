@@ -8,6 +8,10 @@ members = [
     "games/pousse-caisses",
     "games/nova",
     "games/eureka-2048",
+    "games/concile",
+    "crates/concile-core",
+    "tools/concile-gen",
+    "tools/logo-gen",
     "tools/sfx-gen",
 ]
 

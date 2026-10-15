@@ -33,6 +33,6 @@ fn main() {
         .insert_resource(Rng::from_time())
         .init_resource::<Score>()
         .init_state::<GameState>()
-        .add_plugins((LowPolyStylePlugin, tower::TowerPlugin, ui::UiPlugin, audio::AudioPlugin, capture::CapturePlugin))
+        .add_plugins((LowPolyStylePlugin, game_common::splash::SplashPlugin, tower::TowerPlugin, ui::UiPlugin, audio::AudioPlugin, capture::CapturePlugin))
         .run();
 }

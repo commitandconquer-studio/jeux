@@ -494,6 +494,8 @@ enum Lead {
     Square,
     /// Synthé en dents de scie (ambiance spatiale).
     Saw,
+    /// Orgue : jeux tenus, harmoniques nombreuses, attaque lente.
+    Organ,
 }
 
 impl Lead {
@@ -506,6 +508,13 @@ impl Lead {
             Lead::Marimba => s(1.0) * env(t, 0.002, 0.25) + 0.3 * s(4.0) * env(t, 0.001, 0.04),
             Lead::Square => (3.0 * s(1.0)).tanh() * env(t, 0.01, 0.3) * 0.6,
             Lead::Saw => (1..=8).map(|k| s(k as f32) / k as f32).sum::<f32>() * env(t, 0.015, 0.45) * 0.5,
+            Lead::Organ => [(1.0, 1.0), (2.0, 0.7), (3.0, 0.4), (4.0, 0.35), (6.0, 0.2), (8.0, 0.15)]
+                .iter()
+                .map(|&(k, a)| s(k) * a)
+                .sum::<f32>()
+                * (t / 0.08).min(1.0)
+                * (-t / 2.5).exp()
+                * 0.35,
         }
     }
 }
@@ -746,6 +755,68 @@ fn nova_music() -> Buf {
     })
 }
 
+// ---------------------------------------------------------- Église ----
+
+/// Sceau de cire posé : « tchac » sourd et un peu claquant.
+fn stamp() -> Buf {
+    let mut b = Buf::new(0.3);
+    let mut n = Noise(2_718);
+    let mut lp = LowPass::default();
+    b.add(0.0, 0.08, |t| lp.run(n.next(), 1_800.0) * env(t, 0.0005, 0.02) * 2.0);
+    b.add(0.0, 0.25, |t| sweep_phase(t, 180.0, 60.0, 0.2).sin() * env(t, 0.001, 0.05));
+    b.normalize(0.7);
+    b
+}
+
+/// Plume qui gratte le parchemin : deux traits rapides (une croix).
+fn quill() -> Buf {
+    let mut b = Buf::new(0.32);
+    let mut n = Noise(1_234);
+    let mut lp = LowPass::default();
+    for start in [0.0, 0.15] {
+        b.add(start, 0.13, |t| {
+            let x = n.next();
+            let hiss = x - lp.run(x, 2_500.0);
+            let scritch = 0.5 + 0.5 * (TAU * 90.0 * t).sin().abs();
+            hiss * scritch * (t / 0.01).min(1.0) * ((0.13 - t) / 0.03).clamp(0.0, 1.0)
+        });
+    }
+    b.normalize(0.45);
+    b
+}
+
+/// Carillon de cloches d'église : partiels inharmoniques, longue résonance.
+fn church_bells() -> Buf {
+    let mut b = Buf::new(5.0);
+    // Harmoniques d'une cloche : bourdon, fondamentale, tierce mineure, quinte, nominal…
+    let partials = [(0.5, 0.5, 2.2), (1.0, 1.0, 1.6), (1.19, 0.6, 1.2), (1.5, 0.4, 1.0), (2.0, 0.5, 0.8), (2.67, 0.25, 0.5), (3.0, 0.2, 0.4)];
+    for (i, m) in [67.0, 64.0, 60.0, 67.0, 55.0].iter().enumerate() {
+        let f = note(*m);
+        b.add(i as f32 * 0.55, 4.4, |t| {
+            partials.iter().map(|&(k, a, d)| (TAU * f * k * t).sin() * a * (-t / d).exp()).sum::<f32>() * (t / 0.003).min(1.0)
+        });
+    }
+    b.normalize(0.7);
+    b
+}
+
+/// Musique d'orgue, lente et solennelle (ré mineur modal), en boucle.
+fn organ_music() -> Buf {
+    theme(&Theme {
+        bpm: 66.0,
+        chords: [[50.0, 53.0, 57.0], [48.0, 52.0, 55.0], [46.0, 50.0, 53.0], [45.0, 49.0, 52.0]],
+        bass: &[0.0],
+        pad: true,
+        lead: Lead::Organ,
+        melody: [
+            74.0, 0.0, 72.0, 0.0, 69.0, 0.0, 0.0, 0.0, 72.0, 0.0, 70.0, 0.0, 67.0, 0.0, 0.0, 0.0, //
+            69.0, 0.0, 70.0, 72.0, 74.0, 0.0, 0.0, 0.0, 73.0, 0.0, 0.0, 0.0, 74.0, 0.0, 0.0, 0.0,
+        ],
+        drums: Drums::None,
+        waves: false,
+    })
+}
+
 fn main() -> std::io::Result<()> {
     // Racine du projet (par défaut : le dossier courant).
     let root = std::env::args().nth(1).unwrap_or_else(|| ".".into());
@@ -778,6 +849,10 @@ fn main() -> std::io::Result<()> {
         ("sfx/alarm", "Alarme à deux tons", alarm()),
         ("sfx/explosion", "Grosse explosion lointaine", explosion()),
         ("music/nova", "Musique épique de space opera, la mineur, 124 BPM", nova_music()),
+        ("sfx/stamp", "Sceau de cire posé (« tchac »)", stamp()),
+        ("sfx/quill", "Plume qui gratte le parchemin (deux traits)", quill()),
+        ("sfx/churchbells", "Carillon de cloches d'église", church_bells()),
+        ("music/orgue", "Musique d'orgue lente et solennelle, ré mineur, 66 BPM", organ_music()),
         ("music/zen", "Musique zen (marimba, nappes), ré majeur, 84 BPM", zen_music()),
         ("music/campagne", "Musique guillerette, do majeur, 112 BPM", music()),
     ];

@@ -30,6 +30,10 @@ Dans le code, utilisez les constantes de `game_common::sounds`.
 | `sfx/alarm.wav` | 1.00 s | Alarme à deux tons |
 | `sfx/explosion.wav` | 2.20 s | Grosse explosion lointaine |
 | `music/nova.wav` | 15.48 s | Musique épique de space opera, la mineur, 124 BPM |
+| `sfx/stamp.wav` | 0.30 s | Sceau de cire posé (« tchac ») |
+| `sfx/quill.wav` | 0.32 s | Plume qui gratte le parchemin (deux traits) |
+| `sfx/churchbells.wav` | 5.00 s | Carillon de cloches d'église |
+| `music/orgue.wav` | 29.09 s | Musique d'orgue lente et solennelle, ré mineur, 66 BPM |
 | `music/zen.wav` | 22.86 s | Musique zen (marimba, nappes), ré majeur, 84 BPM |
 | `music/campagne.wav` | 17.14 s | Musique guillerette, do majeur, 112 BPM |
 | `music/prairie.wav` | 16.00 s | Musique joyeuse, sol majeur, 120 BPM |

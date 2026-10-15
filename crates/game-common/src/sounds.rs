@@ -29,6 +29,9 @@ pub const CLUNK: &str = "sounds/sfx/clunk.wav";
 pub const CHARGE: &str = "sounds/sfx/charge.wav";
 pub const ALARM: &str = "sounds/sfx/alarm.wav";
 pub const EXPLOSION: &str = "sounds/sfx/explosion.wav";
+pub const STAMP: &str = "sounds/sfx/stamp.wav";
+pub const QUILL: &str = "sounds/sfx/quill.wav";
+pub const CHURCH_BELLS: &str = "sounds/sfx/churchbells.wav";
 
 // Musiques (en boucle)
 pub const MUSIC_CAMPAGNE: &str = "sounds/music/campagne.wav";
@@ -39,11 +42,12 @@ pub const MUSIC_OCEAN: &str = "sounds/music/ocean.wav";
 pub const MUSIC_VOLCAN: &str = "sounds/music/volcan.wav";
 pub const MUSIC_ZEN: &str = "sounds/music/zen.wav";
 pub const MUSIC_NOVA: &str = "sounds/music/nova.wav";
+pub const MUSIC_ORGUE: &str = "sounds/music/orgue.wav";
 
 // Polices (une par univers ; toutes sous licence OFL, voir assets/fonts/)
 /// Croâ & Cie : Noto Sans, ronde et lisible.
 pub const FONT: &str = "fonts/NotoSans-Bold.ttf";
 /// Nova : Space Grotesk, plus technique.
 pub const FONT_NOVA: &str = "fonts/SpaceGrotesk-Bold.ttf";
-/// Eurêka : Comic Relief, façon écriture à la main.
-pub const FONT_EUREKA: &str = "fonts/ComicRelief-Bold.ttf";
+/// Eurêka : Gelasio, une serif façon livre ancien.
+pub const FONT_EUREKA: &str = "fonts/Gelasio-Bold.ttf";

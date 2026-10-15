@@ -1,0 +1,9 @@
+COMMIT AND CONQUER — kit de marque, version conceptuelle
+
+01_identite_visuelle.png : planche des variantes du logo.
+02_splash_screen_1920x1080.png : splash 16:9 pour applications et jeux.
+02_splash_illustration_originale.png : déclinaison portrait du splash.
+03_embleme_CC_apercu.png : emblème CC détouré (aperçu, à vectoriser avant usage définitif).
+04_palette_couleurs.json : couleurs officielles proposées (codes HEX).
+
+Note : les codes inscrits dans les planches générées sont indicatifs ; utiliser 04_palette_couleurs.json comme source de vérité. Le splash est un visuel statique ; une barre de chargement réelle doit être créée par le moteur de jeu.

@@ -1,0 +1,12 @@
+[package]
+name = "concile"
+description = "Le Concile des Évêques : un évêque par diocèse, et pas de voisin !"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+authors.workspace = true
+
+[dependencies]
+bevy.workspace = true
+game-common.workspace = true
+concile-core = { path = "../../crates/concile-core" }

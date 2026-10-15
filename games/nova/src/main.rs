@@ -41,6 +41,7 @@ fn main() {
         .init_state::<GameState>()
         .add_plugins((
             LowPolyStylePlugin,
+            game_common::splash::SplashPlugin,
             game::GamePlugin,
             scene::ScenePlugin,
             ui::UiPlugin,

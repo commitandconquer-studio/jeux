@@ -34,6 +34,6 @@ fn main() {
                 .set(game_common::shared_assets()),
         )
         .init_state::<GameState>()
-        .add_plugins((LowPolyStylePlugin, play::PlayPlugin, ui::UiPlugin, audio::AudioPlugin, capture::CapturePlugin))
+        .add_plugins((LowPolyStylePlugin, game_common::splash::SplashPlugin, play::PlayPlugin, ui::UiPlugin, audio::AudioPlugin, capture::CapturePlugin))
         .run();
 }

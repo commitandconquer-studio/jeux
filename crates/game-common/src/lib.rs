@@ -4,10 +4,13 @@
 //! matériaux mats et ombres douces.
 
 pub mod audio;
+pub mod brand;
+pub mod calendar;
 pub mod models;
 pub mod save;
 pub mod sounds;
 pub mod space;
+pub mod splash;
 pub mod ui;
 pub mod universe;
 
@@ -148,6 +151,11 @@ impl Rng {
     /// Entier dans `0..max`.
     pub fn below(&mut self, max: u32) -> u32 {
         (self.next_u64() % max as u64) as u32
+    }
+
+    /// Réel dans `0..1`.
+    pub fn next_f32(&mut self) -> f32 {
+        (self.next_u64() >> 40) as f32 / (1u64 << 24) as f32
     }
 }
 

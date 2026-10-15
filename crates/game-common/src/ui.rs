@@ -1,6 +1,7 @@
 //! Interface commune à tous les jeux : panneaux, boutons, police, survol.
 //! Le style (couleurs, police) vient de l'univers du jeu (`Universe`).
 use bevy::prelude::*;
+use bevy::text::{FontFeatureTag, FontFeatures};
 
 use crate::palette;
 use crate::universe::{UiStyle, Universe};
@@ -39,6 +40,10 @@ pub struct UiTheme(pub UiStyle);
 #[derive(Component)]
 pub struct UiButton;
 
+/// Couleur de fond propre à un bouton (gardée par le thème et après le survol).
+#[derive(Component, Clone, Copy)]
+pub struct ButtonColor(pub Color);
+
 /// Marque un panneau : fond et bordure de l'univers.
 #[derive(Component)]
 pub struct ThemedPanel;
@@ -47,9 +52,16 @@ pub struct ThemedPanel;
 #[derive(Component)]
 pub struct ThemedText;
 
-fn apply_font(font: Res<UiFont>, mut texts: Query<&mut TextFont, Added<TextFont>>) {
+/// Texte qui garde sa propre police (logo du studio…).
+#[derive(Component)]
+pub struct OwnFont;
+
+fn apply_font(font: Res<UiFont>, mut texts: Query<&mut TextFont, (Added<TextFont>, Without<OwnFont>)>) {
     for mut tf in &mut texts {
         *tf = tf.clone().with_font(font.0.clone());
+        // Chiffres alignés : les polices serif (Gelasio) dessinent sinon des
+        // chiffres « elzéviriens » qui descendent sous la ligne.
+        tf.font_features = FontFeatures::builder().enable(FontFeatureTag::LINING_FIGURES).build();
     }
 }
 
@@ -57,7 +69,7 @@ fn apply_font(font: Res<UiFont>, mut texts: Query<&mut TextFont, Added<TextFont>
 fn apply_theme(
     theme: Res<UiTheme>,
     mut panels: Query<(&mut BackgroundColor, &mut BorderColor), (Added<ThemedPanel>, Without<UiButton>)>,
-    mut buttons: Query<(&mut BackgroundColor, &mut BorderColor), (Added<UiButton>, Without<ThemedPanel>)>,
+    mut buttons: Query<(&mut BackgroundColor, &mut BorderColor, Option<&ButtonColor>), (Added<UiButton>, Without<ThemedPanel>)>,
     mut texts: Query<&mut TextColor, Added<ThemedText>>,
 ) {
     let s = &theme.0;
@@ -65,8 +77,8 @@ fn apply_theme(
         bg.0 = s.panel;
         *border = BorderColor::all(s.panel_border);
     }
-    for (mut bg, mut border) in &mut buttons {
-        bg.0 = s.button;
+    for (mut bg, mut border, own) in &mut buttons {
+        bg.0 = own.map_or(s.button, |c| c.0);
         *border = BorderColor::all(s.button_border);
     }
     for mut color in &mut texts {
@@ -83,9 +95,9 @@ fn on_over(over: On<PointerOver>, theme: Res<UiTheme>, mut q: Query<&mut Backgro
     }
 }
 
-fn on_out(out: On<PointerOut>, theme: Res<UiTheme>, mut q: Query<&mut BackgroundColor, With<UiButton>>) {
-    if let Ok(mut bg) = q.get_mut(out.entity) {
-        bg.0 = theme.0.button;
+fn on_out(out: On<PointerOut>, theme: Res<UiTheme>, mut q: Query<(&mut BackgroundColor, Option<&ButtonColor>), With<UiButton>>) {
+    if let Ok((mut bg, own)) = q.get_mut(out.entity) {
+        bg.0 = own.map_or(theme.0.button, |c| c.0);
     }
 }
 

@@ -35,6 +35,6 @@ fn main() {
         )
         .insert_resource(Rng::from_time())
         .init_state::<GameState>()
-        .add_plugins((LowPolyStylePlugin, desk::DeskPlugin, play::PlayPlugin, ui::UiPlugin, audio::AudioPlugin, capture::CapturePlugin))
+        .add_plugins((LowPolyStylePlugin, game_common::splash::SplashPlugin, desk::DeskPlugin, play::PlayPlugin, ui::UiPlugin, audio::AudioPlugin, capture::CapturePlugin))
         .run();
 }

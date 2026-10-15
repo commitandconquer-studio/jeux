@@ -52,7 +52,7 @@ fn main() {
             })
             .set(game_common::shared_assets()),
     )
-    .add_plugins((LowPolyStylePlugin, ui::UiPlugin, audio::AudioPlugin, capture::CapturePlugin))
+    .add_plugins((LowPolyStylePlugin, game_common::splash::SplashPlugin, ui::UiPlugin, audio::AudioPlugin, capture::CapturePlugin))
     .insert_resource(ClearColor(Color::srgb(0.80, 0.90, 0.95)))
     .init_state::<GameState>()
     .init_resource::<Kit>()

@@ -1,0 +1,9 @@
+[package]
+name = "concile-core"
+description = "Règles, solveurs et générateur du Concile des Évêques (sans affichage)"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+authors.workspace = true
+
+[dependencies]
