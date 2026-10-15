@@ -1,0 +1,4 @@
+/target
+dist/
+# Captures d’écran générées par SNAKE_CAPTURE / TRAVERSEE_CAPTURE
+captures/
