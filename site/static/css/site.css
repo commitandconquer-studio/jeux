@@ -333,3 +333,18 @@ html.moment-nuit .hero-fallback { filter: brightness(.42) saturate(.75) hue-rota
 .jouer-attente img { border-radius: 26px; margin-bottom: 12px; animation: respire 1.6s ease-in-out infinite; }
 @keyframes respire { 50% { transform: scale(1.06); } }
 .btn.btn-main.jouer { display: inline-block; }
+
+/* Blocs de commandes (page Installer). */
+.prose pre { background: var(--night); color: #E6F6FF; border-radius: 14px; padding: 14px 16px; overflow-x: auto; font-size: 14px; line-height: 1.5; }
+.prose code { font-family: ui-monospace, "JetBrains Mono", "DejaVu Sans Mono", monospace; }
+.prose p code, .prose li code { background: var(--sky-soft); padding: 1px 6px; border-radius: 6px; font-size: .92em; }
+.installer-lien { margin: 14px 0 0; font-weight: 700; }
+.installer-lien a { text-decoration: none; }
+@media (max-width: 760px) { .nav { gap: 8px; } .nav a { font-size: 13px; } }
+@media (max-width: 560px) {
+  .top { flex-wrap: wrap; row-gap: 6px; padding-top: 8px; padding-bottom: 8px; }
+  .nav { width: 100%; justify-content: space-between; }
+}
+@media (max-width: 420px) {
+  .nav { flex-wrap: wrap; justify-content: flex-start; row-gap: 6px; column-gap: 12px; }
+}

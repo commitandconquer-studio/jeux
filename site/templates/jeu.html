@@ -38,6 +38,7 @@
       <li>🤖 Android <span>{{ trans(key="a_venir", lang=lang) }}</span></li>
       <li{% if page.extra.web %} class="ok"{% endif %}>🌐 {{ trans(key="jouer_navigateur", lang=lang) }} <span>{% if page.extra.web %}{{ trans(key="disponible", lang=lang) }}{% else %}{{ trans(key="a_venir", lang=lang) }}{% endif %}</span></li>
     </ul>
+    <p class="installer-lien"><a href="{{ get_url(path='@/installer.md', lang=lang) }}">{{ trans(key="voir_installation", lang=lang) }} →</a></p>
   </aside>
 </div>
 <p class="retour"><a href="{{ get_url(path='@/jeux/_index.md', lang=lang) }}">← {{ trans(key="retour_jeux", lang=lang) }}</a></p>

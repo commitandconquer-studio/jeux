@@ -43,6 +43,7 @@
     <nav class="nav" aria-label="Menu">
       <a href="{{ get_url(path='@/univers/_index.md', lang=lang) }}">{{ trans(key="nav_univers", lang=lang) }}</a>
       <a href="{{ get_url(path='@/jeux/_index.md', lang=lang) }}">{{ trans(key="nav_jeux", lang=lang) }}</a>
+      <a href="{{ get_url(path='@/installer.md', lang=lang) }}">{{ trans(key="nav_installer", lang=lang) }}</a>
       <a href="{{ get_url(path='@/studio.md', lang=lang) }}">{{ trans(key="nav_studio", lang=lang) }}</a>
       {%- set other = "en" -%}{%- if lang == "en" -%}{%- set other = "fr" -%}{%- endif -%}
       {%- set other_url = get_url(path='@/_index.md', lang=other) -%}
@@ -73,6 +74,7 @@
       <nav class="foot-links" aria-label="Liens">
         <a href="{{ get_url(path='@/univers/_index.md', lang=lang) }}">{{ trans(key="nav_univers", lang=lang) }}</a>
         <a href="{{ get_url(path='@/jeux/_index.md', lang=lang) }}">{{ trans(key="nav_jeux", lang=lang) }}</a>
+        <a href="{{ get_url(path='@/installer.md', lang=lang) }}">{{ trans(key="nav_installer", lang=lang) }}</a>
         <a href="{{ get_url(path='@/studio.md', lang=lang) }}">{{ trans(key="nav_studio", lang=lang) }}</a>
         <a href="{{ config.extra.github }}">{{ trans(key="code_source", lang=lang) }} (GPL)</a>
         <a href="{{ get_url(path='@/mentions-legales.md', lang=lang) }}">{{ trans(key="mentions", lang=lang) }}</a>
