@@ -48,6 +48,7 @@ pub const MUSIC_ZEN: &str = "sounds/music/zen.wav";
 pub const MUSIC_NOVA: &str = "sounds/music/nova.wav";
 pub const MUSIC_ORGUE: &str = "sounds/music/orgue.wav";
 pub const MUSIC_PARSECS: &str = "sounds/music/parsecs.wav";
+pub const MUSIC_NOCTURNE: &str = "sounds/music/nocturne.wav";
 
 // Polices (une par univers ; toutes sous licence OFL, voir assets/fonts/)
 /// Croâ & Cie : Noto Sans, ronde et lisible.

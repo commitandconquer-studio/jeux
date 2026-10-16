@@ -824,6 +824,23 @@ fn nova_music() -> Buf {
     })
 }
 
+/// Nocturne pour L'Observatoire : boîte à musique sur nappes, fa majeur, 72 BPM.
+fn nocturne_music() -> Buf {
+    theme(&Theme {
+        bpm: 72.0,
+        chords: [[53.0, 57.0, 60.0], [50.0, 53.0, 57.0], [46.0, 50.0, 53.0], [48.0, 52.0, 55.0]],
+        bass: &[0.0, 2.0],
+        pad: true,
+        lead: Lead::Bell,
+        melody: [
+            77.0, 0.0, 81.0, 0.0, 84.0, 0.0, 81.0, 79.0, 77.0, 0.0, 74.0, 0.0, 72.0, 0.0, 0.0, 0.0, //
+            74.0, 0.0, 77.0, 0.0, 82.0, 0.0, 81.0, 0.0, 79.0, 0.0, 76.0, 79.0, 77.0, 0.0, 0.0, 0.0,
+        ],
+        drums: Drums::None,
+        waves: false,
+    })
+}
+
 // ---------------------------------------------------------- Église ----
 
 /// Sceau de cire posé : « tchac » sourd et un peu claquant.
@@ -928,6 +945,7 @@ fn main() -> std::io::Result<()> {
         ("sfx/churchbells", "Carillon de cloches d'église", church_bells()),
         ("music/orgue", "Musique d'orgue lente et solennelle, ré mineur, 66 BPM", organ_music()),
         ("music/zen", "Musique zen (marimba, nappes), ré majeur, 84 BPM", zen_music()),
+        ("music/nocturne", "Nocturne en boîte à musique, fa majeur, 72 BPM", nocturne_music()),
         ("music/campagne", "Musique guillerette, do majeur, 112 BPM", music()),
     ];
     let descriptions = [

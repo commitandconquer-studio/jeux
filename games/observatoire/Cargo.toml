@@ -1,0 +1,13 @@
+[package]
+name = "observatoire"
+description = "L'Observatoire"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+authors.workspace = true
+publish = false
+
+[dependencies]
+observatoire-core = { path = "../../crates/observatoire-core" }
+bevy.workspace = true
+game-common.workspace = true

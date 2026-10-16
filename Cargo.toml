@@ -10,10 +10,13 @@ members = [
     "games/eureka-2048",
     "games/concile",
     "games/modele",
+    "games/observatoire",
     "games/parsecs",
     "games/lanceur",
     "crates/concile-core",
+    "crates/observatoire-core",
     "tools/concile-gen",
+    "tools/observatoire-gen",
     "tools/logo-gen",
     "tools/sfx-gen",
 ]

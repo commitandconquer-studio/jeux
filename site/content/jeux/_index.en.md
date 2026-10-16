@@ -5,4 +5,4 @@ template = "jeux.html"
 page_template = "jeu.html"
 +++
 
-All our games are free and open source. They play on Linux today; Windows, Mac, Android and the browser are coming soon.
+All our games are free and open source. They play in the browser or install on Linux; Windows, Mac and Android are coming soon.
