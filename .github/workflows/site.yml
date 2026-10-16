@@ -12,10 +12,11 @@ permissions:
   pages: write
   id-token: write
 
-# Une seule publication à la fois ; la plus récente gagne.
+# Une seule publication à la fois : un nouvel envoi attend la fin de la
+# précédente au lieu de l'annuler (la compilation des jeux est longue).
 concurrency:
   group: pages
-  cancel-in-progress: true
+  cancel-in-progress: false
 
 jobs:
   construire:
