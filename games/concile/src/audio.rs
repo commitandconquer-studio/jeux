@@ -1,8 +1,7 @@
 //! Sons et musique, tirés de la bibliothèque commune (`assets/sounds/`).
 use bevy::audio::Volume;
 use bevy::prelude::*;
-use game_common::audio::{AudioKitPlugin, Mutable, SoundOn};
-use game_common::calendar::{Date, feast_on};
+use game_common::audio::{Musique, Mutable, SoundOn};
 use game_common::sounds as lib;
 
 use crate::play::PlayEvent;
@@ -11,8 +10,7 @@ pub struct AudioPlugin;
 
 impl Plugin for AudioPlugin {
     fn build(&self, app: &mut App) {
-        app.add_plugins(AudioKitPlugin)
-            .add_message::<UiClick>()
+        app.add_message::<UiClick>()
             .add_systems(Startup, start_music)
             .add_systems(Update, play_sounds);
     }
@@ -22,7 +20,7 @@ impl Plugin for AudioPlugin {
 pub struct UiClick;
 
 fn start_music(mut commands: Commands, server: Res<AssetServer>) {
-    commands.spawn((AudioPlayer::new(server.load(lib::MUSIC_ORGUE)), PlaybackSettings::LOOP.with_volume(Volume::Linear(0.3)), Mutable));
+    commands.spawn((AudioPlayer::new(server.load(lib::MUSIC_ORGUE)), PlaybackSettings::LOOP.with_volume(Volume::Linear(0.3)), Musique, Mutable));
 }
 
 fn play_sounds(
@@ -46,7 +44,7 @@ fn play_sounds(
             PlayEvent::Hint => play(lib::CHIME, 0.4),
             PlayEvent::Won => {
                 // Du jeudi au samedi saints, les cloches sont parties à Rome !
-                let silent = feast_on(Date::today()).is_some_and(|f| f.bells_silent());
+                let silent = game_common::ambiance::fete_du_jour().is_some_and(|f| f.bells_silent());
                 play(if silent { lib::WIN } else { lib::CHURCH_BELLS }, 0.8);
             }
         }

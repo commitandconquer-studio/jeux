@@ -24,7 +24,8 @@ pub struct SplashPlugin;
 
 impl Plugin for SplashPlugin {
     fn build(&self, app: &mut App) {
-        let capture = std::env::vars().any(|(k, _)| k.ends_with("_CAPTURE") && k != "SPLASH_CAPTURE");
+        // (Dans le navigateur, la liste des variables d'environnement n'existe pas.)
+        let capture = !cfg!(target_arch = "wasm32") && std::env::vars().any(|(k, _)| k.ends_with("_CAPTURE") && k != "SPLASH_CAPTURE");
         if capture || std::env::var_os("CC_NO_SPLASH").is_some() {
             return;
         }
@@ -117,7 +118,7 @@ fn spawn(mut commands: Commands, server: Res<AssetServer>) {
         ChildOf(track),
     ));
     commands.spawn((
-        Text::new("CHARGEMENT DES MONDES…"),
+        Text::new(tx!("CHARGEMENT DES MONDES…", "LOADING WORLDS…", "WELTEN WERDEN GELADEN…", "CARICAMENTO DEI MONDI…", "CARGANDO MUNDOS…").t()),
         TextFont::from_font_size(FontSize::VMin(2.0)).with_font(server.load(brand::FONT_LOGO)),
         LetterSpacing::Px(3.0),
         TextColor(colors::IVORY.with_alpha(0.0)),

@@ -11,7 +11,8 @@ mod story;
 mod ui;
 
 use bevy::prelude::*;
-use game_common::{LowPolyStylePlugin, Rng};
+use game_common::Rng;
+use game_common::universe::Universe;
 
 #[derive(States, Default, Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum GameState {
@@ -29,24 +30,21 @@ fn main() {
         .add_plugins(
             DefaultPlugins
                 .set(WindowPlugin {
-                    primary_window: Some(Window {
-                        title: "NOVA — Le Dernier Rempart".into(),
-                        ..default()
-                    }),
+                    primary_window: Some(game_common::fenetre("NOVA — Le Dernier Rempart")),
                     ..default()
                 })
                 .set(game_common::shared_assets()),
         )
         .insert_resource(Rng::from_time())
         .init_state::<GameState>()
+        .add_plugins(game_common::StudioPlugin::new(Universe::Nova, game_common::ambiance::AmbiancePlugin::espace()))
         .add_plugins((
-            LowPolyStylePlugin,
-            game_common::splash::SplashPlugin,
             game::GamePlugin,
             scene::ScenePlugin,
             ui::UiPlugin,
             audio::AudioPlugin,
             capture::CapturePlugin,
         ))
+        .add_systems(Update, game_common::langue::rebatir_menu(GameState::Menu))
         .run();
 }

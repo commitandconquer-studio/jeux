@@ -9,6 +9,7 @@ members = [
     "games/nova",
     "games/eureka-2048",
     "games/concile",
+    "games/modele",
     "crates/concile-core",
     "tools/concile-gen",
     "tools/logo-gen",
@@ -38,3 +39,9 @@ opt-level = 3
 lto = "thin"
 codegen-units = 1
 strip = true
+
+# Version web (WebAssembly) : optimisée pour la taille du téléchargement.
+[profile.web]
+inherits = "release"
+opt-level = "s"
+codegen-units = 4

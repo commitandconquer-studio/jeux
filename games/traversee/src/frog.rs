@@ -2,7 +2,7 @@
 use std::f32::consts::{FRAC_PI_2, PI};
 
 use bevy::prelude::*;
-use game_common::Score;
+use game_common::{Score, tx};
 
 use crate::GameState;
 use crate::audio::Sfx;
@@ -48,11 +48,24 @@ pub enum Cause {
 impl Cause {
     pub fn message(self) -> &'static str {
         match self {
-            Cause::Squashed => "Écrasé !",
-            Cause::Drowned => "Plouf ! Tombé à l'eau",
-            Cause::CarriedAway => "Emporté par le courant",
-            Cause::TooSlow => "Trop lent !",
+            Cause::Squashed => tx!("Écrasé !", "Squashed!", "Überfahren!", "Schiacciato!", "¡Aplastado!"),
+            Cause::Drowned => tx!(
+                "Plouf ! Tombé à l'eau",
+                "Splash! Fell in the water",
+                "Platsch! Ins Wasser gefallen",
+                "Splash! Caduto in acqua",
+                "¡Plof! Se cayó al agua"
+            ),
+            Cause::CarriedAway => tx!(
+                "Emporté par le courant",
+                "Swept away by the current",
+                "Von der Strömung fortgerissen",
+                "Trascinato dalla corrente",
+                "Arrastrado por la corriente"
+            ),
+            Cause::TooSlow => tx!("Trop lent !", "Too slow!", "Zu langsam!", "Troppo lento!", "¡Demasiado lento!"),
         }
+        .t()
     }
 }
 

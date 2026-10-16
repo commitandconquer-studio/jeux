@@ -1,0 +1,12 @@
+[package]
+name = "modele"
+description = "Jeu modèle : le squelette commun d'un jeu Commit & Conquer (à copier)"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+authors.workspace = true
+publish = false
+
+[dependencies]
+bevy.workspace = true
+game-common.workspace = true

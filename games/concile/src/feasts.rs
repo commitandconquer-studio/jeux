@@ -5,7 +5,7 @@ use std::f32::consts::{FRAC_PI_2, TAU};
 
 use bevy::light::NotShadowCaster;
 use bevy::prelude::*;
-use game_common::calendar::{Date, Feast, feast_on};
+use game_common::calendar::Feast;
 use game_common::{Rng, flat_material};
 
 use crate::board::Look;
@@ -44,7 +44,7 @@ fn decorate(
     mut current: Local<Option<Option<Feast>>>,
     old: Query<Entity, With<Decoration>>,
 ) {
-    let feast = if progress.feasts { feast_on(Date::today()) } else { None };
+    let feast = if progress.feasts { game_common::ambiance::fete_du_jour() } else { None };
     if *current == Some(feast) {
         return;
     }

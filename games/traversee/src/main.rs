@@ -10,7 +10,8 @@ mod ui;
 
 use bevy::prelude::*;
 use game_common::models::{FrogKit, spawn_frog};
-use game_common::{LowPolyStylePlugin, Rng, Score, iso_camera};
+use game_common::universe::Universe;
+use game_common::{Rng, Score, StudioPlugin, iso_camera};
 
 use frog::{Cause, Death, Frog, FrogModel};
 use lanes::LaneGen;
@@ -44,17 +45,17 @@ fn main() {
     app.add_plugins(
         DefaultPlugins
             .set(WindowPlugin {
-                primary_window: Some(Window {
-                    title: "Traversée — Commit & Conquer".into(),
-                    ..default()
-                }),
+                primary_window: Some(game_common::fenetre("Traversée — Commit & Conquer")),
                 ..default()
             })
             .set(game_common::shared_assets()),
     )
-    .add_plugins((LowPolyStylePlugin, game_common::splash::SplashPlugin, ui::UiPlugin, audio::AudioPlugin, capture::CapturePlugin))
-    .insert_resource(ClearColor(Color::srgb(0.80, 0.90, 0.95)))
     .init_state::<GameState>()
+    .add_plugins(StudioPlugin::new(Universe::Croa, game_common::ambiance::AmbiancePlugin::exterieur()))
+    .add_plugins((ui::UiPlugin, audio::AudioPlugin, capture::CapturePlugin))
+    // Après le style commun : Traversée garde son ciel à elle.
+    .insert_resource(ClearColor(Color::srgb(0.80, 0.90, 0.95)))
+    .add_systems(Update, game_common::langue::rebatir_menu(GameState::Menu))
     .init_resource::<Kit>()
     .init_resource::<FrogKit>()
     .init_resource::<Score>()

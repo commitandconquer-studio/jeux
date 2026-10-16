@@ -16,13 +16,14 @@ impl Date {
         Date { year, month, day }
     }
 
-    /// Aujourd'hui (heure locale approximée : UTC), ou `CC_DATE` si défini.
+    /// Aujourd'hui (date locale du joueur), ou `CC_DATE` si défini.
     pub fn today() -> Self {
         if let Some(d) = std::env::var("CC_DATE").ok().and_then(|s| Date::parse(&s)) {
             return d;
         }
-        let secs = std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH).map(|d| d.as_secs()).unwrap_or(0);
-        Date::from_days(secs as i64 / 86_400)
+        use chrono::Datelike;
+        let d = chrono::Local::now().date_naive();
+        Date::new(d.year(), d.month(), d.day())
     }
 
     /// `AAAA-MM-JJ`.
@@ -120,52 +121,55 @@ pub enum Feast {
 }
 
 impl Feast {
+    /// Le nom de la fête, dans la langue en cours.
     pub fn name(self) -> &'static str {
         match self {
-            Feast::Epiphany => "Épiphanie",
-            Feast::Candlemas => "Chandeleur",
-            Feast::MardiGras => "Mardi gras",
-            Feast::AshWednesday => "Mercredi des Cendres",
-            Feast::Lent => "Carême",
-            Feast::Annunciation => "Annonciation",
-            Feast::PalmSunday => "Rameaux",
-            Feast::HolyTriduum => "Semaine sainte",
-            Feast::Easter => "Pâques",
-            Feast::Ascension => "Ascension",
-            Feast::Pentecost => "Pentecôte",
-            Feast::CorpusChristi => "Fête-Dieu",
-            Feast::Assumption => "Assomption",
-            Feast::Halloween => "Halloween",
-            Feast::AllSaints => "Toussaint",
-            Feast::SaintMartin => "Saint-Martin",
-            Feast::Advent(_) => "Avent",
-            Feast::SaintNicholas => "Saint-Nicolas",
-            Feast::Christmas => "Noël",
+            Feast::Epiphany => tx!("Épiphanie", "Epiphany", "Dreikönigstag", "Epifania", "Epifanía"),
+            Feast::Candlemas => tx!("Chandeleur", "Candlemas", "Lichtmess", "Candelora", "Candelaria"),
+            Feast::MardiGras => tx!("Mardi gras", "Mardi Gras", "Faschingsdienstag", "Martedì grasso", "Martes de Carnaval"),
+            Feast::AshWednesday => tx!("Mercredi des Cendres", "Ash Wednesday", "Aschermittwoch", "Mercoledì delle Ceneri", "Miércoles de Ceniza"),
+            Feast::Lent => tx!("Carême", "Lent", "Fastenzeit", "Quaresima", "Cuaresma"),
+            Feast::Annunciation => tx!("Annonciation", "Annunciation", "Mariä Verkündigung", "Annunciazione", "Anunciación"),
+            Feast::PalmSunday => tx!("Rameaux", "Palm Sunday", "Palmsonntag", "Domenica delle Palme", "Domingo de Ramos"),
+            Feast::HolyTriduum => tx!("Semaine sainte", "Holy Week", "Karwoche", "Settimana santa", "Semana Santa"),
+            Feast::Easter => tx!("Pâques", "Easter", "Ostern", "Pasqua", "Pascua"),
+            Feast::Ascension => tx!("Ascension", "Ascension", "Christi Himmelfahrt", "Ascensione", "Ascensión"),
+            Feast::Pentecost => tx!("Pentecôte", "Pentecost", "Pfingsten", "Pentecoste", "Pentecostés"),
+            Feast::CorpusChristi => tx!("Fête-Dieu", "Corpus Christi", "Fronleichnam", "Corpus Domini", "Corpus Christi"),
+            Feast::Assumption => tx!("Assomption", "Assumption", "Mariä Himmelfahrt", "Assunzione", "Asunción"),
+            Feast::Halloween => tx!("Halloween", "Halloween", "Halloween", "Halloween", "Halloween"),
+            Feast::AllSaints => tx!("Toussaint", "All Saints' Day", "Allerheiligen", "Ognissanti", "Todos los Santos"),
+            Feast::SaintMartin => tx!("Saint-Martin", "Martinmas", "Martinstag", "San Martino", "San Martín"),
+            Feast::Advent(_) => tx!("Avent", "Advent", "Advent", "Avvento", "Adviento"),
+            Feast::SaintNicholas => tx!("Saint-Nicolas", "Saint Nicholas Day", "Nikolaustag", "San Nicola", "San Nicolás"),
+            Feast::Christmas => tx!("Noël", "Christmas", "Weihnachten", "Natale", "Navidad"),
         }
+        .t()
     }
 
-    /// Petit message de bienvenue.
+    /// Petit message de bienvenue (celui du Concile), dans la langue en cours.
     pub fn greeting(self) -> &'static str {
         match self {
-            Feast::Epiphany => "Bonne Épiphanie ! Qui aura la fève ?",
-            Feast::Candlemas => "Bonne Chandeleur ! Les crêpes sont prêtes.",
-            Feast::MardiGras => "Joyeux Mardi gras !",
-            Feast::AshWednesday | Feast::Lent => "Temps du Carême : le concile se fait sobre.",
-            Feast::Annunciation => "Bonne fête de l'Annonciation.",
-            Feast::PalmSunday => "Bon dimanche des Rameaux !",
-            Feast::HolyTriduum => "Les cloches sont parties à Rome : silence au clocher.",
-            Feast::Easter => "Joyeuses Pâques ! Les cloches sont revenues.",
-            Feast::Ascension => "Bonne fête de l'Ascension !",
-            Feast::Pentecost => "Bonne Pentecôte !",
-            Feast::CorpusChristi => "Bonne Fête-Dieu !",
-            Feast::Assumption => "Bonne fête de l'Assomption !",
-            Feast::Halloween => "Joyeux Halloween ! Même les évêques ont peur.",
-            Feast::AllSaints => "Toussaint : une pensée pour tous les saints.",
-            Feast::SaintMartin => "Bonne Saint-Martin !",
-            Feast::Advent(_) => "Temps de l'Avent : Noël approche.",
-            Feast::SaintNicholas => "Bonne Saint-Nicolas ! Il était évêque, lui aussi.",
-            Feast::Christmas => "Joyeux Noël !",
+            Feast::Epiphany => tx!("Bonne Épiphanie ! Qui aura la fève ?", "Happy Epiphany! Who will find the bean?", "Frohen Dreikönigstag! Wer findet die Bohne?", "Buona Epifania! Chi troverà la fava?", "¡Feliz Día de Reyes! ¿Quién encontrará el haba?"),
+            Feast::Candlemas => tx!("Bonne Chandeleur ! Les crêpes sont prêtes.", "Happy Candlemas! The pancakes are ready.", "Frohe Lichtmess! Die Crêpes sind fertig.", "Buona Candelora! Le crêpe sono pronte.", "¡Feliz Candelaria! Las crepes están listas."),
+            Feast::MardiGras => tx!("Joyeux Mardi gras !", "Happy Mardi Gras!", "Fröhlichen Faschingsdienstag!", "Buon Martedì grasso!", "¡Feliz Martes de Carnaval!"),
+            Feast::AshWednesday | Feast::Lent => tx!("Temps du Carême : le concile se fait sobre.", "Lent: the council keeps things simple.", "Fastenzeit: Das Konzil übt sich in Bescheidenheit.", "Quaresima: il concilio si fa sobrio.", "Cuaresma: el concilio se vuelve sobrio."),
+            Feast::Annunciation => tx!("Bonne fête de l'Annonciation.", "Happy Feast of the Annunciation.", "Frohes Fest Mariä Verkündigung.", "Buona festa dell'Annunciazione.", "Feliz fiesta de la Anunciación."),
+            Feast::PalmSunday => tx!("Bon dimanche des Rameaux !", "Happy Palm Sunday!", "Frohen Palmsonntag!", "Buona Domenica delle Palme!", "¡Feliz Domingo de Ramos!"),
+            Feast::HolyTriduum => tx!("Les cloches sont parties à Rome : silence au clocher.", "The bells have flown to Rome: silence in the bell tower.", "Die Glocken sind nach Rom geflogen: Stille im Kirchturm.", "Le campane sono volate a Roma: silenzio nel campanile.", "Las campanas se han ido a Roma: silencio en el campanario."),
+            Feast::Easter => tx!("Joyeuses Pâques ! Les cloches sont revenues.", "Happy Easter! The bells are back.", "Frohe Ostern! Die Glocken sind zurück.", "Buona Pasqua! Le campane sono tornate.", "¡Felices Pascuas! Las campanas han vuelto."),
+            Feast::Ascension => tx!("Bonne fête de l'Ascension !", "Happy Ascension Day!", "Frohe Christi Himmelfahrt!", "Buona Ascensione!", "¡Feliz Ascensión!"),
+            Feast::Pentecost => tx!("Bonne Pentecôte !", "Happy Pentecost!", "Frohe Pfingsten!", "Buona Pentecoste!", "¡Feliz Pentecostés!"),
+            Feast::CorpusChristi => tx!("Bonne Fête-Dieu !", "Happy Corpus Christi!", "Frohes Fronleichnamsfest!", "Buon Corpus Domini!", "¡Feliz Corpus Christi!"),
+            Feast::Assumption => tx!("Bonne fête de l'Assomption !", "Happy Feast of the Assumption!", "Frohe Mariä Himmelfahrt!", "Buona festa dell'Assunzione!", "¡Feliz fiesta de la Asunción!"),
+            Feast::Halloween => tx!("Joyeux Halloween ! Même les évêques ont peur.", "Happy Halloween! Even the bishops are scared.", "Fröhliches Halloween! Sogar die Bischöfe fürchten sich.", "Buon Halloween! Anche i vescovi hanno paura.", "¡Feliz Halloween! Hasta los obispos tienen miedo."),
+            Feast::AllSaints => tx!("Toussaint : une pensée pour tous les saints.", "All Saints' Day: a thought for all the saints.", "Allerheiligen: ein Gedanke an alle Heiligen.", "Ognissanti: un pensiero per tutti i santi.", "Todos los Santos: un recuerdo para todos los santos."),
+            Feast::SaintMartin => tx!("Bonne Saint-Martin !", "Happy Martinmas!", "Frohen Martinstag!", "Buon San Martino!", "¡Feliz San Martín!"),
+            Feast::Advent(_) => tx!("Temps de l'Avent : Noël approche.", "Advent: Christmas is coming.", "Adventszeit: Weihnachten naht.", "Tempo d'Avvento: il Natale si avvicina.", "Adviento: la Navidad se acerca."),
+            Feast::SaintNicholas => tx!("Bonne Saint-Nicolas ! Il était évêque, lui aussi.", "Happy Saint Nicholas Day! He was a bishop too.", "Frohen Nikolaustag! Er war auch ein Bischof.", "Buon San Nicola! Anche lui era vescovo.", "¡Feliz San Nicolás! Él también era obispo."),
+            Feast::Christmas => tx!("Joyeux Noël !", "Merry Christmas!", "Frohe Weihnachten!", "Buon Natale!", "¡Feliz Navidad!"),
         }
+        .t()
     }
 
     /// Les cloches sonnent-elles ? (Non pendant les jours saints.)

@@ -148,6 +148,52 @@ cargo run -p concile
 - Les grilles sont générées à l'avance (solution unique, résolubles par la logique) : `cargo run --release -p concile-gen` (environ 2 minutes). Tests : `cargo test -p concile-core`.
 - Captures automatiques : `CONCILE_CAPTURE=captures cargo run -p concile`.
 
+## Le squelette commun (obligatoire pour chaque jeu)
+
+Tous les jeux suivent le même squelette, décrit dans [docs/SQUELETTE.md](docs/SQUELETTE.md) : `StudioPlugin` (style, écran de démarrage, interface, son, langues, Options, ambiance), un menu terminé par `pied_de_menu` (Options, Aide, Quitter, logo), l'aide du jeu dans `GameHelp`, et tous les textes en **cinq langues** (français, anglais, allemand, italien, espagnol) avec `tx!`.
+
+Les **Options**, communes à tous les jeux : langue, son, musique, volume de la musique, volume des effets, et l'ambiance (activée ou non, moment de la journée, saison au choix, fête du moment, météo locale avec la ville du joueur).
+
+Pour commencer un nouveau jeu :
+
+```bash
+tools/nouveau-jeu.sh mon-jeu "Mon jeu"
+```
+
+Il copie le jeu modèle (`games/modele`) et l'ajoute au workspace. Pour essayer une langue : `CC_LANGUE=de cargo run -p snake`.
+
+## L'ambiance : le moment, la saison, les fêtes, la météo
+
+Les jeux et le site reflètent le moment où l'on joue, avec les mêmes règles partout (`game_common::ambiance`, et `site/static/js/ambiance.js` pour le site) :
+
+- **moment** : matin (6–10 h), journée (10–18 h), soir (18–21 h), nuit. La lumière et le ciel changent.
+- **saison** : printemps (20 mars), été (21 juin), automne (22 septembre), hiver (21 décembre). Les herbes et feuillages de la palette commune changent de couleur.
+- **fêtes** : le calendrier commun (`game_common::calendar`). Un message salue la fête du jour, et le site et le Concile se décorent.
+- **météo** : seulement si le joueur l'accepte, sur le site (bouton nuage : géolocalisation arrondie ou ville, service Open-Meteo). Les jeux en ligne reprennent ce choix. Pluie, neige, orage et brouillard s'affichent dans les jeux en plein air.
+
+Chaque jeu choisit ce que l'ambiance peut changer : `AmbiancePlugin::exterieur()` (Snake, Traversée, Tour de blocs, Pousse-caisses), `::interieur()` (2048, Concile : lumière du moment seulement) ou `::espace()` (NOVA : les fêtes seulement).
+
+Pour essayer une ambiance :
+
+```bash
+CC_MOMENT=nuit CC_SAISON=hiver CC_FETE=noel CC_METEO=neige cargo run -p snake
+```
+
+Sur le site de développement (`zola serve`), le bouton « 🌦 Ambiance » force ces mêmes réglages, pour le site comme pour les jeux en ligne.
+
+## Jouer dans le navigateur
+
+```bash
+rustup target add wasm32-unknown-unknown
+cargo install wasm-bindgen-cli --version 0.2.129   # la version de Cargo.lock
+tools/build-web.sh                                  # ou : tools/build-web.sh concile
+zola --root site serve
+```
+
+Les jeux compilés (`site/static/jouer/`, non versionnés) se jouent sur `/jouer/<jeu>/`. La sauvegarde utilise alors le stockage du navigateur.
+
+En ligne, c'est l'action GitHub `.github/workflows/site.yml` qui compile les jeux et publie le site sur https://commitandconquer.fr à chaque envoi sur `main`.
+
 ## Bibliothèque commune (`assets/`)
 
 Tous les jeux partagent le même dossier `assets/` : un son créé pour un jeu est utilisable par tous les autres.

@@ -3,7 +3,7 @@
 use bevy::prelude::*;
 use concile_core::{Puzzle, conflicts, next_deduction};
 use game_common::calendar::Date;
-use game_common::{iso_projection, save};
+use game_common::{iso_projection, save, tx};
 
 use crate::GameState;
 use crate::board::{self, CellView, Look, MapPart, MarkKind, SealBody};
@@ -197,24 +197,77 @@ impl Play {
         let n = self.n();
         let wrong: Vec<usize> = self.bishops().into_iter().filter(|&i| !self.puzzle.is_bishop(i / n, i % n)).collect();
         let hint = if !wrong.is_empty() {
-            (wrong, "Cet évêque n'est pas à sa place : retirez-le.".to_string())
+            (wrong, tx!(
+                "Cet évêque n'est pas à sa place : retirez-le.",
+                "This bishop is in the wrong place: remove it.",
+                "Dieser Bischof steht falsch: Nimm ihn weg.",
+                "Questo vescovo non è al suo posto: toglilo.",
+                "Este obispo no está en su sitio: quítalo.",
+            )
+            .t()
+            .to_string())
         } else {
             let bad_cross: Vec<usize> = (0..n * n).filter(|&i| self.marks[i] == Mark::Cross && self.puzzle.is_bishop(i / n, i % n)).collect();
             if !bad_cross.is_empty() {
-                (bad_cross, "Cette croix cache un évêque : effacez-la.".to_string())
+                (bad_cross, tx!(
+                    "Cette croix cache un évêque : effacez-la.",
+                    "This cross hides a bishop: erase it.",
+                    "Unter diesem Kreuz steht ein Bischof: Lösche es.",
+                    "Questa croce nasconde un vescovo: cancellala.",
+                    "Esta cruz oculta un obispo: bórrala.",
+                )
+                .t()
+                .to_string())
             } else {
                 let crossed: Vec<usize> = (0..n * n).filter(|&i| self.marks[i] == Mark::Cross).collect();
                 match next_deduction(n, &self.puzzle.regions, &self.bishops(), &crossed) {
                     Some(d) => match d.place {
-                        Some(i) => (vec![i], format!("Un évêque peut être posé ici. {}", d.technique.explain())),
-                        None => (d.exclude, format!("Ces cases sont à barrer. {}", d.technique.explain())),
+                        Some(i) => (
+                            vec![i],
+                            tx!(
+                                "Un évêque peut être posé ici. {}",
+                                "A bishop can be placed here. {}",
+                                "Ein Bischof gehört auf dieses Feld. {}",
+                                "Qui si può mettere un vescovo. {}",
+                                "Se puede colocar un obispo en esta casilla. {}",
+                            )
+                            .avec(&[&d.technique.explain(langue_core())]),
+                        ),
+                        None => (
+                            d.exclude,
+                            tx!(
+                                "Ces cases sont à barrer. {}",
+                                "These squares can be crossed out. {}",
+                                "Diese Felder können gestrichen werden. {}",
+                                "Queste caselle vanno barrate. {}",
+                                "Estas casillas se pueden tachar. {}",
+                            )
+                            .avec(&[&d.technique.explain(langue_core())]),
+                        ),
                     },
-                    None => (Vec::new(), "Tout ce qui est posé est juste : continuez !".to_string()),
+                    None => (
+                        Vec::new(),
+                        tx!(
+                            "Tout ce qui est posé est juste : continuez !",
+                            "Everything placed so far is right: keep going!",
+                            "Alles Gesetzte ist richtig: Weiter so!",
+                            "Tutto ciò che hai messo è giusto: continua!",
+                            "Todo lo colocado es correcto: ¡sigue así!",
+                        )
+                        .t()
+                        .to_string(),
+                    ),
                 }
             }
         };
         self.hint = Some((hint.0, hint.1, 7.0));
     }
+}
+
+/// La langue en cours, pour `concile_core` (0 français … 4 espagnol).
+fn langue_core() -> usize {
+    let l = game_common::langue::actuelle();
+    game_common::langue::Langue::TOUTES.iter().position(|x| *x == l).unwrap_or(0)
 }
 
 #[derive(Component)]

@@ -27,14 +27,41 @@ impl Technique {
         }
     }
 
-    /// Explication courte, pour les indices.
-    pub fn explain(self) -> &'static str {
-        match self {
-            Technique::Single => "Il ne reste qu'une case possible ici.",
-            Technique::Confinement => "Ce diocèse est enfermé dans une seule rangée ou colonne : le reste de celle-ci est exclu.",
-            Technique::Attack => "Un évêque ici priverait un autre diocèse (ou une rangée) de toute place.",
-            Technique::Group => "Plusieurs diocèses se partagent exactement autant de rangées : les autres cases de ces rangées sont exclues.",
-        }
+    /// Explication courte, pour les indices, dans la langue `langue` :
+    /// 0 français, 1 anglais, 2 allemand, 3 italien, 4 espagnol (le français
+    /// pour toute autre valeur).
+    pub fn explain(self, langue: usize) -> &'static str {
+        let textes: [&'static str; 5] = match self {
+            Technique::Single => [
+                "Il ne reste qu'une case possible ici.",
+                "Only one possible square is left here.",
+                "Hier bleibt nur noch ein mögliches Feld.",
+                "Qui resta una sola casella possibile.",
+                "Aquí solo queda una casilla posible.",
+            ],
+            Technique::Confinement => [
+                "Ce diocèse est enfermé dans une seule rangée ou colonne : le reste de celle-ci est exclu.",
+                "This diocese is confined to a single row or column: the rest of that line is ruled out.",
+                "Diese Diözese liegt ganz in einer Zeile oder Spalte: Der Rest dieser Linie ist ausgeschlossen.",
+                "Questa diocesi è chiusa in una sola riga o colonna: il resto di quella linea è escluso.",
+                "Esta diócesis está encerrada en una sola fila o columna: el resto de esa línea queda descartado.",
+            ],
+            Technique::Attack => [
+                "Un évêque ici priverait un autre diocèse (ou une rangée) de toute place.",
+                "A bishop here would leave another diocese (or a row) with no room at all.",
+                "Ein Bischof hier ließe einer anderen Diözese (oder einer Zeile) keinen Platz mehr.",
+                "Un vescovo qui toglierebbe ogni posto a un'altra diocesi (o a una riga).",
+                "Un obispo aquí dejaría a otra diócesis (o a una fila) sin ningún sitio.",
+            ],
+            Technique::Group => [
+                "Plusieurs diocèses se partagent exactement autant de rangées : les autres cases de ces rangées sont exclues.",
+                "Several dioceses share exactly as many rows: the other squares of those rows are ruled out.",
+                "Mehrere Diözesen teilen sich genau so viele Zeilen: Die übrigen Felder dieser Zeilen sind ausgeschlossen.",
+                "Più diocesi si dividono esattamente altrettante righe: le altre caselle di quelle righe sono escluse.",
+                "Varias diócesis comparten exactamente tantas filas: las demás casillas de esas filas quedan descartadas.",
+            ],
+        };
+        textes.get(langue).copied().unwrap_or(textes[0])
     }
 }
 
@@ -257,6 +284,14 @@ mod tests {
         for n in 5..=9 {
             let p = generate(n, &mut rng);
             assert!(logic_solve(n, &p.regions).is_some(), "taille {n}");
+        }
+    }
+
+    #[test]
+    fn chaque_technique_parle_cinq_langues() {
+        for t in [Technique::Single, Technique::Confinement, Technique::Attack, Technique::Group] {
+            assert_eq!(t.explain(9), t.explain(0));
+            assert!((1..5).all(|l| t.explain(l) != t.explain(0)));
         }
     }
 

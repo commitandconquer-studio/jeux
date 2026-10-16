@@ -9,7 +9,8 @@ mod world;
 use std::f32::consts::{PI, TAU};
 
 use bevy::prelude::*;
-use game_common::{ISO_OFFSET, LowPolyStylePlugin, Rng, Score, iso_camera, iso_projection};
+use game_common::universe::Universe as Univers;
+use game_common::{ISO_OFFSET, Rng, Score, StudioPlugin, iso_camera, iso_projection};
 
 use settings::Settings;
 
@@ -27,16 +28,15 @@ fn main() {
         .add_plugins(
             DefaultPlugins
                 .set(WindowPlugin {
-                    primary_window: Some(Window {
-                        title: "Snake — Commit & Conquer".into(),
-                        ..default()
-                    }),
+                    primary_window: Some(game_common::fenetre("Snake — Commit & Conquer")),
                     ..default()
                 })
                 .set(game_common::shared_assets()),
         )
-        .add_plugins((LowPolyStylePlugin, game_common::splash::SplashPlugin, game::GamePlugin, ui::UiPlugin, audio::AudioPlugin, capture::CapturePlugin))
         .init_state::<GameState>()
+        .add_plugins(StudioPlugin::new(Univers::Croa, game_common::ambiance::AmbiancePlugin::exterieur()))
+        .add_plugins((game::GamePlugin, ui::UiPlugin, audio::AudioPlugin, capture::CapturePlugin))
+        .add_systems(Update, game_common::langue::rebatir_menu(GameState::Menu))
         .insert_resource(Rng::from_time())
         .init_resource::<Settings>()
         .init_resource::<Score>()

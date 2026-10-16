@@ -3,7 +3,13 @@
 //! Le « style maison » : 3D low-poly en vue isométrique, couleurs unies,
 //! matériaux mats et ombres douces.
 
+// En premier : la macro `tx!` (textes traduits) sert à tous les modules.
+#[macro_use]
+pub mod langue;
+pub mod ambiance;
+pub mod ambiance_panneau;
 pub mod audio;
+pub mod options;
 pub mod brand;
 pub mod calendar;
 pub mod models;
@@ -19,14 +25,68 @@ pub mod universe;
 ///
 /// Avec `cargo run`, Bevy part du dossier du jeu (`games/<jeu>/`) ; une fois
 /// le jeu distribué, `assets/` est copié à côté de l'exécutable.
+/// Dans le navigateur, la bibliothèque commune est servie à `/jouer/assets/`
+/// (pour toutes les langues du site).
 pub fn shared_assets() -> bevy::asset::AssetPlugin {
-    let file_path = if std::env::var_os("CARGO_MANIFEST_DIR").is_some() { "../../assets" } else { "assets" };
+    let file_path = if cfg!(target_arch = "wasm32") {
+        "/jouer/assets"
+    } else if std::env::var_os("CARGO_MANIFEST_DIR").is_some() {
+        "../../assets"
+    } else {
+        "assets"
+    };
     bevy::asset::AssetPlugin { file_path: file_path.into(), ..Default::default() }
+}
+
+/// La fenêtre d'un jeu. Dans le navigateur, le jeu dessine dans le
+/// `<canvas id="jeu">` de sa page et en prend toute la place.
+pub fn fenetre(titre: &str) -> bevy::window::Window {
+    bevy::window::Window {
+        title: titre.into(),
+        canvas: Some("#jeu".into()),
+        fit_canvas_to_parent: true,
+        // Laisse le navigateur gérer ses raccourcis (F5, Ctrl+…).
+        prevent_default_event_handling: false,
+        ..Default::default()
+    }
 }
 
 use bevy::camera::ScalingMode;
 use bevy::light::{CascadeShadowConfigBuilder, DirectionalLightShadowMap};
 use bevy::prelude::*;
+
+/// Le squelette commun de tous les jeux du studio, en une ligne :
+/// style low poly, écran de démarrage, interface de l'univers, son, langues,
+/// Options et ambiance.
+///
+/// ```ignore
+/// app.add_plugins(StudioPlugin::new(Universe::Croa, AmbiancePlugin::exterieur()));
+/// ```
+/// Voir `docs/SQUELETTE.md` pour ce que chaque jeu doit fournir.
+pub struct StudioPlugin {
+    pub univers: universe::Universe,
+    pub ambiance: ambiance::AmbiancePlugin,
+}
+
+impl StudioPlugin {
+    pub fn new(univers: universe::Universe, ambiance: ambiance::AmbiancePlugin) -> Self {
+        StudioPlugin { univers, ambiance }
+    }
+}
+
+impl Plugin for StudioPlugin {
+    fn build(&self, app: &mut App) {
+        app.add_plugins((
+            langue::LanguePlugin,
+            LowPolyStylePlugin,
+            splash::SplashPlugin,
+            ui::UiKitPlugin { universe: self.univers },
+            audio::AudioKitPlugin,
+            self.ambiance,
+            options::OptionsPlugin,
+        ));
+    }
+}
 
 /// Palette de couleurs commune à tous les jeux.
 pub mod palette {
@@ -132,8 +192,8 @@ impl Rng {
     }
 
     pub fn from_time() -> Self {
-        let nanos = std::time::SystemTime::now()
-            .duration_since(std::time::UNIX_EPOCH)
+        let nanos = web_time::SystemTime::now()
+            .duration_since(web_time::UNIX_EPOCH)
             .map(|d| d.as_nanos() as u64)
             .unwrap_or(0x9E37_79B9_7F4A_7C15);
         Self::new(nanos)

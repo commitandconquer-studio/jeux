@@ -9,7 +9,8 @@ mod play;
 mod ui;
 
 use bevy::prelude::*;
-use game_common::{LowPolyStylePlugin, Rng};
+use game_common::universe::Universe;
+use game_common::{Rng, StudioPlugin};
 
 #[derive(States, Default, Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum GameState {
@@ -25,16 +26,15 @@ fn main() {
         .add_plugins(
             DefaultPlugins
                 .set(WindowPlugin {
-                    primary_window: Some(Window {
-                        title: "2048 — Eurêka".into(),
-                        ..default()
-                    }),
+                    primary_window: Some(game_common::fenetre("2048 — Eurêka")),
                     ..default()
                 })
                 .set(game_common::shared_assets()),
         )
         .insert_resource(Rng::from_time())
         .init_state::<GameState>()
-        .add_plugins((LowPolyStylePlugin, game_common::splash::SplashPlugin, desk::DeskPlugin, play::PlayPlugin, ui::UiPlugin, audio::AudioPlugin, capture::CapturePlugin))
+        .add_plugins(StudioPlugin::new(Universe::Eureka, game_common::ambiance::AmbiancePlugin::interieur()))
+        .add_plugins((desk::DeskPlugin, play::PlayPlugin, ui::UiPlugin, audio::AudioPlugin, capture::CapturePlugin))
+        .add_systems(Update, game_common::langue::rebatir_menu(GameState::Menu))
         .run();
 }

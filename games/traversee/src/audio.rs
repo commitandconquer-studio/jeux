@@ -3,7 +3,7 @@ use bevy::audio::Volume;
 use bevy::prelude::*;
 use game_common::sounds as lib;
 pub use game_common::audio::{Mutable, SoundOn};
-use game_common::audio::AudioKitPlugin;
+use game_common::audio::Musique;
 
 use crate::GameState;
 use crate::frog::Frog;
@@ -13,8 +13,7 @@ pub struct AudioPlugin;
 
 impl Plugin for AudioPlugin {
     fn build(&self, app: &mut App) {
-        app.add_plugins(AudioKitPlugin)
-            .init_resource::<Sounds>()
+        app.init_resource::<Sounds>()
             .add_message::<Sfx>()
             .add_systems(Startup, start_music)
             .add_systems(OnEnter(GameState::Playing), |mut sfx: MessageWriter<Sfx>| {
@@ -76,14 +75,11 @@ impl FromWorld for Sounds {
     }
 }
 
-#[derive(Component)]
-struct Music;
-
 fn start_music(mut commands: Commands, sounds: Res<Sounds>) {
     commands.spawn((
         AudioPlayer::new(sounds.music.clone()),
         PlaybackSettings::LOOP.with_volume(Volume::Linear(0.35)),
-        Music,
+        Musique,
         Mutable,
     ));
 }

@@ -1,11 +1,11 @@
 //! Écrans : accueil, Livre des Conciles, barre de jeu, victoire.
 use bevy::prelude::*;
 use concile_core::daily;
-use game_common::audio::SoundOn;
-use game_common::calendar::{Date, feast_on};
-use game_common::ui::{GameHelp, HelpButton, spawn_studio_logo};
+use game_common::calendar::Date;
+use game_common::langue::{Langue, actuelle};
+use game_common::tx;
 use game_common::ui::{
-    ButtonColor, PANEL, ThemedPanel, UiButton, UiKitPlugin, spawn_button_sized, spawn_gap, spawn_panel, spawn_panel_left,
+    ButtonColor, GameHelp, PANEL, ThemedPanel, UiButton, pied_de_menu, spawn_button_sized, spawn_gap, spawn_panel, spawn_panel_left,
     spawn_text,
 };
 use game_common::universe::Universe;
@@ -15,7 +15,8 @@ use crate::audio::UiClick;
 use crate::play::{Book, Kind, Play, PlayEvent, Progress, start};
 
 /// Aide du jeu (bouton « Aide » du menu).
-const HELP: &str = "Placez un évêque par diocèse (région de couleur),\n\
+const HELP: game_common::langue::Texte = tx!(
+    "Placez un évêque par diocèse (région de couleur),\n\
 par rangée et par colonne. Deux évêques ne se\n\
 touchent jamais, même en diagonale.\n\
 \n\
@@ -25,14 +26,58 @@ Mode Novice : poser un évêque hachure d'office\n\
 son diocèse, sa rangée, sa colonne et ses voisines.\n\
 \n\
 H : indice · U ou Retour arrière : annuler\n\
-Échap : menu";
+Échap : menu",
+    "Place one bishop in each diocese (coloured region),\n\
+each row and each column. Two bishops never\n\
+touch, not even diagonally.\n\
+\n\
+Click: cross, then bishop, then empty square\n\
+Drag: cross out several squares\n\
+Novice mode: placing a bishop automatically shades\n\
+its diocese, row, column and neighbouring squares.\n\
+\n\
+H: hint · U or Backspace: undo\n\
+Esc: menu",
+    "Setze einen Bischof in jede Diözese (farbige Region),\n\
+jede Zeile und jede Spalte. Zwei Bischöfe berühren\n\
+sich nie, auch nicht diagonal.\n\
+\n\
+Klick: Kreuz, dann Bischof, dann leeres Feld\n\
+Ziehen: mehrere Felder streichen\n\
+Anfängermodus: Ein gesetzter Bischof schraffiert\n\
+sofort seine Diözese, Zeile, Spalte und Nachbarfelder.\n\
+\n\
+H: Tipp · U oder Rücktaste: rückgängig\n\
+Esc: Menü",
+    "Metti un vescovo per diocesi (regione colorata),\n\
+per riga e per colonna. Due vescovi non si\n\
+toccano mai, nemmeno in diagonale.\n\
+\n\
+Clic: croce, poi vescovo, poi casella vuota\n\
+Trascina: barra più caselle\n\
+Modalità Novizio: mettere un vescovo tratteggia\n\
+subito la sua diocesi, riga, colonna e caselle vicine.\n\
+\n\
+H: indizio · U o Backspace: annulla\n\
+Esc: menu",
+    "Coloca un obispo por diócesis (región de color),\n\
+por fila y por columna. Dos obispos nunca se\n\
+tocan, ni siquiera en diagonal.\n\
+\n\
+Clic: cruz, luego obispo, luego casilla vacía\n\
+Arrastrar: tachar varias casillas\n\
+Modo Novato: al colocar un obispo se sombrean\n\
+su diócesis, su fila, su columna y sus vecinas.\n\
+\n\
+H: pista · U o Retroceso: deshacer\n\
+Esc: menú",
+);
 
 pub struct UiPlugin;
 
 impl Plugin for UiPlugin {
     fn build(&self, app: &mut App) {
-        app.add_plugins(UiKitPlugin { universe: Universe::Eureka })
-            .insert_resource(GameHelp(HELP))
+        app.insert_resource(GameHelp(HELP))
             .add_systems(OnEnter(GameState::Menu), spawn_menu)
             .add_systems(OnEnter(GameState::Book), spawn_book)
             .add_systems(OnEnter(GameState::Playing), spawn_hud)
@@ -50,14 +95,11 @@ enum UiAction {
     Daily,
     ToggleNovice,
     ToggleFeasts,
-    ToggleSound,
     Undo,
     Clear,
     Hint,
     Next,
     Menu,
-    #[cfg_attr(any(target_os = "android", target_arch = "wasm32"), allow(dead_code))]
-    Quit,
 }
 
 #[derive(Component)]
@@ -71,64 +113,122 @@ struct HintBox;
 enum Label {
     Novice,
     Feasts,
-    Sound,
 }
 
 fn button(c: &mut Commands, parent: Entity, label: impl Into<String>, action: UiAction) -> Entity {
-    let (b, text) = spawn_button_sized(c, parent, label, 340.0, 46.0, 21.0);
+    let (b, text) = spawn_button_sized(c, parent, label, 340.0, 42.0, 20.0);
     c.entity(b).insert(action);
     text
 }
 
 fn mode_text(novice: bool) -> &'static str {
-    if novice { "Mode : Novice (aidé)" } else { "Mode : Normal" }
+    if novice {
+        tx!("Mode : Novice (aidé)", "Mode: Novice (assisted)", "Modus: Anfänger (mit Hilfe)", "Modalità: Novizio (aiutato)", "Modo: Novato (con ayuda)").t()
+    } else {
+        tx!("Mode : Normal", "Mode: Normal", "Modus: Normal", "Modalità: Normale", "Modo: Normal").t()
+    }
 }
 
 fn feasts_text(on: bool) -> &'static str {
-    if on { "Fêtes : affichées" } else { "Fêtes : masquées" }
+    if on {
+        tx!("Fêtes : affichées", "Feasts: shown", "Feste: angezeigt", "Feste: mostrate", "Fiestas: visibles").t()
+    } else {
+        tx!("Fêtes : masquées", "Feasts: hidden", "Feste: ausgeblendet", "Feste: nascoste", "Fiestas: ocultas").t()
+    }
 }
 
-fn spawn_menu(mut c: Commands, progress: Res<Progress>, sound: Res<SoundOn>, book: Res<Book>) {
+/// La date dans la langue en cours : « vendredi 16 octobre 2026 »,
+/// « Friday 16 October 2026 », « Freitag, 16. Oktober 2026 »…
+fn date_text(d: Date) -> String {
+    let wd = d.weekday();
+    let m = d.month as usize - 1;
+    let (y, n) = (d.year, d.day);
+    match actuelle() {
+        Langue::Fr => d.french(),
+        Langue::En => {
+            const DAYS: [&str; 7] = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
+            const MONTHS: [&str; 12] =
+                ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+            format!("{} {n} {} {y}", DAYS[wd], MONTHS[m])
+        }
+        Langue::De => {
+            const DAYS: [&str; 7] = ["Montag", "Dienstag", "Mittwoch", "Donnerstag", "Freitag", "Samstag", "Sonntag"];
+            const MONTHS: [&str; 12] =
+                ["Januar", "Februar", "März", "April", "Mai", "Juni", "Juli", "August", "September", "Oktober", "November", "Dezember"];
+            format!("{}, {n}. {} {y}", DAYS[wd], MONTHS[m])
+        }
+        Langue::It => {
+            const DAYS: [&str; 7] = ["lunedì", "martedì", "mercoledì", "giovedì", "venerdì", "sabato", "domenica"];
+            const MONTHS: [&str; 12] = [
+                "gennaio", "febbraio", "marzo", "aprile", "maggio", "giugno", "luglio", "agosto", "settembre", "ottobre", "novembre", "dicembre",
+            ];
+            let n = if n == 1 { "1º".to_string() } else { n.to_string() };
+            format!("{} {n} {} {y}", DAYS[wd], MONTHS[m])
+        }
+        Langue::Es => {
+            const DAYS: [&str; 7] = ["lunes", "martes", "miércoles", "jueves", "viernes", "sábado", "domingo"];
+            const MONTHS: [&str; 12] = [
+                "enero", "febrero", "marzo", "abril", "mayo", "junio", "julio", "agosto", "septiembre", "octubre", "noviembre", "diciembre",
+            ];
+            format!("{}, {n} de {} de {y}", DAYS[wd], MONTHS[m])
+        }
+    }
+}
+
+fn spawn_menu(mut c: Commands, progress: Res<Progress>, book: Res<Book>) {
     let panel = spawn_panel_left(&mut c, DespawnOnExit(GameState::Menu));
     // Panneau plus serré : il y a beaucoup de choix.
     c.entity(panel).insert(Node {
         flex_direction: FlexDirection::Column,
         align_items: AlignItems::Center,
-        row_gap: Val::Px(8.0),
-        padding: UiRect::axes(Val::Px(32.0), Val::Px(20.0)),
+        row_gap: Val::Px(6.0),
+        padding: UiRect::axes(Val::Px(28.0), Val::Px(14.0)),
         border: UiRect::all(Val::Px(2.0)),
         border_radius: BorderRadius::all(Val::Px(24.0)),
         ..default()
     });
-    spawn_text(&mut c, panel, "Le Concile\ndes Évêques", 44.0);
-    spawn_text(&mut c, panel, "un jeu Eurêka", 16.0);
+    spawn_text(
+        &mut c,
+        panel,
+        tx!("Le Concile des Évêques", "The Council of Bishops", "Das Konzil der Bischöfe", "Il Concilio dei Vescovi", "El Concilio de los Obispos").t(),
+        36.0,
+    );
+    spawn_text(&mut c, panel, tx!("un jeu Eurêka", "a Eurêka game", "ein Eurêka-Spiel", "un gioco Eurêka", "un juego Eurêka").t(), 15.0);
     let today = Date::today();
+    let streak = if progress.streak > 1 {
+        tx!(" · série : {} jours", " · streak: {} days", " · Serie: {} Tage", " · serie: {} giorni", " · racha: {} días").avec(&[&progress.streak])
+    } else {
+        String::new()
+    };
+    spawn_text(&mut c, panel, format!("{}{streak}", capitalize(&date_text(today))), 15.0);
     if progress.feasts
-        && let Some(f) = feast_on(today)
+        && let Some(f) = game_common::ambiance::fete_du_jour()
     {
-        let t = spawn_text(&mut c, panel, f.greeting(), 19.0);
+        let t = spawn_text(&mut c, panel, f.greeting(), 18.0);
         c.entity(t).insert(TextColor(Universe::Eureka.style().accent));
     }
-    spawn_gap(&mut c, panel, 4.0);
+    spawn_gap(&mut c, panel, 2.0);
     let done = progress.solved.iter().filter(|&&s| s).count();
     let next = progress.next_unsolved().map(|i| i + 1).unwrap_or(book.0.len());
-    button(&mut c, panel, format!("Continuer : n° {next}"), UiAction::Continue);
-    button(&mut c, panel, format!("Livre des Conciles · {done}/{}", book.0.len()), UiAction::Book);
-    let daily = if progress.daily_solved_today() { "Défi du jour : réussi !".to_string() } else { "Défi du jour".to_string() };
-    button(&mut c, panel, daily, UiAction::Daily);
+    button(&mut c, panel, tx!("Continuer : n° {}", "Continue: no. {}", "Weiter: Nr. {}", "Continua: n. {}", "Continuar: n.º {}").avec(&[&next]), UiAction::Continue);
+    button(
+        &mut c,
+        panel,
+        tx!("Livre des Conciles · {}/{}", "Book of Councils · {}/{}", "Buch der Konzile · {}/{}", "Libro dei Concili · {}/{}", "Libro de los Concilios · {}/{}")
+            .avec(&[&done, &book.0.len()]),
+        UiAction::Book,
+    );
+    let daily = if progress.daily_solved_today() {
+        tx!("Défi du jour : réussi !", "Daily challenge: solved!", "Tagesrätsel: gelöst!", "Sfida del giorno: risolta!", "Reto del día: ¡resuelto!")
+    } else {
+        tx!("Défi du jour", "Daily challenge", "Tagesrätsel", "Sfida del giorno", "Reto del día")
+    };
+    button(&mut c, panel, daily.t(), UiAction::Daily);
     let t = button(&mut c, panel, mode_text(progress.novice), UiAction::ToggleNovice);
     c.entity(t).insert(Label::Novice);
     let t = button(&mut c, panel, feasts_text(progress.feasts), UiAction::ToggleFeasts);
     c.entity(t).insert(Label::Feasts);
-    let t = button(&mut c, panel, sound.label(), UiAction::ToggleSound);
-    c.entity(t).insert(Label::Sound);
-    let (b, _) = spawn_button_sized(&mut c, panel, "Aide", 340.0, 46.0, 21.0);
-    c.entity(b).insert(HelpButton);
-    #[cfg(not(any(target_os = "android", target_arch = "wasm32")))]
-    button(&mut c, panel, "Quitter", UiAction::Quit);
-    let streak = if progress.streak > 1 { format!(" · série : {} jours", progress.streak) } else { String::new() };
-    spawn_text(&mut c, panel, format!("{}{streak}", capitalize(&today.french())), 15.0);
-    spawn_studio_logo(&mut c, panel);
+    pied_de_menu(&mut c, panel);
 }
 
 fn capitalize(s: &str) -> String {
@@ -139,7 +239,12 @@ fn capitalize(s: &str) -> String {
 /// Le Livre : une rangée de grilles par taille.
 fn spawn_book(mut c: Commands, book: Res<Book>, progress: Res<Progress>) {
     let panel = spawn_panel(&mut c, DespawnOnExit(GameState::Book));
-    spawn_text(&mut c, panel, "Le Livre des Conciles", 38.0);
+    spawn_text(
+        &mut c,
+        panel,
+        tx!("Le Livre des Conciles", "The Book of Councils", "Das Buch der Konzile", "Il Libro dei Concili", "El Libro de los Concilios").t(),
+        38.0,
+    );
     let mut i = 0;
     while i < book.0.len() {
         let n = book.0[i].n;
@@ -159,7 +264,7 @@ fn spawn_book(mut c: Commands, book: Res<Book>, progress: Res<Progress>) {
         }
     }
     spawn_gap(&mut c, panel, 4.0);
-    button(&mut c, panel, "Retour", UiAction::Menu);
+    button(&mut c, panel, tx!("Retour", "Back", "Zurück", "Indietro", "Volver").t(), UiAction::Menu);
 }
 
 fn spawn_hud(mut c: Commands) {
@@ -188,8 +293,13 @@ fn spawn_hud(mut c: Commands) {
     let t = spawn_text(&mut c, info, "", 20.0);
     c.entity(t).insert((InfoText, TextLayout::justify(Justify::Left)));
     let buttons = c.spawn((Node { column_gap: Val::Px(8.0), ..default() }, ChildOf(bar))).id();
-    for (label, action) in [("Annuler", UiAction::Undo), ("Effacer", UiAction::Clear), ("Indice", UiAction::Hint), ("Menu", UiAction::Menu)] {
-        let (b, _) = spawn_button_sized(&mut c, buttons, label, 118.0, 42.0, 18.0);
+    for (label, action) in [
+        (tx!("Annuler", "Undo", "Rückgängig", "Annulla", "Deshacer"), UiAction::Undo),
+        (tx!("Effacer", "Clear", "Löschen", "Cancella", "Borrar"), UiAction::Clear),
+        (tx!("Indice", "Hint", "Tipp", "Indizio", "Pista"), UiAction::Hint),
+        (tx!("Menu", "Menu", "Menü", "Menu", "Menú"), UiAction::Menu),
+    ] {
+        let (b, _) = spawn_button_sized(&mut c, buttons, label.t(), 128.0, 42.0, 18.0);
         c.entity(b).insert(action);
     }
     // Explication des indices, en bas de l'écran.
@@ -228,12 +338,23 @@ fn update_hud(
 ) {
     let n = play.n();
     let title = match play.kind {
-        Kind::Book(i) => format!("Concile n° {} · {n} × {n}", i + 1),
-        Kind::Daily(d) => format!("Défi du {} · {n} × {n}", d.french()),
+        Kind::Book(i) => tx!("Concile n° {}", "Council no. {}", "Konzil Nr. {}", "Concilio n. {}", "Concilio n.º {}").avec(&[&(i + 1)]),
+        Kind::Daily(d) => tx!("Défi du {}", "Challenge of {}", "Rätsel vom {}", "Sfida di {}", "Reto del {}").avec(&[&date_text(d)]),
     };
-    let mode = if progress.novice { "Novice" } else { "Normal" };
+    let mode = if progress.novice {
+        tx!("Novice", "Novice", "Anfänger", "Novizio", "Novato")
+    } else {
+        tx!("Normal", "Normal", "Normal", "Normale", "Normal")
+    };
     for mut t in &mut info {
-        let s = format!("{title} · {mode}\nSablier : {}   Évêques : {}/{n}", format_time(play.time), play.bishops().len());
+        let s = tx!(
+            "{} · {} × {} · {}\nSablier : {}   Évêques : {}/{}",
+            "{} · {} × {} · {}\nHourglass: {}   Bishops: {}/{}",
+            "{} · {} × {} · {}\nSanduhr: {}   Bischöfe: {}/{}",
+            "{} · {} × {} · {}\nClessidra: {}   Vescovi: {}/{}",
+            "{} · {} × {} · {}\nReloj de arena: {}   Obispos: {}/{}",
+        )
+        .avec(&[&title, &n, &n, &mode.t(), &format_time(play.time), &play.bishops().len(), &n]);
         if t.0 != s {
             t.0 = s;
         }
@@ -252,34 +373,71 @@ fn update_hud(
 
 fn spawn_won(mut c: Commands, play: Res<Play>, progress: Res<Progress>, book: Res<Book>) {
     let panel = spawn_panel_left(&mut c, DespawnOnExit(GameState::Won));
-    spawn_text(&mut c, panel, "Le concile\npeut commencer !", 44.0);
+    spawn_text(
+        &mut c,
+        panel,
+        tx!(
+            "Le concile\npeut commencer !",
+            "The council\ncan begin!",
+            "Das Konzil\nkann beginnen!",
+            "Il concilio\npuò cominciare!",
+            "¡El concilio\npuede comenzar!",
+        )
+        .t(),
+        44.0,
+    );
     let line = match play.kind {
         Kind::Book(i) => {
             let best = progress.best[i].map(|b| format_time(b as f32)).unwrap_or_default();
-            format!("Concile n° {} réussi en {}\nMeilleur temps : {best}", i + 1, format_time(play.time))
+            tx!(
+                "Concile n° {} réussi en {}\nMeilleur temps : {}",
+                "Council no. {} solved in {}\nBest time: {}",
+                "Konzil Nr. {} gelöst in {}\nBestzeit: {}",
+                "Concilio n. {} risolto in {}\nTempo migliore: {}",
+                "Concilio n.º {} resuelto en {}\nMejor tiempo: {}",
+            )
+            .avec(&[&(i + 1), &format_time(play.time), &best])
         }
         Kind::Daily(_) => {
-            let streak = if progress.streak > 1 { format!("\nSérie : {} jours de suite !", progress.streak) } else { String::new() };
-            format!("Défi du jour réussi en {}{streak}", format_time(play.time))
+            let streak = if progress.streak > 1 {
+                tx!(
+                    "\nSérie : {} jours de suite !",
+                    "\nStreak: {} days in a row!",
+                    "\nSerie: {} Tage in Folge!",
+                    "\nSerie: {} giorni di fila!",
+                    "\nRacha: ¡{} días seguidos!",
+                )
+                .avec(&[&progress.streak])
+            } else {
+                String::new()
+            };
+            tx!(
+                "Défi du jour réussi en {}",
+                "Daily challenge solved in {}",
+                "Tagesrätsel gelöst in {}",
+                "Sfida del giorno risolta in {}",
+                "Reto del día resuelto en {}",
+            )
+            .avec(&[&format_time(play.time)])
+                + &streak
         }
     };
     spawn_text(&mut c, panel, line, 20.0);
     spawn_gap(&mut c, panel, 4.0);
     if matches!(play.kind, Kind::Book(i) if i + 1 < book.0.len()) {
-        button(&mut c, panel, "Concile suivant", UiAction::Next);
+        button(&mut c, panel, tx!("Concile suivant", "Next council", "Nächstes Konzil", "Concilio successivo", "Siguiente concilio").t(), UiAction::Next);
     }
-    button(&mut c, panel, "Menu", UiAction::Menu);
+    button(&mut c, panel, tx!("Menu", "Menu", "Menü", "Menu", "Menú").t(), UiAction::Menu);
 }
 
-fn update_labels(progress: Res<Progress>, sound: Res<SoundOn>, mut q: Query<(&Label, &mut Text)>) {
-    if !progress.is_changed() && !sound.is_changed() {
+fn update_labels(progress: Res<Progress>, mut q: Query<(&Label, &mut Text)>) {
+    if !progress.is_changed() {
         return;
     }
     for (label, mut t) in &mut q {
         t.0 = match label {
             Label::Novice => mode_text(progress.novice),
             Label::Feasts => feasts_text(progress.feasts),
-            Label::Sound => sound.label(),
         }
         .into();
     }
@@ -325,10 +483,8 @@ fn on_click(
     mut play: ResMut<Play>,
     mut progress: ResMut<Progress>,
     mut next: ResMut<NextState<GameState>>,
-    mut sound: ResMut<SoundOn>,
     mut clicks: MessageWriter<UiClick>,
     mut events: MessageWriter<PlayEvent>,
-    mut exit: MessageWriter<AppExit>,
 ) {
     let Ok(action) = actions.get(click.entity) else { return };
     clicks.write(UiClick);
@@ -349,7 +505,6 @@ fn on_click(
             progress.feasts = !progress.feasts;
             progress.store();
         }
-        UiAction::ToggleSound => sound.0 = !sound.0,
         UiAction::Undo => {
             play.undo();
         }
@@ -364,8 +519,5 @@ fn on_click(
             }
         }
         UiAction::Menu => next.set(GameState::Menu),
-        UiAction::Quit => {
-            exit.write(AppExit::Success);
-        }
     }
 }

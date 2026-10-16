@@ -1,37 +1,69 @@
-//! Écrans : accueil, options, fin de partie, et affichage du score.
+//! Écrans : accueil, réglages, fin de partie, et affichage du score.
 use bevy::prelude::*;
-use game_common::Score;
-use game_common::ui::{GameHelp, spawn_help_button, spawn_studio_logo};
-use game_common::ui::{UiKitPlugin, spawn_button, spawn_gap, spawn_hud, spawn_panel, spawn_text};
-
-use game_common::audio::SoundOn;
+use game_common::langue::Langue;
+use game_common::ui::{GameHelp, pied_de_menu, spawn_button, spawn_gap, spawn_hud, spawn_panel, spawn_text};
+use game_common::{Score, tx};
 
 use crate::GameState;
 use crate::audio::Sfx;
 use crate::settings::{OptionKind, Settings};
 
-/// Aide du jeu (bouton « Aide » du menu).
-const HELP: &str = "Dirigez le serpent et mangez pour grandir.\n\
+pub struct UiPlugin;
+
+impl Plugin for UiPlugin {
+    fn build(&self, app: &mut App) {
+        app.add_systems(Startup, setup_hud)
+            .insert_resource(GameHelp(tx!(
+                "Dirigez le serpent et mangez pour grandir.\n\
 Ne vous mordez pas la queue !\n\
 \n\
 Flèches ou ZQSD : diriger\n\
 Entrée ou Espace : valider\n\
 M : couper le son · Échap : menu\n\
 \n\
-Options : vitesse, taille du plateau,\n\
-bords murs ou traversables.";
-
-pub struct UiPlugin;
-
-impl Plugin for UiPlugin {
-    fn build(&self, app: &mut App) {
-        app.add_plugins(UiKitPlugin { universe: game_common::universe::Universe::Croa })
-            .add_systems(Startup, setup_hud)
-            .insert_resource(GameHelp(HELP))
+Réglages : vitesse, taille du plateau,\n\
+bords murs ou traversables.",
+                "Steer the snake and eat to grow.\n\
+Don't bite your own tail!\n\
+\n\
+Arrows or WASD: steer\n\
+Enter or Space: confirm\n\
+M: mute · Esc: menu\n\
+\n\
+Settings: speed, board size,\n\
+solid or wrap-around edges.",
+                "Steuere die Schlange und friss, um zu wachsen.\n\
+Beiß dir nicht in den Schwanz!\n\
+\n\
+Pfeiltasten oder WASD: steuern\n\
+Eingabe oder Leertaste: bestätigen\n\
+M: Ton aus · Esc: Menü\n\
+\n\
+Einstellungen: Tempo, Spielfeldgröße,\n\
+Ränder als Wände oder durchlässig.",
+                "Guida il serpente e mangia per crescere.\n\
+Non morderti la coda!\n\
+\n\
+Frecce o WASD: dirigere\n\
+Invio o Spazio: confermare\n\
+M: disattiva l'audio · Esc: menu\n\
+\n\
+Impostazioni: velocità, dimensione del campo,\n\
+bordi come muri o attraversabili.",
+                "Guía la serpiente y come para crecer.\n\
+¡No te muerdas la cola!\n\
+\n\
+Flechas o WASD: dirigir\n\
+Intro o Espacio: confirmar\n\
+M: silenciar · Esc: menú\n\
+\n\
+Ajustes: velocidad, tamaño del tablero,\n\
+bordes como muros o atravesables."
+            )))
             .add_systems(OnEnter(GameState::Menu), spawn_menu)
             .add_systems(OnEnter(GameState::Options), spawn_options)
             .add_systems(OnEnter(GameState::GameOver), spawn_game_over)
-            .add_systems(Update, (update_hud, refresh_option_texts, update_sound_label, keyboard_shortcuts))
+            .add_systems(Update, (update_hud, refresh_option_texts, keyboard_shortcuts))
             .add_observer(on_click);
     }
 }
@@ -40,13 +72,10 @@ impl Plugin for UiPlugin {
 #[derive(Component, Clone, Copy)]
 enum UiAction {
     Play,
-    Options,
+    Settings,
     Back,
     Menu,
     Cycle(OptionKind),
-    ToggleSound,
-    #[cfg_attr(any(target_os = "android", target_arch = "wasm32"), allow(dead_code))]
-    Quit,
 }
 
 /// Texte d'un bouton d'option, mis à jour quand la valeur change.
@@ -59,21 +88,17 @@ struct Hud;
 #[derive(Component)]
 struct HudText;
 
-/// Texte du bouton « Son ».
-#[derive(Component)]
-struct SoundLabel;
-
 fn button(commands: &mut Commands, parent: Entity, label: impl Into<String>, action: UiAction) -> Entity {
     let (b, text) = spawn_button(commands, parent, label);
     commands.entity(b).insert(action);
     text
 }
 
-fn spawn_menu(mut commands: Commands, settings: Res<Settings>, sound: Res<SoundOn>) {
+fn spawn_menu(mut commands: Commands, settings: Res<Settings>) {
     let panel = spawn_panel(&mut commands, DespawnOnExit(GameState::Menu));
     spawn_text(&mut commands, panel, "SNAKE", 72.0);
     spawn_gap(&mut commands, panel, 10.0);
-    button(&mut commands, panel, "Jouer", UiAction::Play);
+    button(&mut commands, panel, tx!("Jouer", "Play", "Spielen", "Gioca", "Jugar").t(), UiAction::Play);
     let t = button(
         &mut commands,
         panel,
@@ -81,33 +106,39 @@ fn spawn_menu(mut commands: Commands, settings: Res<Settings>, sound: Res<SoundO
         UiAction::Cycle(OptionKind::Universe),
     );
     commands.entity(t).insert(OptionText(OptionKind::Universe));
-    let t = button(&mut commands, panel, sound.label(), UiAction::ToggleSound);
-    commands.entity(t).insert(SoundLabel);
-    button(&mut commands, panel, "Options", UiAction::Options);
-    spawn_help_button(&mut commands, panel);
-    #[cfg(not(any(target_os = "android", target_arch = "wasm32")))]
-    button(&mut commands, panel, "Quitter", UiAction::Quit);
-    spawn_studio_logo(&mut commands, panel);
+    button(
+        &mut commands,
+        panel,
+        tx!("Réglages", "Settings", "Einstellungen", "Impostazioni", "Ajustes").t(),
+        UiAction::Settings,
+    );
+    pied_de_menu(&mut commands, panel);
 }
 
 fn spawn_options(mut commands: Commands, settings: Res<Settings>) {
     let panel = spawn_panel(&mut commands, DespawnOnExit(GameState::Options));
-    spawn_text(&mut commands, panel, "Options", 48.0);
+    spawn_text(&mut commands, panel, tx!("Réglages", "Settings", "Einstellungen", "Impostazioni", "Ajustes").t(), 48.0);
     for kind in OptionKind::ALL {
         let t = button(&mut commands, panel, kind.text(&settings), UiAction::Cycle(kind));
         commands.entity(t).insert(OptionText(kind));
     }
     spawn_gap(&mut commands, panel, 6.0);
-    button(&mut commands, panel, "Retour", UiAction::Back);
+    button(&mut commands, panel, tx!("Retour", "Back", "Zurück", "Indietro", "Volver").t(), UiAction::Back);
 }
 
 fn spawn_game_over(mut commands: Commands, score: Res<Score>) {
     let panel = spawn_panel(&mut commands, DespawnOnExit(GameState::GameOver));
-    spawn_text(&mut commands, panel, "Perdu !", 56.0);
-    spawn_text(&mut commands, panel, format!("Score : {}    Record : {}", score.current, score.best), 24.0);
+    spawn_text(&mut commands, panel, tx!("Perdu !", "Game over!", "Verloren!", "Hai perso!", "¡Has perdido!").t(), 56.0);
+    spawn_text(
+        &mut commands,
+        panel,
+        tx!("Score : {}    Record : {}", "Score: {}    Best: {}", "Punkte: {}    Rekord: {}", "Punti: {}    Record: {}", "Puntos: {}    Récord: {}")
+            .avec(&[&score.current, &score.best]),
+        24.0,
+    );
     spawn_gap(&mut commands, panel, 6.0);
-    button(&mut commands, panel, "Rejouer", UiAction::Play);
-    button(&mut commands, panel, "Menu", UiAction::Menu);
+    button(&mut commands, panel, tx!("Rejouer", "Play again", "Nochmal", "Rigioca", "Otra vez").t(), UiAction::Play);
+    button(&mut commands, panel, tx!("Menu", "Menu", "Menü", "Menu", "Menú").t(), UiAction::Menu);
 }
 
 fn setup_hud(mut commands: Commands) {
@@ -118,6 +149,7 @@ fn setup_hud(mut commands: Commands) {
 
 fn update_hud(
     score: Res<Score>,
+    langue: Res<Langue>,
     state: Res<State<GameState>>,
     mut hud: Query<&mut Visibility, With<Hud>>,
     mut text: Query<&mut Text, With<HudText>>,
@@ -126,17 +158,16 @@ fn update_hud(
     for mut v in &mut hud {
         *v = if playing { Visibility::Inherited } else { Visibility::Hidden };
     }
-    if score.is_changed() {
+    if score.is_changed() || langue.is_changed() {
+        let hud = tx!(
+            "Score : {}    Record : {}    Échap : menu    M : son",
+            "Score: {}    Best: {}    Esc: menu    M: sound",
+            "Punkte: {}    Rekord: {}    Esc: Menü    M: Ton",
+            "Punti: {}    Record: {}    Esc: menu    M: audio",
+            "Puntos: {}    Récord: {}    Esc: menú    M: sonido"
+        );
         for mut t in &mut text {
-            t.0 = format!("Score : {}    Record : {}    Échap : menu    M : son", score.current, score.best);
-        }
-    }
-}
-
-fn update_sound_label(sound: Res<SoundOn>, mut labels: Query<&mut Text, With<SoundLabel>>) {
-    if sound.is_changed() {
-        for mut t in &mut labels {
-            t.0 = sound.label().into();
+            t.0 = hud.avec(&[&score.current, &score.best]);
         }
     }
 }
@@ -171,22 +202,16 @@ fn on_click(
     actions: Query<&UiAction>,
     mut settings: ResMut<Settings>,
     mut next: ResMut<NextState<GameState>>,
-    mut sound: ResMut<SoundOn>,
     mut sfx: MessageWriter<Sfx>,
-    mut exit: MessageWriter<AppExit>,
 ) {
     let Ok(action) = actions.get(click.entity) else {
         return;
     };
     sfx.write(Sfx::Click);
     match *action {
-        UiAction::ToggleSound => sound.0 = !sound.0,
         UiAction::Play => next.set(GameState::Playing),
-        UiAction::Options => next.set(GameState::Options),
+        UiAction::Settings => next.set(GameState::Options),
         UiAction::Back | UiAction::Menu => next.set(GameState::Menu),
         UiAction::Cycle(kind) => kind.cycle(&mut settings),
-        UiAction::Quit => {
-            exit.write(AppExit::Success);
-        }
     }
 }

@@ -1,9 +1,10 @@
 //! Écrans : accueil, chapitres, dialogues, barre de jeu, victoire, défaite.
 use bevy::prelude::*;
-use game_common::audio::SoundOn;
-use game_common::ui::{GameHelp, spawn_help_button, spawn_studio_logo};
+use game_common::langue::Texte;
+use game_common::tx;
+use game_common::ui::{GameHelp, pied_de_menu};
 use game_common::ui::{
-    PANEL, ThemedPanel, UiButton, UiKitPlugin, spawn_button, spawn_button_sized, spawn_gap, spawn_panel, spawn_panel_bottom,
+    PANEL, ThemedPanel, UiButton, spawn_button, spawn_button_sized, spawn_gap, spawn_panel, spawn_panel_bottom,
     spawn_panel_left, spawn_text,
 };
 
@@ -11,12 +12,13 @@ use crate::GameState;
 use crate::audio::UiClick;
 use crate::game::{Game, Mode, NextMode, NovaEvent};
 use crate::scene::{HOLD_POS, NEXT_POS};
-use crate::story::{BOULON_FOUR, BOULON_HALF, BOULON_WARNING, CHAPTERS, Line};
+use crate::story::{BOULON_FOUR, BOULON_HALF, BOULON_NOM, BOULON_WARNING, CHAPTERS, Line};
 
 const SAVE: &str = "nova";
 
 /// Aide du jeu (bouton « Aide » du menu).
-const HELP: &str = "Les blocs d'énergie tombent dans le bouclier.\n\
+const HELP: Texte = tx!(
+    "Les blocs d'énergie tombent dans le bouclier.\n\
 Chaque rangée complète tire le canon à ions sur le croiseur :\n\
 plusieurs rangées d'un coup, tir plus puissant !\n\
 Le croiseur riposte avec des rangées endommagées.\n\
@@ -26,7 +28,62 @@ Bas : accélérer · Espace : poser · C : réserve\n\
 M : son · Échap : menu\n\
 \n\
 Tactile : glisser pour déplacer, toucher pour tourner,\n\
-vers le bas pour poser, vers le haut pour la réserve.";
+vers le bas pour poser, vers le haut pour la réserve.",
+    "Energy blocks fall into the shield.\n\
+Every full row fires the ion cannon at the cruiser:\n\
+several rows at once make a stronger shot!\n\
+The cruiser strikes back with damaged rows.\n\
+\n\
+Left/right: move · Up: rotate\n\
+Down: speed up · Space: drop · C: hold\n\
+M: sound · Esc: menu\n\
+\n\
+Touch: slide to move, tap to rotate,\n\
+swipe down to drop, swipe up to hold.",
+    "Energieblöcke fallen in den Schild.\n\
+Jede volle Reihe feuert die Ionenkanone auf den Kreuzer:\n\
+mehrere Reihen auf einmal, stärkerer Schuss!\n\
+Der Kreuzer schlägt mit beschädigten Reihen zurück.\n\
+\n\
+Links/rechts: bewegen · Oben: drehen\n\
+Unten: beschleunigen · Leertaste: absetzen · C: Reserve\n\
+M: Ton · Esc: Menü\n\
+\n\
+Touch: wischen zum Bewegen, tippen zum Drehen,\n\
+nach unten zum Absetzen, nach oben für die Reserve.",
+    "I blocchi di energia cadono nello scudo.\n\
+Ogni fila completa spara il cannone a ioni sull'incrociatore:\n\
+più file in un colpo, tiro più potente!\n\
+L'incrociatore risponde con file danneggiate.\n\
+\n\
+Sinistra/destra: muovere · Su: ruotare\n\
+Giù: accelerare · Spazio: posare · C: riserva\n\
+M: audio · Esc: menu\n\
+\n\
+Touch: trascina per muovere, tocca per ruotare,\n\
+verso il basso per posare, verso l'alto per la riserva.",
+    "Los bloques de energía caen en el escudo.\n\
+Cada fila completa dispara el cañón de iones contra el crucero:\n\
+¡varias filas de golpe, disparo más potente!\n\
+El crucero responde con filas dañadas.\n\
+\n\
+Izquierda/derecha: mover · Arriba: girar\n\
+Abajo: acelerar · Espacio: soltar · C: reserva\n\
+M: sonido · Esc: menú\n\
+\n\
+Táctil: desliza para mover, toca para girar,\n\
+hacia abajo para soltar, hacia arriba para la reserva.",
+);
+
+const MENU: Texte = tx!("Menu", "Menu", "Menü", "Menu", "Menú");
+const BOUCLIER_CEDE: Texte = tx!(
+    "Le bouclier a cédé !",
+    "The shield gave way!",
+    "Der Schild ist gebrochen!",
+    "Lo scudo ha ceduto!",
+    "¡El escudo ha cedido!",
+);
+const MODE_INFINI: Texte = tx!("Mode infini", "Endless mode", "Endlosmodus", "Modalità infinita", "Modo infinito");
 
 pub struct UiPlugin;
 
@@ -34,8 +91,7 @@ impl Plugin for UiPlugin {
     fn build(&self, app: &mut App) {
         let unlocked = game_common::save::load(SAVE, "chapitres").and_then(|s| s.parse().ok()).unwrap_or(1usize).clamp(1, CHAPTERS.len());
         let record = game_common::save::load(SAVE, "record").and_then(|s| s.parse().ok()).unwrap_or(0u32);
-        app.add_plugins(UiKitPlugin { universe: game_common::universe::Universe::Nova })
-            .insert_resource(Progress { unlocked, record })
+        app.insert_resource(Progress { unlocked, record })
             .insert_resource(Dialog::default())
             .insert_resource(GameHelp(HELP))
             .add_systems(OnEnter(GameState::Menu), spawn_menu)
@@ -46,7 +102,7 @@ impl Plugin for UiPlugin {
             .add_systems(OnEnter(GameState::Defeat), spawn_defeat)
             .add_systems(
                 Update,
-                (update_hud, place_preview_labels, boulon_remarks, fade_toasts, update_dialog, update_sound_label, keyboard),
+                (update_hud, place_preview_labels, boulon_remarks, fade_toasts, update_dialog, keyboard),
             )
             .add_observer(on_click);
     }
@@ -77,13 +133,8 @@ enum UiAction {
     NextLine,
     NextChapter,
     Retry,
-    ToggleSound,
-    #[cfg_attr(any(target_os = "android", target_arch = "wasm32"), allow(dead_code))]
-    Quit,
 }
 
-#[derive(Component)]
-struct SoundLabel;
 #[derive(Component)]
 struct InfoText;
 #[derive(Component)]
@@ -111,29 +162,29 @@ fn button(c: &mut Commands, parent: Entity, label: impl Into<String>, action: Ui
     text
 }
 
-fn spawn_menu(mut c: Commands, progress: Res<Progress>, sound: Res<SoundOn>) {
+fn spawn_menu(mut c: Commands, progress: Res<Progress>) {
     let panel = spawn_panel_left(&mut c, DespawnOnExit(GameState::Menu));
-    spawn_text(&mut c, panel, "NOVA", 80.0);
-    spawn_text(&mut c, panel, "Le Dernier Rempart", 30.0);
-    spawn_gap(&mut c, panel, 6.0);
-    button(&mut c, panel, format!("Campagne : chapitre {}", progress.unlocked), UiAction::Campaign);
-    button(&mut c, panel, "Chapitres", UiAction::Chapters);
-    let record = if progress.record > 0 { format!("Mode infini (record {})", progress.record) } else { "Mode infini".into() };
+    spawn_text(&mut c, panel, "NOVA", 64.0);
+    spawn_text(&mut c, panel, tx!("Le Dernier Rempart", "The Last Bastion", "Das letzte Bollwerk", "L'ultimo baluardo", "El último bastión").t(), 30.0);
+    spawn_gap(&mut c, panel, 0.0);
+    let campagne = tx!("Campagne : chapitre {}", "Campaign: chapter {}", "Kampagne: Kapitel {}", "Campagna: capitolo {}", "Campaña: capítulo {}");
+    button(&mut c, panel, campagne.avec(&[&progress.unlocked]), UiAction::Campaign);
+    button(&mut c, panel, tx!("Chapitres", "Chapters", "Kapitel", "Capitoli", "Capítulos").t(), UiAction::Chapters);
+    let record = if progress.record > 0 {
+        tx!("{} (record {})", "{} (best {})", "{} (Rekord {})", "{} (record {})", "{} (récord {})").avec(&[&MODE_INFINI.t(), &progress.record])
+    } else {
+        MODE_INFINI.t().into()
+    };
     button(&mut c, panel, record, UiAction::Endless);
-    let t = button(&mut c, panel, sound.label(), UiAction::ToggleSound);
-    c.entity(t).insert(SoundLabel);
-    spawn_help_button(&mut c, panel);
-    #[cfg(not(any(target_os = "android", target_arch = "wasm32")))]
-    button(&mut c, panel, "Quitter", UiAction::Quit);
-    spawn_studio_logo(&mut c, panel);
+    pied_de_menu(&mut c, panel);
 }
 
 fn spawn_chapters(mut c: Commands, progress: Res<Progress>) {
     let panel = spawn_panel(&mut c, DespawnOnExit(GameState::Chapters));
-    spawn_text(&mut c, panel, "Chapitres", 40.0);
+    spawn_text(&mut c, panel, tx!("Chapitres", "Chapters", "Kapitel", "Capitoli", "Capítulos").t(), 40.0);
     for (i, ch) in CHAPTERS.iter().enumerate() {
         let open = i < progress.unlocked;
-        let label = if open { format!("{} · {}", i + 1, ch.name) } else { format!("{} · ???", i + 1) };
+        let label = if open { format!("{} · {}", i + 1, ch.name.t()) } else { format!("{} · ???", i + 1) };
         let (b, _) = spawn_button_sized(&mut c, panel, label, 320.0, 50.0, 22.0);
         if open {
             c.entity(b).insert(UiAction::Chapter(i));
@@ -142,7 +193,7 @@ fn spawn_chapters(mut c: Commands, progress: Res<Progress>) {
         }
     }
     spawn_gap(&mut c, panel, 4.0);
-    button(&mut c, panel, "Retour", UiAction::Back);
+    button(&mut c, panel, tx!("Retour", "Back", "Zurück", "Indietro", "Volver").t(), UiAction::Back);
 }
 
 /// Lance un chapitre : son introduction, puis la partie.
@@ -171,7 +222,7 @@ fn spawn_dialog_box(c: &mut Commands, scope: impl Bundle) {
     let text = spawn_text(c, panel, "", 22.0);
     c.entity(text).insert((DialogText, TextLayout::justify(Justify::Left)));
     let row = c.spawn((Node { width: Val::Percent(100.0), justify_content: JustifyContent::FlexEnd, ..default() }, ChildOf(panel))).id();
-    let (b, _) = spawn_button_sized(c, row, "Suite ›", 160.0, 44.0, 20.0);
+    let (b, _) = spawn_button_sized(c, row, tx!("Suite ›", "Next ›", "Weiter ›", "Avanti ›", "Seguir ›").t(), 160.0, 44.0, 20.0);
     c.entity(b).insert(UiAction::NextLine);
 }
 
@@ -192,19 +243,27 @@ fn spawn_victory_panel(c: &mut Commands, game: &Game) {
     let panel = spawn_panel(c, DespawnOnExit(GameState::Victory));
     let last = game.chapter() == Some(CHAPTERS.len() - 1);
     if last {
-        spawn_text(c, panel, "Nova est libre !", 48.0);
-        spawn_text(c, panel, "Merci d'avoir défendu la colonie.\nLe mode infini vous attend pour battre des records.", 20.0);
+        spawn_text(c, panel, tx!("Nova est libre !", "Nova is free!", "Nova ist frei!", "Nova è libera!", "¡Nova es libre!").t(), 48.0);
+        let merci = tx!(
+            "Merci d'avoir défendu la colonie.\nLe mode infini vous attend pour battre des records.",
+            "Thank you for defending the colony.\nEndless mode awaits you for record runs.",
+            "Danke, dass du die Kolonie verteidigt hast.\nIm Endlosmodus kannst du jetzt Rekorde jagen.",
+            "Grazie per aver difeso la colonia.\nLa modalità infinita ti aspetta per battere i record.",
+            "Gracias por defender la colonia.\nEl modo infinito te espera para batir récords.",
+        );
+        spawn_text(c, panel, merci.t(), 20.0);
     } else {
-        spawn_text(c, panel, "Chapitre réussi !", 44.0);
+        spawn_text(c, panel, tx!("Chapitre réussi !", "Chapter complete!", "Kapitel geschafft!", "Capitolo superato!", "¡Capítulo superado!").t(), 44.0);
     }
-    spawn_text(c, panel, format!("Score : {}    Lignes : {}", game.score, game.lines), 22.0);
+    let bilan = tx!("Score : {}    Lignes : {}", "Score: {}    Lines: {}", "Punkte: {}    Reihen: {}", "Punti: {}    Righe: {}", "Puntos: {}    Líneas: {}");
+    spawn_text(c, panel, bilan.avec(&[&game.score, &game.lines]), 22.0);
     spawn_gap(c, panel, 4.0);
     if last {
-        button(c, panel, "Mode infini", UiAction::Endless);
+        button(c, panel, MODE_INFINI.t(), UiAction::Endless);
     } else {
-        button(c, panel, "Chapitre suivant", UiAction::NextChapter);
+        button(c, panel, tx!("Chapitre suivant", "Next chapter", "Nächstes Kapitel", "Capitolo successivo", "Capítulo siguiente").t(), UiAction::NextChapter);
     }
-    button(c, panel, "Menu", UiAction::Menu);
+    button(c, panel, MENU.t(), UiAction::Menu);
 }
 
 fn spawn_defeat(mut c: Commands, game: Res<Game>, mut progress: ResMut<Progress>) {
@@ -215,14 +274,23 @@ fn spawn_defeat(mut c: Commands, game: Res<Game>, mut progress: ResMut<Progress>
             progress.record = game.score;
             game_common::save::store(SAVE, "record", &game.score.to_string());
         }
-        spawn_text(&mut c, panel, if new { "Nouveau record !" } else { "Le bouclier a cédé !" }, 40.0);
-        spawn_text(&mut c, panel, format!("Score : {}    Record : {}", game.score, progress.record), 22.0);
+        let titre = if new { tx!("Nouveau record !", "New record!", "Neuer Rekord!", "Nuovo record!", "¡Nuevo récord!").t() } else { BOUCLIER_CEDE.t() };
+        spawn_text(&mut c, panel, titre, 40.0);
+        let bilan = tx!("Score : {}    Record : {}", "Score: {}    Best: {}", "Punkte: {}    Rekord: {}", "Punti: {}    Record: {}", "Puntos: {}    Récord: {}");
+        spawn_text(&mut c, panel, bilan.avec(&[&game.score, &progress.record]), 22.0);
     } else {
-        spawn_text(&mut c, panel, "Le bouclier a cédé !", 40.0);
-        spawn_text(&mut c, panel, "Boulon : « On recommence ? Cette fois, je ne tremble pas. »", 20.0);
+        spawn_text(&mut c, panel, BOUCLIER_CEDE.t(), 40.0);
+        let replique = tx!(
+            "{} : « On recommence ? Cette fois, je ne tremble pas. »",
+            "{}: \"Again? This time I won't shake.\"",
+            "{}: „Noch mal? Diesmal zittere ich nicht.“",
+            "{}: «Riproviamo? Stavolta non tremo.»",
+            "{}: «¿Otra vez? Esta vez no tiemblo.»",
+        );
+        spawn_text(&mut c, panel, replique.avec(&[&BOULON_NOM.t()]), 20.0);
     }
-    button(&mut c, panel, "Réessayer", UiAction::Retry);
-    button(&mut c, panel, "Menu", UiAction::Menu);
+    button(&mut c, panel, tx!("Réessayer", "Retry", "Nochmal", "Riprova", "Reintentar").t(), UiAction::Retry);
+    button(&mut c, panel, MENU.t(), UiAction::Menu);
 }
 
 /// Barre de jeu : infos à gauche, coque du croiseur en haut, alarme, étiquettes.
@@ -283,7 +351,11 @@ fn spawn_hud(mut c: Commands, mode: Option<Res<NextMode>>) {
     }
     for hold in [false, true] {
         c.spawn((
-            Text::new(if hold { "Réserve" } else { "Suivant" }),
+            Text::new(if hold {
+                tx!("Réserve", "Hold", "Reserve", "Riserva", "Reserva").t()
+            } else {
+                tx!("Suivant", "Next", "Nächster", "Prossimo", "Siguiente").t()
+            }),
             TextFont::from_font_size(18.0),
             TextColor(Color::srgb(0.75, 0.9, 1.0)),
             Node { position_type: PositionType::Absolute, ..default() },
@@ -303,22 +375,32 @@ fn update_hud(
     mut fill: Query<&mut Node, With<HullFill>>,
 ) {
     let title = match game.mode {
-        Mode::Campaign(i) => format!("Chapitre {} · {}", i + 1, CHAPTERS[i].name),
-        Mode::Endless => format!("Mode infini · vitesse {}", game.lines / 5 + 1),
+        Mode::Campaign(i) => tx!("Chapitre {} · {}", "Chapter {} · {}", "Kapitel {} · {}", "Capitolo {} · {}", "Capítulo {} · {}")
+            .avec(&[&(i + 1), &CHAPTERS[i].name.t()]),
+        Mode::Endless => tx!("{} · vitesse {}", "{} · speed {}", "{} · Tempo {}", "{} · velocità {}", "{} · velocidad {}")
+            .avec(&[&MODE_INFINI.t(), &(game.lines / 5 + 1)]),
     };
+    let infos = tx!("{}\nScore : {}\nLignes : {}", "{}\nScore: {}\nLines: {}", "{}\nPunkte: {}\nReihen: {}", "{}\nPunti: {}\nRighe: {}", "{}\nPuntos: {}\nLíneas: {}");
     for mut t in &mut info {
-        t.0 = format!("{title}\nScore : {}\nLignes : {}", game.score, game.lines);
+        t.0 = infos.avec(&[&title, &game.score, &game.lines]);
     }
     let pct = if game.hull_max > 0.0 { game.hull / game.hull_max * 100.0 } else { 0.0 };
     for mut t in &mut hull_text {
-        t.0 = format!("Croiseur de l'Hégémonie — coque {:.0} %", pct.ceil());
+        t.0 = tx!(
+            "Croiseur de l'Hégémonie — coque {} %",
+            "Hegemony cruiser — hull {}%",
+            "Kreuzer der Hegemonie — Hülle {} %",
+            "Incrociatore dell'Egemonia — scafo {}%",
+            "Crucero de la Hegemonía — casco {} %",
+        )
+        .avec(&[&format!("{:.0}", pct.ceil())]);
     }
     for mut n in &mut fill {
         n.width = Val::Percent(pct);
     }
     let blink = (time.elapsed_secs() * 6.0).sin() > 0.0;
     for mut t in &mut warn {
-        t.0 = if game.warning > 0.0 && blink { "! Tir ennemi imminent !".into() } else { String::new() };
+        t.0 = if game.warning > 0.0 && blink { tx!("! Tir ennemi imminent !", "! Enemy fire incoming !", "! Feindlicher Schuss droht !", "! Fuoco nemico imminente !", "¡ Disparo enemigo inminente !").t().into() } else { String::new() };
     }
 }
 
@@ -375,7 +457,7 @@ fn boulon_remarks(mut c: Commands, mut events: MessageReader<NovaEvent>, mut gam
             DespawnOnExit(GameState::Playing),
         ))
         .id();
-    let t = spawn_text(&mut c, bubble, format!("Boulon : « {text} »"), 18.0);
+    let t = spawn_text(&mut c, bubble, tx!("{} : « {} »", "{}: \"{}\"", "{}: „{}“", "{}: «{}»", "{}: «{}»").avec(&[&BOULON_NOM.t(), &text.t()]), 18.0);
     c.entity(t).insert(TextLayout::justify(Justify::Left));
 }
 
@@ -399,7 +481,7 @@ fn update_dialog(
         color.0 = who.color();
     }
     for mut t in &mut text {
-        t.0 = line.into();
+        t.0 = line.t().into();
     }
 }
 
@@ -425,14 +507,6 @@ fn advance_dialog(
             spawn_victory_panel(c, game);
         }
         _ => {}
-    }
-}
-
-fn update_sound_label(sound: Res<SoundOn>, mut labels: Query<&mut Text, With<SoundLabel>>) {
-    if sound.is_changed() {
-        for mut t in &mut labels {
-            t.0 = sound.label().into();
-        }
     }
 }
 
@@ -471,9 +545,7 @@ fn on_click(
     progress: Res<Progress>,
     game: Res<Game>,
     boxes: Query<Entity, With<DialogBox>>,
-    mut sound: ResMut<SoundOn>,
     mut clicks: MessageWriter<UiClick>,
-    mut exit: MessageWriter<AppExit>,
 ) {
     let Ok(action) = actions.get(click.entity) else { return };
     clicks.write(UiClick);
@@ -492,9 +564,5 @@ fn on_click(
             start_chapter(&mut c, &mut dialog, &mut next, i);
         }
         UiAction::Retry => next.set(GameState::Playing),
-        UiAction::ToggleSound => sound.0 = !sound.0,
-        UiAction::Quit => {
-            exit.write(AppExit::Success);
-        }
     }
 }

@@ -1,5 +1,6 @@
-//! Options du jeu, modifiables depuis l'écran d'options.
+//! Réglages du jeu, modifiables depuis l'écran « Réglages ».
 use bevy::prelude::*;
+use game_common::tx;
 
 use crate::world::Universe;
 
@@ -69,26 +70,36 @@ impl OptionKind {
 
     pub fn text(self, s: &Settings) -> String {
         let (label, value) = match self {
-            OptionKind::Universe => ("Univers", s.universe.label()),
+            OptionKind::Universe => (tx!("Univers :", "World:", "Welt:", "Mondo:", "Mundo:"), s.universe.label()),
             OptionKind::Speed => (
-                "Vitesse",
+                tx!("Vitesse :", "Speed:", "Tempo:", "Velocità:", "Velocidad:"),
                 match s.speed {
-                    Speed::Lente => "Lente",
-                    Speed::Normale => "Normale",
-                    Speed::Rapide => "Rapide",
-                },
+                    Speed::Lente => tx!("Lente", "Slow", "Langsam", "Lenta", "Lenta"),
+                    Speed::Normale => tx!("Normale", "Normal", "Normal", "Normale", "Normal"),
+                    Speed::Rapide => tx!("Rapide", "Fast", "Schnell", "Veloce", "Rápida"),
+                }
+                .t(),
             ),
             OptionKind::Size => (
-                "Plateau",
+                tx!("Plateau :", "Board:", "Spielfeld:", "Campo:", "Tablero:"),
                 match s.size {
-                    BoardSize::Petit => "Petit",
-                    BoardSize::Moyen => "Moyen",
-                    BoardSize::Grand => "Grand",
-                },
+                    BoardSize::Petit => tx!("Petit", "Small", "Klein", "Piccolo", "Pequeño"),
+                    BoardSize::Moyen => tx!("Moyen", "Medium", "Mittel", "Medio", "Mediano"),
+                    BoardSize::Grand => tx!("Grand", "Large", "Groß", "Grande", "Grande"),
+                }
+                .t(),
             ),
-            OptionKind::Edges => ("Bords", if s.wrap { "Traversables" } else { "Murs" }),
+            OptionKind::Edges => (
+                tx!("Bords :", "Edges:", "Ränder:", "Bordi:", "Bordes:"),
+                if s.wrap {
+                    tx!("Traversables", "Wrap around", "Durchlässig", "Attraversabili", "Atravesables")
+                } else {
+                    tx!("Murs", "Walls", "Wände", "Muri", "Muros")
+                }
+                .t(),
+            ),
         };
-        format!("{label} :  {value}")
+        format!("{}  {}", label.t(), value)
     }
 
     pub fn cycle(self, s: &mut Settings) {

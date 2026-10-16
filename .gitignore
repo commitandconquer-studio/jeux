@@ -2,3 +2,10 @@
 dist/
 # Captures d’écran générées par SNAKE_CAPTURE / TRAVERSEE_CAPTURE
 captures/
+
+# Site généré par Zola
+site/public/
+# Jeux compilés pour le web (tools/build-web.sh)
+site/static/jouer/
+# Réglages locaux du serveur de développement (adresse du réseau local)
+.claude/launch.json

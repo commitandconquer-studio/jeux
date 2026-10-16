@@ -1,7 +1,7 @@
 //! Les univers : plateau, sol, décor et lumière.
 use bevy::light::NotShadowCaster;
 use bevy::prelude::*;
-use game_common::{Rng, flat_material, palette};
+use game_common::{Rng, flat_material, palette, tx};
 
 use crate::settings::Settings;
 
@@ -29,12 +29,13 @@ impl Universe {
 
     pub fn label(self) -> &'static str {
         match self {
-            Universe::Prairie => "Prairie",
-            Universe::Desert => "Désert",
-            Universe::Banquise => "Banquise",
-            Universe::Ocean => "Océan",
-            Universe::Volcan => "Volcan",
+            Universe::Prairie => tx!("Prairie", "Meadow", "Wiese", "Prateria", "Pradera"),
+            Universe::Desert => tx!("Désert", "Desert", "Wüste", "Deserto", "Desierto"),
+            Universe::Banquise => tx!("Banquise", "Ice floe", "Packeis", "Banchisa", "Banquisa"),
+            Universe::Ocean => tx!("Océan", "Ocean", "Ozean", "Oceano", "Océano"),
+            Universe::Volcan => tx!("Volcan", "Volcano", "Vulkan", "Vulcano", "Volcán"),
         }
+        .t()
     }
 
     fn theme(self) -> Theme {

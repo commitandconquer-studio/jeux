@@ -1,7 +1,7 @@
 //! Sons et musiques, tirés de la bibliothèque commune (`assets/sounds/`).
 use bevy::audio::Volume;
 use bevy::prelude::*;
-use game_common::audio::{AudioKitPlugin, Mutable, SoundOn};
+use game_common::audio::{Musique, Mutable, SoundOn};
 use game_common::sounds as lib;
 
 use crate::settings::Settings;
@@ -11,8 +11,7 @@ pub struct AudioPlugin;
 
 impl Plugin for AudioPlugin {
     fn build(&self, app: &mut App) {
-        app.add_plugins(AudioKitPlugin)
-            .add_message::<Sfx>()
+        app.add_message::<Sfx>()
             .add_systems(Update, (switch_music, play_sfx));
     }
 }
@@ -63,6 +62,7 @@ fn switch_music(
         // Démarre en sourdine si le son est coupé.
         PlaybackSettings { muted: !sound.0, ..settings },
         Music,
+        Musique,
         Mutable,
     ));
 }

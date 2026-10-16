@@ -1,7 +1,7 @@
 //! Sons et musique, tirés de la bibliothèque commune (`assets/sounds/`).
 use bevy::audio::Volume;
 use bevy::prelude::*;
-use game_common::audio::{AudioKitPlugin, Mutable, SoundOn};
+use game_common::audio::{Musique, Mutable, SoundOn};
 use game_common::sounds as lib;
 
 use crate::GameState;
@@ -11,8 +11,7 @@ pub struct AudioPlugin;
 
 impl Plugin for AudioPlugin {
     fn build(&self, app: &mut App) {
-        app.add_plugins(AudioKitPlugin)
-            .add_message::<UiClick>()
+        app.add_message::<UiClick>()
             .add_systems(Startup, start_music)
             .add_systems(Update, play_sounds);
     }
@@ -26,6 +25,7 @@ fn start_music(mut commands: Commands, server: Res<AssetServer>) {
     commands.spawn((
         AudioPlayer::new(server.load(lib::MUSIC_NOVA)),
         PlaybackSettings::LOOP.with_volume(Volume::Linear(0.3)),
+        Musique,
         Mutable,
     ));
 }

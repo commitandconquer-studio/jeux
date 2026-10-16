@@ -28,7 +28,8 @@ impl Plugin for UiKitPlugin {
             .add_systems(PostUpdate, (apply_font, apply_theme, fill_logo))
             .add_observer(on_over)
             .add_observer(on_out)
-            .add_observer(on_help);
+            .add_observer(on_help)
+            .add_observer(on_quit);
         if std::env::var_os("CC_OPEN_HELP").is_some() {
             app.add_systems(Update, open_help_for_test);
         }
@@ -56,6 +57,11 @@ pub struct ButtonColor(pub Color);
 #[derive(Component)]
 pub struct ThemedPanel;
 
+/// Panneau d'une fenêtre (Options, Aide, Ambiance) : fond de l'univers, mais
+/// opaque, pour rester lisible au-dessus du menu.
+#[derive(Component)]
+pub struct PanneauOpaque;
+
 /// Marque un texte : couleur de l'univers (s'il n'a pas reçu d'autre couleur).
 #[derive(Component)]
 pub struct ThemedText;
@@ -76,13 +82,13 @@ fn apply_font(font: Res<UiFont>, mut texts: Query<&mut TextFont, (Added<TextFont
 #[allow(clippy::type_complexity)]
 fn apply_theme(
     theme: Res<UiTheme>,
-    mut panels: Query<(&mut BackgroundColor, &mut BorderColor), (Added<ThemedPanel>, Without<UiButton>)>,
+    mut panels: Query<(&mut BackgroundColor, &mut BorderColor, Has<PanneauOpaque>), (Added<ThemedPanel>, Without<UiButton>)>,
     mut buttons: Query<(&mut BackgroundColor, &mut BorderColor, Option<&ButtonColor>), (Added<UiButton>, Without<ThemedPanel>)>,
     mut texts: Query<&mut TextColor, Added<ThemedText>>,
 ) {
     let s = &theme.0;
-    for (mut bg, mut border) in &mut panels {
-        bg.0 = s.panel;
+    for (mut bg, mut border, opaque) in &mut panels {
+        bg.0 = if opaque { s.panel.with_alpha(1.0) } else { s.panel };
         *border = BorderColor::all(s.panel_border);
     }
     for (mut bg, mut border, own) in &mut buttons {
@@ -315,9 +321,10 @@ pub fn spawn_studio_logo(commands: &mut Commands, parent: Entity) -> Entity {
     row
 }
 
-/// Texte d'aide du jeu (règle et commandes), affiché par le bouton « Aide ».
+/// Texte d'aide du jeu (règle et commandes) dans les cinq langues, affiché
+/// par le bouton « Aide ».
 #[derive(Resource, Clone)]
-pub struct GameHelp(pub &'static str);
+pub struct GameHelp(pub crate::langue::Texte);
 
 /// Bouton qui ouvre l'aide (voir `GameHelp`).
 #[derive(Component)]
@@ -333,7 +340,7 @@ struct HelpOverlay;
 
 /// Bouton « Aide » de taille standard.
 pub fn spawn_help_button(commands: &mut Commands, parent: Entity) -> Entity {
-    let (button, _) = spawn_button(commands, parent, "Aide");
+    let (button, _) = spawn_button(commands, parent, tx!("Aide", "Help", "Hilfe", "Aiuto", "Ayuda").t());
     commands.entity(button).insert(HelpButton);
     button
 }
@@ -341,12 +348,13 @@ pub fn spawn_help_button(commands: &mut Commands, parent: Entity) -> Entity {
 fn open_help(commands: &mut Commands, help: Option<&GameHelp>) {
     // Le panneau d'aide passe au-dessus du menu et voile la scène.
     let panel = spawn_panel(commands, (HelpOverlay, BackgroundColor(Color::srgba(0.0, 0.0, 0.0, 0.35)), GlobalZIndex(50)));
-    spawn_text(commands, panel, "Aide", 40.0);
-    let text = help.map_or("Pas d'aide pour ce jeu.", |h| h.0);
+    commands.entity(panel).insert(PanneauOpaque);
+    spawn_text(commands, panel, tx!("Aide", "Help", "Hilfe", "Aiuto", "Ayuda").t(), 40.0);
+    let text = help.map_or("", |h| h.0.t());
     let t = spawn_text(commands, panel, text, 19.0);
     commands.entity(t).insert(TextLayout::justify(Justify::Left));
     spawn_gap(commands, panel, 4.0);
-    let (b, _) = spawn_button(commands, panel, "Fermer");
+    let (b, _) = spawn_button(commands, panel, tx!("Fermer", "Close", "Schließen", "Chiudi", "Cerrar").t());
     commands.entity(b).insert(HelpClose);
 }
 
@@ -373,4 +381,28 @@ fn on_help(
             commands.entity(e).despawn();
         }
     }
+}
+
+/// Bouton « Quitter » commun (absent dans le navigateur et sur Android).
+#[derive(Component)]
+pub struct QuitButton;
+
+fn on_quit(click: On<PointerClick>, q: Query<(), With<QuitButton>>, mut exit: MessageWriter<AppExit>) {
+    if q.contains(click.entity) {
+        exit.write(AppExit::Success);
+    }
+}
+
+/// Le pied de tous les menus du studio : Options, Aide, Quitter (sauf dans le
+/// navigateur et sur Android) et le logo. Les boutons propres au jeu viennent
+/// avant. Le jeu fournit son texte d'aide avec la ressource `GameHelp`.
+pub fn pied_de_menu(commands: &mut Commands, panel: Entity) {
+    crate::options::spawn_options_button(commands, panel);
+    spawn_help_button(commands, panel);
+    #[cfg(not(any(target_os = "android", target_arch = "wasm32")))]
+    {
+        let (b, _) = spawn_button(commands, panel, tx!("Quitter", "Quit", "Beenden", "Esci", "Salir").t());
+        commands.entity(b).insert(QuitButton);
+    }
+    spawn_studio_logo(commands, panel);
 }
