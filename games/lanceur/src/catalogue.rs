@@ -128,6 +128,19 @@ pub const JEUX: &[Jeu] = &[
         univers: Universe::Eureka,
         icone: icone!("concile"),
     },
+    Jeu {
+        id: "observatoire",
+        nom: tx!("L'Observatoire", "The Observatory", "Die Sternwarte", "L'Osservatorio", "El Observatorio"),
+        description: tx!(
+            "Soleils et lunes sur la carte du ciel : autant de chaque, jamais trois à la suite.",
+            "Suns and moons on the star chart: as many of each, never three in a row.",
+            "Sonnen und Monde auf der Himmelskarte: gleich viele, nie drei in Folge.",
+            "Soli e lune sulla mappa del cielo: tanti degli uni quanti delle altre, mai tre di fila.",
+            "Soles y lunas en la carta celeste: tantos de cada, nunca tres seguidos.",
+        ),
+        univers: Universe::Eureka,
+        icone: icone!("observatoire"),
+    },
 ];
 
 /// Les univers, dans l'ordre d'affichage.
