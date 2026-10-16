@@ -13,7 +13,7 @@ Les jeux ne sont pas reliés par une histoire, mais chacun appartient à un **un
 | Univers | Ambiance | Interface | Jeux |
 |---|---|---|---|
 | 🐸 **Croâ & Cie** | Enfantin et sympa : jouets en bois, pastels, animaux (le crapaud en mascotte) | Panneaux crème, police Noto Sans | Snake, Traversée, Tour de blocs, Pousse-caisses |
-| 🚀 **Nova** | Science-fiction : espace profond, néons, vaisseaux | Panneaux sombres à bordure cyan, police Space Grotesk, fond spatial commun (`game_common::space`) | NOVA — Le Dernier Rempart |
+| 🚀 **Nova** | Science-fiction : espace profond, néons, vaisseaux | Panneaux sombres à bordure cyan, police Space Grotesk, fond spatial commun (`game_common::space`) | NOVA — Le Dernier Rempart, 12 Parsecs |
 | 🔬 **Eurêka** | Sciences et maths : cahier quadrillé, feutres, laboratoire | Fiches bristol à bordure bleue, police Gelasio | 2048, Le Concile des Évêques |
 
 ## Structure
@@ -29,6 +29,8 @@ games/pousse-caisses/ Pousse-caisses : le crapaud range les caisses (12 niveaux)
 games/nova/           NOVA — Le Dernier Rempart : blocs d'énergie contre l'Hégémonie
 games/eureka-2048/    2048 (univers Eurêka) : fusionner les puissances de 2
 games/concile/        Le Concile des Évêques (univers Eurêka) : un évêque par diocèse
+games/parsecs/        12 Parsecs (univers Nova) : la traversée d'une ceinture d'astéroïdes
+games/modele/         le jeu modèle : point de départ de tout nouveau jeu
 crates/concile-core/  grilles, solveurs et générateur du Concile (sans Bevy)
 tools/concile-gen/    génère le Livre des Conciles (games/concile/puzzles.txt)
 tools/logo-gen/       rend l'emblème du studio en PNG (assets/branding/)
@@ -193,6 +195,19 @@ zola --root site serve
 Les jeux compilés (`site/static/jouer/`, non versionnés) se jouent sur `/jouer/<jeu>/`. La sauvegarde utilise alors le stockage du navigateur.
 
 En ligne, c'est l'action GitHub `.github/workflows/site.yml` qui compile les jeux et publie le site sur https://commitandconquer.fr à chaque envoi sur `main`.
+
+### 12 Parsecs — Nova
+
+```bash
+cargo run -p parsecs
+```
+
+- Traversez les **12 parsecs** d'une ceinture d'astéroïdes : un parsec toutes les 25 secondes, de plus en plus dense, un boss tous les trois parsecs, puis le jeu continue sans fin pour le record.
+- Rochers glacés (ils ralentissent), métalliques (plus durs), explosifs (ils emportent leurs voisins) ; soucoupes et drones de l'Hégémonie ; sept bonus (bouclier, tir triple, laser, missiles, ralenti, aimant, vie).
+- **Le hangar** : on commence avec la Faucheuse ; le **total des points cumulés** débloque le Bourdon, l'Aiguillon et le Cargo Libre, chacun avec sa façon de voler et de tirer, et trois livrées par vaisseau.
+- **Le pilote et Boulon** commentent la traversée (cinq langues). **Défi du jour** : la même traversée pour tout le monde, atteindre le parsec 4.
+- Réglages : pilotage direct ou classique (tourner et accélérer), tir automatique.
+- Cahier des charges : [docs/jeux/12-parsecs.md](docs/jeux/12-parsecs.md). Tests : `cargo test -p parsecs`. Captures : `PARSECS_CAPTURE=captures cargo run -p parsecs`.
 
 ## Bibliothèque commune (`assets/`)
 

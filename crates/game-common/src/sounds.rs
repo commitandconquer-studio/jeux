@@ -32,6 +32,10 @@ pub const EXPLOSION: &str = "sounds/sfx/explosion.wav";
 pub const STAMP: &str = "sounds/sfx/stamp.wav";
 pub const QUILL: &str = "sounds/sfx/quill.wav";
 pub const CHURCH_BELLS: &str = "sounds/sfx/churchbells.wav";
+pub const ROCK: &str = "sounds/sfx/rock.wav";
+pub const POWER_UP: &str = "sounds/sfx/powerup.wav";
+pub const SHIELD: &str = "sounds/sfx/shield.wav";
+pub const CHATTER: &str = "sounds/sfx/chatter.wav";
 
 // Musiques (en boucle)
 pub const MUSIC_CAMPAGNE: &str = "sounds/music/campagne.wav";
@@ -43,6 +47,7 @@ pub const MUSIC_VOLCAN: &str = "sounds/music/volcan.wav";
 pub const MUSIC_ZEN: &str = "sounds/music/zen.wav";
 pub const MUSIC_NOVA: &str = "sounds/music/nova.wav";
 pub const MUSIC_ORGUE: &str = "sounds/music/orgue.wav";
+pub const MUSIC_PARSECS: &str = "sounds/music/parsecs.wav";
 
 // Polices (une par univers ; toutes sous licence OFL, voir assets/fonts/)
 /// Croâ & Cie : Noto Sans, ronde et lisible.

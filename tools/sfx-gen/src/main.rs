@@ -485,6 +485,75 @@ fn explosion() -> Buf {
     b
 }
 
+// ---------------------------------------------------------- 12 Parsecs ----
+
+/// Rocher qui se brise : craquement grave et éclats.
+fn rock_break() -> Buf {
+    let mut b = Buf::new(0.5);
+    let mut n = Noise(4_407);
+    let mut lp = LowPass::default();
+    b.add(0.0, 0.5, |t| {
+        let cutoff = 300.0 + 1_800.0 * (-t / 0.06).exp();
+        let crack = lp.run(n.next(), cutoff) * env(t, 0.001, 0.12) * 2.5;
+        let thud = sweep_phase(t, 120.0, 50.0, 0.3).sin() * env(t, 0.002, 0.08);
+        crack + thud
+    });
+    b.normalize(0.7);
+    b
+}
+
+/// Bonus ramassé : petit arpège montant et brillant.
+fn power_up() -> Buf {
+    let mut b = Buf::new(0.5);
+    for (k, m) in [72.0, 76.0, 79.0, 84.0].iter().enumerate() {
+        let f = note(*m);
+        b.add(k as f32 * 0.07, 0.25, |t| ((TAU * f * t).sin() + 0.3 * (TAU * 2.0 * f * t).sin()) * env(t, 0.003, 0.09));
+    }
+    b.normalize(0.55);
+    b
+}
+
+/// Impact sur le bouclier : « vloum » électrique.
+fn shield_hit() -> Buf {
+    let mut b = Buf::new(0.35);
+    let mut n = Noise(812);
+    b.add(0.0, 0.35, |t| {
+        let p = sweep_phase(t, 520.0, 140.0, 0.35);
+        let buzz = (4.0 * p.sin()).tanh() * (0.6 + 0.4 * (TAU * 55.0 * t).sin());
+        (buzz * 0.8 + n.next() * 0.25) * env(t, 0.002, 0.1)
+    });
+    b.normalize(0.6);
+    b
+}
+
+/// « Blabla » électronique de Boulon : quelques bips qui changent de ton.
+fn chatter() -> Buf {
+    let mut b = Buf::new(0.42);
+    for (k, f) in [880.0, 1_175.0, 990.0, 1_320.0, 1_050.0].iter().enumerate() {
+        let f = *f;
+        b.add(k as f32 * 0.075, 0.06, |t| (2.0 * (TAU * f * t).sin()).tanh() * env(t, 0.002, 0.03));
+    }
+    b.normalize(0.35);
+    b
+}
+
+/// Musique de la traversée : synthé en dents de scie, mi mineur, 132 BPM.
+fn parsecs_music() -> Buf {
+    theme(&Theme {
+        bpm: 132.0,
+        chords: [[52.0, 55.0, 59.0], [48.0, 52.0, 55.0], [55.0, 59.0, 62.0], [50.0, 54.0, 57.0]],
+        bass: &[0.0, 0.5, 1.0, 1.5, 2.0, 2.5, 3.0, 3.5],
+        pad: true,
+        lead: Lead::Saw,
+        melody: [
+            76.0, 0.0, 79.0, 0.0, 83.0, 0.0, 81.0, 79.0, 76.0, 0.0, 0.0, 74.0, 72.0, 0.0, 74.0, 0.0, //
+            79.0, 0.0, 81.0, 83.0, 86.0, 0.0, 83.0, 0.0, 81.0, 79.0, 78.0, 0.0, 76.0, 0.0, 0.0, 0.0,
+        ],
+        drums: Drums::HiHat,
+        waves: false,
+    })
+}
+
 #[derive(Clone, Copy)]
 enum Lead {
     Pluck,
@@ -849,6 +918,11 @@ fn main() -> std::io::Result<()> {
         ("sfx/alarm", "Alarme à deux tons", alarm()),
         ("sfx/explosion", "Grosse explosion lointaine", explosion()),
         ("music/nova", "Musique épique de space opera, la mineur, 124 BPM", nova_music()),
+        ("sfx/rock", "Rocher qui se brise (craquement et éclats)", rock_break()),
+        ("sfx/powerup", "Bonus ramassé : arpège montant", power_up()),
+        ("sfx/shield", "Impact sur le bouclier", shield_hit()),
+        ("sfx/chatter", "« Blabla » électronique d'un petit robot", chatter()),
+        ("music/parsecs", "Musique de traversée spatiale, mi mineur, 132 BPM", parsecs_music()),
         ("sfx/stamp", "Sceau de cire posé (« tchac »)", stamp()),
         ("sfx/quill", "Plume qui gratte le parchemin (deux traits)", quill()),
         ("sfx/churchbells", "Carillon de cloches d'église", church_bells()),
