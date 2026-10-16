@@ -1,11 +1,25 @@
 //! Écrans : accueil, fin de partie, et affichage du score.
 use bevy::prelude::*;
 use game_common::Score;
+use game_common::ui::{GameHelp, spawn_help_button, spawn_studio_logo};
 use game_common::ui::{UiKitPlugin, spawn_button, spawn_gap, spawn_hud, spawn_panel, spawn_text};
 
 use crate::GameState;
 use crate::audio::{Sfx, SoundOn};
 use crate::frog::Death;
+
+/// Aide du jeu (bouton « Aide » du menu).
+const HELP: &str = "Aidez le crapaud à aller le plus loin possible !\n\
+\n\
+Herbe : arbres et rochers bloquent le passage.\n\
+Routes : attention aux voitures et aux camions.\n\
+Rivières : sautez sur les rondins et les nénuphars.\n\
+Voies ferrées : le feu clignote avant le train.\n\
+La caméra avance toute seule : ne traînez pas !\n\
+\n\
+Flèches ou ZQSD, Espace ou clic : avancer\n\
+Tactile : glisser du doigt\n\
+M : son · Échap : menu";
 
 pub struct UiPlugin;
 
@@ -13,6 +27,7 @@ impl Plugin for UiPlugin {
     fn build(&self, app: &mut App) {
         app.add_plugins(UiKitPlugin { universe: game_common::universe::Universe::Croa })
             .add_systems(Startup, setup_hud)
+            .insert_resource(GameHelp(HELP))
             .add_systems(OnEnter(GameState::Menu), spawn_menu)
             .add_systems(OnEnter(GameState::GameOver), spawn_game_over)
             .add_systems(Update, (update_hud, update_sound_label, keyboard_shortcuts))
@@ -48,16 +63,14 @@ fn button(commands: &mut Commands, parent: Entity, label: &str, action: UiAction
 fn spawn_menu(mut commands: Commands, sound: Res<SoundOn>) {
     let panel = spawn_panel(&mut commands, DespawnOnExit(GameState::Menu));
     spawn_text(&mut commands, panel, "TRAVERSÉE", 64.0);
-    spawn_text(&mut commands, panel, "un jeu Commit & Conquer", 20.0);
-    spawn_gap(&mut commands, panel, 4.0);
-    spawn_text(&mut commands, panel, "Aidez le crapaud à traverser !", 22.0);
-    spawn_text(&mut commands, panel, "Flèches ou ZQSD · Espace · ou glissez du doigt", 16.0);
     spawn_gap(&mut commands, panel, 8.0);
     button(&mut commands, panel, "Jouer", UiAction::Play);
     let label = button(&mut commands, panel, sound.label(), UiAction::ToggleSound);
     commands.entity(label).insert(SoundLabel);
+    spawn_help_button(&mut commands, panel);
     #[cfg(not(any(target_os = "android", target_arch = "wasm32")))]
     button(&mut commands, panel, "Quitter", UiAction::Quit);
+    spawn_studio_logo(&mut commands, panel);
 }
 
 fn spawn_game_over(mut commands: Commands, score: Res<Score>, death: Res<Death>) {

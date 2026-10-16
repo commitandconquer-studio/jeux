@@ -1,6 +1,7 @@
 //! Écrans : accueil, choix du niveau, barre de jeu, niveau réussi.
 use bevy::prelude::*;
 use game_common::audio::SoundOn;
+use game_common::ui::{GameHelp, spawn_help_button, spawn_studio_logo};
 use game_common::ui::{
     PANEL, UiButton, UiKitPlugin, spawn_button, spawn_button_sized, spawn_gap, spawn_panel, spawn_panel_bottom,
     spawn_panel_left, spawn_text,
@@ -10,11 +11,20 @@ use crate::GameState;
 use crate::audio::UiClick;
 use crate::play::{Play, PlayEvent, Progress, load_level, restart, undo};
 
+/// Aide du jeu (bouton « Aide » du menu).
+const HELP: &str = "Rangez toutes les caisses sur les cibles !\n\
+Le crapaud pousse les caisses, il ne peut pas les tirer.\n\
+\n\
+Flèches ou ZQSD, ou glisser du doigt : se déplacer\n\
+U ou Retour arrière : annuler · R : recommencer\n\
+M : son · Échap : menu";
+
 pub struct UiPlugin;
 
 impl Plugin for UiPlugin {
     fn build(&self, app: &mut App) {
         app.add_plugins(UiKitPlugin { universe: game_common::universe::Universe::Croa })
+            .insert_resource(GameHelp(HELP))
             .add_systems(OnEnter(GameState::Menu), spawn_menu)
             .add_systems(OnEnter(GameState::Levels), spawn_levels)
             .add_systems(OnEnter(GameState::Playing), spawn_hud)
@@ -55,10 +65,6 @@ fn button(commands: &mut Commands, parent: Entity, label: impl Into<String>, act
 fn spawn_menu(mut commands: Commands, progress: Res<Progress>, sound: Res<SoundOn>) {
     let panel = spawn_panel_left(&mut commands, DespawnOnExit(GameState::Menu));
     spawn_text(&mut commands, panel, "POUSSE-CAISSES", 56.0);
-    spawn_text(&mut commands, panel, "un jeu Commit & Conquer", 20.0);
-    spawn_gap(&mut commands, panel, 4.0);
-    spawn_text(&mut commands, panel, "Rangez toutes les caisses sur les cibles !", 20.0);
-    spawn_text(&mut commands, panel, "Flèches ou ZQSD · glisser du doigt · U : annuler", 16.0);
     spawn_gap(&mut commands, panel, 8.0);
     let total = progress.levels.len();
     let label = if progress.unlocked >= total && total > 0 {
@@ -70,8 +76,10 @@ fn spawn_menu(mut commands: Commands, progress: Res<Progress>, sound: Res<SoundO
     button(&mut commands, panel, "Choisir un niveau", UiAction::ChooseLevel);
     let t = button(&mut commands, panel, sound.label(), UiAction::ToggleSound);
     commands.entity(t).insert(SoundLabel);
+    spawn_help_button(&mut commands, panel);
     #[cfg(not(any(target_os = "android", target_arch = "wasm32")))]
     button(&mut commands, panel, "Quitter", UiAction::Quit);
+    spawn_studio_logo(&mut commands, panel);
 }
 
 /// Grille des niveaux : ceux pas encore débloqués sont grisés.

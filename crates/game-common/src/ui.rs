@@ -3,6 +3,7 @@
 use bevy::prelude::*;
 use bevy::text::{FontFeatureTag, FontFeatures};
 
+use crate::brand::{self, colors};
 use crate::palette;
 use crate::universe::{UiStyle, Universe};
 
@@ -17,13 +18,20 @@ pub struct UiKitPlugin {
 impl Plugin for UiKitPlugin {
     fn build(&self, app: &mut App) {
         let style = self.universe.style();
-        let font = app.world().resource::<AssetServer>().load(style.font);
+        let server = app.world().resource::<AssetServer>();
+        let font = server.load(style.font);
+        let logo = StudioLogo { emblem: server.load(brand::EMBLEM_MENU), font: server.load(brand::FONT_LOGO) };
         app.insert_resource(UiFont(font))
+            .insert_resource(logo)
             .insert_resource(UiTheme(style))
             .insert_resource(self.universe)
-            .add_systems(PostUpdate, (apply_font, apply_theme))
+            .add_systems(PostUpdate, (apply_font, apply_theme, fill_logo))
             .add_observer(on_over)
-            .add_observer(on_out);
+            .add_observer(on_out)
+            .add_observer(on_help);
+        if std::env::var_os("CC_OPEN_HELP").is_some() {
+            app.add_systems(Update, open_help_for_test);
+        }
     }
 }
 
@@ -225,4 +233,144 @@ pub fn spawn_hud(commands: &mut Commands) -> (Entity, Entity) {
         .id();
     let text = spawn_text(commands, hud, "", 24.0);
     (hud, text)
+}
+
+/// Emblème et police du logo du studio (chargés une fois pour tous les menus).
+#[derive(Resource)]
+pub struct StudioLogo {
+    pub emblem: Handle<Image>,
+    pub font: Handle<Font>,
+}
+
+/// Morceaux du logo à compléter par `fill_logo` (image et police).
+#[derive(Component)]
+enum LogoPart {
+    Emblem,
+    Word,
+}
+
+fn fill_logo(logo: Res<StudioLogo>, mut parts: Query<(&LogoPart, Option<&mut ImageNode>, Option<&mut TextFont>), Added<LogoPart>>) {
+    for (part, image, font) in &mut parts {
+        match part {
+            LogoPart::Emblem => {
+                if let Some(mut image) = image {
+                    image.image = logo.emblem.clone();
+                }
+            }
+            LogoPart::Word => {
+                if let Some(mut font) = font {
+                    font.font = logo.font.clone().into();
+                }
+            }
+        }
+    }
+}
+
+/// Logo du studio : l'emblème CC et « COMMIT AND CONQUER », en ligne.
+/// À placer en bas des menus.
+pub fn spawn_studio_logo(commands: &mut Commands, parent: Entity) -> Entity {
+    let row = commands
+        .spawn((
+            Node { align_items: AlignItems::Center, column_gap: Val::Px(10.0), margin: UiRect::top(Val::Px(6.0)), ..default() },
+            Pickable::IGNORE,
+            ChildOf(parent),
+        ))
+        .id();
+    commands.spawn((
+        Node { width: Val::Px(52.0), height: Val::Px(57.0), ..default() },
+        ImageNode::default(),
+        LogoPart::Emblem,
+        Pickable::IGNORE,
+        ChildOf(row),
+    ));
+    let words = commands
+        .spawn((Node { flex_direction: FlexDirection::Column, align_items: AlignItems::Center, ..default() }, Pickable::IGNORE, ChildOf(row)))
+        .id();
+    let word = |commands: &mut Commands, parent: Entity, text: &str, size: f32, color: Option<Color>| {
+        let mut e = commands.spawn((
+            Text::new(text),
+            TextFont::from_font_size(size),
+            TextColor(color.unwrap_or(palette::TEXT_DARK)),
+            OwnFont,
+            LogoPart::Word,
+            Pickable::IGNORE,
+            ChildOf(parent),
+        ));
+        if color.is_none() {
+            e.insert(ThemedText);
+        }
+    };
+    word(commands, words, "COMMIT", 19.0, None);
+    // « AND » en vert, entre deux traits.
+    let and = commands
+        .spawn((Node { align_items: AlignItems::Center, column_gap: Val::Px(4.0), ..default() }, Pickable::IGNORE, ChildOf(words)))
+        .id();
+    let line = |commands: &mut Commands| {
+        commands.spawn((Node { width: Val::Px(20.0), height: Val::Px(2.0), ..default() }, BackgroundColor(colors::GREEN), ChildOf(and)));
+    };
+    line(commands);
+    word(commands, and, "AND", 11.0, Some(colors::GREEN));
+    line(commands);
+    word(commands, words, "CONQUER", 19.0, None);
+    row
+}
+
+/// Texte d'aide du jeu (règle et commandes), affiché par le bouton « Aide ».
+#[derive(Resource, Clone)]
+pub struct GameHelp(pub &'static str);
+
+/// Bouton qui ouvre l'aide (voir `GameHelp`).
+#[derive(Component)]
+pub struct HelpButton;
+
+/// Bouton qui ferme l'aide.
+#[derive(Component)]
+struct HelpClose;
+
+/// Fond de l'aide (tout l'écran, au-dessus du menu).
+#[derive(Component)]
+struct HelpOverlay;
+
+/// Bouton « Aide » de taille standard.
+pub fn spawn_help_button(commands: &mut Commands, parent: Entity) -> Entity {
+    let (button, _) = spawn_button(commands, parent, "Aide");
+    commands.entity(button).insert(HelpButton);
+    button
+}
+
+fn open_help(commands: &mut Commands, help: Option<&GameHelp>) {
+    // Le panneau d'aide passe au-dessus du menu et voile la scène.
+    let panel = spawn_panel(commands, (HelpOverlay, BackgroundColor(Color::srgba(0.0, 0.0, 0.0, 0.35)), GlobalZIndex(50)));
+    spawn_text(commands, panel, "Aide", 40.0);
+    let text = help.map_or("Pas d'aide pour ce jeu.", |h| h.0);
+    let t = spawn_text(commands, panel, text, 19.0);
+    commands.entity(t).insert(TextLayout::justify(Justify::Left));
+    spawn_gap(commands, panel, 4.0);
+    let (b, _) = spawn_button(commands, panel, "Fermer");
+    commands.entity(b).insert(HelpClose);
+}
+
+/// Test : `CC_OPEN_HELP=1` ouvre l'aide au bout de 2 secondes (pour les captures).
+fn open_help_for_test(time: Res<Time>, mut done: Local<bool>, mut commands: Commands, help: Option<Res<GameHelp>>) {
+    if !*done && time.elapsed_secs() > 2.0 {
+        *done = true;
+        open_help(&mut commands, help.as_deref());
+    }
+}
+
+fn on_help(
+    click: On<PointerClick>,
+    mut commands: Commands,
+    open: Query<(), With<HelpButton>>,
+    close: Query<(), With<HelpClose>>,
+    overlays: Query<Entity, With<HelpOverlay>>,
+    help: Option<Res<GameHelp>>,
+) {
+    if open.contains(click.entity) && overlays.is_empty() {
+        open_help(&mut commands, help.as_deref());
+    } else if close.contains(click.entity) {
+        for e in &overlays {
+            commands.entity(e).despawn();
+        }
+    }
 }

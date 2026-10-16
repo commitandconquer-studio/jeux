@@ -1,6 +1,7 @@
 //! Écrans : accueil, options, fin de partie, et affichage du score.
 use bevy::prelude::*;
 use game_common::Score;
+use game_common::ui::{GameHelp, spawn_help_button, spawn_studio_logo};
 use game_common::ui::{UiKitPlugin, spawn_button, spawn_gap, spawn_hud, spawn_panel, spawn_text};
 
 use game_common::audio::SoundOn;
@@ -9,12 +10,24 @@ use crate::GameState;
 use crate::audio::Sfx;
 use crate::settings::{OptionKind, Settings};
 
+/// Aide du jeu (bouton « Aide » du menu).
+const HELP: &str = "Dirigez le serpent et mangez pour grandir.\n\
+Ne vous mordez pas la queue !\n\
+\n\
+Flèches ou ZQSD : diriger\n\
+Entrée ou Espace : valider\n\
+M : couper le son · Échap : menu\n\
+\n\
+Options : vitesse, taille du plateau,\n\
+bords murs ou traversables.";
+
 pub struct UiPlugin;
 
 impl Plugin for UiPlugin {
     fn build(&self, app: &mut App) {
         app.add_plugins(UiKitPlugin { universe: game_common::universe::Universe::Croa })
             .add_systems(Startup, setup_hud)
+            .insert_resource(GameHelp(HELP))
             .add_systems(OnEnter(GameState::Menu), spawn_menu)
             .add_systems(OnEnter(GameState::Options), spawn_options)
             .add_systems(OnEnter(GameState::GameOver), spawn_game_over)
@@ -59,7 +72,6 @@ fn button(commands: &mut Commands, parent: Entity, label: impl Into<String>, act
 fn spawn_menu(mut commands: Commands, settings: Res<Settings>, sound: Res<SoundOn>) {
     let panel = spawn_panel(&mut commands, DespawnOnExit(GameState::Menu));
     spawn_text(&mut commands, panel, "SNAKE", 72.0);
-    spawn_text(&mut commands, panel, "un jeu Commit & Conquer", 20.0);
     spawn_gap(&mut commands, panel, 10.0);
     button(&mut commands, panel, "Jouer", UiAction::Play);
     let t = button(
@@ -72,8 +84,10 @@ fn spawn_menu(mut commands: Commands, settings: Res<Settings>, sound: Res<SoundO
     let t = button(&mut commands, panel, sound.label(), UiAction::ToggleSound);
     commands.entity(t).insert(SoundLabel);
     button(&mut commands, panel, "Options", UiAction::Options);
+    spawn_help_button(&mut commands, panel);
     #[cfg(not(any(target_os = "android", target_arch = "wasm32")))]
     button(&mut commands, panel, "Quitter", UiAction::Quit);
+    spawn_studio_logo(&mut commands, panel);
 }
 
 fn spawn_options(mut commands: Commands, settings: Res<Settings>) {

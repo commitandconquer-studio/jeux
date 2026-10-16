@@ -3,6 +3,7 @@ use bevy::prelude::*;
 use concile_core::daily;
 use game_common::audio::SoundOn;
 use game_common::calendar::{Date, feast_on};
+use game_common::ui::{GameHelp, HelpButton, spawn_studio_logo};
 use game_common::ui::{
     ButtonColor, PANEL, ThemedPanel, UiButton, UiKitPlugin, spawn_button_sized, spawn_gap, spawn_panel, spawn_panel_left,
     spawn_text,
@@ -13,11 +14,25 @@ use crate::GameState;
 use crate::audio::UiClick;
 use crate::play::{Book, Kind, Play, PlayEvent, Progress, start};
 
+/// Aide du jeu (bouton « Aide » du menu).
+const HELP: &str = "Placez un évêque par diocèse (région de couleur),\n\
+par rangée et par colonne. Deux évêques ne se\n\
+touchent jamais, même en diagonale.\n\
+\n\
+Clic : croix, puis évêque, puis case vide\n\
+Glisser : barrer plusieurs cases\n\
+Mode Novice : poser un évêque hachure d'office\n\
+son diocèse, sa rangée, sa colonne et ses voisines.\n\
+\n\
+H : indice · U ou Retour arrière : annuler\n\
+Échap : menu";
+
 pub struct UiPlugin;
 
 impl Plugin for UiPlugin {
     fn build(&self, app: &mut App) {
         app.add_plugins(UiKitPlugin { universe: Universe::Eureka })
+            .insert_resource(GameHelp(HELP))
             .add_systems(OnEnter(GameState::Menu), spawn_menu)
             .add_systems(OnEnter(GameState::Book), spawn_book)
             .add_systems(OnEnter(GameState::Playing), spawn_hud)
@@ -86,7 +101,7 @@ fn spawn_menu(mut c: Commands, progress: Res<Progress>, sound: Res<SoundOn>, boo
         ..default()
     });
     spawn_text(&mut c, panel, "Le Concile\ndes Évêques", 44.0);
-    spawn_text(&mut c, panel, "un jeu Eurêka · Commit & Conquer", 16.0);
+    spawn_text(&mut c, panel, "un jeu Eurêka", 16.0);
     let today = Date::today();
     if progress.feasts
         && let Some(f) = feast_on(today)
@@ -107,11 +122,13 @@ fn spawn_menu(mut c: Commands, progress: Res<Progress>, sound: Res<SoundOn>, boo
     c.entity(t).insert(Label::Feasts);
     let t = button(&mut c, panel, sound.label(), UiAction::ToggleSound);
     c.entity(t).insert(Label::Sound);
+    let (b, _) = spawn_button_sized(&mut c, panel, "Aide", 340.0, 46.0, 21.0);
+    c.entity(b).insert(HelpButton);
     #[cfg(not(any(target_os = "android", target_arch = "wasm32")))]
     button(&mut c, panel, "Quitter", UiAction::Quit);
     let streak = if progress.streak > 1 { format!(" · série : {} jours", progress.streak) } else { String::new() };
     spawn_text(&mut c, panel, format!("{}{streak}", capitalize(&today.french())), 15.0);
-    spawn_text(&mut c, panel, "Un évêque par diocèse, rangée et colonne,\njamais deux côte à côte (même en diagonale).", 14.0);
+    spawn_studio_logo(&mut c, panel);
 }
 
 fn capitalize(s: &str) -> String {

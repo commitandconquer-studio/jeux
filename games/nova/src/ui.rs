@@ -1,6 +1,7 @@
 //! Écrans : accueil, chapitres, dialogues, barre de jeu, victoire, défaite.
 use bevy::prelude::*;
 use game_common::audio::SoundOn;
+use game_common::ui::{GameHelp, spawn_help_button, spawn_studio_logo};
 use game_common::ui::{
     PANEL, ThemedPanel, UiButton, UiKitPlugin, spawn_button, spawn_button_sized, spawn_gap, spawn_panel, spawn_panel_bottom,
     spawn_panel_left, spawn_text,
@@ -14,6 +15,19 @@ use crate::story::{BOULON_FOUR, BOULON_HALF, BOULON_WARNING, CHAPTERS, Line};
 
 const SAVE: &str = "nova";
 
+/// Aide du jeu (bouton « Aide » du menu).
+const HELP: &str = "Les blocs d'énergie tombent dans le bouclier.\n\
+Chaque rangée complète tire le canon à ions sur le croiseur :\n\
+plusieurs rangées d'un coup, tir plus puissant !\n\
+Le croiseur riposte avec des rangées endommagées.\n\
+\n\
+Gauche/droite : déplacer · Haut : tourner\n\
+Bas : accélérer · Espace : poser · C : réserve\n\
+M : son · Échap : menu\n\
+\n\
+Tactile : glisser pour déplacer, toucher pour tourner,\n\
+vers le bas pour poser, vers le haut pour la réserve.";
+
 pub struct UiPlugin;
 
 impl Plugin for UiPlugin {
@@ -23,6 +37,7 @@ impl Plugin for UiPlugin {
         app.add_plugins(UiKitPlugin { universe: game_common::universe::Universe::Nova })
             .insert_resource(Progress { unlocked, record })
             .insert_resource(Dialog::default())
+            .insert_resource(GameHelp(HELP))
             .add_systems(OnEnter(GameState::Menu), spawn_menu)
             .add_systems(OnEnter(GameState::Chapters), spawn_chapters)
             .add_systems(OnEnter(GameState::Story), spawn_dialog)
@@ -100,7 +115,6 @@ fn spawn_menu(mut c: Commands, progress: Res<Progress>, sound: Res<SoundOn>) {
     let panel = spawn_panel_left(&mut c, DespawnOnExit(GameState::Menu));
     spawn_text(&mut c, panel, "NOVA", 80.0);
     spawn_text(&mut c, panel, "Le Dernier Rempart", 30.0);
-    spawn_text(&mut c, panel, "un jeu Commit & Conquer", 18.0);
     spawn_gap(&mut c, panel, 6.0);
     button(&mut c, panel, format!("Campagne : chapitre {}", progress.unlocked), UiAction::Campaign);
     button(&mut c, panel, "Chapitres", UiAction::Chapters);
@@ -108,10 +122,10 @@ fn spawn_menu(mut c: Commands, progress: Res<Progress>, sound: Res<SoundOn>) {
     button(&mut c, panel, record, UiAction::Endless);
     let t = button(&mut c, panel, sound.label(), UiAction::ToggleSound);
     c.entity(t).insert(SoundLabel);
+    spawn_help_button(&mut c, panel);
     #[cfg(not(any(target_os = "android", target_arch = "wasm32")))]
     button(&mut c, panel, "Quitter", UiAction::Quit);
-    spawn_gap(&mut c, panel, 4.0);
-    spawn_text(&mut c, panel, "Flèches gauche/droite : déplacer · haut : tourner\nbas : accélérer · Espace : poser · C : réserve · M : son", 15.0);
+    spawn_studio_logo(&mut c, panel);
 }
 
 fn spawn_chapters(mut c: Commands, progress: Res<Progress>) {

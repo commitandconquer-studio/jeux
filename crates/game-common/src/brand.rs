@@ -31,6 +31,8 @@ pub mod colors {
 pub const FONT_LOGO: &str = "fonts/RussoOne-Regular.ttf";
 /// Emblème rendu en PNG transparent par `tools/logo-gen` (icônes).
 pub const EMBLEM_IMAGE: &str = "branding/embleme.png";
+/// Emblème officiel du kit de marque, pour le logo des menus.
+pub const EMBLEM_MENU: &str = "branding/embleme-officiel.png";
 /// Illustration de l'écran de démarrage (16:9).
 pub const SPLASH_IMAGE: &str = "branding/splash.png";
 /// Proportions de l'illustration (largeur / hauteur).

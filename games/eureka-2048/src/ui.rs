@@ -2,6 +2,7 @@
 use bevy::prelude::*;
 use game_common::Rng;
 use game_common::audio::SoundOn;
+use game_common::ui::{GameHelp, spawn_help_button, spawn_studio_logo};
 use game_common::ui::{
     PANEL, ThemedPanel, UiKitPlugin, spawn_button, spawn_button_sized, spawn_gap, spawn_panel_left,
     spawn_text,
@@ -12,11 +13,20 @@ use crate::GameState;
 use crate::audio::UiClick;
 use crate::play::{Game, PlayEvent};
 
+/// Aide du jeu (bouton « Aide » du menu).
+const HELP: &str = "Faites glisser les tuiles : deux nombres égaux\n\
+fusionnent et doublent. Atteindrez-vous 2048 ?\n\
+\n\
+Flèches, ZQSD ou glisser du doigt : faire glisser\n\
+U ou Retour arrière : annuler le dernier coup\n\
+M : son · Échap : menu";
+
 pub struct UiPlugin;
 
 impl Plugin for UiPlugin {
     fn build(&self, app: &mut App) {
         app.add_plugins(UiKitPlugin { universe: Universe::Eureka })
+            .insert_resource(GameHelp(HELP))
             .add_systems(OnEnter(GameState::Menu), spawn_menu)
             .add_systems(OnEnter(GameState::Playing), spawn_hud)
             .add_systems(OnEnter(GameState::Won), spawn_won)
@@ -72,7 +82,7 @@ fn spawn_menu(mut c: Commands, game: Res<Game>, sound: Res<SoundOn>) {
     let panel = spawn_panel_left(&mut c, DespawnOnExit(GameState::Menu));
     spawn_text(&mut c, panel, "2048", 96.0);
     spawn_text(&mut c, panel, "les puissances de 2", 26.0);
-    spawn_text(&mut c, panel, "un jeu Eurêka · Commit & Conquer", 17.0);
+    spawn_text(&mut c, panel, "un jeu Eurêka", 17.0);
     spawn_gap(&mut c, panel, 6.0);
     let in_progress = game.score > 0;
     button(&mut c, panel, if in_progress { "Continuer" } else { "Jouer" }, UiAction::Play);
@@ -81,11 +91,10 @@ fn spawn_menu(mut c: Commands, game: Res<Game>, sound: Res<SoundOn>) {
     }
     let t = button(&mut c, panel, sound.label(), UiAction::ToggleSound);
     c.entity(t).insert(SoundLabel);
+    spawn_help_button(&mut c, panel);
     #[cfg(not(any(target_os = "android", target_arch = "wasm32")))]
     button(&mut c, panel, "Quitter", UiAction::Quit);
-    spawn_gap(&mut c, panel, 4.0);
-    spawn_text(&mut c, panel, "Faites glisser les tuiles : deux nombres égaux\nfusionnent et doublent. Atteindrez-vous 2048 ?", 17.0);
-    spawn_text(&mut c, panel, "Flèches, ZQSD ou glisser du doigt · U : annuler", 15.0);
+    spawn_studio_logo(&mut c, panel);
 }
 
 fn spawn_hud(mut c: Commands) {
