@@ -40,6 +40,7 @@ Dans le code, utilisez les constantes de `game_common::sounds`.
 | `sfx/churchbells.wav` | 5.00 s | Carillon de cloches d'église |
 | `music/orgue.wav` | 29.09 s | Musique d'orgue lente et solennelle, ré mineur, 66 BPM |
 | `music/zen.wav` | 22.86 s | Musique zen (marimba, nappes), ré majeur, 84 BPM |
+| `music/nocturne.wav` | 26.67 s | Nocturne en boîte à musique, fa majeur, 72 BPM |
 | `music/campagne.wav` | 17.14 s | Musique guillerette, do majeur, 112 BPM |
 | `music/prairie.wav` | 16.00 s | Musique joyeuse, sol majeur, 120 BPM |
 | `music/desert.wav` | 20.00 s | Musique orientale (oud, darbouka), 96 BPM |

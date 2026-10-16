@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+{% block title %}{{ section.title }} · Commit & Conquer{% endblock %}
+{% block content %}
+<section class="page-head">
+  <h1>{{ section.title }}</h1>
+</section>
+<div class="prose">
+  {{ section.content | safe }}
+  <ol class="maj-liste">
+    {% for p in section.pages %}
+    <li class="maj">
+      <time datetime="{{ p.date }}">{% if lang == "fr" %}{{ p.date | date(format="%d/%m/%Y") }}{% else %}{{ p.date | date(format="%Y-%m-%d") }}{% endif %}</time>
+      <h2><a href="{{ p.permalink }}">{{ p.title }}</a></h2>
+      {{ p.content | safe }}
+    </li>
+    {% endfor %}
+  </ol>
+</div>
+{% endblock %}

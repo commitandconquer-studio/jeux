@@ -24,6 +24,7 @@ GAMES=(
   "eureka-2048|2048 — Eurêka|Fusionnez les puissances de 2 jusqu'à 2048"
   "concile|Le Concile des Évêques|Un évêque par diocèse, par rangée et par colonne, et jamais de voisin"
   "parsecs|12 Parsecs|Traversez la ceinture d'astéroïdes et gagnez de nouveaux vaisseaux"
+  "observatoire|L'Observatoire|Soleils et lunes sur la carte du ciel : un jeu de logique"
 )
 
 if [[ "${1:-}" == "--desinstaller" ]]; then
