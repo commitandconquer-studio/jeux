@@ -1,8 +1,9 @@
-//! Le décor : le bureau de l'astronome, la nuit. Une table en bois, une carte
-//! du ciel bleu nuit cerclée de laiton (la grille), une lunette de cuivre, un
-//! globe céleste, un compas et une chandelle. Les soleils sont des médaillons
-//! dorés, les lunes des croissants d'argent ; les signes « = » et « × » sont
-//! gravés en laiton entre les cases.
+//! Le décor : le bureau de l'astronome. Une table en bois, une carte du ciel
+//! sur parchemin ivoire cerclée de laiton (la grille, cases blanches), une
+//! lunette de cuivre, un globe céleste, un compas et une chandelle. Les soleils
+//! sont des médaillons orange vif, les lunes des croissants bleu foncé : deux
+//! couleurs et deux formes qu'on ne confond pas. Les signes « = » et « × »
+//! sont blancs sur une pastille bleu nuit.
 use std::f32::consts::{FRAC_PI_2, FRAC_PI_4, TAU};
 
 use bevy::light::NotShadowCaster;
@@ -31,11 +32,14 @@ pub struct Look {
     pub disque: Handle<Mesh>,
     pub cone: Handle<Mesh>,
     pub boule: Handle<Mesh>,
+    pub croissant: Handle<Mesh>,
     pub case: Handle<StandardMaterial>,
     pub case_donnee: Handle<StandardMaterial>,
     pub or: Handle<StandardMaterial>,
     pub or_vif: Handle<StandardMaterial>,
-    pub argent: Handle<StandardMaterial>,
+    pub lune: Handle<StandardMaterial>,
+    pub parchemin: Handle<StandardMaterial>,
+    pub encre: Handle<StandardMaterial>,
     pub laiton: Handle<StandardMaterial>,
     pub erreur: Handle<StandardMaterial>,
     pub indice: Handle<StandardMaterial>,
@@ -50,6 +54,7 @@ impl FromWorld for Look {
         let disque = meshes.add(Cylinder::new(0.5, 1.0).mesh().resolution(16));
         let cone = meshes.add(Cone { radius: 0.5, height: 1.0 }.mesh().resolution(4));
         let boule = meshes.add(Sphere::new(0.5).mesh().ico(1).unwrap());
+        let croissant = meshes.add(croissant());
         let mut mats = world.resource_mut::<Assets<StandardMaterial>>();
         let lumineux = |c: Color, f: f32| StandardMaterial { emissive: c.to_linear() * f, ..flat_material(c) };
         Look {
@@ -57,18 +62,46 @@ impl FromWorld for Look {
             disque,
             cone,
             boule,
-            case: mats.add(flat_material(Color::srgb(0.10, 0.15, 0.30))),
-            case_donnee: mats.add(flat_material(Color::srgb(0.17, 0.22, 0.38))),
-            or: mats.add(StandardMaterial { metallic: 0.6, perceptual_roughness: 0.35, ..lumineux(Color::srgb(0.98, 0.76, 0.25), 0.35) }),
+            croissant,
+            case: mats.add(StandardMaterial { base_color: Color::WHITE, unlit: true, ..default() }),
+            case_donnee: mats.add(StandardMaterial { base_color: Color::srgb_u8(0xD9, 0xD2, 0xC3), unlit: true, ..default() }),
+            parchemin: mats.add(StandardMaterial { base_color: Color::srgb_u8(0xF0, 0xE2, 0xC0), unlit: true, ..default() }),
+            encre: mats.add(flat_material(Color::srgb_u8(0x14, 0x2C, 0x40))),
+            or: mats.add(StandardMaterial { base_color: Color::srgb_u8(0xFF, 0x9C, 0x00), unlit: true, ..default() }),
             or_vif: mats.add(lumineux(Color::srgb(1.0, 0.85, 0.35), 1.2)),
-            argent: mats.add(StandardMaterial { metallic: 0.5, perceptual_roughness: 0.3, ..lumineux(Color::srgb(0.85, 0.88, 0.95), 0.25) }),
+            lune: mats.add(StandardMaterial { base_color: Color::srgb_u8(0x1B, 0x4A, 0xB0), unlit: true, ..default() }),
             laiton: mats.add(StandardMaterial { metallic: 0.8, perceptual_roughness: 0.4, ..flat_material(Color::srgb(0.78, 0.60, 0.30)) }),
-            erreur: mats.add(StandardMaterial { base_color: Color::srgba(1.0, 0.25, 0.2, 0.55), emissive: LinearRgba::rgb(1.2, 0.15, 0.1), alpha_mode: AlphaMode::Blend, unlit: true, ..default() }),
-            indice: mats.add(StandardMaterial { base_color: Color::srgb(0.45, 0.95, 0.85), emissive: LinearRgba::rgb(0.4, 1.4, 1.1), unlit: true, ..default() }),
-            indice_pale: mats.add(StandardMaterial { base_color: Color::srgba(0.45, 0.95, 0.85, 0.35), emissive: LinearRgba::rgb(0.15, 0.5, 0.4), alpha_mode: AlphaMode::Blend, unlit: true, ..default() }),
-            etoile: mats.add(StandardMaterial { base_color: Color::srgb(1.0, 0.97, 0.85), emissive: LinearRgba::rgb(2.5, 2.4, 2.0), unlit: true, ..default() }),
+            erreur: mats.add(StandardMaterial { base_color: Color::srgb_u8(0xFF, 0x9A, 0x92), unlit: true, ..default() }),
+            indice: mats.add(StandardMaterial { base_color: Color::srgb_u8(0x5F, 0xA8, 0x12), unlit: true, ..default() }),
+            indice_pale: mats.add(StandardMaterial { base_color: Color::srgb_u8(0xD9, 0xF0, 0xBE), unlit: true, ..default() }),
+            etoile: mats.add(StandardMaterial { base_color: Color::srgb(0.62, 0.70, 0.82), unlit: true, ..default() }),
         }
     }
+}
+
+/// Un croissant de lune plat (dans le plan XZ, face vers le haut), d'un
+/// diamètre de 1 : un demi-cercle extérieur, une demi-ellipse intérieure.
+fn croissant() -> Mesh {
+    use bevy::asset::RenderAssetUsages;
+    use bevy::mesh::{Indices, PrimitiveTopology};
+    let n = 16;
+    let mut pos = Vec::new();
+    for k in 0..=n {
+        let t = -FRAC_PI_2 + k as f32 / n as f32 * std::f32::consts::PI;
+        // L'arc intérieur bombe du même côté que l'extérieur : les cornes sont fines.
+        pos.push([0.5 * t.cos() - 0.15, 0.0, 0.5 * t.sin()]);
+        pos.push([0.12 * t.cos() - 0.15, 0.0, 0.5 * t.sin()]);
+    }
+    let mut idx = Vec::new();
+    for k in 0..n as u32 {
+        let (a, b, c, d) = (2 * k, 2 * k + 1, 2 * k + 2, 2 * k + 3);
+        idx.extend([a, b, c, b, d, c]);
+    }
+    let normales = vec![[0.0, 1.0, 0.0]; pos.len()];
+    Mesh::new(PrimitiveTopology::TriangleList, RenderAssetUsages::default())
+        .with_inserted_attribute(Mesh::ATTRIBUTE_POSITION, pos)
+        .with_inserted_attribute(Mesh::ATTRIBUTE_NORMAL, normales)
+        .with_inserted_indices(Indices::U32(idx))
 }
 
 /// Centre d'une case (la grille est dans le plan XZ, centrée sur l'origine).
@@ -130,7 +163,7 @@ pub fn carte(c: &mut Commands, look: &Look, meshes: &mut Assets<Mesh>, n: usize,
     let r = n as f32 * 0.5 + 1.4;
     c.spawn((
         Mesh3d(look.disque.clone()),
-        MeshMaterial3d(look.case.clone()),
+        MeshMaterial3d(look.parchemin.clone()),
         Transform::from_xyz(0.0, -0.06, 0.0).with_scale(Vec3::new(r * 2.0, 0.12, r * 2.0)),
         DeLaGrille,
     ));
@@ -166,8 +199,8 @@ pub fn carte(c: &mut Commands, look: &Look, meshes: &mut Assets<Mesh>, n: usize,
     let d = n as f32 / 2.0;
     for k in 0..=n {
         let x = k as f32 - d;
-        for (pos, ech) in [(Vec3::new(x, DESSUS - 0.01, 0.0), Vec3::new(0.03, 0.02, n as f32)), (Vec3::new(0.0, DESSUS - 0.01, x), Vec3::new(n as f32, 0.02, 0.03))] {
-            c.spawn((Mesh3d(look.cube.clone()), MeshMaterial3d(look.laiton.clone()), Transform::from_translation(pos).with_scale(ech), NotShadowCaster, DeLaGrille));
+        for (pos, ech) in [(Vec3::new(x, DESSUS - 0.01, 0.0), Vec3::new(0.05, 0.02, n as f32 + 0.05)), (Vec3::new(0.0, DESSUS - 0.01, x), Vec3::new(n as f32 + 0.05, 0.02, 0.05))] {
+            c.spawn((Mesh3d(look.cube.clone()), MeshMaterial3d(look.encre.clone()), Transform::from_translation(pos).with_scale(ech), NotShadowCaster, DeLaGrille));
         }
     }
     // Les signes, à cheval sur la frontière entre deux cases.
@@ -178,19 +211,19 @@ pub fn carte(c: &mut Commands, look: &Look, meshes: &mut Assets<Mesh>, n: usize,
 }
 
 fn signe(c: &mut Commands, look: &Look, p: Vec3, s: Signe) {
-    // Une pastille de laiton sous le signe, pour bien le voir.
-    c.spawn((Mesh3d(look.disque.clone()), MeshMaterial3d(look.laiton.clone()), Transform::from_translation(p).with_scale(Vec3::new(0.3, 0.03, 0.3)), NotShadowCaster, DeLaGrille));
+    // Une pastille bleu nuit sous le signe blanc, pour bien le voir.
+    c.spawn((Mesh3d(look.disque.clone()), MeshMaterial3d(look.encre.clone()), Transform::from_translation(p).with_scale(Vec3::new(0.34, 0.03, 0.34)), NotShadowCaster, DeLaGrille));
     let haut = p + Vec3::Y * 0.025;
     match s {
         // « = » se lit toujours à l'endroit, quelle que soit la frontière.
         Signe::Egal => {
             for dz in [-0.045, 0.045] {
-                c.spawn((Mesh3d(look.cube.clone()), MeshMaterial3d(look.case.clone()), Transform::from_translation(haut + Vec3::new(0.0, 0.0, dz)).with_scale(Vec3::new(0.16, 0.02, 0.035)), NotShadowCaster, DeLaGrille));
+                c.spawn((Mesh3d(look.cube.clone()), MeshMaterial3d(look.case.clone()), Transform::from_translation(haut + Vec3::new(0.0, 0.0, dz)).with_scale(Vec3::new(0.18, 0.02, 0.04)), NotShadowCaster, DeLaGrille));
             }
         }
         Signe::Different => {
             for a in [FRAC_PI_4, -FRAC_PI_4] {
-                c.spawn((Mesh3d(look.cube.clone()), MeshMaterial3d(look.case.clone()), Transform::from_translation(haut).with_rotation(Quat::from_rotation_y(a)).with_scale(Vec3::new(0.19, 0.02, 0.04)), NotShadowCaster, DeLaGrille));
+                c.spawn((Mesh3d(look.cube.clone()), MeshMaterial3d(look.case.clone()), Transform::from_translation(haut).with_rotation(Quat::from_rotation_y(a)).with_scale(Vec3::new(0.21, 0.02, 0.045)), NotShadowCaster, DeLaGrille));
             }
         }
         Signe::Aucun => {}
@@ -198,7 +231,7 @@ fn signe(c: &mut Commands, look: &Look, p: Vec3, s: Signe) {
 }
 
 /// Pose le symbole `v` sur la case `i` (médaillon solaire ou croissant de lune).
-pub fn symbole(c: &mut Commands, look: &Look, n: usize, i: usize, v: u8, donnee: bool) {
+pub fn symbole(c: &mut Commands, look: &Look, n: usize, i: usize, v: u8) {
     let p = pos_case(n, i) + Vec3::Y * 0.02;
     let e = c.spawn((Transform::from_translation(p), Visibility::default(), Marque, DeLaGrille)).id();
     let enfant = |c: &mut Commands, mesh: &Handle<Mesh>, mat: &Handle<StandardMaterial>, t: Transform| {
@@ -206,24 +239,19 @@ pub fn symbole(c: &mut Commands, look: &Look, n: usize, i: usize, v: u8, donnee:
     };
     match v {
         SOLEIL => {
-            enfant(c, &look.disque, &look.or, Transform::from_scale(Vec3::new(0.42, 0.08, 0.42)));
+            // Un disque plein et huit rayons : rond, orange, lumineux.
+            enfant(c, &look.disque, &look.or, Transform::from_scale(Vec3::new(0.46, 0.1, 0.46)));
             for k in 0..8 {
                 let a = k as f32 * TAU / 8.0;
                 let d = Vec3::new(a.cos(), 0.0, a.sin());
-                enfant(c, &look.cone, &look.or, Transform::from_translation(d * 0.3).with_rotation(Quat::from_rotation_arc(Vec3::Y, d)).with_scale(Vec3::new(0.11, 0.16, 0.05)));
+                enfant(c, &look.cone, &look.or, Transform::from_translation(d * 0.32).with_rotation(Quat::from_rotation_arc(Vec3::Y, d)).with_scale(Vec3::new(0.13, 0.16, 0.06)));
             }
         }
         LUNE => {
-            // Un disque d'argent, et un disque couleur de nuit décalé : un croissant.
-            enfant(c, &look.disque, &look.argent, Transform::from_scale(Vec3::new(0.58, 0.08, 0.58)));
-            let fond = if donnee { &look.case_donnee } else { &look.case };
-            enfant(c, &look.disque, fond, Transform::from_xyz(0.15, 0.015, -0.12).with_scale(Vec3::new(0.5, 0.08, 0.5)));
+            // Un croissant bleu foncé, un peu penché.
+            enfant(c, &look.croissant, &look.lune, Transform::from_xyz(0.0, 0.05, 0.0).with_rotation(Quat::from_rotation_y(0.5)).with_scale(Vec3::splat(0.78)));
         }
         _ => {}
-    }
-    if donnee {
-        // Les symboles donnés ont un petit anneau de laiton : on ne peut pas les changer.
-        enfant(c, &look.disque, &look.laiton, Transform::from_xyz(0.0, -0.02, 0.0).with_scale(Vec3::new(0.78, 0.03, 0.78)));
     }
 }
 

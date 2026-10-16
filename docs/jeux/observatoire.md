@@ -7,10 +7,12 @@ dans un décor originaux. Conçu en autonomie à la demande d'Olivier
 
 ## Le décor
 
-Le bureau d'un astronome, la nuit : une **carte du ciel** sur papier bleu
-nuit, cerclée de laiton, posée sur une table en bois ; autour, une lunette de
-cuivre, un globe céleste, un compas et une chandelle. Les **soleils** sont des
-médaillons dorés à rayons, les **lunes** des croissants argentés. Ambiance
+Le bureau d'un astronome : une **carte du ciel** sur parchemin ivoire (cases blanches)
+cerclée de laiton, posée sur une table en bois ; autour, une lunette de
+cuivre, un globe céleste, un compas et une chandelle. Les **soleils** sont
+orange vif, ronds et à rayons, les **lunes** des croissants bleu foncé : deux
+couleurs et deux formes impossibles à confondre. Les cases données sont
+grisées, les signes blancs sur pastille bleu nuit. Ambiance
 `AmbiancePlugin::interieur()` : la lumière suit l'heure, la chandelle brille
 davantage la nuit, et les fêtes saluent le joueur.
 

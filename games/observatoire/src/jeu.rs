@@ -211,7 +211,8 @@ fn preparer(
     // Derrière le menu : la prochaine grille du livre.
     let i = progression.suivante().unwrap_or(0);
     commencer(&mut commands, livre.0[i].clone(), Genre::Livre(i));
-    commands.spawn((Camera3d::default(), iso_projection(12.0, 10.0), Transform::from_translation(CAMERA).looking_at(Vec3::ZERO, Vec3::Y), Camera));
+    // Sans tonemapping : les soleils restent orange vif et les lunes bleu franc.
+    commands.spawn((Camera3d::default(), bevy::core_pipeline::tonemapping::Tonemapping::None, iso_projection(12.0, 10.0), Transform::from_translation(CAMERA).looking_at(Vec3::ZERO, Vec3::Y), Camera));
     commands.spawn((
         DirectionalLight { illuminance: 4_500.0, shadow_maps_enabled: true, ..default() },
         Transform::from_xyz(-4.0, 12.0, 6.0).looking_at(Vec3::ZERO, Vec3::Y),
@@ -252,12 +253,13 @@ fn symboles(mut commands: Commands, mut partie: ResMut<Partie>, progression: Res
     let n = partie.n();
     for i in 0..n * n {
         if partie.cases[i] != VIDE {
-            plateau::symbole(&mut commands, &look, n, i, partie.cases[i], partie.grille.donnees[i] != VIDE);
+            plateau::symbole(&mut commands, &look, n, i, partie.cases[i]);
         }
     }
+    // Une teinte sur toute la case (erreur en rouge, raison de l'indice en vert).
     let disque = |c: &mut Commands, i: usize, mat: &Handle<StandardMaterial>, taille: f32| {
         c.spawn((
-            Mesh3d(look.disque.clone()),
+            Mesh3d(look.cube.clone()),
             MeshMaterial3d(mat.clone()),
             Transform::from_translation(pos_case(n, i) + Vec3::Y * 0.005).with_scale(Vec3::new(taille, 0.01, taille)),
             Marque,
@@ -266,12 +268,12 @@ fn symboles(mut commands: Commands, mut partie: ResMut<Partie>, progression: Res
     };
     if progression.novice && !partie.gagne {
         for i in partie.erreurs() {
-            disque(&mut commands, i, &look.erreur, 0.86);
+            disque(&mut commands, i, &look.erreur, 0.92);
         }
     }
     if let Some(ind) = partie.indice.clone() {
         for i in ind.raison {
-            disque(&mut commands, i, &look.indice_pale, 0.8);
+            disque(&mut commands, i, &look.indice_pale, 0.92);
         }
         // Un cadre lumineux autour de la case à remplir.
         let p = pos_case(n, ind.case) + Vec3::Y * 0.03;
