@@ -29,8 +29,18 @@ for entree in "${JEUX[@]}"; do
   rm -rf "$OUT/$page"
   "$BINDGEN" --target web --no-typescript --out-dir "$OUT/$page" --out-name "$page" \
     "$ROOT/target/wasm32-unknown-unknown/web/$paquet.wasm"
+  # Allègement (facultatif) : les fonctions WebAssembly qu'emploie Rust doivent
+  # être autorisées. Si wasm-opt est trop ancien et échoue, on garde le
+  # fichier tel quel plutôt que de tout arrêter.
   if command -v wasm-opt >/dev/null; then
-    wasm-opt -Os --enable-bulk-memory --enable-nontrapping-float-to-int -o "$OUT/$page/${page}_bg.wasm" "$OUT/$page/${page}_bg.wasm"
+    wasm="$OUT/$page/${page}_bg.wasm"
+    if wasm-opt -Os --enable-bulk-memory --enable-nontrapping-float-to-int --enable-sign-ext \
+         --enable-mutable-globals --enable-reference-types --enable-multivalue -o "$wasm.opt" "$wasm" 2>/dev/null; then
+      mv "$wasm.opt" "$wasm"
+    else
+      rm -f "$wasm.opt"
+      echo "  (wasm-opt indisponible pour ce fichier : version non optimisée)"
+    fi
   fi
   du -h "$OUT/$page/${page}_bg.wasm" | cut -f1 | sed "s/^/  wasm : /"
 done
