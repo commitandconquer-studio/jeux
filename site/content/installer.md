@@ -47,4 +47,4 @@ Les versions **Windows**, **macOS** et **Android** sont en préparation. En atte
 
 ## Une question, un problème ?
 
-Écrivez-nous sur le [dépôt GitHub du studio](https://github.com/commitandconquer-studio/jeux/issues) (onglet « Issues ») : toutes les remarques sont bienvenues.
+Écrivez-nous à [contact@commitandconquer.fr](mailto:contact@commitandconquer.fr), ou sur le [dépôt GitHub du studio](https://github.com/commitandconquer-studio/jeux/issues) (onglet « Issues ») : toutes les remarques sont bienvenues.

@@ -12,7 +12,7 @@ TVA intracommunautaire : FR77953179090
 
 Directeur de la publication : Olivier Dupré, gérant.
 
-Contact : par le [dépôt GitHub du studio](https://github.com/commitandconquer-studio/jeux/issues) (onglet « Issues »).
+Contact : [contact@commitandconquer.fr](mailto:contact@commitandconquer.fr).
 
 ## Hébergement
 

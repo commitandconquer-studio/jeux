@@ -47,4 +47,4 @@ The **Windows**, **macOS** and **Android** versions are on their way. Meanwhile,
 
 ## A question, a problem?
 
-Write to us on the [studio's GitHub repository](https://github.com/commitandconquer-studio/jeux/issues) (“Issues” tab): all feedback is welcome.
+Write to us at [contact@commitandconquer.fr](mailto:contact@commitandconquer.fr), or on the [studio's GitHub repository](https://github.com/commitandconquer-studio/jeux/issues) (“Issues” tab): all feedback is welcome.

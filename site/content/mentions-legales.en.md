@@ -12,7 +12,7 @@ EU VAT number: FR77953179090
 
 Publication director: Olivier Dupré, manager.
 
-Contact: through the [studio's GitHub repository](https://github.com/commitandconquer-studio/jeux/issues) (“Issues” tab).
+Contact: [contact@commitandconquer.fr](mailto:contact@commitandconquer.fr).
 
 ## Hosting
 
