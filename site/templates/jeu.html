@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+{% block title %}{{ page.title }} · Commit & Conquer{% endblock %}
+{% block description %}{{ page.description }}{% endblock %}
+{% block content %}
+{%- set suf = "" -%}{%- if lang != "fr" -%}{%- set suf = "." ~ lang -%}{%- endif -%}
+{%- set univers = get_section(path="univers/_index" ~ suf ~ ".md") -%}
+{%- set u = "" -%}
+{%- for x in univers.pages -%}{%- if x.extra.cle == page.extra.univers -%}{%- set_global u = x -%}{%- endif -%}{%- endfor -%}
+<section class="jeu-hero theme-{{ page.extra.univers }}">
+  <img class="jeu-icone" src="{{ get_url(path='img/jeux/' ~ page.extra.icone ~ '.png') }}" alt="" width="200" height="200">
+  <div>
+    <a class="tag tag-{{ page.extra.univers }}" href="{{ u.permalink }}">{{ trans(key="univers", lang=lang) }} {{ u.title }}</a>
+    <h1>{{ page.title }}</h1>
+    <p class="lede">{{ page.description }}</p>
+    <p class="actions">
+      {%- if page.extra.web %}
+      <a class="btn btn-main jouer" href="{{ get_url(path='@/jouer/' ~ page.slug ~ '.md', lang=lang) }}">▶ {{ trans(key="jouer_maintenant", lang=lang) }}</a>
+      {%- else %}
+      <span class="btn btn-main disabled" title="{{ trans(key='a_venir', lang=lang) }}">▶ {{ trans(key="jouer_navigateur", lang=lang) }} · {{ trans(key="bientot", lang=lang) }}</span>
+      {%- endif %}
+      <a class="btn btn-ghost" href="{{ config.extra.github }}/tree/main/{{ page.extra.code }}">{{ trans(key="code_source", lang=lang) }}</a>
+    </p>
+  </div>
+</section>
+<div class="jeu-corps">
+  <article class="prose">
+    <h2>{{ trans(key="regle", lang=lang) }}</h2>
+    {{ page.content | safe }}
+    <h2>{{ trans(key="commandes", lang=lang) }}</h2>
+    <ul class="commandes">{% for c in page.extra.commandes %}<li>{{ c }}</li>{% endfor %}</ul>
+  </article>
+  <aside class="plateformes">
+    <h2>{{ trans(key="plateformes", lang=lang) }}</h2>
+    <ul>
+      <li class="ok">🐧 Linux <span>{{ trans(key="disponible", lang=lang) }}</span></li>
+      <li>🪟 Windows <span>{{ trans(key="a_venir", lang=lang) }}</span></li>
+      <li>🍎 macOS <span>{{ trans(key="a_venir", lang=lang) }}</span></li>
+      <li>🤖 Android <span>{{ trans(key="a_venir", lang=lang) }}</span></li>
+      <li{% if page.extra.web %} class="ok"{% endif %}>🌐 {{ trans(key="jouer_navigateur", lang=lang) }} <span>{% if page.extra.web %}{{ trans(key="disponible", lang=lang) }}{% else %}{{ trans(key="a_venir", lang=lang) }}{% endif %}</span></li>
+    </ul>
+  </aside>
+</div>
+<p class="retour"><a href="{{ get_url(path='@/jeux/_index.md', lang=lang) }}">← {{ trans(key="retour_jeux", lang=lang) }}</a></p>
+{% endblock %}

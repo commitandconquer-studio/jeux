@@ -1,0 +1,335 @@
+/* Commit & Conquer — feuille de style du site.
+   Couleurs : packaging/branding/04_palette_couleurs.json */
+@font-face {
+  font-family: "Russo One";
+  src: url("../fonts/RussoOne-Regular.ttf") format("truetype");
+  font-display: swap;
+}
+
+:root {
+  --blue: #168FE8;
+  --green: #80C92B;
+  --lemon: #D8F43F;
+  --coral: #FF493E;
+  --night: #142C40;
+  --sky: #8BD9FF;
+  --ivory: #FFF9ED;
+  --sky-soft: #E6F6FF;
+  --ink: #142C40;
+  --ink-soft: #3E5568;
+  --card: #FFFFFF;
+  --line: #DCE7EE;
+  --radius: 18px;
+  --shadow: 0 10px 30px -12px rgba(20, 44, 64, .28);
+  --title: "Russo One", system-ui, sans-serif;
+  --body: system-ui, -apple-system, "Segoe UI", "Noto Sans", Roboto, sans-serif;
+}
+
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+body {
+  margin: 0;
+  background: var(--ivory);
+  color: var(--ink);
+  font: 17px/1.6 var(--body);
+  -webkit-font-smoothing: antialiased;
+}
+img { max-width: 100%; height: auto; }
+a { color: var(--blue); }
+h1, h2, h3 { font-family: var(--title); font-weight: 400; line-height: 1.15; margin: 0 0 .5em; letter-spacing: .01em; }
+h1 { font-size: clamp(2rem, 5vw, 3.4rem); }
+h2 { font-size: clamp(1.6rem, 3.4vw, 2.3rem); }
+h3 { font-size: 1.25rem; }
+.skip { position: absolute; left: -999px; }
+.skip:focus { left: 16px; top: 16px; z-index: 10; background: var(--ivory); padding: 8px 12px; }
+
+/* ---- En-tête ---------------------------------------------------------- */
+.top {
+  position: sticky; top: 0; z-index: 5;
+  display: flex; align-items: center; justify-content: space-between; gap: 16px;
+  padding: 10px clamp(16px, 4vw, 48px);
+  background: rgba(255, 249, 237, .86);
+  backdrop-filter: blur(10px);
+  border-bottom: 1px solid rgba(20, 44, 64, .08);
+}
+.brand { display: flex; align-items: center; gap: 10px; text-decoration: none; color: var(--ink); }
+.wordmark { display: flex; flex-direction: column; font-family: var(--title); font-size: 14px; line-height: 1; }
+.wordmark .and { color: var(--green); font-size: 9px; letter-spacing: .3em; padding: 2px 0 2px 14px; }
+.nav { display: flex; align-items: center; gap: clamp(10px, 2.4vw, 28px); }
+.nav a { color: var(--ink); text-decoration: none; font-weight: 600; font-size: 15px; white-space: nowrap; }
+.nav a:hover { color: var(--blue); }
+.nav .lang { display: inline-flex; align-items: center; gap: 6px; padding: 5px 10px; border: 1.5px solid var(--line); border-radius: 99px; font-size: 13px; }
+.flag { width: 22px; height: 15px; border-radius: 3px; box-shadow: 0 0 0 1px rgba(0,0,0,.12); }
+@media (max-width: 640px) {
+  .wordmark { display: none; }
+  .nav a:not(.lang) { font-size: 14px; }
+}
+
+/* ---- Boutons ---------------------------------------------------------- */
+.btn {
+  display: inline-block; padding: 13px 24px; border-radius: 99px;
+  font-weight: 700; text-decoration: none; transition: transform .15s, box-shadow .15s;
+}
+.btn:hover { transform: translateY(-2px); }
+.btn-main { background: var(--blue); color: #fff; box-shadow: 0 8px 20px -8px var(--blue); }
+.btn-ghost { background: rgba(255,255,255,.8); color: var(--ink); border: 2px solid var(--ink); }
+.btn.disabled { opacity: .55; cursor: default; transform: none; }
+.actions { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 28px; }
+
+/* ---- Accueil : ouverture en 3D ---------------------------------------- */
+.hero {
+  position: relative; overflow: hidden;
+  min-height: min(92vh, 860px);
+  display: flex; align-items: center;
+  padding: 40px clamp(16px, 6vw, 80px);
+  background: linear-gradient(180deg, var(--ciel-haut) 0%, var(--ciel-milieu) 45%, var(--ciel-bas) 100%);
+  transition: background .6s;
+}
+#hero-3d, .hero-fallback { position: absolute; inset: 0; width: 100%; height: 100%; }
+.hero-fallback { background-size: cover; background-position: center; opacity: 0; transition: opacity .6s; }
+.no-3d .hero-fallback { opacity: 1; }
+.hero-text {
+  position: relative; max-width: 620px;
+  padding: 28px 30px; border-radius: 26px;
+  background: rgba(255, 249, 237, .78);
+  backdrop-filter: blur(6px);
+  box-shadow: var(--shadow);
+}
+.hero h1 { color: var(--night); }
+.lede { font-size: 1.15rem; color: var(--ink-soft); margin: 0; }
+@media (max-width: 860px) {
+  .hero { align-items: flex-end; min-height: 100vh; padding-bottom: 28px; }
+  .hero-text { padding: 22px; }
+}
+
+/* ---- Bandes de l'accueil ---------------------------------------------- */
+.band { position: relative; padding: clamp(56px, 8vw, 96px) clamp(16px, 6vw, 80px); }
+.band > h2, .band > .intro, .band-in > h2, .band-in > .intro { text-align: center; }
+.intro { max-width: 680px; margin: 0 auto 36px; color: var(--ink-soft); }
+.band-in { max-width: 1180px; margin: 0 auto; }
+.ridge { position: absolute; left: 0; width: 100%; height: 60px; top: -59px; display: block; }
+
+.piliers { display: grid; grid-template-columns: repeat(4, 1fr); gap: 22px; max-width: 1180px; margin: 0 auto; }
+.pilier { background: var(--card); border-radius: var(--radius); padding: 26px; box-shadow: var(--shadow); }
+.pilier-icon { width: 58px; height: 58px; margin-bottom: 10px; }
+.pilier p { margin: 0; color: var(--ink-soft); }
+
+.univers-band { background: var(--sky-soft); }
+.univers-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 22px; }
+@media (max-width: 1100px) { .piliers, .univers-grid { grid-template-columns: repeat(2, 1fr); } }
+@media (max-width: 560px) { .piliers, .univers-grid { grid-template-columns: 1fr; } }
+.univers-card {
+  display: block; overflow: hidden; border-radius: var(--radius); text-decoration: none;
+  color: var(--ink); background: var(--card); box-shadow: var(--shadow);
+  transition: transform .2s;
+}
+.univers-card:hover { transform: translateY(-6px) rotate(-.5deg); }
+.univers-card .illus { display: block; width: 100%; height: auto; }
+.univers-card-text { padding: 18px 22px 22px; }
+.univers-card-text p { margin: 0; color: var(--ink-soft); font-size: 15px; }
+.univers-grid.big { padding: 0 clamp(16px, 6vw, 80px) 80px; }
+
+.tag {
+  display: inline-block; font: 700 12px/1 var(--body); letter-spacing: .04em; text-transform: uppercase;
+  padding: 6px 10px; border-radius: 99px; background: var(--ivory); color: var(--ink); text-decoration: none;
+}
+.tag-croa { background: #E5F5D2; color: #3D6B10; }
+.tag-nova { background: var(--night); color: var(--sky); }
+.tag-eureka { background: #DDEFFF; color: #0B5DA0; }
+.tag-legendes { background: #FFE3E0; color: #B02A20; }
+
+.jeux-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(300px, 100%), 1fr)); gap: 18px; max-width: 1180px; margin: 0 auto; }
+.jeu-card {
+  display: flex; gap: 16px; align-items: flex-start; padding: 16px; border-radius: var(--radius);
+  background: var(--card); color: var(--ink); text-decoration: none; box-shadow: var(--shadow);
+  transition: transform .2s;
+}
+.jeu-card[hidden] { display: none; }
+.jeu-card:hover { transform: translateY(-4px); }
+.jeu-card img { width: 96px; height: 96px; border-radius: 20px; flex: none; }
+@media (max-width: 400px) { .jeu-card img { width: 72px; height: 72px; border-radius: 16px; } }
+.jeu-card h3 { margin: 8px 0 4px; font-size: 1.1rem; }
+.jeu-card p { margin: 0; font-size: 14.5px; color: var(--ink-soft); }
+
+.libre { background: var(--night); color: var(--ivory); }
+.libre-in { max-width: 1000px; margin: 0 auto; display: flex; gap: 32px; align-items: center; justify-content: space-between; flex-wrap: wrap; }
+.libre-in > div { max-width: 640px; }
+.libre p { color: #C9D8E4; margin: 0; }
+
+/* ---- Pages intérieures ------------------------------------------------ */
+.page-head { text-align: center; padding: clamp(48px, 7vw, 80px) 16px 28px; }
+.filtres { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; }
+.filtre { border: 2px solid transparent; cursor: pointer; padding: 8px 14px; border-radius: 99px; font: 700 14px var(--body); background: #fff; color: var(--ink); }
+.filtre.on { border-color: var(--ink); }
+.prose { max-width: 760px; margin: 0 auto; padding: 0 16px 64px; }
+.prose h2 { margin-top: 1.6em; font-size: 1.6rem; }
+.retour { text-align: center; padding-bottom: 64px; }
+
+.univers-hero, .jeu-hero {
+  display: grid; grid-template-columns: 1.1fr 1fr; gap: clamp(20px, 4vw, 56px); align-items: center;
+  padding: clamp(40px, 6vw, 80px) clamp(16px, 6vw, 80px);
+}
+.univers-hero .illus { width: 100%; border-radius: var(--radius); box-shadow: var(--shadow); }
+.jeu-hero { grid-template-columns: auto 1fr; }
+.jeu-icone { width: clamp(120px, 18vw, 200px); border-radius: 36px; box-shadow: var(--shadow); }
+.jeu-hero .tag { margin-bottom: 14px; }
+@media (max-width: 760px) {
+  .univers-hero, .jeu-hero { grid-template-columns: 1fr; }
+}
+.jeu-corps { display: grid; grid-template-columns: minmax(0, 1fr) 300px; gap: 32px; max-width: 1100px; margin: 0 auto; padding: 24px 16px 0; }
+.jeu-corps .prose { padding: 0; margin: 0; }
+.commandes { padding: 0; list-style: none; }
+.commandes li { background: #fff; border-radius: 12px; padding: 10px 14px; margin-bottom: 8px; box-shadow: 0 2px 8px -4px rgba(20,44,64,.25); }
+.plateformes { background: #fff; border-radius: var(--radius); padding: 22px; box-shadow: var(--shadow); align-self: start; }
+.plateformes h2 { font-size: 1.3rem; }
+.plateformes ul { list-style: none; padding: 0; margin: 0; }
+.plateformes li { display: flex; justify-content: space-between; gap: 10px; padding: 9px 0; border-bottom: 1px solid var(--line); font-weight: 600; }
+.plateformes li span { font-weight: 500; color: var(--ink-soft); font-size: 14px; }
+.plateformes li.ok span { color: #3D6B10; font-weight: 700; }
+@media (max-width: 860px) { .jeu-corps { grid-template-columns: 1fr; } }
+
+/* ---- Thèmes des univers ----------------------------------------------- */
+.univers-hero.theme-croa, .jeu-hero.theme-croa { background: linear-gradient(180deg, #E5F5D2, var(--ivory)); }
+.univers-hero.theme-nova, .jeu-hero.theme-nova {
+  background: radial-gradient(ellipse at 70% 30%, #1E4A6E 0%, var(--night) 60%), var(--night);
+  color: var(--ivory);
+}
+.theme-nova .lede, .theme-nova .prose-inline { color: #C9D8E4; }
+.univers-hero.theme-eureka, .jeu-hero.theme-eureka {
+  background-color: #FBF6E9;
+  background-image: linear-gradient(rgba(139,217,255,.35) 1px, transparent 1px), linear-gradient(90deg, rgba(139,217,255,.35) 1px, transparent 1px);
+  background-size: 24px 24px;
+}
+.univers-hero.theme-legendes, .jeu-hero.theme-legendes { background: linear-gradient(180deg, #F3E9DE, var(--ivory)); }
+
+/* ---- Pied de page ----------------------------------------------------- */
+.foot { position: relative; background: var(--night); color: var(--ivory); margin-top: 60px; padding: 40px clamp(16px, 6vw, 80px) 24px; }
+.libre + .foot, main:has(> .libre:last-child) + .foot { margin-top: 0; }
+.foot-in { max-width: 1180px; margin: 0 auto; display: flex; flex-wrap: wrap; gap: 32px; justify-content: space-between; }
+.foot-brand { display: flex; gap: 16px; align-items: flex-start; }
+.foot-brand p { margin: 0 0 4px; }
+.foot-title { font-family: var(--title); font-size: 1.2rem; }
+.muted { color: #9DB2C3; font-size: 14px; }
+.foot-links { display: flex; flex-wrap: wrap; gap: 10px 22px; align-items: center; }
+.foot-links a { color: var(--ivory); text-decoration: none; opacity: .85; }
+.foot-links a:hover { opacity: 1; color: var(--lemon); }
+.foot-copy { text-align: center; color: #9DB2C3; font-size: 13px; margin: 32px 0 0; }
+
+@media (prefers-reduced-motion: reduce) {
+  * { transition: none !important; scroll-behavior: auto !important; }
+}
+
+/* ---- Montagnes en parallaxe ------------------------------------------- */
+.montagnes {
+  --m1: #CDEAF8; --m1b: #B9DFF3; --m2: #A9D86E; --m2b: #92C957; --m3: var(--ivory);
+  position: relative; z-index: 1; pointer-events: none; overflow: hidden;
+  height: clamp(110px, 15vw, 220px);
+  margin-top: calc(-1 * clamp(110px, 15vw, 220px));
+}
+.montagnes svg { position: absolute; left: 0; width: 100%; will-change: transform; }
+.montagnes svg:nth-child(1) { bottom: -90px; height: calc(100% + 90px); }
+.montagnes svg:nth-child(2) { bottom: -60px; height: calc(100% + 60px); }
+.montagnes svg:nth-child(3) { bottom: -40px; height: calc(100% + 40px); }
+.m1 { fill: var(--m1); } .m1b { fill: var(--m1b); }
+.m2 { fill: var(--m2); } .m2b { fill: var(--m2b); }
+.m3 { fill: var(--m3); }
+.theme-croa .montagnes { --m1: #CFEFB0; --m1b: #BDE594; --m2: #8FCB4E; --m2b: #7AB83C; }
+.theme-nova .montagnes { --m1: #2A557B; --m1b: #234A6C; --m2: #1B3B58; --m2b: #17324B; }
+.theme-eureka .montagnes { --m1: #D7EEFB; --m1b: #C4E5F7; --m2: #A8D3F0; --m2b: #93C6EA; }
+.theme-legendes .montagnes { --m1: #D9CFC3; --m1b: #CBBFB1; --m2: #8FC456; --m2b: #7AB040; }
+
+/* ---- En-tête 3D des univers ------------------------------------------- */
+.univers-hero { position: relative; overflow: hidden; min-height: min(82vh, 760px); }
+.univers-hero .scene-3d { position: absolute; inset: 0; width: 100%; height: 100%; }
+.univers-hero-text {
+  position: relative; z-index: 1; padding: 26px 28px; border-radius: 24px;
+  background: rgba(255, 249, 237, .8); backdrop-filter: blur(6px); box-shadow: var(--shadow);
+}
+.univers-hero.theme-nova .univers-hero-text { background: rgba(20, 44, 64, .72); }
+.univers-hero.a-3d .illus { visibility: hidden; }
+.univers-hero.theme-croa { background: linear-gradient(180deg, var(--ciel-haut) 0%, var(--ciel-milieu) 50%, #E5F5D2 100%); }
+.univers-hero.theme-legendes { background: linear-gradient(180deg, #F6C9A0 0%, #F3E1CB 55%, #EFE7DC 100%); }
+@media (max-width: 760px) { .univers-hero { min-height: 100vh; align-content: start; } }
+
+/* ---- Ambiance : moment, saison, météo (classes posées par ambiance.js) -- */
+:root { --ciel-haut: #5FC3FA; --ciel-milieu: var(--sky); --ciel-bas: var(--ivory); }
+.moment-matin { --ciel-haut: #8EC9F2; --ciel-milieu: #FFD3B5; --ciel-bas: #FFF1DD; }
+.moment-soir  { --ciel-haut: #5A6FB8; --ciel-milieu: #F49A72; --ciel-bas: #FFE0C2; }
+.moment-nuit  { --ciel-haut: #0B1A2C; --ciel-milieu: #1D3557; --ciel-bas: #3B5577; }
+.meteo-nuageux:not(.moment-nuit) { --ciel-haut: #8FB3CC; --ciel-milieu: #C6DAE6; }
+.meteo-pluie:not(.moment-nuit), .meteo-orage:not(.moment-nuit) { --ciel-haut: #5E7487; --ciel-milieu: #93A8B8; --ciel-bas: #DCE4EA; }
+.meteo-brouillard:not(.moment-nuit) { --ciel-haut: #B9C6CF; --ciel-milieu: #DCE3E8; --ciel-bas: #F2F4F5; }
+.meteo-neige:not(.moment-nuit) { --ciel-haut: #A9C4D8; --ciel-milieu: #DCE9F2; --ciel-bas: #F7FAFC; }
+.moment-nuit .hero h1, .moment-nuit .univers-hero h1 { color: var(--night); }
+.moment-nuit .univers-hero.theme-legendes, .moment-nuit .univers-hero.theme-eureka {
+  background: linear-gradient(180deg, var(--ciel-haut), var(--ciel-milieu) 60%, var(--ciel-bas));
+}
+.moment-nuit .univers-hero.theme-croa { background: linear-gradient(180deg, var(--ciel-haut), var(--ciel-milieu) 60%, #2F5A3A); }
+/* Montagnes : neige l'hiver, roux l'automne, bleu sombre la nuit. */
+.saison-hiver .montagnes { --m1: #EEF5FB; --m1b: #DCE8F1; --m2: #E3EDF3; --m2b: #CFDDE7; }
+.saison-automne .montagnes { --m2: #D9A55A; --m2b: #C48A3E; }
+.saison-printemps .montagnes { --m2: #A7DC7A; --m2b: #93CF62; }
+.moment-nuit .montagnes { --m1: #2B4A6B; --m1b: #24405D; --m2: #36603F; --m2b: #2D5236; }
+.moment-nuit.saison-hiver .montagnes { --m1: #4A6684; --m1b: #3E5A78; --m2: #6E88A0; --m2b: #5F7A93; }
+
+/* Message de fête, sous l'en-tête. */
+.fete-bandeau {
+  display: flex; justify-content: center; align-items: center; gap: 10px;
+  padding: 8px 16px; font-weight: 700; font-size: 15px; text-align: center;
+  background: var(--lemon); color: var(--night);
+}
+.fete-halloween .fete-bandeau { background: #FF8A1F; color: #1B1026; }
+.fete-noel .fete-bandeau, .fete-avent .fete-bandeau, .fete-saint-nicolas .fete-bandeau { background: #C8102E; color: #FFF9ED; }
+.fete-paques .fete-bandeau, .fete-rameaux .fete-bandeau { background: #F7D6E6; color: var(--night); }
+.fete-bandeau[hidden] { display: none; }
+
+/* Bouton météo de l'en-tête et sa fenêtre. */
+.meteo-btn { border: 1.5px solid var(--line); background: transparent; border-radius: 99px; padding: 4px 10px; font-size: 16px; cursor: pointer; line-height: 1.4; }
+.meteo-pop {
+  position: fixed; z-index: 40; top: 70px; right: 16px; width: min(360px, calc(100vw - 32px));
+  max-height: calc(100vh - 86px); overflow-y: auto; overscroll-behavior: contain;
+  background: #fff; color: var(--ink); border-radius: 18px; padding: 18px; box-shadow: 0 20px 50px -15px rgba(20,44,64,.45);
+}
+.meteo-pop h3 { margin: 0 0 6px; font-size: 1.1rem; }
+.meteo-pop p { margin: 0 0 12px; font-size: 14px; color: var(--ink-soft); }
+.meteo-pop .ligne { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 10px; }
+.meteo-pop button, .meteo-pop input { font: 600 14px var(--body); border-radius: 12px; padding: 9px 12px; }
+.meteo-pop button { border: 0; background: var(--blue); color: #fff; cursor: pointer; }
+.meteo-pop button.second { background: var(--sky-soft); color: var(--ink); }
+.meteo-pop input { border: 1.5px solid var(--line); flex: 1; min-width: 0; }
+.meteo-pop .etat { font-size: 13px; color: var(--ink-soft); min-height: 1.2em; margin: 6px 0 0; }
+
+/* Panneau de démonstration de l'ambiance (serveur de développement seulement). */
+.dev-ambiance { position: fixed; right: 16px; bottom: 16px; z-index: 30; font: 600 13px var(--body); }
+.dev-ambiance > button { border: 0; border-radius: 99px; padding: 12px 16px; background: var(--night); color: var(--lemon); box-shadow: var(--shadow); cursor: pointer; }
+.dev-ambiance .panneau {
+  position: absolute; right: 0; bottom: 56px; width: min(290px, calc(100vw - 32px)); background: var(--night); color: var(--ivory);
+  border-radius: 16px; padding: 14px; box-shadow: var(--shadow);
+}
+.dev-ambiance label { display: grid; grid-template-columns: 80px 1fr; align-items: center; gap: 8px; margin-bottom: 8px; }
+.dev-ambiance select { font: inherit; padding: 6px; border-radius: 8px; width: 100%; min-width: 0; }
+.dev-ambiance .panneau > button { font: inherit; border: 0; border-radius: 10px; padding: 8px 12px; background: var(--lemon); color: var(--night); cursor: pointer; }
+.dev-ambiance .actuel { color: #9DB2C3; font-weight: 500; margin: 6px 0 0; font-size: 12px; }
+@media (max-width: 420px) {
+  .nav { gap: 9px; }
+  .nav .lang span { display: none; }
+  .nav .lang, .meteo-btn { padding: 4px 7px; }
+  .brand img { width: 34px; height: auto; }
+}
+/* Sans 3D, l'illustration suit aussi l'ambiance. */
+html.moment-nuit .hero-fallback { filter: brightness(.42) saturate(.75) hue-rotate(12deg); }
+.moment-soir .hero-fallback { filter: sepia(.25) saturate(1.2) brightness(.92); }
+.meteo-pluie .hero-fallback, .meteo-orage .hero-fallback { filter: saturate(.55) brightness(.8); }
+.meteo-neige .hero-fallback { filter: saturate(.6) brightness(1.08); }
+
+/* ---- Page « Jouer » : le jeu en plein écran ---------------------------- */
+.page-jouer { margin: 0; height: 100vh; height: 100dvh; display: flex; flex-direction: column; background: var(--night); overflow: hidden; }
+.jouer-barre { display: flex; align-items: center; gap: 14px; padding: 6px 14px; background: var(--ivory); font-family: var(--title); }
+.jouer-barre strong { font-weight: 400; flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.retour-fiche { font: 700 14px var(--body); color: var(--blue); text-decoration: none; white-space: nowrap; }
+.jouer-zone { position: relative; flex: 1; min-height: 0; }
+.jouer-zone canvas { display: block; width: 100%; height: 100%; outline: none; touch-action: none; }
+.jouer-attente { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; color: var(--ivory); text-align: center; padding: 16px; }
+.jouer-attente img { border-radius: 26px; margin-bottom: 12px; animation: respire 1.6s ease-in-out infinite; }
+@keyframes respire { 50% { transform: scale(1.06); } }
+.btn.btn-main.jouer { display: inline-block; }

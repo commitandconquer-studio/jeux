@@ -1,0 +1,10 @@
+{% extends "base.html" %}
+{% block title %}{{ page.title }} · Commit & Conquer{% endblock %}
+{% block content %}
+<section class="page-head">
+  <h1>{{ page.title }}</h1>
+</section>
+<article class="prose">
+  {{ page.content | safe }}
+</article>
+{% endblock %}

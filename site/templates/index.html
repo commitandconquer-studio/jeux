@@ -1,0 +1,80 @@
+{% extends "base.html" %}
+{% block title %}{{ section.title }}{% endblock %}
+{% block body_class %}home{% endblock %}
+{% block head %}
+<script type="importmap">{"imports": {"three": "{{ get_url(path='js/vendor/three.module.min.js') }}"}}</script>
+{% endblock %}
+{% block content %}
+{%- set suf = "" -%}{%- if lang != "fr" -%}{%- set suf = "." ~ lang -%}{%- endif -%}
+{%- set univers = get_section(path="univers/_index" ~ suf ~ ".md") -%}
+{%- set jeux = get_section(path="jeux/_index" ~ suf ~ ".md") -%}
+
+<section class="hero">
+  <canvas id="hero-3d" aria-hidden="true"></canvas>
+  <div class="hero-fallback" style="background-image: url('{{ get_url(path='img/brand/paysage.webp') }}')" aria-hidden="true"></div>
+  <div class="hero-text">
+    <h1>{{ section.extra.h1 | replace(from="|", to="<br>") | safe }}</h1>
+    <p class="lede">{{ section.extra.lede }}</p>
+    <p class="actions">
+      <a class="btn btn-main" href="{{ get_url(path='@/jeux/_index.md', lang=lang) }}">{{ trans(key="cta_jeux", lang=lang) }}</a>
+      <a class="btn btn-ghost" href="#engagement">{{ trans(key="cta_engagement", lang=lang) }}</a>
+    </p>
+  </div>
+</section>
+{{ <cc.montagnes /> }}
+
+<section class="band engagement" id="engagement">
+  <h2>{{ trans(key="engagement_titre", lang=lang) }}</h2>
+  <div class="piliers">
+    {%- for p in section.extra.piliers %}
+    <article class="pilier">
+      {{ <cc.pilier i={loop.index} /> }}
+      <h3>{{ p.titre }}</h3>
+      <p>{{ p.texte }}</p>
+    </article>
+    {%- endfor %}
+  </div>
+</section>
+
+<section class="band univers-band">
+  {{ <cc.ridge fill="var(--sky-soft)" /> }}
+  <div class="band-in">
+    <h2>{{ trans(key="univers_titre", lang=lang) }}</h2>
+    <p class="intro">{{ trans(key="univers_intro", lang=lang) }}</p>
+    <div class="univers-grid">
+      {%- for u in univers.pages %}
+      <a class="univers-card theme-{{ u.extra.cle }}" href="{{ u.permalink }}">
+        {{ <cc.illus cle={u.extra.cle} /> }}
+        <div class="univers-card-text">
+          <h3>{{ u.title }}{% if u.extra.bientot %} <span class="tag">{{ trans(key="bientot", lang=lang) }}</span>{% endif %}</h3>
+          <p>{{ u.description }}</p>
+        </div>
+      </a>
+      {%- endfor %}
+    </div>
+  </div>
+</section>
+
+<section class="band jeux-band">
+  <h2>{{ trans(key="jeux_titre", lang=lang) }}</h2>
+  <p class="intro">{{ trans(key="jeux_intro", lang=lang) }}</p>
+  <div class="jeux-grid">
+    {%- for j in jeux.pages %}
+    {{ <cc.carte_jeu j={j} univers={univers} lang={lang} /> }}
+    {%- endfor %}
+  </div>
+</section>
+
+<section class="band libre">
+  <div class="libre-in">
+    <div>
+      <h2>{{ trans(key="libre_titre", lang=lang) }}</h2>
+      <p>{{ trans(key="libre_texte", lang=lang) }}</p>
+    </div>
+    <a class="btn btn-main" href="{{ config.extra.github }}">{{ trans(key="libre_cta", lang=lang) }}</a>
+  </div>
+</section>
+{% endblock %}
+{% block scripts %}
+<script type="module" src="{{ get_url(path='js/hero.js') }}"></script>
+{% endblock %}

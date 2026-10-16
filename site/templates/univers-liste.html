@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+{% block title %}{{ section.title }} · Commit & Conquer{% endblock %}
+{% block content %}
+<section class="page-head">
+  <h1>{{ section.title }}</h1>
+  <div class="intro">{{ section.content | safe }}</div>
+</section>
+<div class="band-in univers-grid big">
+  {%- for u in section.pages %}
+  <a class="univers-card theme-{{ u.extra.cle }}" href="{{ u.permalink }}">
+    {{ <cc.illus cle={u.extra.cle} /> }}
+    <div class="univers-card-text">
+      <h3>{{ u.title }}{% if u.extra.bientot %} <span class="tag">{{ trans(key="bientot", lang=lang) }}</span>{% endif %}</h3>
+      <p>{{ u.description }}</p>
+    </div>
+  </a>
+  {%- endfor %}
+</div>
+{% endblock %}

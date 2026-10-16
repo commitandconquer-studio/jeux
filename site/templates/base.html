@@ -1,0 +1,95 @@
+{%- if section -%}{%- set tr = section.translations -%}{%- elif page -%}{%- set tr = page.translations -%}{%- else -%}{%- set tr = [] -%}{%- endif -%}
+<!doctype html>
+<html lang="{{ lang }}">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}{{ config.title }}{% endblock %}</title>
+  <meta name="description" content="{% block description %}{{ config.description }}{% endblock %}">
+  <meta name="theme-color" content="#168FE8">
+  <link rel="icon" href="{{ get_url(path='img/brand/favicon.png') }}">
+  {%- for t in tr %}
+  <link rel="alternate" hreflang="{{ t.lang }}" href="{{ t.permalink }}">
+  {%- endfor %}
+  <script>
+    /* Langue : un navigateur en français (toutes variantes : France, Belgique,
+       Suisse, Canada, Afrique…) reçoit le site en français, les autres en
+       anglais. Le choix fait avec le drapeau est retenu dans ce navigateur. */
+    (function () {
+      try {
+        var cur = document.documentElement.lang;
+        var saved = localStorage.getItem("cc-lang");
+        var langs = navigator.languages || [navigator.language || ""];
+        var fr = langs.some(function (l) { return /^fr\b/i.test(l); });
+        var want = saved || (fr ? "fr" : "en");
+        if (want !== cur) {
+          var alt = document.querySelector('link[rel=alternate][hreflang="' + want + '"]');
+          if (alt) location.replace(alt.href);
+        }
+      } catch (e) {}
+    })();
+  </script>
+  <script src="{{ get_url(path='js/ambiance.js') }}"></script>
+  <link rel="stylesheet" href="{{ get_url(path='css/site.css') }}">
+  {% block head %}{% endblock %}
+</head>
+<body class="{% block body_class %}{% endblock %}">
+  <a class="skip" href="#contenu">{{ trans(key="skip", lang=lang) }}</a>
+  <header class="top">
+    <a class="brand" href="{{ get_url(path='@/_index.md', lang=lang) }}" aria-label="Commit & Conquer">
+      <img src="{{ get_url(path='img/brand/embleme.webp') }}" alt="" width="40" height="44">
+      <span class="wordmark"><span>COMMIT</span><span class="and">AND</span><span>CONQUER</span></span>
+    </a>
+    <nav class="nav" aria-label="Menu">
+      <a href="{{ get_url(path='@/univers/_index.md', lang=lang) }}">{{ trans(key="nav_univers", lang=lang) }}</a>
+      <a href="{{ get_url(path='@/jeux/_index.md', lang=lang) }}">{{ trans(key="nav_jeux", lang=lang) }}</a>
+      <a href="{{ get_url(path='@/studio.md', lang=lang) }}">{{ trans(key="nav_studio", lang=lang) }}</a>
+      {%- set other = "en" -%}{%- if lang == "en" -%}{%- set other = "fr" -%}{%- endif -%}
+      {%- set other_url = get_url(path='@/_index.md', lang=other) -%}
+      {%- for t in tr -%}{%- if t.lang == other -%}{%- set_global other_url = t.permalink -%}{%- endif -%}{%- endfor %}
+      <button class="meteo-btn" type="button" aria-haspopup="dialog" title="{{ trans(key='meteo_titre', lang=lang) }}">☀️</button>
+      <a class="lang" href="{{ other_url }}" hreflang="{{ other }}" data-lang="{{ other }}" title="{{ trans(key='other_lang', lang=lang) }}">
+        {{ <cc.flag lang={other} /> }}<span>{{ other | upper }}</span>
+      </a>
+    </nav>
+  </header>
+  <p class="fete-bandeau" hidden></p>
+
+  <main id="contenu">
+    {% block content %}{% endblock %}
+  </main>
+
+  <footer class="foot">
+    {{ <cc.ridge fill="var(--night)" /> }}
+    <div class="foot-in">
+      <div class="foot-brand">
+        <img src="{{ get_url(path='img/brand/embleme.webp') }}" alt="" width="56" height="61">
+        <div>
+          <p class="foot-title">Commit &amp; Conquer</p>
+          <p>{{ trans(key="footer_tagline", lang=lang) }}</p>
+          <p class="muted">{{ trans(key="footer_fait", lang=lang) }}</p>
+        </div>
+      </div>
+      <nav class="foot-links" aria-label="Liens">
+        <a href="{{ get_url(path='@/univers/_index.md', lang=lang) }}">{{ trans(key="nav_univers", lang=lang) }}</a>
+        <a href="{{ get_url(path='@/jeux/_index.md', lang=lang) }}">{{ trans(key="nav_jeux", lang=lang) }}</a>
+        <a href="{{ get_url(path='@/studio.md', lang=lang) }}">{{ trans(key="nav_studio", lang=lang) }}</a>
+        <a href="{{ config.extra.github }}">{{ trans(key="code_source", lang=lang) }} (GPL)</a>
+        <a href="{{ get_url(path='@/mentions-legales.md', lang=lang) }}">{{ trans(key="mentions", lang=lang) }}</a>
+      </nav>
+    </div>
+    <p class="foot-copy">© {{ now() | date(format="%Y") }} Commit &amp; Conquer · Franchir Un Cap</p>
+  </footer>
+  <script>
+    // Le drapeau retient le choix de langue (sinon la détection ramènerait l'autre).
+    document.querySelectorAll("a[data-lang]").forEach(function (a) {
+      a.addEventListener("click", function () {
+        try { localStorage.setItem("cc-lang", a.dataset.lang); } catch (e) {}
+      });
+    });
+  </script>
+  <script src="{{ get_url(path='js/parallax.js') }}" defer></script>
+  <script src="{{ get_url(path='js/ambiance-ui.js') }}" data-lang="{{ lang }}" {% if config.mode == "serve" %}data-dev="1"{% endif %} defer></script>
+  {% block scripts %}{% endblock %}
+</body>
+</html>

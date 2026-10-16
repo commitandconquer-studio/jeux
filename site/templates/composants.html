@@ -1,0 +1,115 @@
+{# Petits dessins low poly en SVG, réutilisés dans tout le site. #}
+
+{% component cc.flag(lang) %}
+{%- if lang == "fr" -%}
+<svg class="flag" viewBox="0 0 30 20" aria-hidden="true"><rect width="10" height="20" fill="#0055A4"/><rect x="10" width="10" height="20" fill="#fff"/><rect x="20" width="10" height="20" fill="#EF4135"/></svg>
+{%- else -%}
+<svg class="flag" viewBox="0 0 60 40" aria-hidden="true"><clipPath id="uk"><rect width="60" height="40"/></clipPath><g clip-path="url(#uk)"><rect width="60" height="40" fill="#012169"/><path d="M0,0 60,40M60,0 0,40" stroke="#fff" stroke-width="8"/><path d="M0,0 60,40M60,0 0,40" stroke="#C8102E" stroke-width="3"/><path d="M30,0V40M0,20H60" stroke="#fff" stroke-width="12"/><path d="M30,0V40M0,20H60" stroke="#C8102E" stroke-width="7"/></g></svg>
+{%- endif -%}
+{% endcomponent cc.flag %}
+
+{# Bord de section à facettes, comme une crête de montagnes low poly. #}
+{% component cc.ridge(fill) %}
+<svg class="ridge" viewBox="0 0 1200 60" preserveAspectRatio="none" aria-hidden="true">
+  <polygon points="0,60 0,34 80,18 150,30 240,8 330,26 410,14 520,36 600,12 690,28 780,6 860,24 950,16 1040,32 1120,10 1200,26 1200,60" fill="{{ fill }}"/>
+  <polygon points="240,8 330,26 300,60 200,60" fill="{{ fill }}" opacity=".85"/>
+  <polygon points="780,6 860,24 840,60 740,60" fill="{{ fill }}" opacity=".85"/>
+</svg>
+{% endcomponent cc.ridge %}
+
+{# Icônes des quatre engagements. #}
+{% component cc.pilier(i) %}
+<svg class="pilier-icon" viewBox="0 0 64 64" aria-hidden="true">
+{%- if i == 1 -%}
+  <polygon points="32,6 54,20 32,30" fill="#D8F43F"/><polygon points="32,6 10,20 32,30" fill="#80C92B"/>
+  <polygon points="10,20 32,30 32,58 10,44" fill="#5A9A1C"/><polygon points="54,20 32,30 32,58 54,44" fill="#80C92B"/>
+  <polygon points="22,25 42,25 32,40" fill="#FFF9ED" opacity=".9"/>
+{%- elif i == 2 -%}
+  <polygon points="20,8 44,8 56,28 44,48 20,48 8,28" fill="#168FE8"/><polygon points="20,8 44,8 32,28" fill="#8BD9FF"/>
+  <polygon points="8,28 20,48 32,28" fill="#0E5FA8"/><polygon points="25,22 39,22 39,38 25,38" fill="none" stroke="#FFF9ED" stroke-width="4"/>
+  <polygon points="28,48 36,48 34,58 30,58" fill="#142C40"/>
+{%- elif i == 3 -%}
+  <polygon points="32,4 56,14 52,40 32,60" fill="#168FE8"/><polygon points="32,4 8,14 12,40 32,60" fill="#8BD9FF"/>
+  <polygon points="22,30 30,38 44,22 48,27 30,46 18,34" fill="#FFF9ED"/>
+{%- else -%}
+  <polygon points="32,4 39,24 60,24 43,37 50,58 32,45 14,58 21,37 4,24 25,24" fill="#FF493E"/>
+  <polygon points="32,4 39,24 32,30 25,24" fill="#FF8A80"/><polygon points="32,30 43,37 50,58 32,45" fill="#D63A30"/>
+{%- endif -%}
+</svg>
+{% endcomponent cc.pilier %}
+
+{# Illustration de chaque univers. #}
+{% component cc.illus(cle) %}
+<svg class="illus" viewBox="0 0 200 140" aria-hidden="true">
+{%- if cle == "croa" -%}
+  <polygon points="0,90 200,80 200,140 0,140" fill="#8BD9FF"/><polygon points="0,90 70,86 30,140 0,140" fill="#6CC4F0"/>
+  <polygon points="130,84 200,80 200,140 160,140" fill="#A8E3FF"/>
+  <polygon points="40,104 100,96 160,104 140,122 60,124" fill="#80C92B"/><polygon points="100,96 160,104 140,122 104,112" fill="#5A9A1C"/>
+  <polygon points="70,100 130,100 124,72 100,60 76,72" fill="#80C92B"/><polygon points="100,60 124,72 130,100 100,92" fill="#5A9A1C"/>
+  <polygon points="76,72 100,60 100,76" fill="#D8F43F"/>
+  <polygon points="74,64 84,56 92,64 84,72" fill="#FFF9ED"/><polygon points="108,64 116,56 126,64 116,72" fill="#FFF9ED"/>
+  <polygon points="81,62 87,62 87,67 81,67" fill="#142C40"/><polygon points="113,62 119,62 119,67 113,67" fill="#142C40"/>
+  <polygon points="86,84 114,84 100,90" fill="#FF493E"/>
+  <polygon points="150,30 170,22 186,32 176,44 156,42" fill="#FFF9ED"/><polygon points="20,26 38,18 52,28 40,36" fill="#FFF9ED"/>
+{%- elif cle == "nova" -%}
+  <rect width="200" height="140" fill="#142C40"/>
+  <polygon points="10,20 12,22 10,24 8,22" fill="#FFF9ED"/><polygon points="170,14 172,16 170,18 168,16" fill="#FFF9ED"/>
+  <polygon points="150,110 152,112 150,114 148,112" fill="#8BD9FF"/><polygon points="30,112 32,114 30,116 28,114" fill="#D8F43F"/>
+  <polygon points="60,40 80,28 104,32 116,52 108,76 84,86 62,78 52,58" fill="#168FE8"/>
+  <polygon points="60,40 80,28 84,56" fill="#8BD9FF"/><polygon points="84,56 116,52 108,76" fill="#0E5FA8"/>
+  <polygon points="52,58 84,56 62,78" fill="#1A73C0"/><polygon points="84,56 108,76 84,86" fill="#0B4E8A"/>
+  <polygon points="30,62 140,44 142,50 34,70" fill="#D8F43F" opacity=".85"/>
+  <polygon points="140,92 176,80 168,96" fill="#FFF9ED"/><polygon points="140,92 168,96 150,102" fill="#8BD9FF"/>
+  <polygon points="136,94 140,92 150,102 138,100" fill="#FF493E"/>
+{%- elif cle == "eureka" -%}
+  <rect width="200" height="140" fill="#FBF6E9"/>
+  <path d="M0 20H200M0 40H200M0 60H200M0 80H200M0 100H200M0 120H200M20 0V140M40 0V140M60 0V140M80 0V140M100 0V140M120 0V140M140 0V140M160 0V140M180 0V140" stroke="#8BD9FF" stroke-width=".8" opacity=".7"/>
+  <polygon points="86,20 114,20 112,52 140,118 60,118 88,52" fill="#FFF9ED" stroke="#142C40" stroke-width="3" stroke-linejoin="round"/>
+  <polygon points="78,88 122,88 136,114 64,114" fill="#80C92B"/><polygon points="100,88 122,88 136,114 108,114" fill="#5A9A1C"/>
+  <polygon points="78,88 100,88 84,102" fill="#D8F43F"/>
+  <polygon points="96,70 102,66 108,70 102,76" fill="#8BD9FF"/><polygon points="104,52 108,49 112,52 108,56" fill="#8BD9FF"/>
+  <polygon points="146,30 176,30 176,60 146,60" fill="#168FE8"/><polygon points="146,30 176,30 172,26 150,26" fill="#8BD9FF"/>
+  <text x="161" y="52" font-family="Russo One, sans-serif" font-size="18" fill="#FFF9ED" text-anchor="middle">2</text>
+{%- else -%}
+  <rect width="200" height="140" fill="#EFE7DC"/>
+  <polygon points="0,120 60,96 120,108 200,90 200,140 0,140" fill="#80C92B"/><polygon points="60,96 120,108 90,140 30,140" fill="#5A9A1C"/>
+  <polygon points="66,50 134,50 134,108 66,108" fill="#C9C2B8"/><polygon points="100,50 134,50 134,108 100,108" fill="#A9A197"/>
+  <polygon points="52,36 76,36 76,108 52,108" fill="#D8D2C9"/><polygon points="124,36 148,36 148,108 124,108" fill="#B6AEA4"/>
+  <polygon points="48,36 64,14 80,36" fill="#FF493E"/><polygon points="64,14 80,36 66,36" fill="#D63A30"/>
+  <polygon points="120,36 136,14 152,36" fill="#FF493E"/><polygon points="136,14 152,36 138,36" fill="#D63A30"/>
+  <polygon points="90,84 110,84 110,108 90,108" fill="#142C40"/><polygon points="90,84 100,76 110,84" fill="#142C40"/>
+  <polygon points="136,14 136,2 150,6 136,10" fill="#FF493E"/>
+{%- endif -%}
+</svg>
+{% endcomponent cc.illus %}
+
+{# Carte d'un jeu (accueil, catalogue, page d'univers). #}
+{% component cc.carte_jeu(j, univers, lang) %}
+{%- set nom_univers = "" -%}
+{%- for u in univers.pages -%}{%- if u.extra.cle == j.extra.univers -%}{%- set_global nom_univers = u.title -%}{%- endif -%}{%- endfor -%}
+<a class="jeu-card theme-{{ j.extra.univers }}" href="{{ j.permalink }}" data-univers="{{ j.extra.univers }}">
+  <img src="{{ get_url(path='img/jeux/' ~ j.extra.icone ~ '.png') }}" alt="" width="96" height="96" loading="lazy">
+  <div>
+    <span class="tag tag-{{ j.extra.univers }}">{{ nom_univers }}</span>
+    <h3>{{ j.title }}</h3>
+    <p>{{ j.description }}</p>
+  </div>
+</a>
+{% endcomponent cc.carte_jeu %}
+
+{# Trois rangées de montagnes à facettes, qui glissent en parallaxe au défilement. #}
+{% component cc.montagnes() %}
+<div class="montagnes" aria-hidden="true">
+  <svg data-vitesse="0.32" viewBox="0 0 1440 220" preserveAspectRatio="none">
+    <polygon class="m1" points="0,220 0,120 90,70 170,110 260,40 350,95 430,60 540,120 620,50 720,100 800,30 900,90 980,55 1080,110 1170,45 1260,95 1350,60 1440,90 1440,220"/>
+    <polygon class="m1b" points="260,40 350,95 330,220 230,220"/><polygon class="m1b" points="800,30 900,90 870,220 770,220"/><polygon class="m1b" points="1170,45 1260,95 1240,220 1150,220"/>
+  </svg>
+  <svg data-vitesse="0.18" viewBox="0 0 1440 220" preserveAspectRatio="none">
+    <polygon class="m2" points="0,220 0,150 120,110 230,150 360,95 480,140 600,105 760,150 880,100 1010,145 1130,115 1280,150 1440,110 1440,220"/>
+    <polygon class="m2b" points="360,95 480,140 460,220 340,220"/><polygon class="m2b" points="880,100 1010,145 990,220 870,220"/>
+  </svg>
+  <svg data-vitesse="0.06" viewBox="0 0 1440 220" preserveAspectRatio="none">
+    <polygon class="m3" points="0,220 0,185 160,165 320,190 480,160 650,188 820,168 990,192 1150,166 1300,186 1440,170 1440,220"/>
+  </svg>
+</div>
+{% endcomponent cc.montagnes %}

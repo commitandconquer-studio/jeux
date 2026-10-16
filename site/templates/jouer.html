@@ -1,0 +1,62 @@
+<!doctype html>
+<html lang="{{ lang }}">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+  <title>{{ page.title }} · Commit & Conquer</title>
+  <link rel="icon" href="{{ get_url(path='img/brand/favicon.png') }}">
+  {%- for t in page.translations %}
+  <link rel="alternate" hreflang="{{ t.lang }}" href="{{ t.permalink }}">
+  {%- endfor %}
+  <link rel="stylesheet" href="{{ get_url(path='css/site.css') }}">
+  <script>
+    /* Le son : les navigateurs exigent un geste (clic, touche) avant d'en jouer.
+       On garde les contextes audio créés par le jeu et on les réveille au premier geste. */
+    (function () {
+      var Origine = window.AudioContext || window.webkitAudioContext;
+      if (!Origine) return;
+      var contextes = [];
+      function Suivi() { var c = new (Function.prototype.bind.apply(Origine, [null].concat([].slice.call(arguments))))(); contextes.push(c); return c; }
+      Suivi.prototype = Origine.prototype;
+      window.AudioContext = window.webkitAudioContext = Suivi;
+      function reveiller() { contextes.forEach(function (c) { if (c.state === "suspended") c.resume(); }); }
+      ["pointerdown", "keydown", "touchstart"].forEach(function (e) { addEventListener(e, reveiller, { capture: true }); });
+    })();
+  </script>
+</head>
+<body class="page-jouer">
+  {%- set suf = "" -%}{%- if lang != "fr" -%}{%- set suf = "." ~ lang -%}{%- endif -%}
+  {%- set fiche = get_page(path="jeux/" ~ page.extra.slug ~ suf ~ ".md") %}
+  <header class="jouer-barre">
+    <a class="brand" href="{{ get_url(path='@/_index.md', lang=lang) }}" aria-label="Commit & Conquer">
+      <img src="{{ get_url(path='img/brand/embleme.webp') }}" alt="" width="30" height="33">
+    </a>
+    <strong>{{ fiche.title }}</strong>
+    <a class="retour-fiche" href="{{ fiche.permalink }}">← {{ trans(key="fiche_jeu", lang=lang) }}</a>
+  </header>
+  <main class="jouer-zone">
+    <canvas id="jeu" tabindex="0"></canvas>
+    <div class="jouer-attente" id="attente">
+      <img src="{{ get_url(path='img/jeux/' ~ fiche.extra.icone ~ '.png') }}" alt="" width="120" height="120">
+      <p>{{ trans(key="chargement", lang=lang) }}</p>
+      <p class="muted">{{ trans(key="chargement_aide", lang=lang) }}</p>
+    </div>
+  </main>
+  <script type="module">
+    import init from "/jouer/{{ page.extra.slug }}/{{ page.extra.slug }}.js";
+    const attente = document.getElementById("attente");
+    const jeu = document.getElementById("jeu");
+    init().catch((e) => {
+      // Bevy sort de init() par une « exception » volontaire : ce n'est pas une erreur.
+      if (!String(e).includes("Using exceptions for control flow")) {
+        attente.querySelector("p").textContent = "{{ trans(key='erreur_jeu', lang=lang) }}";
+        console.error(e);
+      }
+    });
+    // Le jeu a démarré quand son canevas prend une taille : on retire l'attente.
+    const guet = setInterval(() => {
+      if (jeu.width > 300) { attente.remove(); jeu.focus(); clearInterval(guet); }
+    }, 300);
+  </script>
+</body>
+</html>

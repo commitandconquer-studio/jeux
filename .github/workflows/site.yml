@@ -1,0 +1,65 @@
+# Commit & Conquer — publie le site (Zola) et les jeux jouables dans le
+# navigateur (WebAssembly) sur GitHub Pages : https://commitandconquer.fr
+name: Site et jeux en ligne
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# Une seule publication à la fois ; la plus récente gagne.
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  construire:
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: wasm32-unknown-unknown
+
+      - uses: Swatinem/rust-cache@v2
+        with:
+          cache-targets: true
+
+      - name: Outils (wasm-bindgen de Cargo.lock, Zola, wasm-opt)
+        run: |
+          version=$(grep -A1 '^name = "wasm-bindgen"$' Cargo.lock | sed -n 's/^version = "\(.*\)"/\1/p')
+          echo "WASM_BINDGEN=$version" >> "$GITHUB_ENV"
+          sudo apt-get update -q && sudo apt-get install -y -q binaryen
+
+      - uses: taiki-e/install-action@v2
+        with:
+          tool: wasm-bindgen-cli@${{ env.WASM_BINDGEN }},zola@0.23.6
+
+      - name: Jeux pour le navigateur
+        run: tools/build-web.sh
+
+      - name: Site
+        run: zola --root site build
+
+      - uses: actions/configure-pages@v5
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: site/public
+
+  publier:
+    needs: construire
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.publication.outputs.page_url }}
+    steps:
+      - id: publication
+        uses: actions/deploy-pages@v4
