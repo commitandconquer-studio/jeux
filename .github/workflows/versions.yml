@@ -1,0 +1,61 @@
+# Commit & Conquer — publie une version des jeux pour Linux dans les
+# « Releases » GitHub, quand on pousse une étiquette de version :
+#
+#   git tag v0.2.0 && git push origin v0.2.0
+#
+# Chaque jeu (et le lanceur) devient une archive prête à jouer, sans Rust ni
+# compilation pour le joueur ; le lanceur lit catalogue.json pour savoir ce
+# qu'il peut installer ou mettre à jour.
+name: Versions des jeux
+
+on:
+  push:
+    tags: ["v*"]
+  # Lancement à la main : fabrique les archives sans publier de version
+  # (on les retrouve dans les « artefacts » de l'exécution).
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: versions-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  linux:
+    # Ubuntu 22.04 : les exécutables marchent aussi sur des Linux un peu anciens.
+    runs-on: ubuntu-22.04
+    timeout-minutes: 120
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: dtolnay/rust-toolchain@stable
+
+      - uses: Swatinem/rust-cache@v2
+        with:
+          key: linux-release
+
+      - name: Bibliothèques système (son, manettes, fenêtres)
+        run: |
+          sudo apt-get update -q
+          sudo apt-get install -y -q pkg-config libasound2-dev libudev-dev libwayland-dev libxkbcommon-dev
+
+      - name: Archives Linux
+        run: |
+          if [[ "$GITHUB_REF_TYPE" == "tag" ]]; then version="$GITHUB_REF_NAME"; else version="0.0.0-essai"; fi
+          tools/archives-linux.sh "$version" dist
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: jeux-linux
+          path: dist/
+
+      - name: Publication dans les Releases
+        if: github.ref_type == 'tag'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "$GITHUB_REF_NAME" dist/* \
+            --title "Commit & Conquer $GITHUB_REF_NAME" \
+            --notes "Les jeux Commit & Conquer pour Linux. Le plus simple : téléchargez **lanceur-linux-x86_64.tar.gz**, décompressez-le et lancez \`lanceur\` ; il s'ajoute au menu d'applications et installe les jeux."

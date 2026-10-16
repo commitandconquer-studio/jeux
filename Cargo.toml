@@ -11,6 +11,7 @@ members = [
     "games/concile",
     "games/modele",
     "games/parsecs",
+    "games/lanceur",
     "crates/concile-core",
     "tools/concile-gen",
     "tools/logo-gen",

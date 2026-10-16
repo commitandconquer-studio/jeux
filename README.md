@@ -235,7 +235,25 @@ Dans un jeu : `asset_server.load(game_common::sounds::HOP)`. Les jeux trouvent l
 
 `crates/game-common` fournit à tous les jeux : palette, lumière et ombres, caméra isométrique, score, aléatoire, l'interface (`ui` : panneaux, boutons, police, survol), le son (`audio` : activé/coupé, touche M), les noms des sons (`sounds`), le crapaud (`models`), une sauvegarde simple (`save`), le calendrier et les fêtes (`calendar`, date forcée par `CC_DATE=AAAA-MM-JJ`), l'identité du studio (`brand`) et l'écran de démarrage (`splash`, désactivé par `CC_NO_SPLASH=1`).
 
-## Installer les jeux sur son PC (Linux)
+## Le lanceur et les versions publiées (Linux)
+
+Le lanceur (`games/lanceur`) installe, met à jour et lance tous les jeux, sans Rust ni compilation pour le joueur. Il télécharge les archives de la dernière version publiée dans les « Releases » GitHub et les installe dans `~/.local/share/commit-and-conquer`, avec une entrée dans le menu d'applications.
+
+Pour publier une version, poser une étiquette :
+
+```bash
+git tag v0.2.0 && git push origin v0.2.0
+```
+
+L'action `.github/workflows/versions.yml` fabrique alors une archive par jeu (`tools/archives-linux.sh` : exécutable, icône, `assets/`) et le `catalogue.json` que lit le lanceur, et les publie dans une Release. Pour essayer le lanceur avec des archives fabriquées sur le PC :
+
+```bash
+tools/archives-linux.sh 0.2.0 dist
+(cd dist && python3 -m http.server 8000) &
+CC_DEPOT=http://localhost:8000 cargo run -p lanceur
+```
+
+## Installer les jeux depuis les sources (Linux)
 
 ```bash
 tools/install-linux.sh

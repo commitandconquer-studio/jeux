@@ -88,6 +88,9 @@ sont créés.
 
 - `tools/install-linux.sh` : une ligne dans `GAMES` et une icône
   `packaging/icons/<jeu>.png`.
+- Le lanceur et les versions publiées : une entrée dans `JEUX` de
+  `games/lanceur/src/catalogue.rs` et le nom du paquet dans `JEUX` de
+  `tools/archives-linux.sh`.
 - `tools/build-web.sh` : une entrée `page|paquet` dans `JEUX`.
 - Le site : `site/content/jeux/<page>.md` et `.en.md` (fiche, `web = true`),
   `site/content/jouer/<page>.md` et `.en.md`.

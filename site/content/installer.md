@@ -12,34 +12,23 @@ C'est le plus simple : ouvrez la fiche d'un jeu et cliquez sur **▶ Jouer maint
 - Il faut un navigateur récent (Firefox, Chrome, Edge, Safari, Brave…) et une carte graphique compatible WebGL2, ce qui est le cas de presque tous les ordinateurs et téléphones récents.
 - Vos parties et vos réglages sont enregistrés dans votre navigateur.
 
-## 2. Installer les jeux sur Linux
+## 2. Installer le lanceur sur Linux
 
-Les jeux s'installent dans votre menu d'applications (catégorie **Jeux**), sans droits administrateur. Pour l'instant, on les compile depuis le code source : comptez une dizaine de minutes la première fois.
+Le **lanceur Commit & Conquer** installe tous nos jeux, les met à jour et les lance. Il s'ajoute à votre menu d'applications (catégorie **Jeux**), sans droits administrateur et sans rien compiler.
 
-**Une seule fois** : installez Rust et les bibliothèques nécessaires (Ubuntu, Debian, Linux Mint…).
-
-```
-curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
-sudo apt install git build-essential pkg-config libasound2-dev libudev-dev libwayland-dev libxkbcommon-dev
-```
-
-**Puis** récupérez les jeux et installez-les :
+Le plus rapide : copiez cette ligne dans un terminal.
 
 ```
-git clone https://github.com/commitandconquer-studio/jeux.git commit-and-conquer
-cd commit-and-conquer
-tools/install-linux.sh
+mkdir -p /tmp/lanceur-cc && curl -sL https://github.com/commitandconquer-studio/jeux/releases/latest/download/lanceur-linux-x86_64.tar.gz | tar xz -C /tmp/lanceur-cc && /tmp/lanceur-cc/lanceur
 ```
 
-C'est tout : les jeux apparaissent dans votre menu d'applications. Pour les mettre à jour plus tard :
+Ou à la main : [téléchargez le lanceur](https://github.com/commitandconquer-studio/jeux/releases/latest/download/lanceur-linux-x86_64.tar.gz), décompressez l'archive, puis ouvrez le fichier `lanceur` (clic droit, « Exécuter comme un programme »).
 
-```
-cd commit-and-conquer
-git pull
-tools/install-linux.sh
-```
+Au premier lancement, il s'installe dans `~/.local/share/commit-and-conquer` et apparaît dans le menu d'applications sous le nom **Commit & Conquer**. Ensuite, un clic sur **Installer** télécharge un jeu, **Jouer** l'ouvre, et **Mettre à jour** apparaît quand une nouvelle version sort.
 
-Et pour tout retirer : `tools/install-linux.sh --desinstaller`.
+Pour tout retirer, supprimez le dossier `~/.local/share/commit-and-conquer` et les fichiers `commit-and-conquer*.desktop` de `~/.local/share/applications`.
+
+**Vous préférez compiler vous-même ?** Le code source et le script `tools/install-linux.sh` sont sur le [dépôt GitHub du studio](https://github.com/commitandconquer-studio/jeux).
 
 ## 3. Windows, macOS et Android
 
