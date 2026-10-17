@@ -1,0 +1,13 @@
+[package]
+name = "ca-fuit"
+description = "Ça fuit !"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+authors.workspace = true
+publish = false
+
+[dependencies]
+bevy.workspace = true
+game-common.workspace = true
+fuite-core = { path = "../../crates/fuite-core" }

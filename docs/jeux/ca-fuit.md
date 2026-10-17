@@ -4,9 +4,10 @@ Univers **Croâ & Cie**. Un jeu de pose de tuyaux, calme et rigolo : une fuite
 au milieu de nulle part, un crapaud plombier, et un paquet de tuyaux dépareillés
 pour la colmater. Conçu à l'oral par Olivier le 17 octobre 2026.
 
-> **État : règles, décor et interface validés par Olivier le 17 octobre
-> 2026.** Reste à confirmer : la formule de score et l'icône. Linux et web
-> seulement. Pas de développement avant son feu vert.
+> **État : développé le 17 octobre 2026** sur la branche `jeu/ca-fuit`,
+> règles, décor et interface validés par Olivier. Reste à confirmer : la
+> formule de score (ci-dessous, « 5 points par ouverture bouchée » est
+> compté comme 5 points par bouchon posé). Linux et web. Non publié.
 
 ## Le décor : la pâture
 
