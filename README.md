@@ -234,6 +234,7 @@ cargo run -p ca-fuit
 - Une **fuite** au milieu de la pâture, ouverte sur six côtés. Raccordez des **tuyaux de zinc**, des cartes de 2 × 1 tirées d'un paquet de 70 (les 34 formes possibles, des bouchons aux carrefours), jusqu'à ce que plus rien ne fuie.
 - L'eau **avance toute seule** dans ce qui est relié ; ce qui sort sur du vide déborde en flaque, sans défaite. Une carte se pose contre une ouverture d'eau, et chaque bord doit concorder avec ses voisines : ouverture contre ouverture, mur contre mur.
 - **Main de 3 cartes**, qui grandit quand rien n'est posable ; les prochains tuyaux du paquet sont visibles. Fin quand il n'y a plus rien à poser ni à piocher : moins de cartes, plus de points, et tout boucher vaut bien plus.
+- En 2D : les tuyaux sont des **sprites photographiés depuis des modèles 3D** (`CA_FUIT_SPRITES=photos cargo run -p ca-fuit`, puis `tools/sprites-ca-fuit.py photos` → `assets/sprites/ca-fuit/`).
 - Cahier des charges : [docs/jeux/ca-fuit.md](docs/jeux/ca-fuit.md). Tests : `cargo test -p fuite-core`. Captures : `CA_FUIT_CAPTURE=captures cargo run -p ca-fuit`.
 
 ## Bibliothèque commune (`assets/`)
@@ -246,6 +247,7 @@ assets/fonts/          polices : Noto Sans, Space Grotesk, Gelasio, Russo One (l
                        (SIL Open Font License 1.1, voir les fichiers OFL*.txt)
 assets/sounds/ui/      clic, départ, carillon, défaite
 assets/sounds/sfx/     saut, coassement, plouf, crash, klaxons, train, croque, tic…
+assets/sprites/        images 2D tirées des modèles 3D (Ça fuit !)
 assets/sounds/music/   campagne, prairie, désert, banquise, océan, volcan, zen, nova, orgue
 assets/sounds/CATALOGUE.md   liste de tous les sons avec durée et description
 ```

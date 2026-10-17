@@ -9,7 +9,7 @@ use game_common::tx;
 use game_common::ui::{GameHelp, PANEL, ThemedPanel, pied_de_menu, spawn_button, spawn_gap, spawn_hud, spawn_panel, spawn_panel_left, spawn_text};
 
 use crate::GameState;
-use crate::jeu::{Jeu, Record};
+use crate::jeu::{Images, Jeu, Record};
 
 const AIDE: Texte = tx!(
     "Une fuite au milieu de la pâture ! Raccordez des tuyaux pour tout boucher.\n\n\
@@ -84,10 +84,6 @@ struct Main;
 #[derive(Component)]
 struct AVenir;
 
-const ZINC: Color = Color::srgb(0.70, 0.74, 0.76);
-const ZINC_SOMBRE: Color = Color::srgb(0.40, 0.44, 0.48);
-/// Les canaux : la couleur de l'eau, bien visible sur le zinc sombre.
-const CANAL: Color = Color::srgb(0.30, 0.64, 0.95);
 const CHOISIE: Color = Color::srgb(0.98, 0.80, 0.20);
 
 fn spawn_menu(mut commands: Commands, record: Res<Record>) {
@@ -177,56 +173,38 @@ fn spawn_partie(mut commands: Commands) {
     spawn_text(&mut commands, colonne, tx!("À venir", "Next", "Nächste", "In arrivo", "Siguientes").t(), 16.0);
 }
 
-/// Dessine une carte à plat : deux cases de zinc, le canal au milieu, et un
-/// bout de canal vers chaque sortie. `cote` = largeur d'une case en pixels.
-fn tuile(commands: &mut Commands, parent: Entity, forme: Forme, rotation: Rotation, cote: f32, choisie: bool, action: Option<Action>) -> Entity {
-    let bord = (cote * 0.07).max(2.0);
-    let canal = cote * 0.44;
+/// Une carte, avec le même sprite que sur le plateau. `cote` = largeur d'une
+/// case en pixels. La carte choisie est entourée de jaune et tournée.
+fn tuile(commands: &mut Commands, parent: Entity, images: &Images, forme: Forme, rotation: Rotation, cote: f32, choisie: bool, action: Option<Action>) -> Entity {
+    let (image, _, demi_tour) = images.carte(forme);
+    let rotation = Rotation::de_quarts(rotation.quarts() + demi_tour.quarts());
     let boite = commands
         .spawn((
-            Node { width: Val::Px(cote * 2.0), height: Val::Px(cote * 2.0), justify_content: JustifyContent::Center, align_items: AlignItems::Center, ..default() },
+            Node {
+                width: Val::Px(cote * 2.0 + 8.0),
+                height: Val::Px(cote * 2.0 + 8.0),
+                justify_content: JustifyContent::Center,
+                align_items: AlignItems::Center,
+                border: UiRect::all(Val::Px(3.0)),
+                border_radius: BorderRadius::all(Val::Px(10.0)),
+                ..default()
+            },
+            BorderColor::all(if choisie { CHOISIE } else { Color::NONE }),
+            BackgroundColor(if choisie { Color::srgba(0.98, 0.80, 0.20, 0.15) } else { Color::NONE }),
+            Hovered::default(),
             ChildOf(parent),
         ))
         .id();
-    let mut carte = commands.spawn((
-        Node {
-            width: Val::Px(cote),
-            height: Val::Px(cote * 2.0),
-            border: UiRect::all(Val::Px(bord)),
-            border_radius: BorderRadius::all(Val::Px(cote * 0.12)),
-            ..default()
-        },
-        BackgroundColor(ZINC_SOMBRE),
-        BorderColor::all(if choisie { CHOISIE } else { ZINC }),
+    if let Some(a) = action {
+        commands.entity(boite).insert(a);
+    }
+    commands.spawn((
+        ImageNode::new(image),
+        Node { width: Val::Px(cote), height: Val::Px(cote * 2.0), ..default() },
         UiTransform { rotation: Rot2::degrees(-(rotation.quarts() as f32) * 90.0), ..default() },
-        Hovered::default(),
+        Pickable::IGNORE,
         ChildOf(boite),
     ));
-    if let Some(a) = action {
-        carte.insert(a);
-    }
-    let carte = carte.id();
-    let barre = |commands: &mut Commands, left: f32, top: f32, w: f32, h: f32| {
-        commands.spawn((
-            Node { position_type: PositionType::Absolute, left: Val::Px(left - bord), top: Val::Px(top - bord), width: Val::Px(w), height: Val::Px(h), ..default() },
-            BackgroundColor(CANAL),
-            Pickable::IGNORE,
-            ChildOf(carte),
-        ));
-    };
-    // Le canal entre les deux cases (toujours là : la carte est d'un seul tenant).
-    barre(commands, (cote - canal) / 2.0, cote / 2.0, canal, cote);
-    let demi = (cote - canal) / 2.0;
-    for s in forme.sorties() {
-        match s {
-            1 => barre(commands, demi, 0.0, canal, demi),
-            2 => barre(commands, cote / 2.0, demi, demi + canal / 2.0, canal),
-            3 => barre(commands, cote / 2.0, cote + demi, demi + canal / 2.0, canal),
-            4 => barre(commands, demi, cote * 2.0 - demi, canal, demi),
-            5 => barre(commands, 0.0, cote + demi, demi + canal / 2.0, canal),
-            _ => barre(commands, 0.0, demi, demi + canal / 2.0, canal),
-        }
-    }
     boite
 }
 
@@ -245,7 +223,7 @@ fn maj_bandeau(jeu: Res<Jeu>, record: Res<Record>, mut q: Query<&mut Text, With<
 }
 
 /// La main : redessinée quand elle change (pose, pioche, choix, rotation).
-fn maj_main(mut commands: Commands, mut jeu: ResMut<Jeu>, main: Query<(Entity, Option<&Children>), With<Main>>) {
+fn maj_main(mut commands: Commands, mut jeu: ResMut<Jeu>, images: Res<Images>, main: Query<(Entity, Option<&Children>), With<Main>>) {
     if !jeu.main_changee {
         return;
     }
@@ -255,19 +233,16 @@ fn maj_main(mut commands: Commands, mut jeu: ResMut<Jeu>, main: Query<(Entity, O
         commands.entity(*e).despawn();
     }
     let n = jeu.partie.main.len();
-    let cote = if n <= 4 { 64.0 } else { (64.0 * 4.0 / n as f32).max(34.0) };
+    let cote = if n <= 4 { 56.0 } else { (56.0 * 4.0 / n as f32).max(30.0) };
     for (i, &forme) in jeu.partie.main.iter().enumerate() {
         let choisie = i == jeu.choix;
         let rotation = if choisie { jeu.rotation } else { Rotation::R0 };
-        let boite = tuile(&mut commands, panneau, forme, rotation, cote, choisie, Some(Action::Choisir(i)));
-        if choisie {
-            commands.entity(boite).insert(UiTransform::from_translation(Val2::new(Val::ZERO, Val::Px(-8.0))));
-        }
+        tuile(&mut commands, panneau, &images, forme, rotation, cote, choisie, Some(Action::Choisir(i)));
     }
 }
 
 /// Les prochains tuyaux : six, ou bien plus quand on survole la colonne.
-fn maj_a_venir(mut commands: Commands, jeu: Res<Jeu>, colonne: Query<(Entity, &Hovered, &Children), With<AVenir>>, tuiles: Query<Entity, With<TuileAVenir>>, mut montre: Local<Option<(usize, Vec<Forme>)>>) {
+fn maj_a_venir(mut commands: Commands, jeu: Res<Jeu>, images: Res<Images>, colonne: Query<(Entity, &Hovered, &Children), With<AVenir>>, tuiles: Query<Entity, With<TuileAVenir>>, mut montre: Local<Option<(usize, Vec<Forme>)>>) {
     let Ok((panneau, survol, _)) = colonne.single() else { return };
     let nombre = if survol.get() { 12 } else { 5 };
     let voulues: Vec<Forme> = jeu.partie.a_venir().take(nombre).collect();
@@ -279,7 +254,7 @@ fn maj_a_venir(mut commands: Commands, jeu: Res<Jeu>, colonne: Query<(Entity, &H
         commands.entity(e).despawn();
     }
     for forme in voulues {
-        let boite = tuile(&mut commands, panneau, forme, Rotation::R0, 28.0, false, None);
+        let boite = tuile(&mut commands, panneau, &images, forme, Rotation::R0, 26.0, false, None);
         commands.entity(boite).insert(TuileAVenir);
     }
     if jeu.partie.restantes() > nombre {

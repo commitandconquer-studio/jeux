@@ -1,21 +1,28 @@
-//! La partie : la grille 3D, la main, la pose, l'eau qui avance, les flaques,
-//! le curseur et la caméra qui dézoome. Les règles viennent de `fuite_core`.
+//! La partie, en 2D : les sprites des cartes (photographiés depuis les
+//! modèles 3D, voir `sprites.rs`), la main, la pose, l'eau qui avance, les
+//! flaques, le curseur et la caméra qui dézoome. Les règles viennent de
+//! `fuite_core`.
+//!
+//! Une case fait 1 × 1 ; la case (x, y) de la grille est au monde en (x, y) :
+//! le nord de la grille est le haut de l'écran.
+use std::collections::HashMap;
+
+use bevy::camera::ScalingMode;
 use bevy::input::mouse::MouseWheel;
 use bevy::picking::hover::Hovered;
 use bevy::prelude::*;
-use fuite_core::{Carte, Case, Direction, Partie, Refus, Rotation};
-use game_common::{Rng, iso_projection};
+use fuite_core::{Carte, Case, Direction, Forme, Partie, Refus, Rotation};
+use game_common::ambiance::{Ambiance, Saison};
+use game_common::{Rng, palette};
 
 use crate::GameState;
-use crate::modeles::{self, Decor, Eau, Flaque, Jet, Look, HAUTEUR};
 
 pub struct JeuPlugin;
 
 impl Plugin for JeuPlugin {
     fn build(&self, app: &mut App) {
         let record = game_common::save::load("ca-fuit", "record").and_then(|v| v.parse().ok()).unwrap_or(0);
-        app.init_resource::<Look>()
-            .insert_resource(Record(record))
+        app.insert_resource(Record(record))
             .insert_resource(Jeu::nouveau(Rng::from_time().next_u64()))
             .insert_resource(Cadrage::default())
             .add_message::<Evenement>()
@@ -24,12 +31,11 @@ impl Plugin for JeuPlugin {
             // bilan, le réseau reste visible.
             .add_systems(OnEnter(GameState::Playing), (ranger, commencer).chain())
             .add_systems(OnEnter(GameState::Menu), ranger)
-            .add_systems(OnEnter(GameState::Fin), effacer_apercu)
             .add_systems(
                 Update,
                 (
                     (viser, agir, debloquer, fin_de_partie, apercu).chain().run_if(in_state(GameState::Playing)),
-                    (rebatir, couler, deborder, cadrer, frissonner, flaner).run_if(en_jeu),
+                    (rebatir, couler, deborder, cadrer, saison).run_if(en_jeu),
                     zoomer,
                 ),
             );
@@ -57,6 +63,28 @@ pub enum Evenement {
 /// Le meilleur score, gardé par `game_common::save`.
 #[derive(Resource)]
 pub struct Record(pub u32);
+
+/// Les sprites, chargés une fois.
+#[derive(Resource)]
+pub struct Images {
+    /// Pour chaque forme (de référence) : la carte vide, puis pleine d'eau.
+    cartes: HashMap<Forme, (Handle<Image>, Handle<Image>)>,
+    fuite: Handle<Image>,
+    flaque: Handle<Image>,
+    arbre: Handle<Image>,
+    touffe: Handle<Image>,
+    touffe_fleur: Handle<Image>,
+}
+
+impl Images {
+    /// L'image d'une forme, vide ; une forme non canonique est la même carte
+    /// retournée : elle s'affiche avec un demi-tour de plus.
+    pub fn carte(&self, forme: Forme) -> (Handle<Image>, Handle<Image>, Rotation) {
+        let canonique = forme.canonique();
+        let (vide, eau) = self.cartes[&canonique].clone();
+        (vide, eau, if canonique == forme { Rotation::R0 } else { Rotation::R180 })
+    }
+}
 
 /// L'état de la partie en cours, et ce que le joueur est en train de faire.
 #[derive(Resource)]
@@ -104,69 +132,124 @@ impl Jeu {
             self.main_changee = true;
         }
     }
+
+    /// Après une pose : la main a changé, on garde une carte choisie valable.
+    fn posees_apres(&mut self, choix: usize) {
+        let n = self.partie.main.len();
+        self.choix = if n == 0 { 0 } else { choix.min(n - 1) };
+        self.a_redessiner = true;
+        self.main_changee = true;
+    }
 }
 
 /// Le cadrage voulu de la caméra, vers lequel elle glisse.
 #[derive(Resource)]
 pub struct Cadrage {
-    pub cible: Vec3,
+    pub cible: Vec2,
     pub largeur: f32,
     pub hauteur: f32,
     /// Zoom manuel à la molette (1 = automatique) ; revient à 1 à la pose suivante.
     pub zoom: f32,
-    courant: (Vec3, f32, f32),
+    courant: (Vec2, f32, f32),
 }
 
 impl Default for Cadrage {
     fn default() -> Self {
-        Cadrage { cible: Vec3::new(0.5, 0.0, 0.0), largeur: 14.0, hauteur: 11.0, zoom: 1.0, courant: (Vec3::new(0.5, 0.0, 0.0), 14.0, 11.0) }
+        Cadrage { cible: Vec2::new(0.5, 0.0), largeur: 14.0, hauteur: 11.0, zoom: 1.0, courant: (Vec2::new(0.5, 0.0), 14.0, 11.0) }
     }
 }
 
 #[derive(Component)]
 struct CameraJeu;
 
-#[derive(Resource)]
-struct Hasard(Rng);
-
 /// Tout ce qui est dessiné pour une carte posée (indice dans la grille).
 #[derive(Component)]
 struct DeLaCarte(usize);
 
+/// L'eau d'une carte : le sprite plein, qui apparaît par fondu.
+#[derive(Component)]
+struct EauDeLaCarte(usize);
+
 #[derive(Component, Clone)]
 struct DeLaGrille;
 
+/// L'aperçu de la carte au curseur : une seule entité, déplacée.
 #[derive(Component)]
-struct DeLApercu;
+struct Apercu;
 
-/// Le crapaud plombier : il sautille d'un point à l'autre autour du chantier,
-/// s'arrête, regarde la fuite, et repart.
 #[derive(Component)]
-struct Plombier {
-    /// Les cases qui restent à parcourir.
-    chemin: Vec<Case>,
-    pause: f32,
-    phase: f32,
-}
+struct Sol;
+
+/// Un élément du décor, avec la case qu'il occupe (il s'efface si on y pose un tuyau).
+#[derive(Component)]
+struct Decor(Case);
 
 /// La flaque qui déborde d'une ouverture (case vide, direction d'où vient l'eau).
 #[derive(Component)]
-struct Debordement(Case, Direction);
+struct Debordement(Case, Direction, f32);
 
-/// La caméra regarde presque du dessus, un peu depuis le sud pour voir les
-/// parois des tuyaux et le relief du crapaud.
-const VUE: Vec3 = Vec3::new(0.0, 24.0, 7.0);
+pub fn monde(case: Case) -> Vec2 {
+    Vec2::new(case.0 as f32, case.1 as f32)
+}
 
-fn setup(mut commands: Commands, look: Res<Look>, mut meshes: ResMut<Assets<Mesh>>, mut mats: ResMut<Assets<StandardMaterial>>) {
-    let cible = Vec3::new(0.5, 0.0, 0.0);
-    commands.spawn((Camera3d::default(), iso_projection(14.0, 11.0), Transform::from_translation(cible + VUE).looking_at(cible, Vec3::Y), CameraJeu));
-    modeles::dessiner_pature(&mut commands, &look, &mut meshes);
-    let crapaud = modeles::dessiner_crapaud(&mut commands, &look, &mut meshes, &mut mats);
-    commands.entity(crapaud).insert((
-        Plombier { chemin: Vec::new(), pause: 2.0, phase: 0.0 },
-        Transform::from_xyz(-2.0, 0.0, 2.0).with_scale(Vec3::splat(1.3)).looking_at(Vec3::new(0.5, 0.0, 0.0), Vec3::Y),
-    ));
-    commands.insert_resource(Hasard(Rng::from_time()));
+pub fn case_sous(p: Vec2) -> Case {
+    (p.x.round() as i32, p.y.round() as i32)
+}
+
+/// La rotation d'un sprite pour une carte : quarts de tour dans le sens des
+/// aiguilles d'une montre.
+fn quat(rotation: Rotation) -> Quat {
+    Quat::from_rotation_z(-(rotation.quarts() as f32) * std::f32::consts::FRAC_PI_2)
+}
+
+fn projection(largeur: f32, hauteur: f32) -> Projection {
+    Projection::from(OrthographicProjection { scaling_mode: ScalingMode::AutoMin { min_width: largeur, min_height: hauteur }, ..OrthographicProjection::default_2d() })
+}
+
+fn setup(mut commands: Commands, server: Res<AssetServer>) {
+    commands.spawn((Camera2d, projection(14.0, 11.0), Transform::from_xyz(0.5, 0.0, 0.0), CameraJeu, IsDefaultUiCamera));
+    let charge = |nom: &str| server.load(format!("sprites/ca-fuit/{nom}.png"));
+    let mut cartes = HashMap::new();
+    for f in Forme::toutes() {
+        cartes.insert(f, (charge(&format!("carte-{}", f.nom())), charge(&format!("carte-{}-eau", f.nom()))));
+    }
+    let images = Images { cartes, fuite: charge("fuite"), flaque: charge("flaque"), arbre: charge("arbre"), touffe: charge("touffe"), touffe_fleur: charge("touffe-fleur") };
+    // La pâture : l'herbe, des arbres, des touffes.
+    commands.spawn((Sprite { color: palette::GRASS, custom_size: Some(Vec2::splat(400.0)), ..default() }, Transform::from_xyz(0.0, 0.0, -2.0), Sol));
+    for (x, y, t) in [(-9, 7, 1.2), (11, 6, 1.0), (-10, -6, 0.9), (12, -7, 1.3), (-14, 1, 1.1), (15, 0, 0.9), (2, 11, 1.0), (-3, -11, 1.1)] {
+        commands.spawn((
+            Sprite { image: images.arbre.clone(), custom_size: Some(Vec2::splat(3.0 * t)), ..default() },
+            Transform::from_translation(monde((x, y)).extend(0.5)),
+            Decor((x, y)),
+        ));
+    }
+    for (i, (x, y)) in [(-6, 4), (7, 3), (-4, -5), (5, -6), (-8, -2), (9, -3), (3, 7), (-2, 8), (6, 8), (-7, -8), (10, 2), (-11, 4), (0, -9), (13, 4), (-12, -4)].into_iter().enumerate() {
+        let image = if i % 3 == 0 { images.touffe_fleur.clone() } else { images.touffe.clone() };
+        commands.spawn((
+            Sprite { image, custom_size: Some(Vec2::splat(1.0)), ..default() },
+            Transform::from_translation(monde((x, y)).extend(0.3)).with_rotation(Quat::from_rotation_z(i as f32 * 1.3)),
+            Decor((x, y)),
+        ));
+    }
+    // L'aperçu, invisible tant qu'il n'y a rien à montrer.
+    commands.spawn((Sprite { custom_size: Some(Vec2::new(1.0, 2.0)), ..default() }, Transform::from_xyz(0.0, 0.0, 3.0), Visibility::Hidden, Apercu));
+    commands.insert_resource(images);
+}
+
+/// L'herbe prend la couleur de la saison.
+fn saison(ambiance: Option<Res<Ambiance>>, mut sol: Query<&mut Sprite, With<Sol>>) {
+    let Some(a) = ambiance else { return };
+    let couleur = match a.saison {
+        Saison::Printemps => palette::GRASS_LIGHT,
+        Saison::Ete => palette::GRASS,
+        Saison::Automne => Color::srgb(0.76, 0.72, 0.42),
+        Saison::Hiver => Color::srgb(0.90, 0.92, 0.94),
+    };
+    for mut s in &mut sol {
+        if s.color != couleur {
+            s.color = couleur;
+        }
+    }
 }
 
 /// Une nouvelle partie à chaque entrée dans le jeu.
@@ -175,17 +258,18 @@ fn commencer(mut jeu: ResMut<Jeu>, mut cadrage: ResMut<Cadrage>) {
     *cadrage = Cadrage::default();
 }
 
-fn ranger(mut commands: Commands, q: Query<Entity, Or<(With<DeLaCarte>, With<DeLaGrille>, With<DeLApercu>, With<Debordement>)>>) {
+fn ranger(mut commands: Commands, q: Query<Entity, Or<(With<DeLaCarte>, With<DeLaGrille>, With<Debordement>)>>, mut apercu: Query<&mut Visibility, With<Apercu>>) {
     for e in &q {
         commands.entity(e).despawn();
     }
+    for mut v in &mut apercu {
+        *v = Visibility::Hidden;
+    }
 }
 
-/// La case sous la souris (plan du sol).
+/// La case sous la souris.
 fn case_sous_la_souris(camera: &Camera, cam_tf: &GlobalTransform, ecran: Vec2) -> Option<Case> {
-    let rayon = camera.viewport_to_world(cam_tf, ecran).ok()?;
-    let d = rayon.intersect_plane(Vec3::Y * HAUTEUR * 0.5, InfinitePlane3d::new(Vec3::Y))?;
-    Some(modeles::case_sous(rayon.get_point(d)))
+    camera.viewport_to_world_2d(cam_tf, ecran).ok().map(case_sous)
 }
 
 /// Le pointeur est-il sur un élément d'interface (la main, les panneaux…) ?
@@ -196,16 +280,17 @@ fn sur_l_interface(survols: &Query<&Hovered>) -> bool {
 fn viser(
     windows: Query<&Window>,
     cam: Query<(&Camera, &GlobalTransform), With<CameraJeu>>,
-    mut souris: MessageReader<bevy::input::mouse::MouseMotion>,
     keys: Res<ButtonInput<KeyCode>>,
     survols: Query<&Hovered>,
     mut jeu: ResMut<Jeu>,
 ) {
-    let bouge = souris.read().count() > 0;
-    if bouge && !sur_l_interface(&survols) {
+    if !sur_l_interface(&survols) {
         let Ok((camera, cam_tf)) = cam.single() else { return };
         if let Some(p) = windows.single().ok().and_then(|w| w.cursor_position()) {
-            jeu.curseur = case_sous_la_souris(camera, cam_tf, p);
+            let case = case_sous_la_souris(camera, cam_tf, p);
+            if case.is_some() && case != jeu.curseur {
+                jeu.curseur = case;
+            }
         }
     }
     let mut d = (0, 0);
@@ -290,16 +375,6 @@ fn agir(
 /// Le temps pour que l'eau remplisse une carte.
 const DUREE_REMPLISSAGE: f32 = 0.8;
 
-impl Jeu {
-    /// Après une pose : la main a changé, on garde une carte choisie valable.
-    fn posees_apres(&mut self, choix: usize) {
-        let n = self.partie.main.len();
-        self.choix = if n == 0 { 0 } else { choix.min(n - 1) };
-        self.a_redessiner = true;
-        self.main_changee = true;
-    }
-}
-
 /// Rien n'est posable : la main grandit d'une carte (une par image, pour
 /// qu'on la voie arriver), jusqu'à ce qu'une carte soit posable. Le calcul
 /// n'est refait que quand la main ou la grille ont changé.
@@ -344,11 +419,27 @@ fn fin_de_partie(time: Res<Time>, mut jeu: ResMut<Jeu>, mut record: ResMut<Recor
     }
 }
 
-/// Redessine les cartes qui ne le sont pas encore, et la grille autour.
+/// Le sprite d'une carte posée : l'image vide, et par-dessus l'image pleine
+/// d'eau, transparente tant que l'eau n'est pas arrivée.
+fn dessiner_carte(commands: &mut Commands, images: &Images, i: usize, carte: &Carte) {
+    let (vide, eau, demi_tour) = images.carte(carte.forme);
+    let rotation = Rotation::de_quarts(carte.rotation.quarts() + demi_tour.quarts());
+    let cases = carte.cases();
+    let centre = (monde(cases[0]) + monde(cases[1])) / 2.0;
+    let taille = Some(Vec2::new(1.0, 2.0));
+    commands.spawn((Sprite { image: vide, custom_size: taille, ..default() }, Transform::from_translation(centre.extend(1.0)).with_rotation(quat(rotation)), DeLaCarte(i))).with_child((
+        Sprite { image: eau, custom_size: taille, color: Color::WHITE.with_alpha(0.0), ..default() },
+        Transform::from_xyz(0.0, 0.0, 0.1),
+        EauDeLaCarte(i),
+    ));
+}
+
+/// Dessine les cartes qui ne le sont pas encore, et la grille autour.
+#[allow(clippy::too_many_arguments)]
 fn rebatir(
     mut commands: Commands,
     mut jeu: ResMut<Jeu>,
-    look: Res<Look>,
+    images: Res<Images>,
     dessinees: Query<&DeLaCarte>,
     grille: Query<Entity, With<DeLaGrille>>,
     decor: Query<(Entity, &Decor)>,
@@ -364,11 +455,12 @@ fn rebatir(
         if deja.contains(&i) {
             continue;
         }
-        let racine = commands.spawn((Transform::default(), Visibility::default(), DeLaCarte(i))).id();
         if i == 0 {
-            modeles::dessiner_fuite(&mut commands, racine, &look, carte);
+            // La fuite : la terre retournée dessous, puis la carte toute ouverte.
+            let centre = (monde(carte.cases()[0]) + monde(carte.cases()[1])) / 2.0;
+            commands.spawn((Sprite { image: images.fuite.clone(), custom_size: Some(Vec2::new(4.0, 3.0)), ..default() }, Transform::from_translation(centre.extend(0.6)), DeLaCarte(0)));
         } else {
-            modeles::dessiner_carte(&mut commands, racine, &look, carte, None);
+            dessiner_carte(&mut commands, &images, i, carte);
         }
         // Le décor et les flaques qui étaient là s'effacent.
         for (e, d) in &decor {
@@ -387,54 +479,53 @@ fn rebatir(
     }
     let (min, max) = jeu.partie.grille.bornes();
     let marge = 2;
-    modeles::dessiner_grille(&mut commands, &look, (min.0 - marge, min.1 - marge), (max.0 + marge, max.1 + marge), DeLaGrille);
+    let (min, max) = ((min.0 - marge, min.1 - marge), (max.0 + marge, max.1 + marge));
+    let ligne = Color::srgba(1.0, 1.0, 1.0, 0.18);
+    let (x0, x1) = (min.0 as f32 - 0.5, max.0 as f32 + 0.5);
+    let (y0, y1) = (min.1 as f32 - 0.5, max.1 as f32 + 0.5);
+    for x in min.0..=max.0 + 1 {
+        commands.spawn((Sprite { color: ligne, custom_size: Some(Vec2::new(0.03, y1 - y0)), ..default() }, Transform::from_xyz(x as f32 - 0.5, (y0 + y1) / 2.0, -1.0), DeLaGrille));
+    }
+    for y in min.1..=max.1 + 1 {
+        commands.spawn((Sprite { color: ligne, custom_size: Some(Vec2::new(x1 - x0, 0.03)), ..default() }, Transform::from_xyz((x0 + x1) / 2.0, y as f32 - 0.5, -1.0), DeLaGrille));
+    }
     // La caméra cadre tout le réseau, avec de la place pour la main en bas.
-    let a = modeles::monde(min);
-    let b = modeles::monde(max);
+    let (a, b) = (monde(jeu.partie.grille.bornes().0), monde(jeu.partie.grille.bornes().1));
     let centre = (a + b) / 2.0;
-    let largeur = (b.x - a.x).abs() + 7.0;
-    let hauteur = (b.z - a.z).abs() + 7.0;
-    cadrage.cible = centre + Vec3::Z * 0.8;
-    cadrage.largeur = largeur.max(14.0);
-    cadrage.hauteur = hauteur.max(11.0);
+    cadrage.cible = centre - Vec2::Y * 0.8;
+    cadrage.largeur = ((b.x - a.x).abs() + 7.0).max(14.0);
+    cadrage.hauteur = ((b.y - a.y).abs() + 7.0).max(11.0);
 }
 
-fn effacer_apercu(mut commands: Commands, q: Query<Entity, With<DeLApercu>>) {
-    for e in &q {
-        commands.entity(e).despawn();
-    }
-}
-
-/// L'aperçu de la carte au curseur : vert si la pose est possible, rouge sinon.
-fn apercu(mut commands: Commands, jeu: Res<Jeu>, look: Res<Look>, anciens: Query<Entity, With<DeLApercu>>, mut dernier: Local<Option<(Carte, bool)>>, state: Res<State<GameState>>) {
-    let voulu = if *state.get() == GameState::Playing && jeu.finie_depuis.is_none() { jeu.apercu().map(|(c, v)| (c, v.is_ok())) } else { None };
-    if voulu == *dernier {
+/// L'aperçu de la carte au curseur : vert si la pose est possible, rouge
+/// sinon. Une seule entité, mise à jour sans être recréée.
+fn apercu(jeu: Res<Jeu>, images: Res<Images>, mut q: Query<(&mut Sprite, &mut Transform, &mut Visibility), With<Apercu>>) {
+    let Ok((mut sprite, mut tf, mut vis)) = q.single_mut() else { return };
+    let voulu = if jeu.finie_depuis.is_none() { jeu.apercu() } else { None };
+    let Some((carte, verdict)) = voulu else {
+        *vis = Visibility::Hidden;
         return;
+    };
+    *vis = Visibility::Inherited;
+    let (vide, _, demi_tour) = images.carte(carte.forme);
+    if sprite.image != vide {
+        sprite.image = vide;
     }
-    *dernier = voulu;
-    for e in &anciens {
-        commands.entity(e).despawn();
-    }
-    if let Some((carte, ok)) = voulu {
-        let racine = commands.spawn((Transform::from_xyz(0.0, 0.02, 0.0), Visibility::default(), DeLApercu)).id();
-        let mat = if ok { &look.valide } else { &look.refuse };
-        modeles::dessiner_carte(&mut commands, racine, &look, &carte, Some(mat));
-    }
+    sprite.color = if verdict.is_ok() { Color::srgba(0.45, 1.0, 0.5, 0.75) } else { Color::srgba(1.0, 0.35, 0.3, 0.75) };
+    let cases = carte.cases();
+    let centre = (monde(cases[0]) + monde(cases[1])) / 2.0;
+    tf.translation = centre.extend(3.0);
+    tf.rotation = quat(Rotation::de_quarts(carte.rotation.quarts() + demi_tour.quarts()));
 }
 
-/// L'eau monte dans chaque tuyau, tuyau par tuyau.
-fn couler(time: Res<Time>, jeu: Res<Jeu>, cartes: Query<(&DeLaCarte, &Children)>, mut eaux: Query<(&Eau, &mut Transform, &mut Visibility)>) {
+/// L'eau apparaît dans chaque tuyau, tuyau par tuyau.
+fn couler(time: Res<Time>, jeu: Res<Jeu>, mut eaux: Query<(&EauDeLaCarte, &mut Sprite)>) {
     let t = time.elapsed_secs();
-    for (carte, enfants) in &cartes {
-        let Some(&plein) = jeu.plein.get(carte.0) else { continue };
+    for (e, mut sprite) in &mut eaux {
+        let Some(&plein) = jeu.plein.get(e.0) else { continue };
         let niveau = ((t - (plein - DUREE_REMPLISSAGE)) / DUREE_REMPLISSAGE).clamp(0.0, 1.0);
-        for &e in enfants {
-            if let Ok((eau, mut tf, mut vis)) = eaux.get_mut(e) {
-                *vis = if niveau > 0.0 { Visibility::Inherited } else { Visibility::Hidden };
-                let h = eau.taille.y * niveau.max(0.001);
-                tf.translation = eau.base + Vec3::Y * h / 2.0;
-                tf.scale = Vec3::new(eau.taille.x, h, eau.taille.z);
-            }
+        if sprite.color.alpha() != niveau {
+            sprite.color = Color::WHITE.with_alpha(niveau);
         }
     }
 }
@@ -445,13 +536,12 @@ fn deborder(
     mut commands: Commands,
     time: Res<Time>,
     jeu: Res<Jeu>,
-    look: Res<Look>,
-    debordements: Query<&Debordement>,
-    mut toutes: Query<(&mut Flaque, &mut Transform)>,
+    images: Res<Images>,
+    mut flaques: Query<(&mut Debordement, &mut Sprite, &mut Transform)>,
     mut evenements: MessageWriter<Evenement>,
 ) {
     let t = time.elapsed_secs();
-    let existantes: Vec<(Case, Direction)> = debordements.iter().map(|d| (d.0, d.1)).collect();
+    let existantes: Vec<(Case, Direction)> = flaques.iter().map(|(d, _, _)| (d.0, d.1)).collect();
     for (i, carte) in jeu.partie.grille.cartes().iter().enumerate() {
         if jeu.plein.get(i).is_none_or(|&p| t < p) {
             continue;
@@ -459,15 +549,22 @@ fn deborder(
         for (case, dir) in carte.ouvertures() {
             let vide = dir.voisine(case);
             if jeu.partie.grille.libre(vide) && !existantes.contains(&(vide, dir)) {
-                modeles::dessiner_flaque(&mut commands, &look, vide, dir, Debordement(vide, dir));
+                // Au bord de la case vide, côté tuyau, puis elle s'étale.
+                let (dx, dy) = dir.delta();
+                let pos = monde(vide) - Vec2::new(dx as f32, dy as f32) * 0.2;
+                commands.spawn((
+                    Sprite { image: images.flaque.clone(), custom_size: Some(Vec2::splat(0.05)), ..default() },
+                    Transform::from_translation(pos.extend(0.4)),
+                    Debordement(vide, dir, 0.05),
+                ));
                 evenements.write(Evenement::Deborde);
             }
         }
     }
-    for (mut f, mut tf) in &mut toutes {
-        if f.taille < f.max {
-            f.taille = (f.taille + time.delta_secs() * 0.25).min(f.max);
-            tf.scale = Vec3::new(f.taille, 0.02, f.taille * 0.8);
+    for (mut d, mut sprite, _) in &mut flaques {
+        if d.2 < 0.95 {
+            d.2 = (d.2 + time.delta_secs() * 0.25).min(0.95);
+            sprite.custom_size = Some(Vec2::splat(d.2));
         }
     }
 }
@@ -481,8 +578,8 @@ fn cadrer(time: Res<Time>, mut cadrage: ResMut<Cadrage>, mut cam: Query<(&mut Tr
     c.1 += (largeur - c.1) * k;
     c.2 += (hauteur - c.2) * k;
     for (mut tf, mut proj) in &mut cam {
-        *tf = Transform::from_translation(c.0 + VUE).looking_at(c.0, Vec3::Y);
-        *proj = iso_projection(c.1, c.2);
+        tf.translation = c.0.extend(0.0);
+        *proj = projection(c.1, c.2);
     }
 }
 
@@ -490,16 +587,6 @@ fn zoomer(mut molette: MessageReader<MouseWheel>, mut cadrage: ResMut<Cadrage>) 
     for m in molette.read() {
         let pas = if m.y > 0.0 { 0.85 } else { 1.0 / 0.85 };
         cadrage.zoom = (cadrage.zoom * pas).clamp(0.4, 2.5);
-    }
-}
-
-/// Le jet de la fuite frémit.
-fn frissonner(time: Res<Time>, mut jets: Query<(&Jet, &mut Transform)>) {
-    let t = time.elapsed_secs();
-    for (j, mut tf) in &mut jets {
-        let s = 1.0 + 0.12 * (t * 9.0 + j.0 * 2.0).sin();
-        tf.scale.y = (0.9 - j.0 * 0.17) * s;
-        tf.translation.y = 0.62 + tf.scale.y / 2.0;
     }
 }
 
@@ -523,95 +610,5 @@ pub fn jouer_au_hasard(jeu: &mut Jeu, coups: usize, rng: &mut fuite_core::Rng, t
             jeu.plein.push(temps);
             jeu.posees_apres(i);
         }
-    }
-}
-
-/// Un chemin de cases libres, du crapaud jusqu'à une case tirée au sort
-/// autour du réseau (jamais sur les tuyaux).
-fn chemin_de_promenade(jeu: &Jeu, depuis: Case, hasard: &mut Rng) -> Vec<Case> {
-    use std::collections::{HashMap, VecDeque};
-    let grille = &jeu.partie.grille;
-    let (min, max) = grille.bornes();
-    let (min, max) = ((min.0 - 3, min.1 - 3), (max.0 + 3, max.1 + 3));
-    let dans = |c: Case| c.0 >= min.0 && c.0 <= max.0 && c.1 >= min.1 && c.1 <= max.1;
-    let mut parent: HashMap<Case, Case> = HashMap::new();
-    let mut file = VecDeque::new();
-    parent.insert(depuis, depuis);
-    file.push_back(depuis);
-    let mut atteintes = Vec::new();
-    while let Some(c) = file.pop_front() {
-        if c != depuis {
-            atteintes.push(c);
-        }
-        for d in Direction::TOUTES {
-            let v = d.voisine(c);
-            if dans(v) && grille.libre(v) && !parent.contains_key(&v) {
-                parent.insert(v, c);
-                file.push_back(v);
-            }
-        }
-    }
-    // Plutôt une case un peu loin, pour que la balade vaille le coup.
-    let loin: Vec<Case> = atteintes.iter().copied().filter(|c| (c.0 - depuis.0).abs() + (c.1 - depuis.1).abs() >= 3).collect();
-    let choix = if loin.is_empty() { &atteintes } else { &loin };
-    if choix.is_empty() {
-        return Vec::new();
-    }
-    let mut c = choix[hasard.below(choix.len() as u32) as usize];
-    let mut chemin = vec![c];
-    while c != depuis {
-        c = parent[&c];
-        chemin.push(c);
-    }
-    chemin.pop(); // la case de départ
-    chemin.reverse();
-    chemin
-}
-
-/// Le crapaud flâne : il saute de case en case jusqu'à sa cible en évitant
-/// les tuyaux, s'arrête un moment en regardant la fuite, puis repart.
-fn flaner(time: Res<Time>, jeu: Res<Jeu>, mut hasard: ResMut<Hasard>, mut q: Query<(&mut Plombier, &mut Transform)>) {
-    let dt = time.delta_secs();
-    for (mut p, mut tf) in &mut q {
-        let au_sol = Vec3::new(tf.translation.x, 0.0, tf.translation.z);
-        let ici = modeles::case_sous(au_sol);
-        // Un tuyau vient d'être posé sous lui : il déguerpit vers la case libre la plus proche.
-        if !jeu.partie.grille.libre(ici) && p.chemin.is_empty() {
-            if let Some(v) = Direction::TOUTES.iter().map(|d| d.voisine(ici)).find(|&v| jeu.partie.grille.libre(v)) {
-                p.chemin = vec![v];
-                p.pause = 0.0;
-            }
-        }
-        if p.pause > 0.0 {
-            p.pause -= dt;
-            tf.translation.y = 0.0;
-            if p.pause <= 0.0 {
-                p.chemin = chemin_de_promenade(&jeu, ici, &mut hasard.0);
-                p.phase = 0.0;
-            }
-            continue;
-        }
-        let Some(&prochaine) = p.chemin.first() else {
-            p.pause = 1.5 + hasard.0.next_f32() * 3.0;
-            // Il regarde la fuite.
-            let fuite = modeles::monde((0, 0)) + Vec3::X * 0.5;
-            if fuite.distance(au_sol) > 0.5 {
-                tf.look_at(fuite, Vec3::Y);
-            }
-            continue;
-        };
-        let cible = modeles::monde(prochaine);
-        let vers = cible - au_sol;
-        if vers.length() < 0.08 {
-            tf.translation = cible;
-            p.chemin.remove(0);
-            continue;
-        }
-        let dir = vers.normalize();
-        tf.look_to(dir, Vec3::Y);
-        let pas = (1.8 * dt).min(vers.length());
-        tf.translation += dir * pas;
-        p.phase += dt * 7.0;
-        tf.translation.y = p.phase.sin().abs() * 0.35;
     }
 }

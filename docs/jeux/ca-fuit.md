@@ -9,31 +9,32 @@ pour la colmater. Conçu à l'oral par Olivier le 17 octobre 2026.
 > formule de score (ci-dessous, « 5 points par ouverture bouchée » est
 > compté comme 5 points par bouchon posé). Linux et web. Non publié.
 
-## Le décor : la pâture
+## Le décor : la pâture, en 2D
 
 Choisi par Olivier le 17 octobre 2026 (« un tuyau qui sort au milieu d'un
-champ, d'une pâture, c'est largement suffisant »).
+champ, d'une pâture, c'est largement suffisant »), puis **passé en 2D** le
+même jour après essai : en 3D sur la puce Intel, l'aperçu suivait la souris
+avec une fraction de seconde de retard (30 images par seconde). En 2D on
+est à 55 et plus, et l'aperçu est une seule entité déplacée.
 
-Une **pâture** vue presque du dessus (choisi après essai, le 17 octobre :
-plus lisible pour poser que la vue en biais des autres jeux) : l'herbe de Croâ & Cie, quelques
-touffes plus hautes, des fleurs, une clôture de piquets au loin, un arbre, une
-vache ou deux qui regardent (facultatif). Au centre, un bout de **canalisation
-de zinc** qui sort de terre et a crevé, la terre retournée autour, l'eau qui
-jaillit. Le **crapaud plombier** (`spawn_frog`, casquette et clé à molette)
-se promène en sautillant de case en case autour du chantier, sans jamais
-marcher sur les tuyaux, s'arrête et regarde la fuite. Il est dessiné en
-sphères (plus fin que le crapaud commun en cubes).
+Une **pâture** vue du dessus : l'herbe (sa couleur suit la saison), des
+arbres, des touffes et des fleurs. Au centre, un bout de **canalisation de
+zinc** qui sort de terre et a crevé, la terre retournée autour, l'eau qui
+jaillit. Pas de personnage : le crapaud plombier n'apportait rien au jeu.
 
-Les tuyaux : des **cartes 2 × 1** low poly en **zinc** gris, un peu brillant,
-posées sur une grille de cases carrées dessinée en creux dans l'herbe :
-des gouttières ouvertes sur le dessus, aux **coudes arrondis**, où l'on voit
-l'eau monter. L'eau bleue avance **à vue** dans les tuyaux
-(tuyaux ouverts sur le dessus, ou eau visible par transparence). Quand elle
-sort sur du vide, elle **déborde** : une flaque bleue s'étale, assombrit
-l'herbe, grandit un peu, un « splash », et c'est tout.
+Les tuyaux : des **cartes 2 × 1** en **zinc** gris, des gouttières ouvertes
+sur le dessus aux **coudes arrondis**, où l'on voit l'eau. Ce sont des
+**sprites** photographiés depuis des modèles 3D (`sprites.rs`, puis
+`tools/sprites-ca-fuit.py` qui en tire la transparence exacte à partir de
+deux fonds, noir et blanc) : les 34 cartes vides et pleines, la fuite, la
+flaque, l'arbre, les touffes, dans `assets/sprites/ca-fuit/`. La main et la
+colonne « À venir » montrent exactement les mêmes images que le plateau.
+L'eau arrive dans une carte par fondu de l'image pleine sur l'image vide ;
+ce qui déborde fait une flaque qui s'étale.
 
-Ambiance `AmbiancePlugin::exterieur()` : lumière du moment, saisons, pluie et
-neige ; musique `MUSIC_PRAIRIE`.
+Ambiance `AmbiancePlugin::exterieur()` pour les fêtes et le moment ; la
+pluie et la neige (en 3D) ne s'affichent pas dans ce jeu 2D. Musique
+`MUSIC_PRAIRIE`.
 
 Autres décors envisagés et écartés : les toits du village (gouttière de zinc),
 la mare (planches flottantes), le potager (robinet du jardin), la cave du
@@ -171,8 +172,11 @@ brouette, pancarte), gardé comme idée pour une version suivante.
   grille infinie (`HashMap<(i32, i32), …>`), propagation de l'eau, règles de
   pose, paquet et mélange, score. Tests : les 34 formes exactement, les
   rotations, les raccords interdits, la propagation, la fin de partie.
-- `games/ca-fuit` : le jeu sur le squelette commun (StudioPlugin, cinq
-  langues, Options, ambiance, version web), mode capture `CA_FUIT_CAPTURE`.
+- `games/ca-fuit` : le jeu, en 2D, sur le squelette commun (StudioPlugin,
+  cinq langues, Options, ambiance, version web). Modes : `CA_FUIT_CAPTURE`
+  (captures), `CA_FUIT_SPRITES` (photos des modèles 3D pour les sprites),
+  `CA_FUIT_FPS` (images par seconde), `CA_FUIT_OMBRES` (essais d'ombres,
+  sans effet en 2D).
 
 ## Décisions du 17 octobre 2026
 
@@ -191,11 +195,11 @@ brouette, pancarte), gardé comme idée pour une version suivante.
 9. Icône proposée : le crapaud plombier, clé à molette en main, devant un
    tuyau de zinc qui gicle (à confirmer).
 
-## Après le premier essai d'Olivier (17 octobre 2026)
+## Après les essais d'Olivier (17 octobre 2026)
 
-- Coudes arrondis plutôt qu'angles droits ; vue du dessus gardée ; le crapaud
-  se promène sans marcher sur les tuyaux ; cartes de la main plus grandes,
-  canaux bleus sur zinc sombre.
+- Coudes arrondis plutôt qu'angles droits ; vue du dessus gardée ; puis
+  **tout en 2D** avec des sprites tirés des modèles 3D, et plus de crapaud.
+- Cartes de la main et de la colonne « À venir » : les sprites du plateau.
 - Pas de son à la pose refusée ni aux débordements (ploufs en rafale
   pénibles) : restent le « toc » de la pose, le tour, la pioche, le carillon
   du réseau bouché et la fin de partie.
