@@ -1,0 +1,9 @@
+[package]
+name = "fuite-core"
+description = "Règles de « Ça fuit ! » : cartes, grille, eau, paquet et score (sans affichage)"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+authors.workspace = true
+
+[dependencies]

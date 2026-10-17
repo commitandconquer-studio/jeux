@@ -15,6 +15,7 @@ members = [
     "games/lanceur",
     "crates/concile-core",
     "crates/observatoire-core",
+    "crates/fuite-core",
     "tools/concile-gen",
     "tools/observatoire-gen",
     "tools/logo-gen",
