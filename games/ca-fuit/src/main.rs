@@ -1,16 +1,15 @@
 // Ça fuit ! — un jeu de pose de tuyaux de l'univers Croâ & Cie (voir docs/jeux/ca-fuit.md).
 // Jeu libre sous licence GPL-3.0-or-later.
 //
-// Une fuite au milieu d'une pâture ; on y raccorde des tuyaux de zinc tirés
+// Une fuite au milieu d'une pâture ; on y raccorde des tuyaux de cuivre tirés
 // d'un paquet de 70, jusqu'à ce que plus rien ne fuie… ou qu'il n'y ait plus
-// rien à poser. Les règles sont dans `crates/fuite-core`. Le jeu est en 2D :
-// ses sprites sont photographiés depuis des modèles 3D (`sprites.rs`).
+// rien à poser. Les règles sont dans `crates/fuite-core`. Le jeu est en 2D,
+// direction artistique « La plomberie de poche » (docs/jeux/da/ca-fuit/) :
+// ses sprites sont dessinés par `tools/sprites-ca-fuit.py`.
 mod audio;
 mod capture;
 mod fps;
 mod jeu;
-mod modeles;
-mod sprites;
 mod ui;
 
 use bevy::prelude::*;
@@ -31,11 +30,6 @@ pub enum GameState {
 }
 
 fn main() {
-    // Le générateur de sprites : les modèles 3D photographiés du dessus.
-    if let Ok(dossier) = std::env::var("CA_FUIT_SPRITES") {
-        sprites::generer(dossier);
-        return;
-    }
     // La carte graphique : `CA_FUIT_GPU=intel` (ou `integree`) pour la puce
     // intégrée, `nvidia` (ou `dediee`) pour la carte dédiée ; sans rien, la
     // plus puissante. `WGPU_ADAPTER_NAME` et `WGPU_POWER_PREF` marchent aussi.

@@ -1,16 +1,24 @@
-//! L'interface : le menu, le bandeau des compteurs, la main en bas, la
-//! colonne « À venir » à droite et le bilan de fin de partie. Tous les
-//! textes en cinq langues avec `tx!`.
+//! L'interface : le menu, le bandeau des compteurs (ivoire à bord bleu nuit,
+//! pictogrammes et grands chiffres), la main en bas (cartes ivoire, la carte
+//! choisie en halo cyan, les cartes imposables grisées), la colonne « À
+//! venir » à droite et le bilan de fin de partie. Tous les textes en cinq
+//! langues avec `tx!`.
 use bevy::picking::hover::Hovered;
 use bevy::prelude::*;
 use bevy::window::{MonitorSelection, PrimaryWindow, WindowMode};
 use fuite_core::{Forme, Rotation};
 use game_common::langue::Texte;
 use game_common::tx;
-use game_common::ui::{GameHelp, PANEL, ThemedPanel, pied_de_menu, spawn_button, spawn_gap, spawn_hud, spawn_panel, spawn_panel_left, spawn_text};
+use game_common::ui::{GameHelp, pied_de_menu, spawn_button, spawn_gap, spawn_panel, spawn_panel_left, spawn_text};
 
 use crate::GameState;
-use crate::jeu::{Images, Jeu, Record};
+use crate::jeu::{Images, Jeu, Record, TAILLE_CARTE};
+
+/// Les couleurs de la direction artistique.
+const IVOIRE: Color = Color::srgb(0.99, 0.95, 0.87);
+const NUIT: Color = Color::srgb(0.055, 0.106, 0.227);
+const CYAN: Color = Color::srgb(0.26, 0.80, 1.0);
+const GRIS_SEPARATEUR: Color = Color::srgba(0.34, 0.46, 0.58, 0.5);
 
 const AIDE: Texte = tx!(
     "Une fuite au milieu de la pâture ! Raccordez des tuyaux pour tout boucher.\n\n\
@@ -77,8 +85,14 @@ enum Action {
     PleinEcran,
 }
 
-#[derive(Component)]
-struct TexteBandeau;
+/// Un compteur du bandeau.
+#[derive(Component, Clone, Copy, PartialEq, Eq)]
+enum Compteur {
+    Posees,
+    Restantes,
+    Fuites,
+    Record,
+}
 
 #[derive(Component)]
 struct Main;
@@ -86,15 +100,13 @@ struct Main;
 #[derive(Component)]
 struct AVenir;
 
-const CHOISIE: Color = Color::srgb(0.98, 0.80, 0.20);
-
 fn spawn_menu(mut commands: Commands, record: Res<Record>) {
     let panel = spawn_panel(&mut commands, DespawnOnExit(GameState::Menu));
     spawn_text(&mut commands, panel, tx!("ÇA FUIT !", "IT'S LEAKING!", "ES TROPFT!", "C'È UNA PERDITA!", "¡HAY UNA FUGA!").t(), 60.0);
     spawn_text(
         &mut commands,
         panel,
-        tx!("Le crapaud plombier et ses tuyaux de zinc", "The plumber toad and his zinc pipes", "Die Klempnerkröte und ihre Zinkrohre", "Il rospo idraulico e i suoi tubi di zinco", "El sapo fontanero y sus tuberías de zinc").t(),
+        tx!("Le crapaud plombier et ses tuyaux de cuivre", "The plumber toad and his copper pipes", "Die Klempnerkröte und ihre Kupferrohre", "Il rospo idraulico e i suoi tubi di rame", "El sapo fontanero y sus tuberías de cobre").t(),
         20.0,
     );
     if record.0 > 0 {
@@ -140,74 +152,128 @@ fn clavier(keys: Res<ButtonInput<KeyCode>>, state: Res<State<GameState>>, mut ne
     }
 }
 
-/// Un panneau du jeu (fond clair arrondi), qui attrape le pointeur pour
-/// qu'un clic dessus ne pose pas de carte.
-fn panneau(commands: &mut Commands, node: Node, scope: impl Bundle) -> Entity {
+/// Un panneau ivoire à bord bleu nuit, qui attrape le pointeur pour qu'un
+/// clic dessus ne pose pas de carte.
+fn panneau(commands: &mut Commands, node: Node, bord: f32, scope: impl Bundle) -> Entity {
     commands
         .spawn((
-            Node { padding: UiRect::all(Val::Px(10.0)), border: UiRect::all(Val::Px(2.0)), border_radius: BorderRadius::all(Val::Px(18.0)), ..node },
-            BackgroundColor(PANEL),
-            BorderColor::all(Color::NONE),
-            ThemedPanel,
+            Node { border: UiRect::all(Val::Px(bord)), border_radius: BorderRadius::all(Val::Px(16.0)), ..node },
+            BackgroundColor(IVOIRE),
+            BorderColor::all(NUIT),
+            BoxShadow::new(Color::srgba(0.0, 0.0, 0.0, 0.25), Val::Px(3.0), Val::Px(4.0), Val::Px(0.0), Val::Px(4.0)),
             Hovered::default(),
             scope,
         ))
         .id()
 }
 
-fn spawn_partie(mut commands: Commands) {
-    let (hud, texte) = spawn_hud(&mut commands);
-    commands.entity(hud).insert((DespawnOnExit(GameState::Playing), Hovered::default()));
-    commands.entity(texte).insert(TexteBandeau);
-    // La main, en bas au centre.
-    panneau(
+/// Un texte dans la couleur de la DA (la police du studio s'applique toute seule).
+fn texte(commands: &mut Commands, parent: Entity, s: impl Into<String>, taille: f32, couleur: Color) -> Entity {
+    commands.spawn((Text::new(s), TextFont::from_font_size(taille), TextColor(couleur), Pickable::IGNORE, ChildOf(parent))).id()
+}
+
+fn spawn_partie(mut commands: Commands, images: Res<Images>) {
+    // Le bandeau des compteurs, en haut à gauche.
+    let bandeau = panneau(
         &mut commands,
         Node {
             position_type: PositionType::Absolute,
-            bottom: Val::Px(14.0),
+            top: Val::Px(12.0),
+            left: Val::Px(12.0),
+            flex_direction: FlexDirection::Row,
+            align_items: AlignItems::Center,
+            column_gap: Val::Px(14.0),
+            padding: UiRect::axes(Val::Px(16.0), Val::Px(8.0)),
+            ..default()
+        },
+        3.0,
+        DespawnOnExit(GameState::Playing),
+    );
+    let compteurs = [
+        (Compteur::Posees, images.pictos.cle.clone(), tx!("Posées", "Placed", "Gelegt", "Posate", "Colocadas")),
+        (Compteur::Restantes, images.pictos.tuyau.clone(), tx!("Restantes", "Left", "Übrig", "Rimaste", "Quedan")),
+        (Compteur::Fuites, images.pictos.goutte.clone(), tx!("Fuites", "Leaks", "Lecks", "Perdite", "Fugas")),
+        (Compteur::Record, images.pictos.trophee.clone(), tx!("Record", "Best", "Rekord", "Record", "Récord")),
+    ];
+    for (k, (compteur, picto, libelle)) in compteurs.into_iter().enumerate() {
+        if k > 0 {
+            commands.spawn((Node { width: Val::Px(2.0), height: Val::Px(36.0), ..default() }, BackgroundColor(GRIS_SEPARATEUR), ChildOf(bandeau)));
+        }
+        let groupe = commands.spawn((Node { flex_direction: FlexDirection::Row, align_items: AlignItems::Center, column_gap: Val::Px(8.0), ..default() }, ChildOf(bandeau))).id();
+        commands.spawn((ImageNode::new(picto), Node { width: Val::Px(34.0), height: Val::Px(34.0), ..default() }, Pickable::IGNORE, ChildOf(groupe)));
+        let colonne = commands.spawn((Node { flex_direction: FlexDirection::Column, align_items: AlignItems::FlexStart, ..default() }, ChildOf(groupe))).id();
+        texte(&mut commands, colonne, libelle.t(), 13.0, Color::srgba(0.2, 0.28, 0.42, 1.0));
+        let n = texte(&mut commands, colonne, "0", 26.0, NUIT);
+        commands.entity(n).insert(compteur);
+    }
+    // La main, en bas au centre : des cartes posées directement sur l'herbe.
+    commands.spawn((
+        Node {
+            position_type: PositionType::Absolute,
+            bottom: Val::Px(16.0),
             left: Val::Percent(50.0),
             flex_direction: FlexDirection::Row,
             align_items: AlignItems::Center,
-            column_gap: Val::Px(10.0),
+            column_gap: Val::Px(14.0),
             ..default()
         },
-        (DespawnOnExit(GameState::Playing), Main, UiTransform::from_translation(Val2::new(Val::Percent(-50.0), Val::ZERO))),
-    );
-    // Les prochains tuyaux, à droite.
+        UiTransform::from_translation(Val2::new(Val::Percent(-50.0), Val::ZERO)),
+        DespawnOnExit(GameState::Playing),
+        Main,
+    ));
+    // Les prochains tuyaux, à droite, discrets.
     let colonne = panneau(
         &mut commands,
         Node {
             position_type: PositionType::Absolute,
-            top: Val::Px(70.0),
-            right: Val::Px(14.0),
+            top: Val::Px(90.0),
+            right: Val::Px(12.0),
             flex_direction: FlexDirection::Column,
             align_items: AlignItems::Center,
-            row_gap: Val::Px(6.0),
+            row_gap: Val::Px(4.0),
+            padding: UiRect::all(Val::Px(8.0)),
             ..default()
         },
+        2.0,
         (DespawnOnExit(GameState::Playing), AVenir),
     );
-    spawn_text(&mut commands, colonne, tx!("À venir", "Next", "Nächste", "In arrivo", "Siguientes").t(), 16.0);
+    commands.entity(colonne).insert(BackgroundColor(IVOIRE.with_alpha(0.85)));
+    texte(&mut commands, colonne, tx!("À venir", "Next", "Nächste", "In arrivo", "Siguientes").t(), 13.0, Color::srgba(0.2, 0.28, 0.42, 1.0));
 }
 
-/// Une carte, avec le même sprite que sur le plateau. `cote` = largeur d'une
-/// case en pixels. La carte choisie est entourée de jaune et tournée.
-fn tuile(commands: &mut Commands, parent: Entity, images: &Images, forme: Forme, rotation: Rotation, cote: f32, choisie: bool, action: Option<Action>) -> Entity {
-    let (image, _, demi_tour) = images.carte(forme);
+/// Une carte de la main ou de la pioche : une boîte ivoire arrondie à bord
+/// bleu nuit, avec le sprite du plateau dedans (et son ombre). `cote` =
+/// largeur d'une case en pixels. La carte choisie a un halo cyan ; une carte
+/// imposable est grisée.
+#[allow(clippy::too_many_arguments)]
+fn tuile(commands: &mut Commands, parent: Entity, images: &Images, forme: Forme, rotation: Rotation, cote: f32, choisie: bool, posable: bool, action: Option<Action>) -> Entity {
+    let (image, _, ombre, demi_tour) = images.carte(forme);
     let rotation = Rotation::de_quarts(rotation.quarts() + demi_tour.quarts());
+    let boite_px = cote * TAILLE_CARTE.y + 6.0;
+    let (bord, fond, bord_px) = match (choisie, posable) {
+        (true, _) => (CYAN, IVOIRE, 4.0),
+        (false, true) => (NUIT, IVOIRE, 3.0),
+        (false, false) => (Color::srgba(0.3, 0.33, 0.4, 0.6), Color::srgba(0.85, 0.84, 0.8, 0.8), 3.0),
+    };
+    let mut ombre_boite = BoxShadow::new(Color::srgba(0.0, 0.0, 0.0, 0.25), Val::Px(3.0), Val::Px(4.0), Val::Px(0.0), Val::Px(4.0));
+    if choisie {
+        ombre_boite.0.push(ShadowStyle { color: CYAN.with_alpha(0.75), x_offset: Val::ZERO, y_offset: Val::ZERO, spread_radius: Val::Px(4.0), blur_radius: Val::Px(14.0) });
+    }
     let boite = commands
         .spawn((
             Node {
-                width: Val::Px(cote * 2.0 + 8.0),
-                height: Val::Px(cote * 2.0 + 8.0),
+                width: Val::Px(boite_px),
+                height: Val::Px(boite_px),
                 justify_content: JustifyContent::Center,
                 align_items: AlignItems::Center,
-                border: UiRect::all(Val::Px(3.0)),
-                border_radius: BorderRadius::all(Val::Px(10.0)),
+                border: UiRect::all(Val::Px(bord_px)),
+                border_radius: BorderRadius::all(Val::Px(14.0)),
+                overflow: Overflow::clip(),
                 ..default()
             },
-            BorderColor::all(if choisie { CHOISIE } else { Color::NONE }),
-            BackgroundColor(if choisie { Color::srgba(0.98, 0.80, 0.20, 0.15) } else { Color::NONE }),
+            BorderColor::all(bord),
+            BackgroundColor(fond),
+            ombre_boite,
             Hovered::default(),
             ChildOf(parent),
         ))
@@ -215,27 +281,27 @@ fn tuile(commands: &mut Commands, parent: Entity, images: &Images, forme: Forme,
     if let Some(a) = action {
         commands.entity(boite).insert(a);
     }
-    commands.spawn((
-        ImageNode::new(image),
-        Node { width: Val::Px(cote), height: Val::Px(cote * 2.0), ..default() },
-        UiTransform { rotation: Rot2::degrees(-(rotation.quarts() as f32) * 90.0), ..default() },
-        Pickable::IGNORE,
-        ChildOf(boite),
-    ));
+    let teinte = if posable { Color::WHITE } else { Color::srgba(0.6, 0.6, 0.6, 0.7) };
+    let tourne = UiTransform { rotation: Rot2::degrees(-(rotation.quarts() as f32) * 90.0), ..default() };
+    let taille = Node { position_type: PositionType::Absolute, width: Val::Px(cote * TAILLE_CARTE.x), height: Val::Px(cote * TAILLE_CARTE.y), ..default() };
+    commands.spawn((ImageNode::new(ombre).with_color(teinte), taille.clone(), tourne.clone(), Pickable::IGNORE, ChildOf(boite)));
+    commands.spawn((ImageNode::new(image).with_color(teinte), taille, tourne, Pickable::IGNORE, ChildOf(boite)));
     boite
 }
 
-fn maj_bandeau(jeu: Res<Jeu>, record: Res<Record>, mut q: Query<&mut Text, With<TexteBandeau>>) {
-    for mut t in &mut q {
-        let s = jeu.partie.score();
-        t.0 = tx!(
-            "Posées : {}   Paquet : {}   Fuites : {}   Record : {}",
-            "Placed: {}   Deck: {}   Leaks: {}   Best: {}",
-            "Gelegt: {}   Stapel: {}   Lecks: {}   Rekord: {}",
-            "Posate: {}   Mazzo: {}   Perdite: {}   Record: {}",
-            "Colocadas: {}   Mazo: {}   Fugas: {}   Récord: {}"
-        )
-        .avec(&[&s.posees, &jeu.partie.restantes(), &s.fuites, &record.0]);
+fn maj_bandeau(jeu: Res<Jeu>, record: Res<Record>, mut q: Query<(&Compteur, &mut Text)>) {
+    let s = jeu.partie.score();
+    for (c, mut t) in &mut q {
+        let v = match c {
+            Compteur::Posees => s.posees as usize,
+            Compteur::Restantes => jeu.partie.restantes(),
+            Compteur::Fuites => s.fuites as usize,
+            Compteur::Record => record.0 as usize,
+        };
+        let texte = v.to_string();
+        if t.0 != texte {
+            t.0 = texte;
+        }
     }
 }
 
@@ -250,15 +316,16 @@ fn maj_main(mut commands: Commands, mut jeu: ResMut<Jeu>, images: Res<Images>, m
         commands.entity(*e).despawn();
     }
     let n = jeu.partie.main.len();
-    let cote = if n <= 4 { 56.0 } else { (56.0 * 4.0 / n as f32).max(30.0) };
+    let cote = if n <= 4 { 44.0 } else { (44.0 * 4.0 / n as f32).max(24.0) };
     for (i, &forme) in jeu.partie.main.iter().enumerate() {
         let choisie = i == jeu.choix;
-        let rotation = if choisie { jeu.rotation } else { Rotation::R0 };
-        tuile(&mut commands, panneau, &images, forme, rotation, cote, choisie, Some(Action::Choisir(i)));
+        // Les cartes de la main se tiennent couchées ; la carte choisie montre sa rotation.
+        let rotation = if choisie { jeu.rotation } else { Rotation::R90 };
+        tuile(&mut commands, panneau, &images, forme, rotation, cote, choisie, jeu.partie.posable(i), Some(Action::Choisir(i)));
     }
 }
 
-/// Les prochains tuyaux : six, ou bien plus quand on survole la colonne.
+/// Les prochains tuyaux : cinq, ou bien plus quand on survole la colonne.
 fn maj_a_venir(mut commands: Commands, jeu: Res<Jeu>, images: Res<Images>, colonne: Query<(Entity, &Hovered, &Children), With<AVenir>>, tuiles: Query<Entity, With<TuileAVenir>>, mut montre: Local<Option<(usize, Vec<Forme>)>>) {
     let Ok((panneau, survol, _)) = colonne.single() else { return };
     let nombre = if survol.get() { 12 } else { 5 };
@@ -271,11 +338,11 @@ fn maj_a_venir(mut commands: Commands, jeu: Res<Jeu>, images: Res<Images>, colon
         commands.entity(e).despawn();
     }
     for forme in voulues {
-        let boite = tuile(&mut commands, panneau, &images, forme, Rotation::R0, 26.0, false, None);
+        let boite = tuile(&mut commands, panneau, &images, forme, Rotation::R90, 18.0, false, true, None);
         commands.entity(boite).insert(TuileAVenir);
     }
     if jeu.partie.restantes() > nombre {
-        let e = spawn_text(&mut commands, panneau, "…", 16.0);
+        let e = texte(&mut commands, panneau, "…", 14.0, NUIT);
         commands.entity(e).insert(TuileAVenir);
     }
 }

@@ -1,16 +1,21 @@
-//! La partie, en 2D : les sprites des cartes (photographiés depuis les
-//! modèles 3D, voir `sprites.rs`), la main, la pose, l'eau qui avance, les
-//! flaques, le curseur et la caméra qui dézoome. Les règles viennent de
-//! `fuite_core`.
+//! La partie, en 2D : la pâture et son décor, les cartes de tuyaux (sprites
+//! dessinés par `tools/sprites-ca-fuit.py`), la main, la pose, l'eau qui
+//! avance, les flaques, le curseur et la caméra qui dézoome. Les règles
+//! viennent de `fuite_core`.
 //!
 //! Une case fait 1 × 1 ; la case (x, y) de la grille est au monde en (x, y) :
-//! le nord de la grille est le haut de l'écran.
+//! le nord de la grille est le haut de l'écran. Les images des cartes font
+//! 1,5 × 2,5 cases (une marge de 0,25 pour l'ombre portée), centrées sur la
+//! carte.
 use std::collections::HashMap;
 
+use bevy::asset::RenderAssetUsages;
 use bevy::camera::ScalingMode;
+use bevy::image::ImageSampler;
 use bevy::input::mouse::MouseWheel;
 use bevy::picking::hover::Hovered;
 use bevy::prelude::*;
+use bevy::render::render_resource::{Extent3d, TextureDimension, TextureFormat};
 use fuite_core::{Carte, Case, Direction, Forme, Partie, Refus, Rotation};
 use game_common::ambiance::{Ambiance, Saison};
 use game_common::{Rng, palette};
@@ -35,7 +40,7 @@ impl Plugin for JeuPlugin {
                 Update,
                 (
                     (viser, agir, debloquer, fin_de_partie, apercu).chain().run_if(in_state(GameState::Playing)),
-                    (rebatir, couler, deborder, cadrer, saison).run_if(en_jeu),
+                    (rebatir, couler, deborder, palpiter, cadrer, saison).run_if(en_jeu),
                     zoomer,
                 ),
             );
@@ -64,25 +69,46 @@ pub enum Evenement {
 #[derive(Resource)]
 pub struct Record(pub u32);
 
+/// Taille (en cases) de l'image d'une carte : 1 × 2 plus la marge.
+pub const TAILLE_CARTE: Vec2 = Vec2::new(1.5, 2.5);
+
 /// Les sprites, chargés une fois.
 #[derive(Resource)]
 pub struct Images {
-    /// Pour chaque forme (de référence) : la carte vide, puis pleine d'eau.
-    cartes: HashMap<Forme, (Handle<Image>, Handle<Image>)>,
+    /// Pour chaque forme (de référence) : la carte vide, pleine d'eau, et son ombre.
+    cartes: HashMap<Forme, (Handle<Image>, Handle<Image>, Handle<Image>)>,
     fuite: Handle<Image>,
-    flaque: Handle<Image>,
-    arbre: Handle<Image>,
-    touffe: Handle<Image>,
-    touffe_fleur: Handle<Image>,
+    fuite_ombre: Handle<Image>,
+    eclaboussure: Handle<Image>,
+    flaques: Vec<Handle<Image>>,
+    touffes: Vec<Handle<Image>>,
+    fleurs: Vec<Handle<Image>>,
+    cailloux: Vec<Handle<Image>>,
+    buissons: Vec<Handle<Image>>,
+    cloture: Handle<Image>,
+    mare: Handle<Image>,
+    roseaux: Handle<Image>,
+    nenuphars: Vec<Handle<Image>>,
+    crapaud: Handle<Image>,
+    caisse: Handle<Image>,
+    pub pictos: Pictos,
+}
+
+/// Les pictogrammes du bandeau.
+pub struct Pictos {
+    pub cle: Handle<Image>,
+    pub tuyau: Handle<Image>,
+    pub goutte: Handle<Image>,
+    pub trophee: Handle<Image>,
 }
 
 impl Images {
-    /// L'image d'une forme, vide ; une forme non canonique est la même carte
-    /// retournée : elle s'affiche avec un demi-tour de plus.
-    pub fn carte(&self, forme: Forme) -> (Handle<Image>, Handle<Image>, Rotation) {
+    /// Les images d'une forme (vide, pleine, ombre) ; une forme non canonique
+    /// est la même carte retournée : elle s'affiche avec un demi-tour de plus.
+    pub fn carte(&self, forme: Forme) -> (Handle<Image>, Handle<Image>, Handle<Image>, Rotation) {
         let canonique = forme.canonique();
-        let (vide, eau) = self.cartes[&canonique].clone();
-        (vide, eau, if canonique == forme { Rotation::R0 } else { Rotation::R180 })
+        let (vide, eau, ombre) = self.cartes[&canonique].clone();
+        (vide, eau, ombre, if canonique == forme { Rotation::R0 } else { Rotation::R180 })
     }
 }
 
@@ -177,16 +203,21 @@ struct DeLaGrille;
 #[derive(Component)]
 struct Apercu;
 
+/// L'herbe : le fond uni, repeint par la saison.
 #[derive(Component)]
 struct Sol;
 
-/// Un élément du décor, avec la case qu'il occupe (il s'efface si on y pose un tuyau).
+/// Un élément du décor, avec les cases qu'il occupe (il s'efface si on y pose un tuyau).
 #[derive(Component)]
-struct Decor(Case);
+struct Decor(Vec<Case>);
 
-/// La flaque qui déborde d'une ouverture (case vide, direction d'où vient l'eau).
+/// La flaque qui déborde d'une ouverture (case vide, direction d'où vient l'eau, taille).
 #[derive(Component)]
 struct Debordement(Case, Direction, f32);
+
+/// Le jet de la fuite, qui palpite.
+#[derive(Component)]
+struct Eclaboussure;
 
 pub fn monde(case: Case) -> Vec2 {
     Vec2::new(case.0 as f32, case.1 as f32)
@@ -206,34 +237,147 @@ fn projection(largeur: f32, hauteur: f32) -> Projection {
     Projection::from(OrthographicProjection { scaling_mode: ScalingMode::AutoMin { min_width: largeur, min_height: hauteur }, ..OrthographicProjection::default_2d() })
 }
 
-fn setup(mut commands: Commands, server: Res<AssetServer>) {
+/// L'enclos : la clôture court sur ce rectangle de cases (inclus).
+const ENCLOS: (Case, Case) = ((-12, -9), (13, 9));
+
+fn setup(mut commands: Commands, server: Res<AssetServer>, mut images_assets: ResMut<Assets<Image>>) {
     commands.spawn((Camera2d, projection(14.0, 11.0), Transform::from_xyz(0.5, 0.0, 0.0), CameraJeu, IsDefaultUiCamera));
     let charge = |nom: &str| server.load(format!("sprites/ca-fuit/{nom}.png"));
+    let serie = |nom: &str, n: usize| (1..=n).map(|i| charge(&format!("{nom}-{i}"))).collect::<Vec<_>>();
     let mut cartes = HashMap::new();
     for f in Forme::toutes() {
-        cartes.insert(f, (charge(&format!("carte-{}", f.nom())), charge(&format!("carte-{}-eau", f.nom()))));
+        let n = f.nom();
+        cartes.insert(f, (charge(&format!("carte-{n}")), charge(&format!("carte-{n}-eau")), charge(&format!("carte-{n}-ombre"))));
     }
-    let images = Images { cartes, fuite: charge("fuite"), flaque: charge("flaque"), arbre: charge("arbre"), touffe: charge("touffe"), touffe_fleur: charge("touffe-fleur") };
-    // La pâture : l'herbe, des arbres, des touffes.
+    let images = Images {
+        cartes,
+        fuite: charge("fuite"),
+        fuite_ombre: charge("fuite-ombre"),
+        eclaboussure: charge("eclaboussure"),
+        flaques: serie("flaque", 3),
+        touffes: serie("touffe", 4),
+        fleurs: serie("fleur", 4),
+        cailloux: serie("caillou", 3),
+        buissons: serie("buisson", 2),
+        cloture: charge("cloture"),
+        mare: charge("mare"),
+        roseaux: charge("roseaux"),
+        nenuphars: serie("nenuphar", 2),
+        crapaud: charge("crapaud"),
+        caisse: charge("caisse"),
+        pictos: Pictos { cle: charge("picto-cle"), tuyau: charge("picto-tuyau"), goutte: charge("picto-goutte"), trophee: charge("picto-trophee") },
+    };
+    // L'herbe : un fond uni à la couleur de la saison, et par-dessus un damier
+    // doux (une case sur deux à peine assombrie), quelle que soit la couleur.
     commands.spawn((Sprite { color: palette::GRASS, custom_size: Some(Vec2::splat(400.0)), ..default() }, Transform::from_xyz(0.0, 0.0, -2.0), Sol));
-    for (x, y, t) in [(-9, 7, 1.2), (11, 6, 1.0), (-10, -6, 0.9), (12, -7, 1.3), (-14, 1, 1.1), (15, 0, 0.9), (2, 11, 1.0), (-3, -11, 1.1)] {
-        commands.spawn((
-            Sprite { image: images.arbre.clone(), custom_size: Some(Vec2::splat(3.0 * t)), ..default() },
-            Transform::from_translation(monde((x, y)).extend(0.5)),
-            Decor((x, y)),
-        ));
-    }
-    for (i, (x, y)) in [(-6, 4), (7, 3), (-4, -5), (5, -6), (-8, -2), (9, -3), (3, 7), (-2, 8), (6, 8), (-7, -8), (10, 2), (-11, 4), (0, -9), (13, 4), (-12, -4)].into_iter().enumerate() {
-        let image = if i % 3 == 0 { images.touffe_fleur.clone() } else { images.touffe.clone() };
-        commands.spawn((
-            Sprite { image, custom_size: Some(Vec2::splat(1.0)), ..default() },
-            Transform::from_translation(monde((x, y)).extend(0.3)).with_rotation(Quat::from_rotation_z(i as f32 * 1.3)),
-            Decor((x, y)),
-        ));
-    }
+    let damier = images_assets.add(damier(80));
+    commands.spawn((Sprite { image: damier, custom_size: Some(Vec2::splat(80.0)), ..default() }, Transform::from_xyz(0.5, 0.5, -1.9)));
+    decor(&mut commands, &images);
     // L'aperçu, invisible tant qu'il n'y a rien à montrer.
-    commands.spawn((Sprite { custom_size: Some(Vec2::new(1.0, 2.0)), ..default() }, Transform::from_xyz(0.0, 0.0, 3.0), Visibility::Hidden, Apercu));
+    commands.spawn((Sprite { custom_size: Some(TAILLE_CARTE), ..default() }, Transform::from_xyz(0.0, 0.0, 3.0), Visibility::Hidden, Apercu));
     commands.insert_resource(images);
+}
+
+/// Un damier de `n` × `n` cases : une case sur deux est un voile sombre
+/// léger, les autres sont transparentes. Un texel par case, sans lissage.
+fn damier(n: u32) -> Image {
+    let mut donnees = Vec::with_capacity((n * n * 4) as usize);
+    for y in 0..n {
+        for x in 0..n {
+            let sombre = (x + y) % 2 == 0;
+            donnees.extend_from_slice(&[0, 0, 0, if sombre { 18 } else { 0 }]);
+        }
+    }
+    let mut image = Image::new(Extent3d { width: n, height: n, depth_or_array_layers: 1 }, TextureDimension::D2, donnees, TextureFormat::Rgba8UnormSrgb, RenderAssetUsages::RENDER_WORLD);
+    image.sampler = ImageSampler::nearest();
+    image
+}
+
+/// Le décor de la pâture, semé à graine fixe : la clôture autour de l'enclos,
+/// la mare dans un coin, le crapaud plombier et sa caisse dans un autre, des
+/// touffes, des fleurs, des cailloux et des buissons.
+fn decor(commands: &mut Commands, images: &Images) {
+    let mut rng = Rng::new(2026_10_17);
+    let pose = |commands: &mut Commands, image: Handle<Image>, cases: Vec<Case>, centre: Vec2, taille: Vec2, z: f32, flip: bool, rotation: Quat| {
+        commands.spawn((
+            Sprite { image, custom_size: Some(taille), flip_x: flip, ..default() },
+            Transform::from_translation(centre.extend(z)).with_rotation(rotation),
+            Decor(cases),
+        ));
+    };
+    let ((x0, y0), (x1, y1)) = ENCLOS;
+    // La clôture : des tronçons de deux cases, à plat en haut et en bas,
+    // debout sur les côtés (le sprite tourné d'un quart de tour).
+    let mut x = x0;
+    while x < x1 {
+        for y in [y0, y1] {
+            pose(commands, images.cloture.clone(), vec![(x, y), (x + 1, y)], Vec2::new(x as f32 + 0.5, y as f32), Vec2::new(2.0, 1.0), 0.6, false, Quat::IDENTITY);
+        }
+        x += 2;
+    }
+    let mut y = y0 + 1;
+    while y < y1 {
+        for (x, r) in [(x0, std::f32::consts::FRAC_PI_2), (x1, -std::f32::consts::FRAC_PI_2)] {
+            pose(commands, images.cloture.clone(), vec![(x, y), (x, y + 1)], Vec2::new(x as f32, y as f32 + 0.5), Vec2::new(2.0, 1.0), 0.6, false, Quat::from_rotation_z(r));
+        }
+        y += 2;
+    }
+    // La mare, en haut à droite, et ses roseaux.
+    let mare = (x1 - 3, y1 - 3);
+    let cases_mare: Vec<Case> = (mare.0 - 1..=mare.0 + 1).flat_map(|x| (mare.1 - 1..=mare.1 + 1).map(move |y| (x, y))).collect();
+    pose(commands, images.mare.clone(), cases_mare.clone(), monde(mare), Vec2::splat(3.0), 0.2, false, Quat::IDENTITY);
+    pose(commands, images.roseaux.clone(), vec![(mare.0 - 2, mare.1 + 1)], monde((mare.0 - 2, mare.1 + 1)) + Vec2::new(0.2, 0.2), Vec2::splat(1.3), 0.5, false, Quat::IDENTITY);
+    pose(commands, images.roseaux.clone(), vec![(mare.0 + 1, mare.1 - 2)], monde((mare.0 + 1, mare.1 - 2)) + Vec2::new(-0.1, 0.3), Vec2::splat(1.2), 0.5, true, Quat::IDENTITY);
+    pose(commands, images.nenuphars[0].clone(), vec![(mare.0 - 1, mare.1)], monde((mare.0 - 1, mare.1)) + Vec2::new(0.3, 0.1), Vec2::splat(0.9), 0.3, false, Quat::IDENTITY);
+    pose(commands, images.nenuphars[1].clone(), vec![(mare.0 + 1, mare.1 + 1)], monde((mare.0 + 1, mare.1 + 1)) + Vec2::new(-0.3, -0.2), Vec2::splat(0.8), 0.3, true, Quat::IDENTITY);
+    // Le crapaud plombier et sa caisse à outils, en bas à gauche.
+    let crapaud = (x0 + 2, y0 + 2);
+    pose(commands, images.crapaud.clone(), vec![crapaud, (crapaud.0, crapaud.1 + 1)], monde(crapaud) + Vec2::Y * 0.4, Vec2::splat(1.7), 0.5, false, Quat::IDENTITY);
+    pose(commands, images.caisse.clone(), vec![(crapaud.0 + 1, crapaud.1)], monde((crapaud.0 + 1, crapaud.1)) + Vec2::new(0.1, -0.1), Vec2::splat(1.0), 0.5, false, Quat::IDENTITY);
+    // Les cases déjà prises, et le centre (la fuite et ses premiers tuyaux).
+    let mut prises: Vec<Case> = cases_mare;
+    prises.extend([crapaud, (crapaud.0, crapaud.1 + 1), (crapaud.0 + 1, crapaud.1), (mare.0 - 2, mare.1 + 1), (mare.0 + 1, mare.1 - 2)]);
+    for x in -2..=3 {
+        for y in -2..=2 {
+            prises.push((x, y));
+        }
+    }
+    let mut libre = |rng: &mut Rng, marge: i32| -> Option<Case> {
+        for _ in 0..40 {
+            let c = (x0 + 1 + rng.below((x1 - x0 - 1) as u32) as i32, y0 + 1 + rng.below((y1 - y0 - 1) as u32) as i32);
+            let ok = !prises.iter().any(|p| (p.0 - c.0).abs() <= marge && (p.1 - c.1).abs() <= marge);
+            if ok {
+                prises.push(c);
+                return Some(c);
+            }
+        }
+        None
+    };
+    // Les buissons, plutôt près des bords.
+    for _ in 0..7 {
+        if let Some(c) = libre(&mut rng, 1) {
+            if (c.0 - (x0 + x1) / 2).abs() < 7 && (c.1 - (y0 + y1) / 2).abs() < 5 {
+                continue;
+            }
+            let i = rng.below(2) as usize;
+            let t = 1.4 + rng.next_f32() * 0.6;
+            pose(commands, images.buissons[i].clone(), vec![c, (c.0 + 1, c.1), (c.0, c.1 + 1), (c.0 + 1, c.1 + 1)], monde(c) + Vec2::splat(0.5), Vec2::splat(t), 0.45, rng.below(2) == 0, Quat::IDENTITY);
+        }
+    }
+    for _ in 0..8 {
+        if let Some(c) = libre(&mut rng, 1) {
+            let i = rng.below(3) as usize;
+            pose(commands, images.cailloux[i].clone(), vec![c], monde(c), Vec2::splat(0.8 + rng.next_f32() * 0.3), 0.4, rng.below(2) == 0, Quat::IDENTITY);
+        }
+    }
+    for k in 0..70 {
+        if let Some(c) = libre(&mut rng, 0) {
+            let image = if k % 3 == 0 { images.fleurs[rng.below(4) as usize].clone() } else { images.touffes[rng.below(4) as usize].clone() };
+            let t = 0.7 + rng.next_f32() * 0.4;
+            let d = Vec2::new(rng.next_f32() - 0.5, rng.next_f32() - 0.5) * 0.3;
+            pose(commands, image, vec![c], monde(c) + d, Vec2::splat(t), 0.3, rng.below(2) == 0, Quat::IDENTITY);
+        }
+    }
 }
 
 /// L'herbe prend la couleur de la saison.
@@ -419,19 +563,24 @@ fn fin_de_partie(time: Res<Time>, mut jeu: ResMut<Jeu>, mut record: ResMut<Recor
     }
 }
 
-/// Le sprite d'une carte posée : l'image vide, et par-dessus l'image pleine
-/// d'eau, transparente tant que l'eau n'est pas arrivée.
-fn dessiner_carte(commands: &mut Commands, images: &Images, i: usize, carte: &Carte) {
-    let (vide, eau, demi_tour) = images.carte(carte.forme);
-    let rotation = Rotation::de_quarts(carte.rotation.quarts() + demi_tour.quarts());
+/// Le centre d'une carte posée, au monde.
+fn centre(carte: &Carte) -> Vec2 {
     let cases = carte.cases();
-    let centre = (monde(cases[0]) + monde(cases[1])) / 2.0;
-    let taille = Some(Vec2::new(1.0, 2.0));
-    commands.spawn((Sprite { image: vide, custom_size: taille, ..default() }, Transform::from_translation(centre.extend(1.0)).with_rotation(quat(rotation)), DeLaCarte(i))).with_child((
-        Sprite { image: eau, custom_size: taille, color: Color::WHITE.with_alpha(0.0), ..default() },
-        Transform::from_xyz(0.0, 0.0, 0.1),
-        EauDeLaCarte(i),
-    ));
+    (monde(cases[0]) + monde(cases[1])) / 2.0
+}
+
+/// Le sprite d'une carte posée : l'image vide, son ombre dessous, et
+/// par-dessus l'image pleine d'eau, transparente tant que l'eau n'est pas arrivée.
+fn dessiner_carte(commands: &mut Commands, images: &Images, i: usize, carte: &Carte) {
+    let (vide, eau, ombre, demi_tour) = images.carte(carte.forme);
+    let rotation = Rotation::de_quarts(carte.rotation.quarts() + demi_tour.quarts());
+    let taille = Some(TAILLE_CARTE);
+    commands
+        .spawn((Sprite { image: vide, custom_size: taille, ..default() }, Transform::from_translation(centre(carte).extend(1.0)).with_rotation(quat(rotation)), DeLaCarte(i)))
+        .with_children(|p| {
+            p.spawn((Sprite { image: ombre, custom_size: taille, ..default() }, Transform::from_xyz(0.0, 0.0, -0.3)));
+            p.spawn((Sprite { image: eau, custom_size: taille, color: Color::WHITE.with_alpha(0.0), ..default() }, Transform::from_xyz(0.0, 0.0, 0.1), EauDeLaCarte(i)));
+        });
 }
 
 /// Dessine les cartes qui ne le sont pas encore, et la grille autour.
@@ -456,15 +605,18 @@ fn rebatir(
             continue;
         }
         if i == 0 {
-            // La fuite : la terre retournée dessous, puis la carte toute ouverte.
-            let centre = (monde(carte.cases()[0]) + monde(carte.cases()[1])) / 2.0;
-            commands.spawn((Sprite { image: images.fuite.clone(), custom_size: Some(Vec2::new(4.0, 3.0)), ..default() }, Transform::from_translation(centre.extend(0.6)), DeLaCarte(0)));
+            // La fuite : la carte toute ouverte, fendue, et le jet qui gicle.
+            let c = centre(carte);
+            commands
+                .spawn((Sprite { image: images.fuite.clone(), custom_size: Some(TAILLE_CARTE), ..default() }, Transform::from_translation(c.extend(1.0)).with_rotation(quat(carte.rotation)), DeLaCarte(0)))
+                .with_child((Sprite { image: images.fuite_ombre.clone(), custom_size: Some(TAILLE_CARTE), ..default() }, Transform::from_xyz(0.0, 0.0, -0.3)));
+            commands.spawn((Sprite { image: images.eclaboussure.clone(), custom_size: Some(Vec2::splat(1.5)), ..default() }, Transform::from_translation(c.extend(2.0)), DeLaCarte(0), Eclaboussure));
         } else {
             dessiner_carte(&mut commands, &images, i, carte);
         }
         // Le décor et les flaques qui étaient là s'effacent.
         for (e, d) in &decor {
-            if carte.cases().contains(&d.0) {
+            if d.0.iter().any(|c| carte.cases().contains(c)) {
                 commands.entity(e).despawn();
             }
         }
@@ -477,10 +629,11 @@ fn rebatir(
     for e in &grille {
         commands.entity(e).despawn();
     }
+    // La grille de pose : un quadrillage discret autour du réseau.
     let (min, max) = jeu.partie.grille.bornes();
     let marge = 2;
     let (min, max) = ((min.0 - marge, min.1 - marge), (max.0 + marge, max.1 + marge));
-    let ligne = Color::srgba(1.0, 1.0, 1.0, 0.18);
+    let ligne = Color::srgba(1.0, 1.0, 1.0, 0.16);
     let (x0, x1) = (min.0 as f32 - 0.5, max.0 as f32 + 0.5);
     let (y0, y1) = (min.1 as f32 - 0.5, max.1 as f32 + 0.5);
     for x in min.0..=max.0 + 1 {
@@ -507,14 +660,12 @@ fn apercu(jeu: Res<Jeu>, images: Res<Images>, mut q: Query<(&mut Sprite, &mut Tr
         return;
     };
     *vis = Visibility::Inherited;
-    let (vide, _, demi_tour) = images.carte(carte.forme);
+    let (vide, _, _, demi_tour) = images.carte(carte.forme);
     if sprite.image != vide {
         sprite.image = vide;
     }
-    sprite.color = if verdict.is_ok() { Color::srgba(0.45, 1.0, 0.5, 0.75) } else { Color::srgba(1.0, 0.35, 0.3, 0.75) };
-    let cases = carte.cases();
-    let centre = (monde(cases[0]) + monde(cases[1])) / 2.0;
-    tf.translation = centre.extend(3.0);
+    sprite.color = if verdict.is_ok() { Color::srgba(0.55, 1.0, 0.6, 0.8) } else { Color::srgba(1.0, 0.4, 0.35, 0.8) };
+    tf.translation = centre(&carte).extend(3.0);
     tf.rotation = quat(Rotation::de_quarts(carte.rotation.quarts() + demi_tour.quarts()));
 }
 
@@ -527,6 +678,16 @@ fn couler(time: Res<Time>, jeu: Res<Jeu>, mut eaux: Query<(&EauDeLaCarte, &mut S
         if sprite.color.alpha() != niveau {
             sprite.color = Color::WHITE.with_alpha(niveau);
         }
+    }
+}
+
+/// Le jet de la fuite palpite doucement.
+fn palpiter(time: Res<Time>, mut q: Query<&mut Transform, With<Eclaboussure>>) {
+    let t = time.elapsed_secs();
+    for mut tf in &mut q {
+        let k = 1.0 + 0.06 * (t * 5.0).sin();
+        tf.scale = Vec3::new(k, 2.0 - k, 1.0);
+        tf.rotation = Quat::from_rotation_z(0.04 * (t * 3.1).sin());
     }
 }
 
@@ -551,10 +712,11 @@ fn deborder(
             if jeu.partie.grille.libre(vide) && !existantes.contains(&(vide, dir)) {
                 // Au bord de la case vide, côté tuyau, puis elle s'étale.
                 let (dx, dy) = dir.delta();
-                let pos = monde(vide) - Vec2::new(dx as f32, dy as f32) * 0.2;
+                let pos = monde(vide) - Vec2::new(dx as f32, dy as f32) * 0.15;
+                let k = (vide.0 * 7 + vide.1 * 13).rem_euclid(3) as usize;
                 commands.spawn((
-                    Sprite { image: images.flaque.clone(), custom_size: Some(Vec2::splat(0.05)), ..default() },
-                    Transform::from_translation(pos.extend(0.4)),
+                    Sprite { image: images.flaques[k].clone(), custom_size: Some(Vec2::splat(0.05)), flip_x: (vide.0 + vide.1) % 2 == 0, ..default() },
+                    Transform::from_translation(pos.extend(0.7)),
                     Debordement(vide, dir, 0.05),
                 ));
                 evenements.write(Evenement::Deborde);
@@ -562,8 +724,8 @@ fn deborder(
         }
     }
     for (mut d, mut sprite, _) in &mut flaques {
-        if d.2 < 0.95 {
-            d.2 = (d.2 + time.delta_secs() * 0.25).min(0.95);
+        if d.2 < 1.05 {
+            d.2 = (d.2 + time.delta_secs() * 0.3).min(1.05);
             sprite.custom_size = Some(Vec2::splat(d.2));
         }
     }
