@@ -14,16 +14,20 @@ pour la colmater. Conçu à l'oral par Olivier le 17 octobre 2026.
 Choisi par Olivier le 17 octobre 2026 (« un tuyau qui sort au milieu d'un
 champ, d'une pâture, c'est largement suffisant »).
 
-Une **pâture** vue de dessus, un peu en biais : l'herbe de Croâ & Cie, quelques
+Une **pâture** vue presque du dessus (choisi après essai, le 17 octobre :
+plus lisible pour poser que la vue en biais des autres jeux) : l'herbe de Croâ & Cie, quelques
 touffes plus hautes, des fleurs, une clôture de piquets au loin, un arbre, une
 vache ou deux qui regardent (facultatif). Au centre, un bout de **canalisation
 de zinc** qui sort de terre et a crevé, la terre retournée autour, l'eau qui
 jaillit. Le **crapaud plombier** (`spawn_frog`, casquette et clé à molette)
-regarde la fuite, les bras ballants.
+se promène en sautillant de case en case autour du chantier, sans jamais
+marcher sur les tuyaux, s'arrête et regarde la fuite. Il est dessiné en
+sphères (plus fin que le crapaud commun en cubes).
 
 Les tuyaux : des **cartes 2 × 1** low poly en **zinc** gris, un peu brillant,
-joints et colliers plus sombres, posées sur une grille de cases carrées
-dessinée en creux dans l'herbe. L'eau bleue avance **à vue** dans les tuyaux
+posées sur une grille de cases carrées dessinée en creux dans l'herbe :
+des gouttières ouvertes sur le dessus, aux **coudes arrondis**, où l'on voit
+l'eau monter. L'eau bleue avance **à vue** dans les tuyaux
 (tuyaux ouverts sur le dessus, ou eau visible par transparence). Quand elle
 sort sur du vide, elle **déborde** : une flaque bleue s'étale, assombrit
 l'herbe, grandit un peu, un « splash », et c'est tout.
@@ -186,3 +190,12 @@ brouette, pancarte), gardé comme idée pour une version suivante.
 8. Décor : la pâture (A). Interface : main en bas, pioche à droite (P2).
 9. Icône proposée : le crapaud plombier, clé à molette en main, devant un
    tuyau de zinc qui gicle (à confirmer).
+
+## Après le premier essai d'Olivier (17 octobre 2026)
+
+- Coudes arrondis plutôt qu'angles droits ; vue du dessus gardée ; le crapaud
+  se promène sans marcher sur les tuyaux ; cartes de la main plus grandes,
+  canaux bleus sur zinc sombre.
+- Pas de son à la pose refusée ni aux débordements (ploufs en rafale
+  pénibles) : restent le « toc » de la pose, le tour, la pioche, le carillon
+  du réseau bouché et la fin de partie.
