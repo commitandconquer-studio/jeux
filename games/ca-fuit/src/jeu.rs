@@ -4,8 +4,7 @@ use bevy::input::mouse::MouseWheel;
 use bevy::picking::hover::Hovered;
 use bevy::prelude::*;
 use fuite_core::{Carte, Case, Direction, Partie, Refus, Rotation};
-use game_common::models::{FrogKit, spawn_frog};
-use game_common::{ISO_OFFSET, Rng, iso_camera, iso_projection};
+use game_common::{Rng, iso_projection};
 
 use crate::GameState;
 use crate::modeles::{self, Decor, Eau, Flaque, Jet, Look, HAUTEUR};
@@ -16,7 +15,6 @@ impl Plugin for JeuPlugin {
     fn build(&self, app: &mut App) {
         let record = game_common::save::load("ca-fuit", "record").and_then(|v| v.parse().ok()).unwrap_or(0);
         app.init_resource::<Look>()
-            .init_resource::<FrogKit>()
             .insert_resource(Record(record))
             .insert_resource(Jeu::nouveau(Rng::from_time().next_u64()))
             .insert_resource(Cadrage::default())
@@ -26,11 +24,12 @@ impl Plugin for JeuPlugin {
             // bilan, le réseau reste visible.
             .add_systems(OnEnter(GameState::Playing), (ranger, commencer).chain())
             .add_systems(OnEnter(GameState::Menu), ranger)
+            .add_systems(OnEnter(GameState::Fin), effacer_apercu)
             .add_systems(
                 Update,
                 (
-                    (viser, agir, debloquer, fin_de_partie).chain().run_if(in_state(GameState::Playing)),
-                    (rebatir, apercu, couler, deborder, cadrer, frissonner).run_if(en_jeu),
+                    (viser, agir, debloquer, fin_de_partie, apercu).chain().run_if(in_state(GameState::Playing)),
+                    (rebatir, couler, deborder, cadrer, frissonner, flaner).run_if(en_jeu),
                     zoomer,
                 ),
             );
@@ -127,6 +126,9 @@ impl Default for Cadrage {
 #[derive(Component)]
 struct CameraJeu;
 
+#[derive(Resource)]
+struct Hasard(Rng);
+
 /// Tout ce qui est dessiné pour une carte posée (indice dans la grille).
 #[derive(Component)]
 struct DeLaCarte(usize);
@@ -137,19 +139,34 @@ struct DeLaGrille;
 #[derive(Component)]
 struct DeLApercu;
 
+/// Le crapaud plombier : il sautille d'un point à l'autre autour du chantier,
+/// s'arrête, regarde la fuite, et repart.
 #[derive(Component)]
-struct Plombier;
+struct Plombier {
+    /// Les cases qui restent à parcourir.
+    chemin: Vec<Case>,
+    pause: f32,
+    phase: f32,
+}
 
 /// La flaque qui déborde d'une ouverture (case vide, direction d'où vient l'eau).
 #[derive(Component)]
 struct Debordement(Case, Direction);
 
-fn setup(mut commands: Commands, look: Res<Look>, kit: Res<FrogKit>, mut meshes: ResMut<Assets<Mesh>>) {
-    commands.spawn((iso_camera(Vec3::new(0.5, 0.0, 0.0), 14.0, 11.0), CameraJeu));
+/// La caméra regarde presque du dessus, un peu depuis le sud pour voir les
+/// parois des tuyaux et le relief du crapaud.
+const VUE: Vec3 = Vec3::new(0.0, 24.0, 7.0);
+
+fn setup(mut commands: Commands, look: Res<Look>, mut meshes: ResMut<Assets<Mesh>>, mut mats: ResMut<Assets<StandardMaterial>>) {
+    let cible = Vec3::new(0.5, 0.0, 0.0);
+    commands.spawn((Camera3d::default(), iso_projection(14.0, 11.0), Transform::from_translation(cible + VUE).looking_at(cible, Vec3::Y), CameraJeu));
     modeles::dessiner_pature(&mut commands, &look, &mut meshes);
-    let crapaud = spawn_frog(&mut commands, &kit);
-    commands.entity(crapaud).insert((Plombier, Transform::from_xyz(-1.6, 0.0, 1.5).with_scale(Vec3::splat(1.3)).looking_at(Vec3::new(0.5, 0.0, 0.0), Vec3::Y)));
-    modeles::equiper_le_plombier(&mut commands, crapaud, &look);
+    let crapaud = modeles::dessiner_crapaud(&mut commands, &look, &mut meshes, &mut mats);
+    commands.entity(crapaud).insert((
+        Plombier { chemin: Vec::new(), pause: 2.0, phase: 0.0 },
+        Transform::from_xyz(-2.0, 0.0, 2.0).with_scale(Vec3::splat(1.3)).looking_at(Vec3::new(0.5, 0.0, 0.0), Vec3::Y),
+    ));
+    commands.insert_resource(Hasard(Rng::from_time()));
 }
 
 /// Une nouvelle partie à chaque entrée dans le jeu.
@@ -284,20 +301,32 @@ impl Jeu {
 }
 
 /// Rien n'est posable : la main grandit d'une carte (une par image, pour
-/// qu'on la voie arriver), jusqu'à ce qu'une carte soit posable.
-fn debloquer(mut jeu: ResMut<Jeu>, mut evenements: MessageWriter<Evenement>) {
-    if jeu.finie_depuis.is_some() || !jeu.partie.bloquee() {
+/// qu'on la voie arriver), jusqu'à ce qu'une carte soit posable. Le calcul
+/// n'est refait que quand la main ou la grille ont changé.
+fn debloquer(mut jeu: ResMut<Jeu>, mut evenements: MessageWriter<Evenement>, mut verifiee: Local<bool>) {
+    if jeu.finie_depuis.is_some() {
+        return;
+    }
+    if jeu.main_changee {
+        *verifiee = false;
+    }
+    if *verifiee {
+        return;
+    }
+    *verifiee = true;
+    if !jeu.partie.bloquee() {
         return;
     }
     if jeu.partie.piocher() {
         jeu.main_changee = true;
+        *verifiee = false;
         evenements.write(Evenement::Piochee);
     }
 }
 
 fn fin_de_partie(time: Res<Time>, mut jeu: ResMut<Jeu>, mut record: ResMut<Record>, mut next: ResMut<NextState<GameState>>, mut evenements: MessageWriter<Evenement>) {
     let t = time.elapsed_secs();
-    if jeu.finie_depuis.is_none() && jeu.partie.terminee() {
+    if jeu.finie_depuis.is_none() && jeu.main_changee && jeu.partie.terminee() {
         jeu.finie_depuis = Some(t);
         let score = jeu.partie.score();
         if score.points > record.0 {
@@ -368,6 +397,12 @@ fn rebatir(
     cadrage.cible = centre + Vec3::Z * 0.8;
     cadrage.largeur = largeur.max(14.0);
     cadrage.hauteur = hauteur.max(11.0);
+}
+
+fn effacer_apercu(mut commands: Commands, q: Query<Entity, With<DeLApercu>>) {
+    for e in &q {
+        commands.entity(e).despawn();
+    }
 }
 
 /// L'aperçu de la carte au curseur : vert si la pose est possible, rouge sinon.
@@ -446,7 +481,7 @@ fn cadrer(time: Res<Time>, mut cadrage: ResMut<Cadrage>, mut cam: Query<(&mut Tr
     c.1 += (largeur - c.1) * k;
     c.2 += (hauteur - c.2) * k;
     for (mut tf, mut proj) in &mut cam {
-        *tf = Transform::from_translation(c.0 + ISO_OFFSET).looking_at(c.0, Vec3::Y);
+        *tf = Transform::from_translation(c.0 + VUE).looking_at(c.0, Vec3::Y);
         *proj = iso_projection(c.1, c.2);
     }
 }
@@ -488,5 +523,95 @@ pub fn jouer_au_hasard(jeu: &mut Jeu, coups: usize, rng: &mut fuite_core::Rng, t
             jeu.plein.push(temps);
             jeu.posees_apres(i);
         }
+    }
+}
+
+/// Un chemin de cases libres, du crapaud jusqu'à une case tirée au sort
+/// autour du réseau (jamais sur les tuyaux).
+fn chemin_de_promenade(jeu: &Jeu, depuis: Case, hasard: &mut Rng) -> Vec<Case> {
+    use std::collections::{HashMap, VecDeque};
+    let grille = &jeu.partie.grille;
+    let (min, max) = grille.bornes();
+    let (min, max) = ((min.0 - 3, min.1 - 3), (max.0 + 3, max.1 + 3));
+    let dans = |c: Case| c.0 >= min.0 && c.0 <= max.0 && c.1 >= min.1 && c.1 <= max.1;
+    let mut parent: HashMap<Case, Case> = HashMap::new();
+    let mut file = VecDeque::new();
+    parent.insert(depuis, depuis);
+    file.push_back(depuis);
+    let mut atteintes = Vec::new();
+    while let Some(c) = file.pop_front() {
+        if c != depuis {
+            atteintes.push(c);
+        }
+        for d in Direction::TOUTES {
+            let v = d.voisine(c);
+            if dans(v) && grille.libre(v) && !parent.contains_key(&v) {
+                parent.insert(v, c);
+                file.push_back(v);
+            }
+        }
+    }
+    // Plutôt une case un peu loin, pour que la balade vaille le coup.
+    let loin: Vec<Case> = atteintes.iter().copied().filter(|c| (c.0 - depuis.0).abs() + (c.1 - depuis.1).abs() >= 3).collect();
+    let choix = if loin.is_empty() { &atteintes } else { &loin };
+    if choix.is_empty() {
+        return Vec::new();
+    }
+    let mut c = choix[hasard.below(choix.len() as u32) as usize];
+    let mut chemin = vec![c];
+    while c != depuis {
+        c = parent[&c];
+        chemin.push(c);
+    }
+    chemin.pop(); // la case de départ
+    chemin.reverse();
+    chemin
+}
+
+/// Le crapaud flâne : il saute de case en case jusqu'à sa cible en évitant
+/// les tuyaux, s'arrête un moment en regardant la fuite, puis repart.
+fn flaner(time: Res<Time>, jeu: Res<Jeu>, mut hasard: ResMut<Hasard>, mut q: Query<(&mut Plombier, &mut Transform)>) {
+    let dt = time.delta_secs();
+    for (mut p, mut tf) in &mut q {
+        let au_sol = Vec3::new(tf.translation.x, 0.0, tf.translation.z);
+        let ici = modeles::case_sous(au_sol);
+        // Un tuyau vient d'être posé sous lui : il déguerpit vers la case libre la plus proche.
+        if !jeu.partie.grille.libre(ici) && p.chemin.is_empty() {
+            if let Some(v) = Direction::TOUTES.iter().map(|d| d.voisine(ici)).find(|&v| jeu.partie.grille.libre(v)) {
+                p.chemin = vec![v];
+                p.pause = 0.0;
+            }
+        }
+        if p.pause > 0.0 {
+            p.pause -= dt;
+            tf.translation.y = 0.0;
+            if p.pause <= 0.0 {
+                p.chemin = chemin_de_promenade(&jeu, ici, &mut hasard.0);
+                p.phase = 0.0;
+            }
+            continue;
+        }
+        let Some(&prochaine) = p.chemin.first() else {
+            p.pause = 1.5 + hasard.0.next_f32() * 3.0;
+            // Il regarde la fuite.
+            let fuite = modeles::monde((0, 0)) + Vec3::X * 0.5;
+            if fuite.distance(au_sol) > 0.5 {
+                tf.look_at(fuite, Vec3::Y);
+            }
+            continue;
+        };
+        let cible = modeles::monde(prochaine);
+        let vers = cible - au_sol;
+        if vers.length() < 0.08 {
+            tf.translation = cible;
+            p.chemin.remove(0);
+            continue;
+        }
+        let dir = vers.normalize();
+        tf.look_to(dir, Vec3::Y);
+        let pas = (1.8 * dt).min(vers.length());
+        tf.translation += dir * pas;
+        p.phase += dt * 7.0;
+        tf.translation.y = p.phase.sin().abs() * 0.35;
     }
 }

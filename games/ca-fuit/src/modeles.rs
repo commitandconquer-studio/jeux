@@ -3,6 +3,8 @@
 //!
 //! Une case fait 1 × 1 ; la case (x, y) de la grille est au monde en
 //! (x, 0, −y) : « haut » de la grille = fond de l'écran.
+use std::ops::Neg;
+
 use bevy::prelude::*;
 use fuite_core::{Carte, Case, Direction};
 use game_common::{flat_material, palette};
@@ -94,16 +96,75 @@ pub struct Eau {
     pub taille: Vec3,
 }
 
-fn eau(c: &mut Commands, parent: Entity, look: &Look, pos: Vec3, taille: Vec3) {
+fn eau(c: &mut Commands, parent: Entity, look: &Look, pos: Vec3, taille: Vec3, rot: Quat) {
     let base = Vec3::new(pos.x, SOL, pos.z);
     c.spawn((
         Mesh3d(look.cube.clone()),
         MeshMaterial3d(look.eau.clone()),
-        Transform::from_translation(base).with_scale(Vec3::new(taille.x, 0.001, taille.z)),
+        Transform::from_translation(base).with_rotation(rot).with_scale(Vec3::new(taille.x, 0.001, taille.z)),
         Visibility::Hidden,
         Eau { base, taille: Vec3::new(taille.x, HAUTEUR - 0.03, taille.z) },
         ChildOf(parent),
     ));
+}
+
+/// Un tronçon droit de gouttière : le fond, les deux parois et l'eau,
+/// centré en `centre`, tourné de `yaw` autour de la verticale, long de `longueur`.
+#[allow(clippy::too_many_arguments)]
+fn troncon(c: &mut Commands, parent: Entity, look: &Look, paroi: &Handle<StandardMaterial>, fond: &Handle<StandardMaterial>, centre: Vec3, yaw: f32, longueur: f32, avec_eau: bool) {
+    let rot = Quat::from_rotation_y(yaw);
+    let lateral = rot * Vec3::Z;
+    c.spawn((Mesh3d(look.cube.clone()), MeshMaterial3d(fond.clone()), Transform::from_translation(centre + Vec3::Y * SOL / 2.0).with_rotation(rot).with_scale(Vec3::new(longueur, SOL, LARGEUR)), ChildOf(parent)));
+    for s in [-1.0, 1.0] {
+        c.spawn((
+            Mesh3d(look.cube.clone()),
+            MeshMaterial3d(paroi.clone()),
+            Transform::from_translation(centre + lateral * s * (LARGEUR / 2.0 + PAROI / 2.0) + Vec3::Y * HAUTEUR / 2.0).with_rotation(rot).with_scale(Vec3::new(longueur, HAUTEUR, PAROI)),
+            ChildOf(parent),
+        ));
+    }
+    if avec_eau {
+        eau(c, parent, look, centre, Vec3::new(longueur, 0.0, LARGEUR), rot);
+    }
+}
+
+/// Un coude arrondi entre deux côtés voisins d'une case : un quart de cercle
+/// autour du coin, du milieu d'un bord au milieu de l'autre.
+#[allow(clippy::too_many_arguments)]
+fn coude(c: &mut Commands, parent: Entity, look: &Look, paroi: &Handle<StandardMaterial>, fond: &Handle<StandardMaterial>, centre: Vec3, a: Direction, b: Direction, avec_eau: bool) {
+    let coin = centre + (axe(a) + axe(b)) * (CASE / 2.0);
+    let r = CASE / 2.0;
+    let n = 6;
+    let pas = std::f32::consts::FRAC_PI_2 / n as f32;
+    // De la direction −a (vers le centre depuis le bord a) à la direction −b.
+    let depart = (-axe(a)).xz();
+    let arrivee = (-axe(b)).xz();
+    let sens = (depart.x * arrivee.y - depart.y * arrivee.x).signum();
+    for k in 0..n {
+        let t = (k as f32 + 0.5) * pas;
+        let (cos, sin) = (t.cos(), t.sin());
+        // Rotation de `depart` d'un angle t (dans le sens qui mène à `arrivee`).
+        let dir = Vec2::new(depart.x * cos - sens * depart.y * sin, sens * depart.x * sin + depart.y * cos);
+        let radial = Vec3::new(dir.x, 0.0, dir.y);
+        let tangente = Vec3::new(-dir.y, 0.0, dir.x);
+        let yaw = tangente.z.atan2(tangente.x).neg();
+        let rot = Quat::from_rotation_y(yaw);
+        let milieu = coin + radial * r;
+        let longueur = r * pas * 1.12;
+        c.spawn((Mesh3d(look.cube.clone()), MeshMaterial3d(fond.clone()), Transform::from_translation(milieu + Vec3::Y * SOL / 2.0).with_rotation(rot).with_scale(Vec3::new(longueur, SOL, LARGEUR)), ChildOf(parent)));
+        for s in [-1.0, 1.0] {
+            let rayon = r + s * (LARGEUR / 2.0 + PAROI / 2.0);
+            c.spawn((
+                Mesh3d(look.cube.clone()),
+                MeshMaterial3d(paroi.clone()),
+                Transform::from_translation(coin + radial * rayon + Vec3::Y * HAUTEUR / 2.0).with_rotation(rot).with_scale(Vec3::new(rayon * pas * 1.12, HAUTEUR, PAROI)),
+                ChildOf(parent),
+            ));
+        }
+        if avec_eau {
+            eau(c, parent, look, milieu, Vec3::new(longueur, 0.0, LARGEUR), rot);
+        }
+    }
 }
 
 /// Dessine une carte (ses deux cases et ses tuyaux) sous `parent`. Avec
@@ -111,39 +172,42 @@ fn eau(c: &mut Commands, parent: Entity, look: &Look, pos: Vec3, taille: Vec3) {
 pub fn dessiner_carte(c: &mut Commands, parent: Entity, look: &Look, carte: &Carte, fantome: Option<&Handle<StandardMaterial>>) {
     let paroi = fantome.unwrap_or(&look.zinc);
     let fond = fantome.unwrap_or(&look.zinc_sombre);
+    let avec_eau = fantome.is_none();
     let cases = carte.cases();
     for case in cases {
         let centre = monde(case);
-        // Les quatre côtés de cette case : ouvert, fermé, ou vers l'autre case de la carte.
-        for d in Direction::TOUTES {
-            let voisine = d.voisine(case);
-            let interne = cases.contains(&voisine);
-            let ouvert = interne || carte.cotes().iter().any(|(ca, di, o)| *ca == case && *di == d && *o);
-            let a = axe(d);
-            let lateral = Vec3::new(a.z.abs(), 0.0, a.x.abs());
-            let demi = CASE / 2.0;
-            if ouvert {
-                // Un bout de tuyau du centre jusqu'au bord, et ses deux parois.
-                let longueur = demi - LARGEUR / 2.0;
-                let milieu = centre + a * (LARGEUR / 2.0 + longueur / 2.0);
-                bloc(c, parent, look, fond, milieu + Vec3::Y * SOL / 2.0, a.abs() * longueur + lateral * LARGEUR + Vec3::Y * SOL);
-                for s in [-1.0, 1.0] {
-                    let t = a.abs() * longueur + lateral * PAROI + Vec3::Y * HAUTEUR;
-                    bloc(c, parent, look, paroi, milieu + lateral * s * (LARGEUR / 2.0 + PAROI / 2.0) + Vec3::Y * HAUTEUR / 2.0, t);
+        let ouverts: Vec<Direction> = Direction::TOUTES
+            .into_iter()
+            .filter(|&d| cases.contains(&d.voisine(case)) || carte.cotes().iter().any(|(ca, di, o)| *ca == case && *di == d && *o))
+            .collect();
+        let yaw_de = |d: Direction| match d {
+            Direction::Est | Direction::Ouest => 0.0,
+            Direction::Nord | Direction::Sud => std::f32::consts::FRAC_PI_2,
+        };
+        match ouverts.as_slice() {
+            // Deux côtés opposés : un tuyau droit qui traverse la case.
+            [a, b] if *b == a.opposee() => troncon(c, parent, look, paroi, fond, centre, yaw_de(*a), CASE, avec_eau),
+            // Deux côtés voisins : un coude arrondi.
+            [a, b] => coude(c, parent, look, paroi, fond, centre, *a, *b, avec_eau),
+            // Un bouchon (un seul côté) ou un carrefour : un bout de tuyau vers
+            // chaque côté ouvert, et un mur qui ferme chaque côté fermé.
+            _ => {
+                for d in Direction::TOUTES {
+                    let a = axe(d);
+                    let lateral = Vec3::new(a.z.abs(), 0.0, a.x.abs());
+                    if ouverts.contains(&d) {
+                        let longueur = CASE / 2.0 - LARGEUR / 2.0;
+                        troncon(c, parent, look, paroi, fond, centre + a * (LARGEUR / 2.0 + longueur / 2.0), yaw_de(d), longueur, avec_eau);
+                    } else {
+                        let t = a.abs() * PAROI + lateral * (LARGEUR + 2.0 * PAROI) + Vec3::Y * HAUTEUR;
+                        bloc(c, parent, look, paroi, centre + a * (LARGEUR / 2.0 + PAROI / 2.0) + Vec3::Y * HAUTEUR / 2.0, t);
+                    }
                 }
-                if fantome.is_none() {
-                    eau(c, parent, look, milieu, a.abs() * longueur + lateral * LARGEUR);
+                bloc(c, parent, look, fond, centre + Vec3::Y * SOL / 2.0, Vec3::new(LARGEUR, SOL, LARGEUR));
+                if avec_eau {
+                    eau(c, parent, look, centre, Vec3::new(LARGEUR, 0.0, LARGEUR), Quat::IDENTITY);
                 }
-            } else {
-                // Un mur qui ferme ce côté du carrefour central.
-                let t = a.abs() * PAROI + lateral * (LARGEUR + 2.0 * PAROI) + Vec3::Y * HAUTEUR;
-                bloc(c, parent, look, paroi, centre + a * (LARGEUR / 2.0 + PAROI / 2.0) + Vec3::Y * HAUTEUR / 2.0, t);
             }
-        }
-        // Le carrefour central et son eau.
-        bloc(c, parent, look, fond, centre + Vec3::Y * SOL / 2.0, Vec3::new(LARGEUR, SOL, LARGEUR));
-        if fantome.is_none() {
-            eau(c, parent, look, centre, Vec3::new(LARGEUR, 0.0, LARGEUR));
         }
     }
 }
@@ -267,11 +331,51 @@ pub fn dessiner_pature(c: &mut Commands, look: &Look, meshes: &mut Assets<Mesh>)
     }
 }
 
-/// La casquette et la clé à molette du plombier, à accrocher au crapaud.
-pub fn equiper_le_plombier(c: &mut Commands, crapaud: Entity, look: &Look) {
-    bloc(c, crapaud, look, &look.casquette, Vec3::new(0.0, 0.56, -0.26), Vec3::new(0.46, 0.08, 0.40));
-    bloc(c, crapaud, look, &look.casquette, Vec3::new(0.0, 0.53, -0.50), Vec3::new(0.40, 0.03, 0.16));
-    // La clé, dans la patte droite.
-    bloc(c, crapaud, look, &look.zinc, Vec3::new(0.32, 0.22, -0.42), Vec3::new(0.06, 0.34, 0.06));
-    bloc(c, crapaud, look, &look.zinc, Vec3::new(0.32, 0.42, -0.42), Vec3::new(0.16, 0.08, 0.06));
+/// Le crapaud plombier, en sphères plutôt qu'en cubes : tête vers −Z, posé
+/// en y = 0. Renvoie la racine (à déplacer et tourner).
+pub fn dessiner_crapaud(c: &mut Commands, look: &Look, meshes: &mut Assets<Mesh>, mats: &mut Assets<StandardMaterial>) -> Entity {
+    let boule = meshes.add(Sphere::new(0.5).mesh().uv(36, 24));
+    let peau = mats.add(flat_material(Color::srgb(0.38, 0.72, 0.30)));
+    let sombre = mats.add(flat_material(Color::srgb(0.24, 0.52, 0.22)));
+    let ventre = mats.add(flat_material(Color::srgb(0.88, 0.91, 0.58)));
+    let blanc = mats.add(flat_material(Color::srgb(0.97, 0.97, 0.97)));
+    let noir = mats.add(flat_material(Color::srgb(0.06, 0.06, 0.08)));
+    let racine = c.spawn((Transform::default(), Visibility::default())).id();
+    let mut sphere = |mat: &Handle<StandardMaterial>, pos: Vec3, taille: Vec3| {
+        c.spawn((Mesh3d(boule.clone()), MeshMaterial3d(mat.clone()), Transform::from_translation(pos).with_scale(taille), ChildOf(racine)));
+    };
+    // Corps rebondi, ventre clair, tête ronde un peu aplatie.
+    sphere(&peau, Vec3::new(0.0, 0.30, 0.08), Vec3::new(0.72, 0.46, 0.80));
+    sphere(&ventre, Vec3::new(0.0, 0.22, 0.10), Vec3::new(0.62, 0.30, 0.70));
+    sphere(&peau, Vec3::new(0.0, 0.38, -0.30), Vec3::new(0.62, 0.40, 0.52));
+    // Bouche : un trait sombre.
+    sphere(&sombre, Vec3::new(0.0, 0.28, -0.52), Vec3::new(0.40, 0.03, 0.08));
+    for s in [-1.0, 1.0] {
+        // Yeux globuleux.
+        sphere(&peau, Vec3::new(0.19 * s, 0.56, -0.34), Vec3::splat(0.26));
+        sphere(&blanc, Vec3::new(0.19 * s, 0.59, -0.40), Vec3::splat(0.20));
+        sphere(&noir, Vec3::new(0.19 * s, 0.60, -0.49), Vec3::splat(0.09));
+        // Cuisses repliées et pieds palmés derrière, pattes avant devant.
+        sphere(&sombre, Vec3::new(0.40 * s, 0.18, 0.22), Vec3::new(0.30, 0.26, 0.44));
+        sphere(&sombre, Vec3::new(0.48 * s, 0.05, 0.02), Vec3::new(0.26, 0.08, 0.30));
+        for (i, dx) in [-0.08, 0.0, 0.08].into_iter().enumerate() {
+            sphere(&sombre, Vec3::new(0.48 * s + dx, 0.04, -0.14 + (i as f32 - 1.0).abs() * 0.04), Vec3::new(0.07, 0.05, 0.12));
+        }
+        sphere(&peau, Vec3::new(0.28 * s, 0.14, -0.34), Vec3::new(0.14, 0.26, 0.14));
+        sphere(&sombre, Vec3::new(0.28 * s, 0.03, -0.42), Vec3::new(0.18, 0.05, 0.16));
+    }
+    // Taches sur le dos.
+    for (x, z, t) in [(-0.14, 0.14, 0.14), (0.12, 0.24, 0.11), (0.05, -0.02, 0.09), (-0.05, 0.32, 0.08)] {
+        sphere(&sombre, Vec3::new(x, 0.50, z), Vec3::new(t, 0.04, t));
+    }
+    // La casquette (calotte et visière) et la clé à molette dans la patte droite.
+    sphere(&look_casquette(look), Vec3::new(0.0, 0.60, -0.26), Vec3::new(0.50, 0.22, 0.50));
+    c.spawn((Mesh3d(look.cube.clone()), MeshMaterial3d(look.casquette.clone()), Transform::from_xyz(0.0, 0.60, -0.52).with_scale(Vec3::new(0.36, 0.03, 0.16)), ChildOf(racine)));
+    bloc(c, racine, look, &look.zinc, Vec3::new(0.34, 0.24, -0.46), Vec3::new(0.05, 0.34, 0.05));
+    bloc(c, racine, look, &look.zinc, Vec3::new(0.34, 0.44, -0.46), Vec3::new(0.15, 0.08, 0.05));
+    racine
+}
+
+fn look_casquette(look: &Look) -> Handle<StandardMaterial> {
+    look.casquette.clone()
 }

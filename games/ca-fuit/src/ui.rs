@@ -84,9 +84,10 @@ struct Main;
 #[derive(Component)]
 struct AVenir;
 
-const ZINC: Color = Color::srgb(0.64, 0.68, 0.70);
-const ZINC_SOMBRE: Color = Color::srgb(0.36, 0.40, 0.44);
-const CANAL: Color = Color::srgb(0.30, 0.42, 0.50);
+const ZINC: Color = Color::srgb(0.70, 0.74, 0.76);
+const ZINC_SOMBRE: Color = Color::srgb(0.40, 0.44, 0.48);
+/// Les canaux : la couleur de l'eau, bien visible sur le zinc sombre.
+const CANAL: Color = Color::srgb(0.30, 0.64, 0.95);
 const CHOISIE: Color = Color::srgb(0.98, 0.80, 0.20);
 
 fn spawn_menu(mut commands: Commands, record: Res<Record>) {
@@ -179,8 +180,8 @@ fn spawn_partie(mut commands: Commands) {
 /// Dessine une carte à plat : deux cases de zinc, le canal au milieu, et un
 /// bout de canal vers chaque sortie. `cote` = largeur d'une case en pixels.
 fn tuile(commands: &mut Commands, parent: Entity, forme: Forme, rotation: Rotation, cote: f32, choisie: bool, action: Option<Action>) -> Entity {
-    let bord = (cote * 0.08).max(2.0);
-    let canal = cote * 0.34;
+    let bord = (cote * 0.07).max(2.0);
+    let canal = cote * 0.44;
     let boite = commands
         .spawn((
             Node { width: Val::Px(cote * 2.0), height: Val::Px(cote * 2.0), justify_content: JustifyContent::Center, align_items: AlignItems::Center, ..default() },
@@ -195,8 +196,8 @@ fn tuile(commands: &mut Commands, parent: Entity, forme: Forme, rotation: Rotati
             border_radius: BorderRadius::all(Val::Px(cote * 0.12)),
             ..default()
         },
-        BackgroundColor(ZINC),
-        BorderColor::all(if choisie { CHOISIE } else { ZINC_SOMBRE }),
+        BackgroundColor(ZINC_SOMBRE),
+        BorderColor::all(if choisie { CHOISIE } else { ZINC }),
         UiTransform { rotation: Rot2::degrees(-(rotation.quarts() as f32) * 90.0), ..default() },
         Hovered::default(),
         ChildOf(boite),
@@ -254,7 +255,7 @@ fn maj_main(mut commands: Commands, mut jeu: ResMut<Jeu>, main: Query<(Entity, O
         commands.entity(*e).despawn();
     }
     let n = jeu.partie.main.len();
-    let cote = if n <= 4 { 44.0 } else { (44.0 * 4.0 / n as f32).max(26.0) };
+    let cote = if n <= 4 { 64.0 } else { (64.0 * 4.0 / n as f32).max(34.0) };
     for (i, &forme) in jeu.partie.main.iter().enumerate() {
         let choisie = i == jeu.choix;
         let rotation = if choisie { jeu.rotation } else { Rotation::R0 };
@@ -268,7 +269,7 @@ fn maj_main(mut commands: Commands, mut jeu: ResMut<Jeu>, main: Query<(Entity, O
 /// Les prochains tuyaux : six, ou bien plus quand on survole la colonne.
 fn maj_a_venir(mut commands: Commands, jeu: Res<Jeu>, colonne: Query<(Entity, &Hovered, &Children), With<AVenir>>, tuiles: Query<Entity, With<TuileAVenir>>, mut montre: Local<Option<(usize, Vec<Forme>)>>) {
     let Ok((panneau, survol, _)) = colonne.single() else { return };
-    let nombre = if survol.get() { 16 } else { 6 };
+    let nombre = if survol.get() { 12 } else { 5 };
     let voulues: Vec<Forme> = jeu.partie.a_venir().take(nombre).collect();
     if montre.as_ref().is_some_and(|(n, v)| *n == nombre && *v == voulues) {
         return;
@@ -278,7 +279,7 @@ fn maj_a_venir(mut commands: Commands, jeu: Res<Jeu>, colonne: Query<(Entity, &H
         commands.entity(e).despawn();
     }
     for forme in voulues {
-        let boite = tuile(&mut commands, panneau, forme, Rotation::R0, 18.0, false, None);
+        let boite = tuile(&mut commands, panneau, forme, Rotation::R0, 28.0, false, None);
         commands.entity(boite).insert(TuileAVenir);
     }
     if jeu.partie.restantes() > nombre {

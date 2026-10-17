@@ -20,12 +20,13 @@ fn musique(mut commands: Commands, server: Res<AssetServer>) {
 
 fn effets(mut commands: Commands, server: Res<AssetServer>, son: Res<SoundOn>, mut evenements: MessageReader<Evenement>) {
     for e in evenements.read() {
+        // Pose refusée : le curseur rouge suffit, pas de bruit. Débordement :
+        // pas de bruit non plus, les ploufs en rafale étaient pénibles.
         let fichier = match e {
             Evenement::Posee => lib::TOCK,
             Evenement::Tournee => lib::TURN,
-            Evenement::Refusee => lib::CLUNK,
+            Evenement::Refusee | Evenement::Deborde => continue,
             Evenement::Piochee => lib::BLIP,
-            Evenement::Deborde => lib::SPLASH,
             Evenement::Bouchee => lib::CHIME,
             Evenement::Finie => lib::WIN,
         };
