@@ -3,6 +3,7 @@
 //! textes en cinq langues avec `tx!`.
 use bevy::picking::hover::Hovered;
 use bevy::prelude::*;
+use bevy::window::{MonitorSelection, PrimaryWindow, WindowMode};
 use fuite_core::{Forme, Rotation};
 use game_common::langue::Texte;
 use game_common::tx;
@@ -19,7 +20,7 @@ const AIDE: Texte = tx!(
      Rien de posable ? On pioche une carte de plus. Fin quand il n'y a plus rien à poser.\n\
      Moins de cartes = plus de points ; tout boucher vaut bien plus.\n\n\
      Clic ou Entrée : poser · clic droit ou R : tourner · 1 à 9, Tab : choisir\n\
-     Flèches : viser · molette : zoom · Échap : menu · M : son",
+     Flèches : viser · molette : zoom · F11 : plein écran · Échap : menu · M : son",
     "A leak in the middle of the pasture! Connect pipes to plug it all.\n\n\
      Water flows by itself through whatever is connected; what spills into the void overflows, no defeat.\n\
      A card goes against a water opening, and every edge must match its neighbours: \
@@ -27,7 +28,7 @@ const AIDE: Texte = tx!(
      Nothing to play? Draw one more card. The game ends when nothing can be placed.\n\
      Fewer cards = more points; plugging everything is worth far more.\n\n\
      Click or Enter: place · right click or R: rotate · 1 to 9, Tab: choose\n\
-     Arrows: aim · wheel: zoom · Esc: menu · M: sound",
+     Arrows: aim · wheel: zoom · F11: full screen · Esc: menu · M: sound",
     "Ein Leck mitten auf der Weide! Verbinde Rohre, um alles zu stopfen.\n\n\
      Das Wasser fließt von allein durch alles, was verbunden ist; was ins Leere läuft, läuft über – keine Niederlage.\n\
      Eine Karte liegt an einer Wasseröffnung an, und jede Kante muss zu den Nachbarn passen: \
@@ -35,7 +36,7 @@ const AIDE: Texte = tx!(
      Nichts legbar? Eine Karte mehr ziehen. Ende, wenn nichts mehr gelegt werden kann.\n\
      Weniger Karten = mehr Punkte; alles zu stopfen zählt viel mehr.\n\n\
      Klick oder Eingabe: legen · Rechtsklick oder R: drehen · 1 bis 9, Tab: wählen\n\
-     Pfeile: zielen · Mausrad: Zoom · Esc: Menü · M: Ton",
+     Pfeile: zielen · Mausrad: Zoom · F11: Vollbild · Esc: Menü · M: Ton",
     "Una perdita in mezzo al pascolo! Collega i tubi per tappare tutto.\n\n\
      L'acqua avanza da sola in ciò che è collegato; ciò che esce nel vuoto trabocca, senza sconfitta.\n\
      Una carta si posa contro un'apertura d'acqua, e ogni bordo deve combaciare con i vicini: \
@@ -43,7 +44,7 @@ const AIDE: Texte = tx!(
      Niente da posare? Si pesca una carta in più. Fine quando non c'è più nulla da posare.\n\
      Meno carte = più punti; tappare tutto vale molto di più.\n\n\
      Clic o Invio: posare · clic destro o R: ruotare · 1–9, Tab: scegliere\n\
-     Frecce: mirare · rotella: zoom · Esc: menu · M: audio",
+     Frecce: mirare · rotella: zoom · F11: schermo intero · Esc: menu · M: audio",
     "¡Una fuga en medio del prado! Conecta tuberías para taparlo todo.\n\n\
      El agua avanza sola por lo que está conectado; lo que sale al vacío se desborda, sin derrota.\n\
      Una carta se coloca contra una abertura de agua, y cada borde debe encajar con sus vecinas: \
@@ -51,7 +52,7 @@ const AIDE: Texte = tx!(
      ¿Nada que colocar? Se roba una carta más. Fin cuando no queda nada que colocar.\n\
      Menos cartas = más puntos; taparlo todo vale mucho más.\n\n\
      Clic o Intro: colocar · clic derecho o R: girar · 1 a 9, Tab: elegir\n\
-     Flechas: apuntar · rueda: zoom · Esc: menú · M: sonido",
+     Flechas: apuntar · rueda: zoom · F11: pantalla completa · Esc: menú · M: sonido",
 );
 
 pub struct UiPlugin;
@@ -73,6 +74,7 @@ enum Action {
     Menu,
     /// Choisir la carte `i` de la main.
     Choisir(usize),
+    PleinEcran,
 }
 
 #[derive(Component)]
@@ -101,19 +103,34 @@ fn spawn_menu(mut commands: Commands, record: Res<Record>) {
     spawn_gap(&mut commands, panel, 6.0);
     let (b, _) = spawn_button(&mut commands, panel, tx!("Jouer", "Play", "Spielen", "Gioca", "Jugar").t());
     commands.entity(b).insert(Action::Jouer);
+    let (b, _) = spawn_button(&mut commands, panel, tx!("Plein écran (F11)", "Full screen (F11)", "Vollbild (F11)", "Schermo intero (F11)", "Pantalla completa (F11)").t());
+    commands.entity(b).insert(Action::PleinEcran);
     pied_de_menu(&mut commands, panel);
 }
 
-fn au_clic(clic: On<PointerClick>, actions: Query<&Action>, mut jeu: ResMut<Jeu>, mut next: ResMut<NextState<GameState>>) {
+fn au_clic(clic: On<PointerClick>, actions: Query<&Action>, mut jeu: ResMut<Jeu>, mut next: ResMut<NextState<GameState>>, mut fenetres: Query<&mut Window, With<PrimaryWindow>>) {
     match actions.get(clic.entity) {
         Ok(Action::Jouer) => next.set(GameState::Playing),
         Ok(Action::Menu) => next.set(GameState::Menu),
         Ok(Action::Choisir(i)) => jeu.choisir(*i),
+        Ok(Action::PleinEcran) => basculer_plein_ecran(&mut fenetres),
         Err(_) => {}
     }
 }
 
-fn clavier(keys: Res<ButtonInput<KeyCode>>, state: Res<State<GameState>>, mut next: ResMut<NextState<GameState>>) {
+/// Fenêtre ou plein écran (sans bordure, sur l'écran courant) ; mémorisé.
+fn basculer_plein_ecran(fenetres: &mut Query<&mut Window, With<PrimaryWindow>>) {
+    for mut f in fenetres.iter_mut() {
+        let plein = !matches!(f.mode, WindowMode::Windowed);
+        f.mode = if plein { WindowMode::Windowed } else { WindowMode::BorderlessFullscreen(MonitorSelection::Current) };
+        game_common::save::store("ca-fuit", "plein-ecran", if plein { "0" } else { "1" });
+    }
+}
+
+fn clavier(keys: Res<ButtonInput<KeyCode>>, state: Res<State<GameState>>, mut next: ResMut<NextState<GameState>>, mut fenetres: Query<&mut Window, With<PrimaryWindow>>) {
+    if keys.just_pressed(KeyCode::F11) {
+        basculer_plein_ecran(&mut fenetres);
+    }
     match state.get() {
         GameState::Menu if keys.any_just_pressed([KeyCode::Enter, KeyCode::Space]) => next.set(GameState::Playing),
         GameState::Playing if keys.just_pressed(KeyCode::Escape) => next.set(GameState::Menu),
