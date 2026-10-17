@@ -23,7 +23,7 @@ ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 CARGO="$(command -v cargo || echo "$HOME/.cargo/bin/cargo")"
 
 # Les jeux publiés (paquets Cargo), puis le lanceur.
-JEUX=(snake traversee tour pousse-caisses nova eureka-2048 concile parsecs observatoire lanceur)
+JEUX=(snake traversee tour pousse-caisses nova eureka-2048 concile parsecs observatoire ca-fuit lanceur)
 
 packages=()
 for jeu in "${JEUX[@]}"; do

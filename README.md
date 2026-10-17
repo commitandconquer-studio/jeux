@@ -31,11 +31,13 @@ games/eureka-2048/    2048 (univers Eurêka) : fusionner les puissances de 2
 games/concile/        Le Concile des Évêques (univers Eurêka) : un évêque par diocèse
 games/parsecs/        12 Parsecs (univers Nova) : la traversée d'une ceinture d'astéroïdes
 games/observatoire/   L'Observatoire (univers Eurêka) : soleils et lunes sur la carte du ciel
+games/ca-fuit/        Ça fuit ! (univers Croâ & Cie) : des tuyaux de zinc pour boucher la fuite
 games/modele/         le jeu modèle : point de départ de tout nouveau jeu
 crates/concile-core/  grilles, solveurs et générateur du Concile (sans Bevy)
 tools/concile-gen/    génère le Livre des Conciles (games/concile/puzzles.txt)
 crates/observatoire-core/ règles, solveurs et générateur de L'Observatoire (sans Bevy)
 tools/observatoire-gen/   génère le Livre des Constellations (games/observatoire/grilles.txt)
+crates/fuite-core/    règles de Ça fuit ! : cartes, grille, eau, paquet et score (sans Bevy)
 tools/logo-gen/       rend l'emblème du studio en PNG (assets/branding/)
 tools/sfx-gen/        fabrique les sons et musiques de la bibliothèque
 packaging/            icônes des jeux et charte du studio
@@ -222,6 +224,17 @@ cargo run -p observatoire
 - **Le Livre des Constellations** : 100 grilles (4 × 4, 6 × 6, 8 × 8), chacune à solution unique et trouvable par la logique seule. **Grille du jour** et série de jours réussis.
 - Mode Novice (erreurs signalées tout de suite) ou Normal ; **indice** expliqué en une phrase ; annuler, effacer, sablier et meilleur temps.
 - Cahier des charges : [docs/jeux/observatoire.md](docs/jeux/observatoire.md). Tests : `cargo test -p observatoire-core`. Captures : `OBSERVATOIRE_CAPTURE=captures cargo run -p observatoire`. Nouvelles grilles : `cargo run --release -p observatoire-gen`.
+
+### Ça fuit ! — Croâ & Cie
+
+```bash
+cargo run -p ca-fuit
+```
+
+- Une **fuite** au milieu de la pâture, ouverte sur six côtés. Raccordez des **tuyaux de zinc**, des cartes de 2 × 1 tirées d'un paquet de 70 (les 34 formes possibles, des bouchons aux carrefours), jusqu'à ce que plus rien ne fuie.
+- L'eau **avance toute seule** dans ce qui est relié ; ce qui sort sur du vide déborde en flaque, sans défaite. Une carte se pose contre une ouverture d'eau, et chaque bord doit concorder avec ses voisines : ouverture contre ouverture, mur contre mur.
+- **Main de 3 cartes**, qui grandit quand rien n'est posable ; les prochains tuyaux du paquet sont visibles. Fin quand il n'y a plus rien à poser ni à piocher : moins de cartes, plus de points, et tout boucher vaut bien plus.
+- Cahier des charges : [docs/jeux/ca-fuit.md](docs/jeux/ca-fuit.md). Tests : `cargo test -p fuite-core`. Captures : `CA_FUIT_CAPTURE=captures cargo run -p ca-fuit`.
 
 ## Bibliothèque commune (`assets/`)
 

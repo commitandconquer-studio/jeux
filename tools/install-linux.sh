@@ -25,6 +25,7 @@ GAMES=(
   "concile|Le Concile des Évêques|Un évêque par diocèse, par rangée et par colonne, et jamais de voisin"
   "parsecs|12 Parsecs|Traversez la ceinture d'astéroïdes et gagnez de nouveaux vaisseaux"
   "observatoire|L'Observatoire|Soleils et lunes sur la carte du ciel : un jeu de logique"
+  "ca-fuit|Ça fuit !|Raccordez des tuyaux de zinc pour boucher la fuite de la pâture"
 )
 
 if [[ "${1:-}" == "--desinstaller" ]]; then
