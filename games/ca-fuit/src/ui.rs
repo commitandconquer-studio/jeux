@@ -120,7 +120,10 @@ fn spawn_menu(mut commands: Commands, record: Res<Record>) {
     pied_de_menu(&mut commands, panel);
 }
 
-fn au_clic(clic: On<PointerClick>, actions: Query<&Action>, mut jeu: ResMut<Jeu>, mut next: ResMut<NextState<GameState>>, mut fenetres: Query<&mut Window, With<PrimaryWindow>>) {
+fn au_clic(clic: On<PointerClick>, actions: Query<&Action>, mut jeu: ResMut<Jeu>, mut next: ResMut<NextState<GameState>>, mut fenetres: Query<&mut Window, With<PrimaryWindow>>, capture: Option<Res<crate::capture::Capture>>) {
+    if capture.is_some() {
+        return;
+    }
     match actions.get(clic.entity) {
         Ok(Action::Jouer) => next.set(GameState::Playing),
         Ok(Action::Menu) => next.set(GameState::Menu),
@@ -139,7 +142,10 @@ fn basculer_plein_ecran(fenetres: &mut Query<&mut Window, With<PrimaryWindow>>) 
     }
 }
 
-fn clavier(keys: Res<ButtonInput<KeyCode>>, state: Res<State<GameState>>, mut next: ResMut<NextState<GameState>>, mut fenetres: Query<&mut Window, With<PrimaryWindow>>) {
+fn clavier(keys: Res<ButtonInput<KeyCode>>, state: Res<State<GameState>>, mut next: ResMut<NextState<GameState>>, mut fenetres: Query<&mut Window, With<PrimaryWindow>>, capture: Option<Res<crate::capture::Capture>>) {
+    if capture.is_some() {
+        return;
+    }
     if keys.just_pressed(KeyCode::F11) {
         basculer_plein_ecran(&mut fenetres);
     }

@@ -1,5 +1,7 @@
 //! Mode capture : `CA_FUIT_CAPTURE=dossier cargo run -p ca-fuit` enregistre
-//! le menu, une partie en cours et le bilan, puis quitte.
+//! le menu, une partie en cours et le bilan, puis quitte. Pendant ce temps
+//! le jeu ignore le clavier et la souris (la fenêtre prend le focus : ce
+//! qu'on tape à côté arriverait dans le jeu).
 use bevy::prelude::*;
 use bevy::render::view::screenshot::{Screenshot, save_to_disk};
 
@@ -15,8 +17,9 @@ enum Etape {
 
 const CLICHES: [(&str, Etape, f32); 3] = [("1-menu", Etape::Menu, 4.0), ("2-partie", Etape::Partie, 3.5), ("3-bilan", Etape::Fin, 3.0)];
 
+/// Présente seulement en mode capture : les commandes du joueur sont ignorées.
 #[derive(Resource)]
-struct Capture {
+pub struct Capture {
     dossier: String,
     i: usize,
     depuis: f32,

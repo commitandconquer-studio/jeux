@@ -427,7 +427,11 @@ fn viser(
     keys: Res<ButtonInput<KeyCode>>,
     survols: Query<&Hovered>,
     mut jeu: ResMut<Jeu>,
+    capture: Option<Res<crate::capture::Capture>>,
 ) {
+    if capture.is_some() {
+        return;
+    }
     if !sur_l_interface(&survols) {
         let Ok((camera, cam_tf)) = cam.single() else { return };
         if let Some(p) = windows.single().ok().and_then(|w| w.cursor_position()) {
@@ -458,8 +462,9 @@ fn agir(
     mut jeu: ResMut<Jeu>,
     mut cadrage: ResMut<Cadrage>,
     mut evenements: MessageWriter<Evenement>,
+    capture: Option<Res<crate::capture::Capture>>,
 ) {
-    if jeu.finie_depuis.is_some() {
+    if jeu.finie_depuis.is_some() || capture.is_some() {
         return;
     }
     for (i, k) in [KeyCode::Digit1, KeyCode::Digit2, KeyCode::Digit3, KeyCode::Digit4, KeyCode::Digit5, KeyCode::Digit6, KeyCode::Digit7, KeyCode::Digit8, KeyCode::Digit9].into_iter().enumerate() {
@@ -545,7 +550,10 @@ fn debloquer(mut jeu: ResMut<Jeu>, mut evenements: MessageWriter<Evenement>, mut
 
 fn fin_de_partie(time: Res<Time>, mut jeu: ResMut<Jeu>, mut record: ResMut<Record>, mut next: ResMut<NextState<GameState>>, mut evenements: MessageWriter<Evenement>) {
     let t = time.elapsed_secs();
-    if jeu.finie_depuis.is_none() && jeu.main_changee && jeu.partie.terminee() {
+    // Vérifié à chaque image (le calcul est minuscule) : s'appuyer sur
+    // `main_changee` faisait manquer la fin quand l'interface remettait le
+    // drapeau à zéro dans le même tour.
+    if jeu.finie_depuis.is_none() && jeu.partie.terminee() {
         jeu.finie_depuis = Some(t);
         let score = jeu.partie.score();
         if score.points > record.0 {
