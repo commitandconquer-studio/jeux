@@ -31,7 +31,7 @@ games/eureka-2048/    2048 (univers Eurêka) : fusionner les puissances de 2
 games/concile/        Le Concile des Évêques (univers Eurêka) : un évêque par diocèse
 games/parsecs/        12 Parsecs (univers Nova) : la traversée d'une ceinture d'astéroïdes
 games/observatoire/   L'Observatoire (univers Eurêka) : soleils et lunes sur la carte du ciel
-games/ca-fuit/        Ça fuit ! (univers Croâ & Cie) : des tuyaux de zinc pour boucher la fuite
+games/ca-fuit/        Ça fuit ! (univers Croâ & Cie) : des tuyaux de cuivre pour boucher la fuite
 games/modele/         le jeu modèle : point de départ de tout nouveau jeu
 crates/concile-core/  grilles, solveurs et générateur du Concile (sans Bevy)
 tools/concile-gen/    génère le Livre des Conciles (games/concile/puzzles.txt)
@@ -231,11 +231,11 @@ cargo run -p observatoire
 cargo run -p ca-fuit
 ```
 
-- Une **fuite** au milieu de la pâture, ouverte sur six côtés. Raccordez des **tuyaux de zinc**, des cartes de 2 × 1 tirées d'un paquet de 70 (les 34 formes possibles, des bouchons aux carrefours), jusqu'à ce que plus rien ne fuie.
+- Une **fuite** au milieu de la pâture, ouverte sur six côtés. Raccordez des **tuyaux de cuivre**, des cartes de 2 × 1 tirées d'un paquet de 70 (les 34 formes possibles, des bouchons aux carrefours), jusqu'à ce que plus rien ne fuie.
 - L'eau **avance toute seule** dans ce qui est relié ; ce qui sort sur du vide déborde en flaque, sans défaite. Une carte se pose contre une ouverture d'eau, et chaque bord doit concorder avec ses voisines : ouverture contre ouverture, mur contre mur.
 - **Main de 3 cartes**, qui grandit quand rien n'est posable ; les prochains tuyaux du paquet sont visibles. Fin quand il n'y a plus rien à poser ni à piocher : moins de cartes, plus de points, et tout boucher vaut bien plus.
 - **Plein écran** : F11 ou le bouton du menu (mémorisé). **Carte graphique** : `CA_FUIT_GPU=nvidia cargo run -p ca-fuit` pour la carte dédiée (c'est le choix par défaut), `CA_FUIT_GPU=intel` pour la puce intégrée.
-- En 2D : les tuyaux sont des **sprites photographiés depuis des modèles 3D** (`CA_FUIT_SPRITES=photos cargo run -p ca-fuit`, puis `tools/sprites-ca-fuit.py photos` → `assets/sprites/ca-fuit/`).
+- En 2D cartoon, direction artistique « La plomberie de poche » ([docs/jeux/da/ca-fuit/](docs/jeux/da/ca-fuit/)) : les tuyaux sont **dessinés par `tools/sprites-ca-fuit.py`** (cairo), le décor et le crapaud découpés dans les planches de référence → `assets/sprites/ca-fuit/`.
 - Cahier des charges : [docs/jeux/ca-fuit.md](docs/jeux/ca-fuit.md). Tests : `cargo test -p fuite-core`. Captures : `CA_FUIT_CAPTURE=captures cargo run -p ca-fuit`.
 
 ## Bibliothèque commune (`assets/`)

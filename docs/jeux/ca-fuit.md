@@ -4,12 +4,13 @@ Univers **Croâ & Cie**. Un jeu de pose de tuyaux, calme et rigolo : une fuite
 au milieu de nulle part, un crapaud plombier, et un paquet de tuyaux dépareillés
 pour la colmater. Conçu à l'oral par Olivier le 17 octobre 2026.
 
-> **État : développé le 17 octobre 2026** sur la branche `jeu/ca-fuit`,
-> règles, décor et interface validés par Olivier. Reste à confirmer : la
-> formule de score (ci-dessous, « 5 points par ouverture bouchée » est
-> compté comme 5 points par bouchon posé). Linux et web. Non publié.
+> **État : publié le 17 octobre 2026** (Linux et web). Graphisme refait le
+> même jour selon la direction artistique « La plomberie de poche »
+> (branche `jeu/ca-fuit-da`, à valider par Olivier sur captures). Reste à
+> confirmer : la formule de score (ci-dessous, « 5 points par ouverture
+> bouchée » est compté comme 5 points par bouchon posé).
 
-## Le décor : la pâture, en 2D
+## Le décor : la pâture, en 2D — « La plomberie de poche »
 
 Choisi par Olivier le 17 octobre 2026 (« un tuyau qui sort au milieu d'un
 champ, d'une pâture, c'est largement suffisant »), puis **passé en 2D** le
@@ -17,20 +18,46 @@ même jour après essai : en 3D sur la puce Intel, l'aperçu suivait la souris
 avec une fraction de seconde de retard (30 images par seconde). En 2D on
 est à 55 et plus, et l'aperçu est une seule entité déplacée.
 
-Une **pâture** vue du dessus : l'herbe (sa couleur suit la saison), des
-arbres, des touffes et des fleurs. Au centre, un bout de **canalisation de
-zinc** qui sort de terre et a crevé, la terre retournée autour, l'eau qui
-jaillit. Pas de personnage : le crapaud plombier n'apportait rien au jeu.
+Le premier graphisme 2D (sprites photographiés depuis des modèles 3D,
+tuyaux de zinc gris) était plat et terne. Le jeu a été **entièrement
+redessiné** le 17 octobre 2026 selon la direction artistique **« La
+plomberie de poche »** (références dans `docs/jeux/da/ca-fuit/`) : 2D
+cartoon vue de dessus, aplats de couleur, contours bleu nuit épais, ombres
+portées simples décalées vers le bas à droite, très peu de textures.
 
-Les tuyaux : des **cartes 2 × 1** en **zinc** gris, des gouttières ouvertes
-sur le dessus aux **coudes arrondis**, où l'on voit l'eau. Ce sont des
-**sprites** photographiés depuis des modèles 3D (`sprites.rs`, puis
-`tools/sprites-ca-fuit.py` qui en tire la transparence exacte à partir de
-deux fonds, noir et blanc) : les 34 cartes vides et pleines, la fuite, la
-flaque, l'arbre, les touffes, dans `assets/sprites/ca-fuit/`. La main et la
-colonne « À venir » montrent exactement les mêmes images que le plateau.
-L'eau arrive dans une carte par fondu de l'image pleine sur l'image vide ;
-ce qui déborde fait une flaque qui s'étale.
+- **Les tuyaux** : des **cartes 2 × 1** en **cuivre orangé** (dégradé en
+  trois bandes, clair vers la lumière en haut à gauche), colliers gris
+  rivetés en retrait de chaque sortie (deux cartes raccordées montrent donc
+  deux colliers côte à côte, comme un vrai raccord), coudes arrondis
+  (quart de cercle de rayon une demi-case), jonctions en T et en croix où
+  le cuivre se fond sans manchon. Quand l'eau circule, le canal intérieur
+  devient bleu vif avec des reflets blancs en pastilles. Un bout mort est
+  fermé par un **bouchon rouge plat** (une bride en travers du tuyau : le
+  dôme rouge essayé d'abord ressemblait à autre chose, pas souhaitable
+  dans un jeu pour enfants). La **fuite** est la carte toute ouverte,
+  fendue au milieu, avec un jet d'eau qui palpite par-dessus.
+- Les cartes sont **dessinées par `tools/sprites-ca-fuit.py`** (Python et
+  cairo) à partir de règles chiffrées : 256 px par case, chaque image fait
+  1,5 × 2,5 cases (une marge de 0,25 case pour l'ombre), les sorties sont
+  centrées sur les bords de case et le tube s'arrête exactement au bord,
+  pour que les raccords soient parfaits. Trois images par forme : vide,
+  pleine, ombre (l'ombre est un sprite à part, sous les cartes voisines).
+  Même numérotation des sorties et mêmes rotations que `fuite-core`.
+- **La pâture** : herbe à la couleur de la saison avec un **damier doux**
+  (une case sur deux à peine assombrie, par un voile indépendant de la
+  couleur), touffes, fleurs, cailloux et buissons semés à graine fixe,
+  **clôture en bois** autour de l'enclos, une **mare** avec nénuphars et
+  roseaux en haut à droite, le **crapaud plombier** à casquette avec sa
+  clé et sa caisse à outils en bas à gauche. Les éléments du décor
+  s'effacent quand un tuyau se pose dessus. Les débordements font des
+  **flaques irrégulières** à deux bleus qui s'étalent.
+- Le décor (touffes, fleurs, cailloux, buissons, roseaux, nénuphars,
+  flaques, éclaboussure), le crapaud, la caisse et les pictogrammes du
+  bandeau sont **découpés dans les planches** dessinées par IA sur fond
+  transparent (`decor-2.png`, `crapaud.png`, `pictos.png`) par
+  `tools/decoupe-ca-fuit.py` ; la clôture et la mare sont tracées par le
+  générateur. `tools/sprites-ca-fuit.py` fait tout d'un coup, et produit
+  aussi l'icône du jeu.
 
 Ambiance `AmbiancePlugin::exterieur()` pour les fêtes et le moment ; la
 pluie et la neige (en 3D) ne s'affichent pas dans ce jeu 2D. Musique
@@ -142,20 +169,21 @@ encore. Meilleur score gardé avec `game_common::save`.
 
 Choisie par Olivier le 17 octobre 2026 (disposition « P2 »).
 
-- **La grille 3D** occupe presque tout l'écran. Le curseur de pose suit la
+- **La pâture** occupe tout l'écran, avec un quadrillage discret autour du réseau. Le curseur de pose suit la
   souris (ou les flèches) et montre la carte choisie en transparence, verte
   si la pose est possible, rouge sinon.
-- **En haut à gauche**, un petit bandeau de compteurs : cartes posées,
-  cartes restantes dans le paquet, ouvertures qui fuient, meilleur score.
-- **En bas, au centre, la main** : les cartes à l'horizontale, comme on les
-  tient, dessinées en vrais petits tuyaux de zinc vus de dessus (modèles 3D
-  en vue orthographique, ou rendu à plat de la même forme). La carte choisie
-  se soulève un peu. Quand la main grandit (4, 5, 6 cartes…), les cartes se
-  resserrent. Touches 1 à 9 pour choisir, R pour tourner (la carte de la
-  main tourne aussi).
-- **À droite, une fine colonne « À venir »** : les prochains tuyaux du
-  paquet empilés de haut en bas, en petit (les 6 premiers) ; un clic ou un
-  survol la déroule pour en voir davantage, jusqu'à la fin du paquet.
+- **En haut à gauche**, un bandeau ivoire à bord bleu nuit : quatre
+  compteurs à pictogramme et grand chiffre (clé : cartes posées ; coude :
+  cartes restantes ; goutte : ouvertures qui fuient ; trophée : record).
+- **En bas, au centre, la main** : des cartes ivoire arrondies à bord bleu
+  nuit, posées directement sur l'herbe, avec le même sprite que le plateau
+  (et son ombre), couchées comme on les tient. La carte choisie a un **halo
+  cyan** et montre sa rotation ; une carte qui n'a aucune place valide est
+  **grisée**. Quand la main grandit (4, 5, 6 cartes…), les cartes se
+  resserrent. Touches 1 à 9 pour choisir, R pour tourner.
+- **À droite, une fine colonne « À venir »**, discrète (ivoire translucide) :
+  les prochains tuyaux du paquet empilés de haut en bas, en petit (les 5
+  premiers) ; un survol la déroule pour en voir davantage.
 - **Menu** : Échap, ou un petit bouton dans le bandeau. Pied commun du
   studio (Options, Aide, Quitter) dans le menu, comme partout.
 - **Fin de partie** : panneau central avec le score, le détail (cartes
@@ -174,9 +202,13 @@ brouette, pancarte), gardé comme idée pour une version suivante.
   rotations, les raccords interdits, la propagation, la fin de partie.
 - `games/ca-fuit` : le jeu, en 2D, sur le squelette commun (StudioPlugin,
   cinq langues, Options, ambiance, version web). Modes : `CA_FUIT_CAPTURE`
-  (captures), `CA_FUIT_SPRITES` (photos des modèles 3D pour les sprites),
-  `CA_FUIT_FPS` (images par seconde), `CA_FUIT_OMBRES` (essais d'ombres,
-  sans effet en 2D).
+  (captures : menu, partie, bilan), `CA_FUIT_FPS` (images par seconde),
+  `CA_FUIT_GPU` (choix de la carte graphique).
+- Les sprites : `tools/sprites-ca-fuit.py` (cartes, fuite, clôture, mare,
+  icône ; découpe des planches via `tools/decoupe-ca-fuit.py`) →
+  `assets/sprites/ca-fuit/`. Pour les planches à redécouper :
+  `tools/decoupe-ca-fuit.py reperer <planche> <aperçu>` numérote les
+  éléments, à reporter dans la table `NOMS`.
 
 ## Décisions du 17 octobre 2026
 
@@ -188,7 +220,8 @@ brouette, pancarte), gardé comme idée pour une version suivante.
    viendra après.
 4. Score : formule ci-dessus, **à confirmer**.
 5. Paquet vide : on continue tant qu'une carte de la main est posable.
-6. Tuyaux en **zinc**, gris.
+6. Tuyaux en **zinc**, gris (remplacé le soir même par le **cuivre orangé**
+   de la direction artistique « La plomberie de poche »).
 7. Main qui grandit quand rien n'est posable ; paquet de 70 ; aperçu des
    prochains tuyaux.
 8. Décor : la pâture (A). Interface : main en bas, pioche à droite (P2).
