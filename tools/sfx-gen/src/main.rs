@@ -903,6 +903,60 @@ fn organ_music() -> Buf {
     })
 }
 
+// ------------------------------------------------------ Le berger ----
+
+/// Aboiement : deux « ouaf » secs et graves.
+fn bark() -> Buf {
+    let mut b = Buf::new(0.5);
+    let mut n = Noise(4_242);
+    let mut lp = LowPass::default();
+    for (i, start) in [0.0f32, 0.2].into_iter().enumerate() {
+        let f0 = if i == 0 { 420.0 } else { 380.0 };
+        b.add(start, 0.17, |t| {
+            let p = sweep_phase(t, f0, f0 * 0.55, 0.17);
+            let voix = p.sin() + 0.6 * (2.0 * p).sin() + 0.35 * (3.0 * p).sin();
+            let souffle = lp.run(n.next(), 2_400.0) * 0.5;
+            (voix * 0.6 + souffle) * env(t, 0.006, 0.05)
+        });
+    }
+    b.normalize(0.75);
+    b
+}
+
+/// Bêlement : « mêêê » nasillard, un peu tremblé.
+fn bleat() -> Buf {
+    let mut b = Buf::new(0.8);
+    let mut lp = LowPass::default();
+    let mut phase = 0.0;
+    b.add(0.0, 0.8, |t| {
+        let f = 330.0 - 40.0 * t + 14.0 * (TAU * 28.0 * t).sin();
+        phase += f / SR;
+        let dent = 2.0 * (phase % 1.0) - 1.0;
+        let forme = (t / 0.06).min(1.0) * ((0.8 - t) / 0.25).clamp(0.0, 1.0);
+        lp.run(dent, 1_300.0 + 500.0 * (TAU * 3.0 * t).sin()) * forme * (0.75 + 0.25 * (TAU * 28.0 * t).sin())
+    });
+    b.normalize(0.55);
+    b
+}
+
+/// Hurlement de loup : un long « ouuuh » qui monte puis retombe.
+fn howl() -> Buf {
+    let mut b = Buf::new(2.2);
+    let mut lp = LowPass::default();
+    let mut phase = 0.0;
+    b.add(0.0, 2.2, |t| {
+        let x = t / 2.2;
+        let hauteur = 300.0 + 280.0 * (x * 3.0).min(1.0) - 200.0 * ((x - 0.55) / 0.45).clamp(0.0, 1.0);
+        let f = hauteur + 9.0 * (TAU * 5.5 * t).sin() * (x * 4.0).min(1.0);
+        phase += f / SR;
+        let voix = (TAU * phase).sin() + 0.45 * (TAU * 2.0 * phase).sin() + 0.2 * (TAU * 3.0 * phase).sin();
+        let forme = (t / 0.25).min(1.0) * ((2.2 - t) / 0.7).clamp(0.0, 1.0);
+        lp.run(voix, 2_200.0) * forme
+    });
+    b.normalize(0.6);
+    b
+}
+
 fn main() -> std::io::Result<()> {
     // Racine du projet (par défaut : le dossier courant).
     let root = std::env::args().nth(1).unwrap_or_else(|| ".".into());
@@ -939,6 +993,9 @@ fn main() -> std::io::Result<()> {
         ("sfx/powerup", "Bonus ramassé : arpège montant", power_up()),
         ("sfx/shield", "Impact sur le bouclier", shield_hit()),
         ("sfx/chatter", "« Blabla » électronique d'un petit robot", chatter()),
+        ("sfx/bark", "Aboiement : deux « ouaf » secs", bark()),
+        ("sfx/bleat", "Bêlement d'un mouton", bleat()),
+        ("sfx/howl", "Hurlement de loup", howl()),
         ("music/parsecs", "Musique de traversée spatiale, mi mineur, 132 BPM", parsecs_music()),
         ("sfx/stamp", "Sceau de cire posé (« tchac »)", stamp()),
         ("sfx/quill", "Plume qui gratte le parchemin (deux traits)", quill()),

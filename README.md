@@ -31,9 +31,11 @@ games/eureka-2048/    2048 (univers Eurêka) : fusionner les puissances de 2
 games/concile/        Le Concile des Évêques (univers Eurêka) : un évêque par diocèse
 games/parsecs/        12 Parsecs (univers Nova) : la traversée d'une ceinture d'astéroïdes
 games/observatoire/   L'Observatoire (univers Eurêka) : soleils et lunes sur la carte du ciel
+games/berger/         Le Chien de berger : rassembler un troupeau dans l'enclos (boids, loups)
 games/modele/         le jeu modèle : point de départ de tout nouveau jeu
 crates/concile-core/  grilles, solveurs et générateur du Concile (sans Bevy)
 tools/concile-gen/    génère le Livre des Conciles (games/concile/puzzles.txt)
+crates/berger-core/   moutons (boids), loups, cartes et chien automatique du Chien de berger (sans Bevy)
 crates/observatoire-core/ règles, solveurs et générateur de L'Observatoire (sans Bevy)
 tools/observatoire-gen/   génère le Livre des Constellations (games/observatoire/grilles.txt)
 tools/logo-gen/       rend l'emblème du studio en PNG (assets/branding/)
@@ -222,6 +224,17 @@ cargo run -p observatoire
 - **Le Livre des Constellations** : 100 grilles (4 × 4, 6 × 6, 8 × 8), chacune à solution unique et trouvable par la logique seule. **Grille du jour** et série de jours réussis.
 - Mode Novice (erreurs signalées tout de suite) ou Normal ; **indice** expliqué en une phrase ; annuler, effacer, sablier et meilleur temps.
 - Cahier des charges : [docs/jeux/observatoire.md](docs/jeux/observatoire.md). Tests : `cargo test -p observatoire-core`. Captures : `OBSERVATOIRE_CAPTURE=captures cargo run -p observatoire`. Nouvelles grilles : `cargo run --release -p observatoire-gen`.
+
+### Le Chien de berger — Croâ & Cie
+
+```bash
+cargo run -p berger
+```
+
+- Vous êtes un chien de berger : rassemblez les moutons (des **boids** qui fuient le chien et restent groupés) et rentrez-les dans l'enclos, sur des prés avec arbres, rochers, mares et clôtures. Dès le niveau 5, des **loups** rôdent.
+- Commandes : flèches ou ZQSD pour courir, Maj pour sprinter, Espace ou B pour aboyer (affole les moutons, fait fuir les loups). Souris ou doigt : le chien va vers le pointeur.
+- 12 niveaux (étoiles : réussir, finir vite, ne perdre aucun mouton), **pré du jour** et **pré au hasard**.
+- Cahier des charges : [docs/jeux/chien-de-berger.md](docs/jeux/chien-de-berger.md). Tests : `cargo test -p berger-core`. Captures : `BERGER_CAPTURE=captures cargo run -p berger`.
 
 ## Bibliothèque commune (`assets/`)
 

@@ -34,6 +34,9 @@ Dans le code, utilisez les constantes de `game_common::sounds`.
 | `sfx/powerup.wav` | 0.50 s | Bonus ramassé : arpège montant |
 | `sfx/shield.wav` | 0.35 s | Impact sur le bouclier |
 | `sfx/chatter.wav` | 0.42 s | « Blabla » électronique d'un petit robot |
+| `sfx/bark.wav` | 0.50 s | Aboiement : deux « ouaf » secs |
+| `sfx/bleat.wav` | 0.80 s | Bêlement d'un mouton |
+| `sfx/howl.wav` | 2.20 s | Hurlement de loup |
 | `music/parsecs.wav` | 14.55 s | Musique de traversée spatiale, mi mineur, 132 BPM |
 | `sfx/stamp.wav` | 0.30 s | Sceau de cire posé (« tchac ») |
 | `sfx/quill.wav` | 0.32 s | Plume qui gratte le parchemin (deux traits) |

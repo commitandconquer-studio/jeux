@@ -36,6 +36,9 @@ pub const ROCK: &str = "sounds/sfx/rock.wav";
 pub const POWER_UP: &str = "sounds/sfx/powerup.wav";
 pub const SHIELD: &str = "sounds/sfx/shield.wav";
 pub const CHATTER: &str = "sounds/sfx/chatter.wav";
+pub const SHEEP_BLEAT: &str = "sounds/sfx/bleat.wav";
+pub const DOG_BARK: &str = "sounds/sfx/bark.wav";
+pub const WOLF_HOWL: &str = "sounds/sfx/howl.wav";
 
 // Musiques (en boucle)
 pub const MUSIC_CAMPAGNE: &str = "sounds/music/campagne.wav";
