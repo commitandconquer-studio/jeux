@@ -1,0 +1,9 @@
+[package]
+name = "passage-core"
+description = "Règles, solveurs et générateur de Passage à niveau (sans affichage)"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+authors.workspace = true
+
+[dependencies]
