@@ -77,19 +77,19 @@ pub enum Piece {
 impl Piece {
     /// Les pièces du paquet et leur nombre d'exemplaires (40 en tout).
     pub const DECK: [(Piece, usize); 16] = [
-        (Piece::RailDroit, 4),
+        (Piece::RailDroit, 6),
         (Piece::RailCourbe, 4),
         (Piece::RailT, 2),
         (Piece::RailCroix, 1),
-        (Piece::RouteDroite, 4),
+        (Piece::RouteDroite, 6),
         (Piece::RouteCourbe, 4),
         (Piece::RouteT, 2),
         (Piece::RouteCroix, 1),
-        (Piece::Croisement, 3),
+        (Piece::Croisement, 2),
         (Piece::Gare2Droite, 2),
-        (Piece::Gare2Courbe, 2),
-        (Piece::Gare3Rail, 2),
-        (Piece::Gare3Route, 2),
+        (Piece::Gare2Courbe, 1),
+        (Piece::Gare3Rail, 1),
+        (Piece::Gare3Route, 1),
         (Piece::Gare4, 1),
         (Piece::Impasse, 3),
         (Piece::RondPoint, 3),
@@ -187,6 +187,21 @@ pub fn neighbor(cell: usize, side: usize) -> Option<usize> {
     }
 }
 
+/// L'état d'un côté d'une carte posée.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum SideStatus {
+    /// Ce côté est fermé (rien n'en sort).
+    Closed,
+    /// Ouvert et raccordé à une carte voisine de la même voie.
+    Linked,
+    /// Ouvert vers une case vide ou le bord de la grille : une carte à venir
+    /// peut encore le raccorder (sinon il coûte un point).
+    Open,
+    /// Ouvert vers une carte qui ne l'accepte pas (côté fermé, ou autre
+    /// voie) : c'est un problème que rien ne pourra réparer.
+    Blocked,
+}
+
 /// Le détail du score d'une grille.
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
 pub struct Score {
@@ -206,6 +221,9 @@ pub struct Score {
     /// Côtés ouverts qui n'arrivent sur rien (case vide, bord, ou une
     /// carte qui ne s'y raccorde pas).
     pub open_ends: u32,
+    /// Parmi eux, ceux qui butent contre une carte qui ne les accepte pas
+    /// (côté fermé ou autre voie) : plus rien ne pourra les raccorder.
+    pub blocked: u32,
 }
 
 impl Score {
@@ -226,7 +244,7 @@ impl Score {
 
 /// Scores à atteindre pour une, deux et trois étoiles (à régler d'après le
 /// joueur glouton : voir le test d'équilibrage).
-pub const STARS: [i32; 3] = [25, 40, 55];
+pub const STARS: [i32; 3] = [20, 32, 45];
 
 /// La grille de jeu.
 #[derive(Clone, Debug, PartialEq, Eq)]
@@ -288,6 +306,19 @@ impl Board {
             .is_some_and(|other| other.sides(network) & (1 << ((side + 2) % 4)) != 0)
     }
 
+    /// L'état d'un côté d'une carte, pour une voie.
+    pub fn side_status(&self, cell: usize, side: usize, network: Network) -> SideStatus {
+        let Some(card) = self.cells[cell] else { return SideStatus::Closed };
+        if card.sides(network) & (1 << side) == 0 {
+            return SideStatus::Closed;
+        }
+        match neighbor(cell, side).and_then(|j| self.cells[j]) {
+            None => SideStatus::Open,
+            Some(other) if other.sides(network) & (1 << ((side + 2) % 4)) != 0 => SideStatus::Linked,
+            Some(_) => SideStatus::Blocked,
+        }
+    }
+
     /// Les cartes (côté voie) atteintes en suivant les raccords depuis `start`.
     /// Un nœud est une case et une voie ; avec `joined`, les gares routières
     /// relient leur rail à leur route.
@@ -322,10 +353,13 @@ impl Board {
                     if card.sides(network) & (1 << side) == 0 {
                         continue;
                     }
-                    if self.is_linked(cell, side, network) {
-                        link_sides += 1;
-                    } else {
-                        score.open_ends += 1;
+                    match self.side_status(cell, side, network) {
+                        SideStatus::Linked => link_sides += 1,
+                        SideStatus::Blocked => {
+                            score.open_ends += 1;
+                            score.blocked += 1;
+                        }
+                        _ => score.open_ends += 1,
                     }
                 }
             }
@@ -401,11 +435,18 @@ pub struct Game {
     pub board: Board,
     /// Cases où l'on a posé les cartes, dans l'ordre (pour annuler).
     pub history: Vec<usize>,
+    /// Le joueur a décidé de s'arrêter avant la fin du paquet.
+    pub ended: bool,
 }
 
 impl Game {
     pub fn new(number: u64) -> Game {
-        Game { number, deck: deck(number), board: Board::default(), history: Vec::new() }
+        Game { number, deck: deck(number), board: Board::default(), history: Vec::new(), ended: false }
+    }
+
+    /// Arrête la partie maintenant : « c'est bon, j'ai assez de cartes ».
+    pub fn finish(&mut self) {
+        self.ended = true;
     }
 
     /// Combien de cartes ont déjà été posées.
@@ -414,16 +455,22 @@ impl Game {
     }
 
     pub fn is_finished(&self) -> bool {
-        self.played() >= DECK_SIZE
+        self.ended || self.played() >= DECK_SIZE
     }
 
     /// La carte à poser maintenant.
     pub fn current(&self) -> Option<Piece> {
+        if self.ended {
+            return None;
+        }
         self.deck.get(self.played()).copied()
     }
 
     /// Les deux cartes suivantes (moins s'il n'en reste plus).
     pub fn upcoming(&self) -> &[Piece] {
+        if self.ended {
+            return &[];
+        }
         let from = (self.played() + 1).min(DECK_SIZE);
         &self.deck[from..(from + 2).min(DECK_SIZE)]
     }

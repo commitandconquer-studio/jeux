@@ -96,14 +96,18 @@ pub struct Partie {
     pub survol: Option<usize>,
     /// Ce que rapporterait la carte posée sur la case visée.
     pub gain: Option<i32>,
+    /// Côtés bloqués si on posait ici (pour avertir).
+    pub bloques: Option<u32>,
     /// Faux dès que quelque chose change : la table est redessinée.
     pub dessinee: bool,
     pub nouveau_record: bool,
+    /// Le joueur a demandé à terminer : une seconde demande confirme.
+    pub fin_demandee: bool,
 }
 
 impl Partie {
     pub fn nouvelle(numero: u64) -> Partie {
-        Partie { jeu: Game::new(numero), rot: 0, survol: None, gain: None, dessinee: false, nouveau_record: false }
+        Partie { jeu: Game::new(numero), rot: 0, survol: None, gain: None, bloques: None, dessinee: false, nouveau_record: false, fin_demandee: false }
     }
 
     pub fn carte(&self) -> Option<Card> {
@@ -122,11 +126,13 @@ impl Partie {
     }
 
     fn calculer_gain(&mut self) {
-        self.gain = self.survol.filter(|&i| self.jeu.board.cells[i].is_none()).and_then(|i| {
-            let avant = self.jeu.score().total();
+        let avant = self.jeu.score();
+        let essai = self.survol.filter(|&i| self.jeu.board.cells[i].is_none()).and_then(|i| {
             let mut essai = self.jeu.clone();
-            essai.play(i, self.rot).then(|| essai.score().total() - avant)
+            essai.play(i, self.rot).then(|| essai.score())
         });
+        self.gain = essai.map(|s| s.total() - avant.total());
+        self.bloques = essai.map(|s| s.blocked.saturating_sub(avant.blocked));
     }
 }
 
@@ -198,6 +204,7 @@ fn poser(
     let rot = partie.rot;
     if partie.jeu.play(i, rot) {
         partie.survol = Some(i);
+        partie.fin_demandee = false;
         partie.calculer_gain();
         partie.dessinee = false;
         evenements.write(JeuEvenement::Pose);
@@ -213,6 +220,7 @@ fn fin(mut partie: ResMut<Partie>, mut progres: ResMut<Progres>, mut evenements:
     partie.nouveau_record = progres.proposer(numero, total);
     partie.survol = None;
     partie.gain = None;
+    partie.bloques = None;
     partie.dessinee = false;
     evenements.write(JeuEvenement::Fin);
     next.set(GameState::Fini);
@@ -226,22 +234,30 @@ fn redessiner(mut commands: Commands, mut partie: ResMut<Partie>, look: Res<Look
     partie.dessinee = true;
     anciennes.iter().for_each(|e| commands.entity(e).despawn());
     let board = &partie.jeu.board;
+    // La carte à poser, en fantôme sur la case visée.
+    let fantome = partie.survol.filter(|&i| board.cells[i].is_none()).zip(partie.carte());
+    // La vue : la grille, avec le fantôme posé. Les côtés qui posent problème
+    // (même ceux des cartes voisines) sont marqués avant même de poser.
+    let mut vue = board.clone();
+    if let Some((i, card)) = fantome {
+        vue.place(i, card);
+    }
     for (i, card) in board.cells.iter().enumerate() {
         let Some(card) = *card else { continue };
         plateau::carte(&mut commands, &look, card, plateau::pos_case(i), 1.0, i / N + i % N, ());
+    }
+    if let Some((i, card)) = fantome {
+        plateau::carte(&mut commands, &look, card, plateau::pos_case(i) + Vec3::Y * 0.12, 1.0, i / N + i % N, ());
+        plateau::cadre(&mut commands, &look, plateau::pos_case(i) + Vec3::Y * 0.12);
+    }
+    for (i, card) in vue.cells.iter().enumerate() {
+        let Some(card) = *card else { continue };
         for net in Network::ALL {
             for side in 0..4 {
-                if card.sides(net) & (1 << side) != 0 && !board.is_linked(i, side, net) {
-                    plateau::bout_dans_le_vide(&mut commands, &look, i, side);
+                if card.sides(net) & (1 << side) != 0 {
+                    plateau::marque_cote(&mut commands, &look, i, side, vue.side_status(i, side, net));
                 }
             }
-        }
-    }
-    // La carte à poser, en fantôme sur la case visée.
-    if let (Some(i), Some(card)) = (partie.survol.filter(|&i| board.cells[i].is_none()), partie.carte()) {
-        if partie.jeu.current().is_some() {
-            plateau::carte(&mut commands, &look, card, plateau::pos_case(i) + Vec3::Y * 0.12, 1.0, i / N + i % N, ());
-            plateau::cadre(&mut commands, &look, plateau::pos_case(i) + Vec3::Y * 0.12);
         }
     }
     // La file : la carte à poser en grand, puis les deux suivantes.

@@ -30,9 +30,11 @@ les icônes, les pièces, les couleurs, le train et les règles de score sont
 - La **carte du dessus** est à poser tout de suite, où l'on veut, sur une
   case libre, et dans le sens qu'on veut (on la tourne). Les **deux
   suivantes** sont visibles, pour prévoir.
-- On ne peut ni la garder ni la jeter : **toutes les cartes doivent être
-  posées**. La partie s'arrête quand la 40e est posée (il reste donc 5
-  cases libres).
+- On ne peut ni la garder ni la jeter : la carte du dessus doit être
+  posée avant de voir la suivante. Mais **on peut s'arrêter quand on
+  veut** (« c'est bon, j'ai assez de cartes ») avec le bouton
+  **Terminer** (touche Entrée), qu'il faut presser deux fois pour
+  confirmer. Sinon la partie s'arrête quand la 40e carte est posée.
 - On ne peut pas déplacer ni reprendre une carte posée ; **annuler la
   dernière carte** est permis (c'est un jeu pour s'amuser, pas pour
   punir).
@@ -45,13 +47,13 @@ fermé. Deux côtés ouverts de la **même voie** qui se touchent sont
 
 | Pièce | Entrées | Voie | Par partie |
 |---|---|---|---|
-| Rail droit, rail en courbe | 2 | rail | 4 + 4 |
+| Rail droit, rail en courbe | 2 | rail | 6 + 4 |
 | **Rail en T**, **rail en croix** | 3, 4 | rail | 2 + 1 |
-| Route droite, route en courbe | 2 | route | 4 + 4 |
+| Route droite, route en courbe | 2 | route | 6 + 4 |
 | **Route en T**, **route en croix** | 3, 4 | route | 2 + 1 |
-| **Passage à niveau** | 4 | un rail et une route qui se croisent, **sans se raccorder** | 3 |
-| **Gare routière à 2 entrées** (un rail, une route : en face ou en coude) | 2 | rail **et** route raccordés | 2 + 2 |
-| **Gare routière à 3 entrées** (rail qui passe et route qui s'y raccorde, ou l'inverse) | 3 | rail **et** route raccordés | 2 + 2 |
+| **Passage à niveau** | 4 | un rail et une route qui se croisent, **sans se raccorder** | 2 |
+| **Gare routière à 2 entrées** (un rail, une route : en face ou en coude) | 2 | rail **et** route raccordés | 2 + 1 |
+| **Gare routière à 3 entrées** (rail qui passe et route qui s'y raccorde, ou l'inverse) | 3 | rail **et** route raccordés | 1 + 1 |
 | **Gare routière à 4 entrées** (rail et route qui se croisent **en se raccordant**) | 4 | rail **et** route raccordés | 1 |
 | **Impasse** (rail) et **rond-point** (route) : un **cul-de-sac** | 1 | rail ou route | 3 + 3 |
 
@@ -64,6 +66,21 @@ fermé. Deux côtés ouverts de la **même voie** qui se touchent sont
 - Les quatre pièces de départ sont des culs-de-sac particuliers : la
   **gare de départ** (une entrée de rail, un petit bâtiment) et le
   **parking de départ** (une entrée de route, un P sur fond bleu).
+
+### Les côtés qui posent problème
+
+Quand on vise une case, la carte s'affiche en fantôme **avec ses
+conséquences** : chaque côté ouvert qui n'est pas raccordé est marqué,
+sur la carte posée **et** sur ses voisines.
+
+- un **petit rond rouge** : le côté donne sur une case vide ou sur le bord
+  de la grille. Rien n'est perdu, une carte à venir peut encore le
+  raccorder (sinon il coûte un point) ;
+- une **grande croix rouge** : le côté bute contre une carte qui ne
+  l'accepte pas (un rail qui arrive sur une route, ou contre un côté
+  fermé). **Plus rien ne pourra le raccorder**, il coûtera un point
+  jusqu'à la fin. La barre du haut prévient aussi : « côté(s)
+  bloqué(s) ».
 
 ### Les départs
 

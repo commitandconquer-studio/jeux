@@ -21,7 +21,7 @@ const AIDE: Texte = tx!(
      • 6 points si les deux gares sont reliées, 6 si les deux parkings le sont, 6 si les quatre départs sont dans un même réseau.\n\
      • -1 point par chemin qui arrive dans le vide (rond rouge).\n\n\
      Clic : poser · clic droit, R, espace ou molette : tourner\n\
-     Retour arrière : annuler · Échap : menu\n\
+     Retour arrière : annuler · Entrée (deux fois) : terminer · Échap : menu\n\
      Au menu, tapez un numéro au clavier.",
     "Place every card to get the best score. Four start pieces are already on the grid: two stations (rail) and two car parks (road).\n\n\
      Each number always gives the same cards in the same order: pick a number and try to beat your best.\n\n\
@@ -32,7 +32,7 @@ const AIDE: Texte = tx!(
      • 6 points if the two stations are linked, 6 if the two car parks are, 6 if all four starts share one network.\n\
      • -1 point for each path that ends in nothing (red dot).\n\n\
      Click: place · right click, R, space or wheel: rotate\n\
-     Backspace: undo · Esc: menu\n\
+     Backspace: undo · Enter (twice): finish · Esc: menu\n\
      In the menu, type a number on the keyboard.",
     "Lege alle Karten, um die beste Punktzahl zu erreichen. Vier Startteile liegen schon auf dem Feld: zwei Bahnhöfe (Schiene) und zwei Parkplätze (Straße).\n\n\
      Jede Nummer ergibt immer dieselben Karten in derselben Reihenfolge: Wähle eine Nummer und versuche, deinen Rekord zu schlagen.\n\n\
@@ -43,7 +43,7 @@ const AIDE: Texte = tx!(
      • 6 Punkte, wenn die zwei Bahnhöfe verbunden sind, 6 für die zwei Parkplätze, 6 wenn alle vier Starts ein Netz bilden.\n\
      • -1 Punkt pro Weg, der im Leeren endet (roter Punkt).\n\n\
      Klick: legen · Rechtsklick, R, Leertaste oder Mausrad: drehen\n\
-     Rücktaste: rückgängig · Esc: Menü\n\
+     Rücktaste: rückgängig · Enter (zweimal): beenden · Esc: Menü\n\
      Im Menü kannst du eine Nummer tippen.",
     "Posa tutte le carte per fare il punteggio migliore. Quattro pezzi di partenza sono già sulla griglia: due stazioni (binario) e due parcheggi (strada).\n\n\
      Ogni numero dà sempre le stesse carte nello stesso ordine: scegli un numero e prova a battere il tuo record.\n\n\
@@ -54,7 +54,7 @@ const AIDE: Texte = tx!(
      • 6 punti se le due stazioni sono unite, 6 se lo sono i due parcheggi, 6 se le quattro partenze formano una sola rete.\n\
      • -1 punto per ogni percorso che finisce nel vuoto (pallino rosso).\n\n\
      Clic: posare · clic destro, R, spazio o rotella: ruotare\n\
-     Backspace: annulla · Esc: menu\n\
+     Backspace: annulla · Invio (due volte): termina · Esc: menu\n\
      Nel menu, digita un numero con la tastiera.",
     "Coloca todas las cartas para conseguir la mejor puntuación. Cuatro piezas de salida ya están en la cuadrícula: dos estaciones (vía) y dos aparcamientos (carretera).\n\n\
      Cada número da siempre las mismas cartas en el mismo orden: elige un número e intenta superar tu récord.\n\n\
@@ -65,7 +65,7 @@ const AIDE: Texte = tx!(
      • 6 puntos si las dos estaciones están unidas, 6 si lo están los dos aparcamientos, 6 si las cuatro salidas forman una sola red.\n\
      • -1 punto por cada camino que acaba en el vacío (punto rojo).\n\n\
      Clic: colocar · clic derecho, R, espacio o rueda: girar\n\
-     Retroceso: deshacer · Esc: menú\n\
+     Retroceso: deshacer · Intro (dos veces): terminar · Esc: menú\n\
      En el menú, escribe un número con el teclado.",
 );
 
@@ -91,6 +91,7 @@ pub enum Action {
     Rejouer,
     Tourner,
     Annuler,
+    Terminer,
     Menu,
 }
 
@@ -102,6 +103,9 @@ struct TexteRecord;
 
 #[derive(Component)]
 struct TexteInfo;
+
+#[derive(Component)]
+struct TexteTerminer;
 
 fn bouton(c: &mut Commands, parent: Entity, label: &str, action: Action) -> Entity {
     let (b, t) = spawn_button_sized(c, parent, label, 340.0, 40.0, 19.0);
@@ -174,14 +178,26 @@ fn spawn_barre(mut c: Commands) {
     for (label, action) in [
         (tx!("Tourner", "Rotate", "Drehen", "Ruota", "Girar"), Action::Tourner),
         (tx!("Annuler", "Undo", "Rückgängig", "Annulla", "Deshacer"), Action::Annuler),
+        (tx!("Terminer", "Finish", "Beenden", "Termina", "Terminar"), Action::Terminer),
         (tx!("Menu", "Menu", "Menü", "Menu", "Menú"), Action::Menu),
     ] {
-        let (b, _) = spawn_button_sized(&mut c, boutons, label.t(), 118.0, 42.0, 18.0);
+        let (b, t) = spawn_button_sized(&mut c, boutons, label.t(), 130.0, 42.0, 18.0);
         c.entity(b).insert(action);
+        if action == Action::Terminer {
+            c.entity(t).insert(TexteTerminer);
+        }
     }
 }
 
-fn maj_barre(partie: Res<Partie>, progres: Res<Progres>, mut info: Query<&mut Text, With<TexteInfo>>) {
+fn maj_barre(partie: Res<Partie>, progres: Res<Progres>, mut info: Query<&mut Text, (With<TexteInfo>, Without<TexteTerminer>)>, mut terminer: Query<&mut Text, (With<TexteTerminer>, Without<TexteInfo>)>) {
+    for mut t in &mut terminer {
+        t.0 = if partie.fin_demandee {
+            tx!("Confirmer ?", "Confirm?", "Sicher?", "Confermi?", "¿Seguro?").t()
+        } else {
+            tx!("Terminer", "Finish", "Beenden", "Termina", "Terminar").t()
+        }
+        .to_string();
+    }
     let s = partie.jeu.score();
     let numero = partie.jeu.number;
     for mut t in &mut info {
@@ -189,7 +205,12 @@ fn maj_barre(partie: Res<Partie>, progres: Res<Progres>, mut info: Query<&mut Te
             .avec(&[&numero, &(partie.jeu.played() + 1).min(CARTES), &CARTES]);
         let record = progres.record(numero).map(|r| format!("  ·  {}", tx!("Record : {}", "Best: {}", "Rekord: {}", "Record: {}", "Récord: {}").avec(&[&r]))).unwrap_or_default();
         let gain = partie.gain.map(|g| format!("  ·  {g:+}")).unwrap_or_default();
-        let ligne2 = format!("{}{}{}", tx!("Score : {}", "Score: {}", "Punkte: {}", "Punteggio: {}", "Puntos: {}").avec(&[&s.total()]), gain, record);
+        let bloques = partie
+            .bloques
+            .filter(|&b| b > 0)
+            .map(|b| format!("  ·  {}", tx!("{} côté(s) bloqué(s) !", "{} blocked side(s)!", "{} blockierte Seite(n)!", "{} lato/i bloccato/i!", "¡{} lado(s) bloqueado(s)!").avec(&[&b])))
+            .unwrap_or_default();
+        let ligne2 = format!("{}{}{}{}", tx!("Score : {}", "Score: {}", "Punkte: {}", "Punteggio: {}", "Puntos: {}").avec(&[&s.total()]), gain, bloques, record);
         let ligne3 = tx!(
             "Raccords {} · fer {} · route {} · passages {} · gares {} · départs {} · vides -{}",
             "Links {} · rail {} · road {} · crossings {} · stations {} · starts {} · open ends -{}",
@@ -208,6 +229,7 @@ fn spawn_fin(mut c: Commands, partie: Res<Partie>, progres: Res<Progres>) {
     spawn_text(&mut c, panel, tx!("Terminus !", "End of the line!", "Endstation!", "Capolinea!", "¡Fin de trayecto!").t(), 40.0);
     spawn_text(&mut c, panel, tx!("Numéro {}", "Number {}", "Nummer {}", "Numero {}", "Número {}").avec(&[&partie.jeu.number]), 22.0);
     spawn_text(&mut c, panel, tx!("Score : {}", "Score: {}", "Punkte: {}", "Punteggio: {}", "Puntos: {}").avec(&[&s.total()]), 32.0);
+    spawn_text(&mut c, panel, tx!("Cartes posées : {} sur {}", "Cards placed: {} of {}", "Gelegte Karten: {} von {}", "Carte posate: {} su {}", "Cartas colocadas: {} de {}").avec(&[&partie.jeu.played(), &CARTES]), 17.0);
     spawn_text(&mut c, panel, tx!("Étoiles : {} sur 3", "Stars: {} out of 3", "Sterne: {} von 3", "Stelle: {} su 3", "Estrellas: {} de 3").avec(&[&s.stars()]), 20.0);
     if partie.nouveau_record {
         spawn_text(&mut c, panel, tx!("Nouveau record !", "New best!", "Neuer Rekord!", "Nuovo record!", "¡Nuevo récord!").t(), 24.0);
@@ -262,7 +284,18 @@ fn agir(action: Action, c: &mut Commands, progres: &mut Progres, partie: &mut Pa
             partie.tourner();
             evenements.write(JeuEvenement::Tourne);
         }
-        Action::Annuler if state == GameState::Playing => partie.annuler(),
+        Action::Annuler if state == GameState::Playing => {
+            partie.annuler();
+            partie.fin_demandee = false;
+        }
+        Action::Terminer if state == GameState::Playing => {
+            // Une seconde demande confirme : on ne s'arrête pas par mégarde.
+            if partie.fin_demandee {
+                partie.jeu.finish();
+            } else {
+                partie.fin_demandee = true;
+            }
+        }
         Action::Menu => next.set(GameState::Menu),
         _ => {}
     }
@@ -325,6 +358,7 @@ fn clavier(
         GameState::Fini if keys.any_just_pressed([KeyCode::Enter, KeyCode::Space]) => Action::Rejouer,
         GameState::Fini if keys.just_pressed(KeyCode::Escape) => Action::Menu,
         GameState::Playing if keys.just_pressed(KeyCode::Escape) => Action::Menu,
+        GameState::Playing if keys.any_just_pressed([KeyCode::Enter, KeyCode::NumpadEnter]) => Action::Terminer,
         GameState::Playing if keys.just_pressed(KeyCode::Backspace) || (keys.just_pressed(KeyCode::KeyZ) && keys.any_pressed([KeyCode::ControlLeft, KeyCode::ControlRight, KeyCode::SuperLeft, KeyCode::SuperRight])) => Action::Annuler,
         _ => return,
     };

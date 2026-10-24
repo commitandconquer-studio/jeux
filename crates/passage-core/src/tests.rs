@@ -35,7 +35,7 @@ fn le_paquet_ne_change_jamais_d_une_version_a_l_autre() {
     assert_eq!(day_number(2026, 10, 24), 20261024);
 }
 
-const PAQUET_7_DEBUT: [usize; 12] = [12, 13, 11, 0, 0, 1, 14, 8, 12, 0, 9, 8];
+const PAQUET_7_DEBUT: [usize; 12] = [11, 13, 9, 0, 0, 1, 14, 6, 12, 0, 8, 5];
 
 #[test]
 fn deux_numeros_voisins_donnent_deux_paquets_differents() {
@@ -398,3 +398,54 @@ fn equilibrage() {
     );
 }
 
+
+#[test]
+fn un_cote_ouvert_vers_une_case_vide_est_ouvert_pas_bloque() {
+    let mut board = Board::empty();
+    board.place(at(3, 3), card(Piece::RailDroit, 0));
+    assert_eq!(board.side_status(at(3, 3), 0, Network::Rail), SideStatus::Open);
+    assert_eq!(board.side_status(at(3, 3), 1, Network::Rail), SideStatus::Closed);
+    let s = board.score();
+    assert_eq!((s.open_ends, s.blocked), (2, 0));
+    // Au bord de la grille aussi : ouvert, mais jamais « bloqué ».
+    board.place(at(0, 0), card(Piece::RailDroit, 0));
+    assert_eq!(board.side_status(at(0, 0), 0, Network::Rail), SideStatus::Open);
+}
+
+#[test]
+fn un_rail_qui_arrive_sur_une_route_est_bloque() {
+    let mut board = Board::empty();
+    board.place(at(3, 3), card(Piece::RailDroit, 0));
+    board.place(at(2, 3), card(Piece::RouteDroite, 0)); // une route au nord du rail
+    assert_eq!(board.side_status(at(3, 3), 0, Network::Rail), SideStatus::Blocked);
+    // Le côté sud de la route regarde le rail, mais la route n'a pas de rail : bloqué aussi.
+    assert_eq!(board.side_status(at(2, 3), 2, Network::Route), SideStatus::Blocked);
+    let s = board.score();
+    assert_eq!((s.blocked, s.open_ends), (2, 4));
+}
+
+#[test]
+fn un_cote_ouvert_contre_un_cote_ferme_est_bloque() {
+    let mut board = Board::empty();
+    board.place(at(3, 3), card(Piece::RailDroit, 0)); // nord-sud
+    board.place(at(3, 4), card(Piece::RailDroit, 0)); // à l'est : son côté ouest est fermé
+    // Le rail n'ouvre pas son côté est : rien n'arrive sur la carte voisine.
+    assert_eq!(board.side_status(at(3, 3), 1, Network::Rail), SideStatus::Closed);
+    // Mais un rail tourné vers elle serait bloqué.
+    board.place(at(5, 5), card(Piece::RailDroit, 1)); // est-ouest
+    board.place(at(5, 6), card(Piece::RailDroit, 0)); // nord-sud : son côté ouest est fermé
+    assert_eq!(board.side_status(at(5, 5), 1, Network::Rail), SideStatus::Blocked);
+}
+
+#[test]
+fn on_peut_arreter_la_partie_avant_la_fin_du_paquet() {
+    let mut game = Game::new(5);
+    game.play(libres()[0], 0);
+    assert!(!game.is_finished());
+    game.finish();
+    assert!(game.is_finished());
+    assert_eq!(game.played(), 1);
+    assert_eq!(game.current(), None);
+    assert!(game.upcoming().is_empty());
+    assert!(!game.play(libres()[1], 0), "partie terminée");
+}

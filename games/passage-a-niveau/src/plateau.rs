@@ -8,7 +8,7 @@ use std::f32::consts::FRAC_PI_2;
 use bevy::light::NotShadowCaster;
 use bevy::prelude::*;
 use game_common::{flat_material, palette};
-use passage_core::{Card, EAST, N, NORTH, Network, Piece, SOUTH, WEST};
+use passage_core::{Card, EAST, N, NORTH, Network, Piece, SOUTH, SideStatus, WEST};
 
 /// Hauteur du dessus des cases.
 pub const DESSUS: f32 = 0.08;
@@ -36,6 +36,7 @@ pub struct Look {
     pub vert: Handle<StandardMaterial>,
     pub bleu: Handle<StandardMaterial>,
     pub vide: Handle<StandardMaterial>,
+    pub bloque: Handle<StandardMaterial>,
 }
 
 impl FromWorld for Look {
@@ -64,6 +65,7 @@ impl FromWorld for Look {
             vert: uni(0x3F, 0xA3, 0x4D),
             bleu: uni(0x2F, 0x6F, 0xD6),
             vide: uni(0xE0, 0x4A, 0x3C),
+            bloque: uni(0xC4, 0x12, 0x12),
         }
     }
 }
@@ -313,15 +315,29 @@ pub fn cadre(c: &mut Commands, look: &Look, centre: Vec3) {
     }
 }
 
-/// Un petit rond rouge : un chemin qui arrive dans le vide.
-pub fn bout_dans_le_vide(c: &mut Commands, look: &Look, case: usize, side: usize) {
-    c.spawn((
-        Mesh3d(look.disque.clone()),
-        MeshMaterial3d(look.vide.clone()),
-        Transform::from_translation(pos_case(case) + bord(side, 0.07) + Vec3::Y * 0.1).with_scale(Vec3::new(0.15, 0.04, 0.15)),
-        NotShadowCaster,
-        Carte,
-    ));
+/// Marque un côté ouvert qui n'est pas raccordé : un petit rond rouge s'il
+/// donne sur du vide (une carte à venir peut encore le raccorder), une
+/// grande croix rouge s'il bute contre une carte qui ne l'accepte pas.
+pub fn marque_cote(c: &mut Commands, look: &Look, case: usize, side: usize, status: SideStatus) {
+    let centre = pos_case(case) + bord(side, 0.07) + Vec3::Y * 0.2;
+    match status {
+        SideStatus::Open => {
+            c.spawn((
+                Mesh3d(look.disque.clone()),
+                MeshMaterial3d(look.vide.clone()),
+                Transform::from_translation(centre).with_scale(Vec3::new(0.15, 0.04, 0.15)),
+                NotShadowCaster,
+                Carte,
+            ));
+        }
+        SideStatus::Blocked => {
+            let racine = c.spawn((Transform::from_translation(centre + bord(side, 0.0) * -0.0), Visibility::default(), Carte)).id();
+            for angle in [std::f32::consts::FRAC_PI_4, -std::f32::consts::FRAC_PI_4] {
+                pave(c, racine, look, &look.bloque, Vec3::ZERO, Vec3::new(0.34, 0.05, 0.08), angle);
+            }
+        }
+        SideStatus::Closed | SideStatus::Linked => {}
+    }
 }
 
 /// La prairie, la table de bois, les cases vides et le décor (une fois pour toutes).
