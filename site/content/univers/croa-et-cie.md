@@ -7,4 +7,4 @@ cle = "croa"
 bientot = false
 +++
 
-Des jeux simples à comprendre et amusants à maîtriser, pour les petits comme pour les grands. Le crapaud traverse les routes, range des caisses, et le serpent explore cinq paysages.
+Des jeux simples à comprendre et amusants à maîtriser, pour les petits comme pour les grands. Le crapaud traverse les routes, et le serpent explore cinq paysages.

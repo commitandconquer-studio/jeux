@@ -19,13 +19,11 @@ GAMES=(
   "snake|Snake|Le serpent classique en 3D low-poly, dans 5 univers"
   "traversee|Traversée|Aidez le crapaud à traverser routes, rivières et voies ferrées"
   "tour|Tour de blocs|Empilez les blocs le plus haut possible"
-  "pousse-caisses|Pousse-caisses|Le crapaud range les caisses sur les cibles, en 12 niveaux"
   "nova|NOVA — Le Dernier Rempart|Bâtissez le bouclier de Nova et abattez le croiseur de l'Hégémonie"
   "eureka-2048|2048 — Eurêka|Fusionnez les puissances de 2 jusqu'à 2048"
   "concile|Le Concile des Évêques|Un évêque par diocèse, par rangée et par colonne, et jamais de voisin"
   "parsecs|12 Parsecs|Traversez la ceinture d'astéroïdes et gagnez de nouveaux vaisseaux"
   "observatoire|L'Observatoire|Soleils et lunes sur la carte du ciel : un jeu de logique"
-  "ca-fuit|Ça fuit !|Raccordez des tuyaux de cuivre pour boucher la fuite de la pâture"
 )
 
 if [[ "${1:-}" == "--desinstaller" ]]; then

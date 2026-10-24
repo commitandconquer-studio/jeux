@@ -31,13 +31,11 @@ games/eureka-2048/    2048 (univers Eurêka) : fusionner les puissances de 2
 games/concile/        Le Concile des Évêques (univers Eurêka) : un évêque par diocèse
 games/parsecs/        12 Parsecs (univers Nova) : la traversée d'une ceinture d'astéroïdes
 games/observatoire/   L'Observatoire (univers Eurêka) : soleils et lunes sur la carte du ciel
-games/ca-fuit/        Ça fuit ! (univers Croâ & Cie) : des tuyaux de cuivre pour boucher la fuite
 games/modele/         le jeu modèle : point de départ de tout nouveau jeu
 crates/concile-core/  grilles, solveurs et générateur du Concile (sans Bevy)
 tools/concile-gen/    génère le Livre des Conciles (games/concile/puzzles.txt)
 crates/observatoire-core/ règles, solveurs et générateur de L'Observatoire (sans Bevy)
 tools/observatoire-gen/   génère le Livre des Constellations (games/observatoire/grilles.txt)
-crates/fuite-core/    règles de Ça fuit ! : cartes, grille, eau, paquet et score (sans Bevy)
 tools/logo-gen/       rend l'emblème du studio en PNG (assets/branding/)
 tools/sfx-gen/        fabrique les sons et musiques de la bibliothèque
 packaging/            icônes des jeux et charte du studio
@@ -225,19 +223,6 @@ cargo run -p observatoire
 - Mode Novice (erreurs signalées tout de suite) ou Normal ; **indice** expliqué en une phrase ; annuler, effacer, sablier et meilleur temps.
 - Cahier des charges : [docs/jeux/observatoire.md](docs/jeux/observatoire.md). Tests : `cargo test -p observatoire-core`. Captures : `OBSERVATOIRE_CAPTURE=captures cargo run -p observatoire`. Nouvelles grilles : `cargo run --release -p observatoire-gen`.
 
-### Ça fuit ! — Croâ & Cie
-
-```bash
-cargo run -p ca-fuit
-```
-
-- Une **fuite** au milieu de la pâture, ouverte sur six côtés. Raccordez des **tuyaux de cuivre**, des cartes de 2 × 1 tirées d'un paquet de 70 (les 34 formes possibles, des bouchons aux carrefours), jusqu'à ce que plus rien ne fuie.
-- L'eau **avance toute seule** dans ce qui est relié ; ce qui sort sur du vide déborde en flaque, sans défaite. Une carte se pose contre une ouverture d'eau, et chaque bord doit concorder avec ses voisines : ouverture contre ouverture, mur contre mur.
-- **Main de 3 cartes**, qui grandit quand rien n'est posable ; les prochains tuyaux du paquet sont visibles. Fin quand il n'y a plus rien à poser ni à piocher : moins de cartes, plus de points, et tout boucher vaut bien plus.
-- **Plein écran** : F11 ou le bouton du menu (mémorisé). **Carte graphique** : `CA_FUIT_GPU=nvidia cargo run -p ca-fuit` pour la carte dédiée (c'est le choix par défaut), `CA_FUIT_GPU=intel` pour la puce intégrée.
-- En 2D cartoon, direction artistique « La plomberie de poche » ([docs/jeux/da/ca-fuit/](docs/jeux/da/ca-fuit/)) : les tuyaux sont **dessinés par `tools/sprites-ca-fuit.py`** (cairo), le décor et le crapaud découpés dans les planches de référence → `assets/sprites/ca-fuit/`.
-- Cahier des charges : [docs/jeux/ca-fuit.md](docs/jeux/ca-fuit.md). Tests : `cargo test -p fuite-core`. Captures : `CA_FUIT_CAPTURE=captures cargo run -p ca-fuit`.
-
 ## Bibliothèque commune (`assets/`)
 
 Tous les jeux partagent le même dossier `assets/` : un son créé pour un jeu est utilisable par tous les autres.
@@ -248,7 +233,6 @@ assets/fonts/          polices : Noto Sans, Space Grotesk, Gelasio, Russo One (l
                        (SIL Open Font License 1.1, voir les fichiers OFL*.txt)
 assets/sounds/ui/      clic, départ, carillon, défaite
 assets/sounds/sfx/     saut, coassement, plouf, crash, klaxons, train, croque, tic…
-assets/sprites/        images 2D tirées des modèles 3D (Ça fuit !)
 assets/sounds/music/   campagne, prairie, désert, banquise, océan, volcan, zen, nova, orgue
 assets/sounds/CATALOGUE.md   liste de tous les sons avec durée et description
 ```

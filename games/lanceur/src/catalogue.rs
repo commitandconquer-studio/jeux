@@ -77,19 +77,6 @@ pub const JEUX: &[Jeu] = &[
         icone: icone!("snake"),
     },
     Jeu {
-        id: "ca-fuit",
-        nom: tx!("Ça fuit !", "It's Leaking!", "Es tropft!", "C'è una perdita!", "¡Hay una fuga!"),
-        description: tx!(
-            "Raccordez des tuyaux de zinc pour boucher la fuite de la pâture.",
-            "Connect zinc pipes to plug the leak in the pasture.",
-            "Verbinde Zinkrohre, um das Leck auf der Weide zu stopfen.",
-            "Collega tubi di zinco per tappare la perdita nel pascolo.",
-            "Conecta tuberías de zinc para tapar la fuga del prado.",
-        ),
-        univers: Universe::Croa,
-        icone: icone!("ca-fuit"),
-    },
-    Jeu {
         id: "nova",
         nom: tx!("NOVA — Le Dernier Rempart", "NOVA — The Last Bulwark", "NOVA — Das letzte Bollwerk", "NOVA — L'ultimo baluardo", "NOVA — El último bastión"),
         description: tx!(

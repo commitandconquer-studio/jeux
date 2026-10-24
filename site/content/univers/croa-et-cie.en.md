@@ -7,4 +7,4 @@ cle = "croa"
 bientot = false
 +++
 
-Games that are simple to pick up and fun to master, for young and old alike. The toad crosses roads and tidies crates, and the snake explores five landscapes.
+Games that are simple to pick up and fun to master, for young and old alike. The toad crosses roads, and the snake explores five landscapes.
