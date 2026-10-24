@@ -10,6 +10,7 @@ members = [
     "games/eureka-2048",
     "games/concile",
     "games/modele",
+    "games/passage-a-niveau",
     "games/observatoire",
     "games/parsecs",
     "games/lanceur",
