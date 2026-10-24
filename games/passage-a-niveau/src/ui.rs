@@ -12,47 +12,57 @@ use crate::jeu::{CARTES, JeuEvenement, NUMERO_MAX, Partie, Progres, commencer};
 
 /// Aide du jeu (bouton « Aide » du pied de menu).
 const AIDE: Texte = tx!(
-    "Posez toutes les cartes de rails et de routes pour faire le meilleur score.\n\n\
+    "Posez toutes les cartes pour faire le meilleur score. Quatre pièces de départ sont déjà sur la grille : deux gares (rail) et deux parkings (route).\n\n\
      Chaque numéro donne toujours les mêmes cartes, dans le même ordre : choisissez un numéro et essayez de battre votre record.\n\n\
+     Cartes : rails et routes (droits, en courbe, en T, en croix), passage à niveau (le rail et la route se croisent sans se raccorder), gare routière (rail et route raccordés), impasse et rond-point (cul-de-sac).\n\n\
      • 1 point par raccord entre deux cartes voisines de la même voie.\n\
-     • 1 point par carte de la plus longue voie ferrée et de la plus longue route.\n\
-     • 5 points par passage à niveau dont les quatre côtés sont raccordés.\n\
+     • 1 point par carte du plus grand groupe de rail et de route.\n\
+     • 5 points par passage à niveau, 4 par gare routière entièrement raccordés.\n\
+     • 6 points si les deux gares sont reliées, 6 si les deux parkings le sont, 6 si les quatre départs sont dans un même réseau.\n\
      • -1 point par chemin qui arrive dans le vide (rond rouge).\n\n\
      Clic : poser · clic droit, R, espace ou molette : tourner\n\
      Retour arrière : annuler · Échap : menu\n\
      Au menu, tapez un numéro au clavier.",
-    "Place every rail and road card to get the best score.\n\n\
+    "Place every card to get the best score. Four start pieces are already on the grid: two stations (rail) and two car parks (road).\n\n\
      Each number always gives the same cards in the same order: pick a number and try to beat your best.\n\n\
+     Cards: rails and roads (straight, curved, T, cross), level crossing (rail and road cross without connecting), road station (rail and road connected), dead end and roundabout (cul-de-sac).\n\n\
      • 1 point for each link between two neighbouring cards of the same kind.\n\
-     • 1 point per card of the longest railway and of the longest road.\n\
-     • 5 points for each level crossing connected on all four sides.\n\
+     • 1 point per card of the largest rail group and road group.\n\
+     • 5 points per level crossing and 4 per road station that are fully connected.\n\
+     • 6 points if the two stations are linked, 6 if the two car parks are, 6 if all four starts share one network.\n\
      • -1 point for each path that ends in nothing (red dot).\n\n\
      Click: place · right click, R, space or wheel: rotate\n\
      Backspace: undo · Esc: menu\n\
      In the menu, type a number on the keyboard.",
-    "Lege alle Schienen- und Straßenkarten und erreiche die beste Punktzahl.\n\n\
+    "Lege alle Karten, um die beste Punktzahl zu erreichen. Vier Startteile liegen schon auf dem Feld: zwei Bahnhöfe (Schiene) und zwei Parkplätze (Straße).\n\n\
      Jede Nummer ergibt immer dieselben Karten in derselben Reihenfolge: Wähle eine Nummer und versuche, deinen Rekord zu schlagen.\n\n\
+     Karten: Schienen und Straßen (gerade, Kurve, T, Kreuz), Bahnübergang (Schiene und Straße kreuzen sich ohne Anschluss), Umsteigebahnhof (Schiene und Straße verbunden), Sackgasse und Kreisverkehr.\n\n\
      • 1 Punkt pro Anschluss zwischen zwei benachbarten Karten derselben Art.\n\
-     • 1 Punkt pro Karte der längsten Bahnstrecke und der längsten Straße.\n\
-     • 5 Punkte pro Bahnübergang, der an allen vier Seiten angeschlossen ist.\n\
+     • 1 Punkt pro Karte der größten Schienen- und Straßengruppe.\n\
+     • 5 Punkte pro Bahnübergang, 4 pro Umsteigebahnhof, wenn ganz angeschlossen.\n\
+     • 6 Punkte, wenn die zwei Bahnhöfe verbunden sind, 6 für die zwei Parkplätze, 6 wenn alle vier Starts ein Netz bilden.\n\
      • -1 Punkt pro Weg, der im Leeren endet (roter Punkt).\n\n\
      Klick: legen · Rechtsklick, R, Leertaste oder Mausrad: drehen\n\
      Rücktaste: rückgängig · Esc: Menü\n\
      Im Menü kannst du eine Nummer tippen.",
-    "Posa tutte le carte di binari e strade per fare il punteggio migliore.\n\n\
+    "Posa tutte le carte per fare il punteggio migliore. Quattro pezzi di partenza sono già sulla griglia: due stazioni (binario) e due parcheggi (strada).\n\n\
      Ogni numero dà sempre le stesse carte nello stesso ordine: scegli un numero e prova a battere il tuo record.\n\n\
+     Carte: binari e strade (dritti, curve, a T, a croce), passaggio a livello (binario e strada si incrociano senza collegarsi), stazione stradale (binario e strada collegati), vicolo cieco e rotatoria.\n\n\
      • 1 punto per ogni collegamento tra due carte vicine dello stesso tipo.\n\
-     • 1 punto per carta della ferrovia più lunga e della strada più lunga.\n\
-     • 5 punti per ogni passaggio a livello collegato su tutti e quattro i lati.\n\
+     • 1 punto per carta del gruppo più grande di binario e di strada.\n\
+     • 5 punti per passaggio a livello e 4 per stazione stradale completamente collegati.\n\
+     • 6 punti se le due stazioni sono unite, 6 se lo sono i due parcheggi, 6 se le quattro partenze formano una sola rete.\n\
      • -1 punto per ogni percorso che finisce nel vuoto (pallino rosso).\n\n\
      Clic: posare · clic destro, R, spazio o rotella: ruotare\n\
      Backspace: annulla · Esc: menu\n\
      Nel menu, digita un numero con la tastiera.",
-    "Coloca todas las cartas de vías y carreteras para conseguir la mejor puntuación.\n\n\
+    "Coloca todas las cartas para conseguir la mejor puntuación. Cuatro piezas de salida ya están en la cuadrícula: dos estaciones (vía) y dos aparcamientos (carretera).\n\n\
      Cada número da siempre las mismas cartas en el mismo orden: elige un número e intenta superar tu récord.\n\n\
+     Cartas: vías y carreteras (rectas, curvas, en T, en cruz), paso a nivel (vía y carretera se cruzan sin unirse), estación vial (vía y carretera unidas), callejón sin salida y rotonda.\n\n\
      • 1 punto por cada unión entre dos cartas vecinas del mismo tipo.\n\
-     • 1 punto por carta de la vía férrea más larga y de la carretera más larga.\n\
-     • 5 puntos por cada paso a nivel conectado por sus cuatro lados.\n\
+     • 1 punto por carta del grupo más grande de vía y de carretera.\n\
+     • 5 puntos por paso a nivel y 4 por estación vial totalmente conectados.\n\
+     • 6 puntos si las dos estaciones están unidas, 6 si lo están los dos aparcamientos, 6 si las cuatro salidas forman una sola red.\n\
      • -1 punto por cada camino que acaba en el vacío (punto rojo).\n\n\
      Clic: colocar · clic derecho, R, espacio o rueda: girar\n\
      Retroceso: deshacer · Esc: menú\n\
@@ -181,13 +191,13 @@ fn maj_barre(partie: Res<Partie>, progres: Res<Progres>, mut info: Query<&mut Te
         let gain = partie.gain.map(|g| format!("  ·  {g:+}")).unwrap_or_default();
         let ligne2 = format!("{}{}{}", tx!("Score : {}", "Score: {}", "Punkte: {}", "Punteggio: {}", "Puntos: {}").avec(&[&s.total()]), gain, record);
         let ligne3 = tx!(
-            "Raccords {} · voie ferrée {} · route {} · passages {} · vides -{}",
-            "Links {} · railway {} · road {} · crossings {} · open ends -{}",
-            "Anschlüsse {} · Bahn {} · Straße {} · Übergänge {} · offen -{}",
-            "Collegamenti {} · ferrovia {} · strada {} · passaggi {} · vuoti -{}",
-            "Uniones {} · vía {} · carretera {} · pasos {} · vacíos -{}"
+            "Raccords {} · fer {} · route {} · passages {} · gares {} · départs {} · vides -{}",
+            "Links {} · rail {} · road {} · crossings {} · stations {} · starts {} · open ends -{}",
+            "Anschlüsse {} · Bahn {} · Straße {} · Übergänge {} · Bahnhöfe {} · Starts {} · offen -{}",
+            "Collegamenti {} · ferro {} · strada {} · passaggi {} · stazioni {} · partenze {} · vuoti -{}",
+            "Uniones {} · vía {} · carretera {} · pasos {} · estaciones {} · salidas {} · vacíos -{}"
         )
-        .avec(&[&s.links, &s.longest_rail, &s.longest_route, &s.crossings, &s.open_ends]);
+        .avec(&[&s.links, &s.longest_rail, &s.longest_route, &s.crossings, &s.stations, &s.starts, &s.open_ends]);
         t.0 = format!("{ligne1}\n{ligne2}\n{ligne3}");
     }
 }
@@ -208,13 +218,13 @@ fn spawn_fin(mut c: Commands, partie: Res<Partie>, progres: Res<Progres>) {
         &mut c,
         panel,
         tx!(
-            "Raccords {} · voie ferrée {} · route {} · passages à niveau {} · bouts dans le vide -{}",
-            "Links {} · railway {} · road {} · level crossings {} · open ends -{}",
-            "Anschlüsse {} · Bahn {} · Straße {} · Bahnübergänge {} · offene Enden -{}",
-            "Collegamenti {} · ferrovia {} · strada {} · passaggi a livello {} · estremità vuote -{}",
-            "Uniones {} · vía {} · carretera {} · pasos a nivel {} · extremos vacíos -{}"
+            "Raccords {} · voie ferrée {} · route {} · passages à niveau {} · gares routières {} · liaisons de départ {} · bouts dans le vide -{}",
+            "Links {} · railway {} · road {} · level crossings {} · road stations {} · start links {} · open ends -{}",
+            "Anschlüsse {} · Bahn {} · Straße {} · Bahnübergänge {} · Umsteigebahnhöfe {} · Startverbindungen {} · offene Enden -{}",
+            "Collegamenti {} · ferrovia {} · strada {} · passaggi a livello {} · stazioni stradali {} · collegamenti di partenza {} · estremità vuote -{}",
+            "Uniones {} · vía {} · carretera {} · pasos a nivel {} · estaciones viales {} · enlaces de salida {} · extremos vacíos -{}"
         )
-        .avec(&[&s.links, &s.longest_rail, &s.longest_route, &s.crossings, &s.open_ends]),
+        .avec(&[&s.links, &s.longest_rail, &s.longest_route, &s.crossings, &s.stations, &s.starts, &s.open_ends]),
         15.0,
     );
     spawn_gap(&mut c, panel, 4.0);

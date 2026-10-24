@@ -55,7 +55,9 @@ fn capturer(
     while partie.jeu.played() < voulues {
         let k = partie.jeu.played();
         let rot = (k % 4) as u8;
-        if !partie.jeu.play((k * 11) % (N * N), rot) {
+        // La première case libre en sautant de 11 en 11 (les départs sont déjà pris).
+        let Some(cell) = (0..N * N).map(|j| (k * 11 + j) % (N * N)).find(|&i| partie.jeu.board.cells[i].is_none()) else { break };
+        if !partie.jeu.play(cell, rot) {
             break;
         }
         partie.dessinee = false;

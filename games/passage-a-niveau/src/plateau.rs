@@ -8,7 +8,7 @@ use std::f32::consts::FRAC_PI_2;
 use bevy::light::NotShadowCaster;
 use bevy::prelude::*;
 use game_common::{flat_material, palette};
-use passage_core::{Card, N, Piece};
+use passage_core::{Card, EAST, N, NORTH, Network, Piece, SOUTH, WEST};
 
 /// Hauteur du dessus des cases.
 pub const DESSUS: f32 = 0.08;
@@ -32,6 +32,9 @@ pub struct Look {
     pub rouge: Handle<StandardMaterial>,
     pub blanc: Handle<StandardMaterial>,
     pub cadre: Handle<StandardMaterial>,
+    pub mur: Handle<StandardMaterial>,
+    pub vert: Handle<StandardMaterial>,
+    pub bleu: Handle<StandardMaterial>,
     pub vide: Handle<StandardMaterial>,
 }
 
@@ -57,6 +60,9 @@ impl FromWorld for Look {
             rouge: uni(0xD8, 0x3A, 0x2E),
             blanc: uni(0xF8, 0xF4, 0xEC),
             cadre: uni(0xFF, 0xC8, 0x2E),
+            mur: uni(0xF1, 0xE6, 0xC8),
+            vert: uni(0x3F, 0xA3, 0x4D),
+            bleu: uni(0x2F, 0x6F, 0xD6),
             vide: uni(0xE0, 0x4A, 0x3C),
         }
     }
@@ -186,6 +192,76 @@ fn route_courbe(c: &mut Commands, parent: Entity, look: &Look) {
     }
 }
 
+fn dir(side: usize) -> Vec2 {
+    match side {
+        0 => Vec2::new(0.0, -1.0),
+        1 => Vec2::new(1.0, 0.0),
+        2 => Vec2::new(0.0, 1.0),
+        _ => Vec2::new(-1.0, 0.0),
+    }
+}
+
+fn cotes(masque: u8) -> impl Iterator<Item = usize> {
+    (0..4).filter(move |s| masque & (1 << s) != 0)
+}
+
+/// Un bras de rail : du bord de la case jusqu'au centre.
+fn rail_bras(c: &mut Commands, parent: Entity, look: &Look, side: usize, y: f32) {
+    let d = dir(side);
+    let perp = Vec2::new(-d.y, d.x);
+    for t in [0.42, 0.27, 0.12] {
+        let centre = d * t;
+        segment(c, parent, look, &look.traverse, centre - perp * 0.26, centre + perp * 0.26, 0.07, 0.025, y);
+    }
+    for s in [-0.15, 0.15] {
+        segment(c, parent, look, &look.rail, d * 0.5 + perp * s, d * 0.0 + perp * s, 0.06, 0.04, y + 0.02);
+    }
+}
+
+/// Un bras de route : du bord de la case jusqu'au centre.
+fn route_bras(c: &mut Commands, parent: Entity, look: &Look, side: usize) {
+    let d = dir(side);
+    segment(c, parent, look, &look.route, d * 0.5, d * 0.0, 0.56, 0.02, 0.0);
+    segment(c, parent, look, &look.ligne, d * 0.34, d * 0.2, 0.05, 0.01, 0.02);
+}
+
+fn dessiner_rail(c: &mut Commands, parent: Entity, look: &Look, masque: u8, y: f32) {
+    match masque {
+        0 => {}
+        m if m == NORTH | EAST => rail_courbe(c, parent, look, y),
+        m if m == NORTH | SOUTH => rail_droit(c, parent, look, false, y),
+        m if m == EAST | WEST => rail_droit(c, parent, look, true, y),
+        m => cotes(m).for_each(|s| rail_bras(c, parent, look, s, y)),
+    }
+}
+
+fn dessiner_route(c: &mut Commands, parent: Entity, look: &Look, masque: u8) {
+    match masque {
+        0 => {}
+        m if m == NORTH | EAST => route_courbe(c, parent, look),
+        m if m == NORTH | SOUTH => route_droite(c, parent, look, false),
+        m if m == EAST | WEST => route_droite(c, parent, look, true),
+        m => {
+            cotes(m).for_each(|s| route_bras(c, parent, look, s));
+            pave(c, parent, look, &look.route, Vec3::new(0.0, 0.01, 0.0), Vec3::new(0.56, 0.02, 0.56), 0.0);
+        }
+    }
+}
+
+/// Le bâtiment d'une gare, au centre de la case : des murs crème et un toit de couleur.
+fn batiment(c: &mut Commands, parent: Entity, look: &Look, toit: &Handle<StandardMaterial>) {
+    pave(c, parent, look, &look.mur, Vec3::new(0.0, 0.1, 0.0), Vec3::new(0.34, 0.2, 0.34), 0.0);
+    pave(c, parent, look, toit, Vec3::new(0.0, 0.23, 0.0), Vec3::new(0.44, 0.07, 0.44), 0.0);
+}
+
+/// Le parking de départ : un carré bleu marqué d'un P blanc (toujours à l'endroit).
+fn parking(c: &mut Commands, parent: Entity, look: &Look) {
+    pave(c, parent, look, &look.bleu, Vec3::new(0.0, 0.02, 0.0), Vec3::new(0.5, 0.04, 0.5), 0.0);
+    for (x, z, w, d) in [(-0.07, 0.0, 0.07, 0.3), (0.0, -0.11, 0.2, 0.07), (0.0, 0.0, 0.2, 0.07), (0.1, -0.055, 0.07, 0.18)] {
+        pave(c, parent, look, &look.blanc, Vec3::new(x, 0.045, z), Vec3::new(w, 0.02, d), 0.0);
+    }
+}
+
 /// Dessine une carte : la tuile, la pièce, tournée comme la carte. `echelle`
 /// la grossit (la file des cartes à venir).
 pub fn carte(c: &mut Commands, look: &Look, card: Card, centre: Vec3, echelle: f32, parite: usize, extra: impl Bundle) -> Entity {
@@ -193,14 +269,12 @@ pub fn carte(c: &mut Commands, look: &Look, card: Card, centre: Vec3, echelle: f
     let tuile = if parite.is_multiple_of(2) { &look.tuile_a } else { &look.tuile_b };
     pave(c, racine, look, tuile, Vec3::new(0.0, -0.05, 0.0), Vec3::new(0.94, 0.1, 0.94), 0.0);
     let pose = c.spawn((Transform::from_rotation(Quat::from_rotation_y(-(card.rot as f32) * FRAC_PI_2)), Visibility::default(), ChildOf(racine))).id();
+    let masque = |net: Network| Card::new(card.piece).sides(net);
+    let (rail, route) = (masque(Network::Rail), masque(Network::Route));
+    dessiner_route(c, pose, look, route);
+    dessiner_rail(c, pose, look, rail, if route != 0 { 0.02 } else { 0.0 });
     match card.piece {
-        Piece::RailDroit => rail_droit(c, pose, look, false, 0.0),
-        Piece::RailCourbe => rail_courbe(c, pose, look, 0.0),
-        Piece::RouteDroite => route_droite(c, pose, look, false),
-        Piece::RouteCourbe => route_courbe(c, pose, look),
         Piece::Croisement => {
-            route_droite(c, pose, look, true);
-            rail_droit(c, pose, look, false, 0.02);
             // Les quatre barrières du passage à niveau, aux coins.
             for (sx, sz) in [(-1.0, -1.0), (1.0, -1.0), (-1.0, 1.0), (1.0, 1.0)] {
                 let (x, z) = (sx * 0.4, sz * 0.4);
@@ -208,6 +282,20 @@ pub fn carte(c: &mut Commands, look: &Look, card: Card, centre: Vec3, echelle: f
                 pave(c, pose, look, &look.blanc, Vec3::new(x, 0.17, z), Vec3::new(0.075, 0.05, 0.075), 0.0);
             }
         }
+        Piece::Gare2Droite | Piece::Gare2Courbe | Piece::Gare3Rail | Piece::Gare3Route | Piece::Gare4 => batiment(c, racine, look, &look.rouge),
+        Piece::GareDepart => batiment(c, racine, look, &look.vert),
+        Piece::Parking => parking(c, racine, look),
+        Piece::Impasse => {
+            // Le heurtoir : une barre rouge en travers de la voie, à son extrémité.
+            pave(c, pose, look, &look.rouge, Vec3::new(0.0, 0.07, 0.04), Vec3::new(0.36, 0.1, 0.08), 0.0);
+            pave(c, pose, look, &look.blanc, Vec3::new(0.0, 0.13, 0.04), Vec3::new(0.3, 0.03, 0.04), 0.0);
+        }
+        Piece::RondPoint => {
+            // L'anneau du rond-point, avec son îlot vert.
+            c.spawn((Mesh3d(look.disque.clone()), MeshMaterial3d(look.route.clone()), Transform::from_xyz(0.0, 0.01, 0.0).with_scale(Vec3::new(0.66, 0.03, 0.66)), NotShadowCaster, ChildOf(pose)));
+            c.spawn((Mesh3d(look.disque.clone()), MeshMaterial3d(look.vert.clone()), Transform::from_xyz(0.0, 0.03, 0.0).with_scale(Vec3::new(0.28, 0.03, 0.28)), NotShadowCaster, ChildOf(pose)));
+        }
+        _ => {}
     }
     racine
 }

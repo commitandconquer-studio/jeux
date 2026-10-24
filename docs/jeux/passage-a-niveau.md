@@ -21,41 +21,75 @@ les icônes, les pièces, les couleurs, le train et les règles de score sont
 
 ## La règle
 
-- Une grille de **7 × 7** cases, vide au départ.
+- Une grille de **7 × 7** cases. **Quatre pièces sont déjà posées**, sur
+  les bords, et imposées : **deux gares de départ** (voie ferrée) et **deux
+  parkings de départ** (route). Il reste 45 cases libres.
 - Un **paquet de 40 cartes**, déterminé par le **numéro de la partie**.
-  Chaque carte montre une pièce de voie qui tient dans une case :
-  **rail droit**, **rail en courbe**, **route droite**, **route en
-  courbe**, ou **passage à niveau** (un rail et une route qui se
-  croisent à angle droit).
+  Chaque carte montre une pièce qui tient dans une case (voir « Les
+  cartes »).
 - La **carte du dessus** est à poser tout de suite, où l'on veut, sur une
   case libre, et dans le sens qu'on veut (on la tourne). Les **deux
   suivantes** sont visibles, pour prévoir.
 - On ne peut ni la garder ni la jeter : **toutes les cartes doivent être
-  posées**. La partie s'arrête quand la 40e est posée (la grille a 49
-  cases, il en reste donc au moins 9 de libres).
+  posées**. La partie s'arrête quand la 40e est posée (il reste donc 5
+  cases libres).
 - On ne peut pas déplacer ni reprendre une carte posée ; **annuler la
   dernière carte** est permis (c'est un jeu pour s'amuser, pas pour
   punir).
 
+### Les cartes (40 par partie)
+
+Chaque côté d'une carte est **ouvert** (rail ou route qui sort) ou
+fermé. Deux côtés ouverts de la **même voie** qui se touchent sont
+**raccordés**.
+
+| Pièce | Entrées | Voie | Par partie |
+|---|---|---|---|
+| Rail droit, rail en courbe | 2 | rail | 4 + 4 |
+| **Rail en T**, **rail en croix** | 3, 4 | rail | 2 + 1 |
+| Route droite, route en courbe | 2 | route | 4 + 4 |
+| **Route en T**, **route en croix** | 3, 4 | route | 2 + 1 |
+| **Passage à niveau** | 4 | un rail et une route qui se croisent, **sans se raccorder** | 3 |
+| **Gare routière à 2 entrées** (un rail, une route : en face ou en coude) | 2 | rail **et** route raccordés | 2 + 2 |
+| **Gare routière à 3 entrées** (rail qui passe et route qui s'y raccorde, ou l'inverse) | 3 | rail **et** route raccordés | 2 + 2 |
+| **Gare routière à 4 entrées** (rail et route qui se croisent **en se raccordant**) | 4 | rail **et** route raccordés | 1 |
+| **Impasse** (rail) et **rond-point** (route) : un **cul-de-sac** | 1 | rail ou route | 3 + 3 |
+
+- Une **gare routière** est le seul endroit où l'on **passe d'une route
+  à une voie ferrée** : ses entrées de rail se raccordent aux rails
+  voisins, ses entrées de route aux routes voisines, et les deux
+  réseaux ne forment plus qu'un.
+- Un **cul-de-sac** (impasse ou rond-point) n'a **qu'une entrée** : il
+  **termine** proprement une voie, sans bout dans le vide au-delà.
+- Les quatre pièces de départ sont des culs-de-sac particuliers : la
+  **gare de départ** (une entrée de rail, un petit bâtiment) et le
+  **parking de départ** (une entrée de route, un P sur fond bleu).
+
+### Les départs
+
+Les quatre pièces de départ sont toujours **aux mêmes places**, quel que
+soit le numéro : une gare sur le bord ouest (rangée 2) et une au
+bord est (rangée 6), un parking au bord nord (colonne 6) et un au bord sud
+(colonne 2). Leur seule entrée regarde vers l'intérieur de la grille.
+
 ### Le score (à équilibrer à l'essai)
 
-Deux cartes **voisines** sont **raccordées** quand leurs deux côtés qui se
-touchent sont ouverts et de la même voie (rail avec rail, route avec
-route).
-
-- **1 point par raccord.**
-- **1 point par carte** de la plus longue **voie ferrée** d'un seul
-  tenant, et **1 point par carte** de la plus longue **route** d'un seul
-  tenant. Un passage à niveau compte dans les deux.
-- **5 points par passage à niveau** dont les **quatre côtés** sont
-  raccordés (le rail le traverse et la route aussi).
+- **1 point par raccord** (rail avec rail, route avec route).
+- **1 point par carte** du plus grand **groupe de voie ferrée** relié, et
+  **1 point par carte** du plus grand **groupe de route** relié. Les
+  passages à niveau et les gares routières comptent dans les deux.
+- **5 points par passage à niveau** dont les quatre côtés sont raccordés.
+- **4 points par gare routière** dont **toutes les entrées** sont
+  raccordées.
+- **6 points** si les **deux gares de départ** sont reliées entre elles
+  par la voie ferrée ; **6 points** si les **deux parkings de départ**
+  sont reliés par la route ; **6 points** si **les quatre départs** font
+  partie d'un même réseau (en passant par des gares routières).
 - **−1 point par chemin qui arrive dans le vide** : chaque **côté ouvert**
-  d'une carte qui ne tombe pas sur un côté ouvert de la même voie (il
-  donne sur une case vide, sur le bord de la grille, sur un côté fermé ou
-  sur l'autre voie) coûte un point. Un passage à niveau a quatre côtés
-  ouverts, donc il peut en coûter jusqu'à quatre. Les deux bouts d'une
-  voie coûtent donc déjà deux points : il faut les rapprocher, les
-  refermer l'un sur l'autre, ou les ramener contre une autre voie.
+  d'une carte qui ne tombe pas sur un côté ouvert de la même voie (case
+  vide, bord de la grille, côté fermé, ou l'autre voie) coûte un point.
+  Les bouts de voie coûtent donc : il faut les **raccorder**, les
+  **refermer par un cul-de-sac**, ou les ramener contre une autre voie.
 
 Le total donne une **note** de une à trois étoiles ; un second repère
 compte pour la fierté : le **meilleur score** de ce numéro.
@@ -70,9 +104,8 @@ compte pour la fierté : le **meilleur score** de ce numéro.
 - Le jeu retient le **meilleur score de chaque numéro** déjà joué, dans la
   sauvegarde, et le montre quand on le choisit. On peut ainsi se mesurer à
   soi-même, ou comparer son score avec quelqu'un qui joue le même numéro.
-- Le paquet contient toujours **les mêmes quantités de pièces** (par
-  exemple 8 de chaque sorte) : seul **l'ordre** change d'un numéro à
-  l'autre.
+- Le paquet contient toujours **les mêmes quantités de pièces** (le
+  tableau ci-dessus) : seul **l'ordre** change d'un numéro à l'autre.
 
 ## Le décor : la gare du crapaud
 
@@ -145,14 +178,14 @@ games/passage-a-niveau/ le jeu : plateau 2D, interface, séquence 3D
 
 ## Questions pour Olivier
 
-1. **La taille de la grille et du paquet.** 7 × 7 et 40 cartes : d'accord ?
-   (49 cases pour 40 cartes laisse peu de place libre, ce qui rend les
-   choix serrés.)
-2. **Les quantités.** 8 cartes de chaque sorte (5 sortes) : d'accord ?
-3. **Le barème** est un point de départ, à ajuster à l'essai. Pour les
-   bouts dans le vide, un côté ouvert contre l'**autre** voie ou contre un
-   côté fermé compte-t-il aussi −1 (ce que j'ai écrit), ou seulement ceux
-   qui donnent sur une case vide ou sur le bord ?
-4. **Le puzzle à déduire.** On le laisse tomber ? Le noyau de règles déjà
-   écrit pour lui (`crates/passage-core`, 12 tests) sera alors remplacé par
-   celui de ce jeu.
+1. **Les places des départs.** Gares en (rangée 2, bord ouest) et
+   (rangée 6, bord est), parkings en (colonne 6, bord nord) et
+   (colonne 2, bord sud), toujours les mêmes : d'accord ? (Ou veux-tu
+   qu'elles changent avec le numéro ?)
+2. **La taille.** 7 × 7 donne 45 cases libres pour 40 cartes, donc 5 cases
+   vides à la fin. Trop serré ? Un 8 × 8 laisserait plus de choix.
+3. **Les quantités** de chaque pièce sont des premières propositions.
+4. **Le barème** est un point de départ, à ajuster à l'essai. Un côté
+   ouvert contre l'**autre** voie ou contre un côté fermé compte-t-il aussi
+   −1 (ce que j'ai écrit) ?
+5. **Les vies.** Pas de défaite : on garde le choix calme ?
