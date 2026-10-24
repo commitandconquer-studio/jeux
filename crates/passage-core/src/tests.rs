@@ -449,3 +449,54 @@ fn on_peut_arreter_la_partie_avant_la_fin_du_paquet() {
     assert!(game.upcoming().is_empty());
     assert!(!game.play(libres()[1], 0), "partie terminée");
 }
+
+#[test]
+fn la_plus_longue_voie_suit_une_ligne_droite() {
+    let mut board = Board::empty();
+    for r in 1..=4 {
+        board.place(at(r, 3), card(Piece::RailDroit, 0));
+    }
+    let chemin = board.longest_path(Network::Rail);
+    assert_eq!(chemin.len(), 4);
+    assert!(chemin == [at(1, 3), at(2, 3), at(3, 3), at(4, 3)] || chemin == [at(4, 3), at(3, 3), at(2, 3), at(1, 3)]);
+    assert!(board.longest_path(Network::Route).is_empty());
+}
+
+#[test]
+fn dans_un_t_la_plus_longue_voie_prend_les_deux_plus_longues_branches() {
+    let mut board = Board::empty();
+    // Un T au centre (nord, est, ouest) ; au nord 1 carte, à l'est 1, à l'ouest 3.
+    board.place(at(3, 3), Card::new(Piece::RailT));
+    board.place(at(2, 3), card(Piece::RailDroit, 0));
+    board.place(at(3, 4), card(Piece::RailDroit, 1));
+    for c in 0..3 {
+        board.place(at(3, c), card(Piece::RailDroit, 1));
+    }
+    let chemin = board.longest_path(Network::Rail);
+    // Ouest (3) + T + une branche : 3 + 1 + 1 = 5.
+    assert_eq!(chemin.len(), 5);
+    assert!(chemin.contains(&at(3, 3)));
+}
+
+#[test]
+fn la_plus_longue_voie_d_une_boucle_fait_le_tour() {
+    let mut board = Board::empty();
+    board.place(at(0, 0), card(Piece::RailCourbe, 1));
+    board.place(at(0, 1), card(Piece::RailCourbe, 2));
+    board.place(at(1, 1), card(Piece::RailCourbe, 3));
+    board.place(at(1, 0), card(Piece::RailCourbe, 0));
+    assert_eq!(board.longest_path(Network::Rail).len(), 4);
+}
+
+#[test]
+fn le_convoi_ne_traverse_pas_un_passage_a_niveau_d_une_voie_a_l_autre() {
+    // Le rail passe sur le passage à niveau ; la route n'y est pas raccordée au rail.
+    let mut board = Board::empty();
+    board.place(at(3, 3), Card::new(Piece::Croisement));
+    board.place(at(2, 3), card(Piece::RailDroit, 0));
+    board.place(at(3, 2), card(Piece::RouteDroite, 1));
+    let chemin = board.longest_path(Network::Rail);
+    assert_eq!(chemin.len(), 2);
+    assert!(chemin.contains(&at(2, 3)) && chemin.contains(&at(3, 3)));
+    assert_eq!(board.longest_path(Network::Route).len(), 2);
+}

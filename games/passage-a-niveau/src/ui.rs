@@ -240,11 +240,11 @@ fn spawn_fin(mut c: Commands, partie: Res<Partie>, progres: Res<Progres>) {
         &mut c,
         panel,
         tx!(
-            "Raccords {} · voie ferrée {} · route {} · passages à niveau {} · gares routières {} · liaisons de départ {} · bouts dans le vide -{}",
-            "Links {} · railway {} · road {} · level crossings {} · road stations {} · start links {} · open ends -{}",
-            "Anschlüsse {} · Bahn {} · Straße {} · Bahnübergänge {} · Umsteigebahnhöfe {} · Startverbindungen {} · offene Enden -{}",
-            "Collegamenti {} · ferrovia {} · strada {} · passaggi a livello {} · stazioni stradali {} · collegamenti di partenza {} · estremità vuote -{}",
-            "Uniones {} · vía {} · carretera {} · pasos a nivel {} · estaciones viales {} · enlaces de salida {} · extremos vacíos -{}"
+            "Raccords {} · voie ferrée {} · route {}\nPassages à niveau {} · gares routières {}\nLiaisons de départ {} · bouts dans le vide -{}",
+            "Links {} · railway {} · road {}\nLevel crossings {} · road stations {}\nStart links {} · open ends -{}",
+            "Anschlüsse {} · Bahn {} · Straße {}\nBahnübergänge {} · Umsteigebahnhöfe {}\nStartverbindungen {} · offene Enden -{}",
+            "Collegamenti {} · ferrovia {} · strada {}\nPassaggi a livello {} · stazioni stradali {}\nCollegamenti di partenza {} · estremità vuote -{}",
+            "Uniones {} · vía {} · carretera {}\nPasos a nivel {} · estaciones viales {}\nEnlaces de salida {} · extremos vacíos -{}"
         )
         .avec(&[&s.links, &s.longest_rail, &s.longest_route, &s.crossings, &s.stations, &s.starts, &s.open_ends]),
         15.0,

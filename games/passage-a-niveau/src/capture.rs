@@ -7,7 +7,7 @@ use crate::GameState;
 use crate::jeu::Partie;
 use passage_core::N;
 
-const CLICHES: [(&str, GameState, f32); 3] = [("1-menu", GameState::Menu, 4.0), ("2-partie", GameState::Playing, 2.0), ("3-fin", GameState::Fini, 2.0)];
+const CLICHES: [(&str, GameState, f32); 3] = [("1-menu", GameState::Menu, 4.0), ("2-partie", GameState::Playing, 2.0), ("3-fin", GameState::Fini, 3.0)];
 
 #[derive(Resource)]
 struct Capture {
@@ -41,6 +41,12 @@ fn capturer(
         exit.write(AppExit::Success);
         return;
     };
+    if nom == "3-fin" && *state.get() != etat {
+        // Pour voir rouler le convoi : une grille bien raccordée, posée d'office.
+        partie.jeu.board = grille_d_exemple();
+        partie.jeu.finish();
+        partie.dessinee = false;
+    }
     if *state.get() != etat {
         next.set(etat);
         cap.depuis = t;
@@ -49,7 +55,6 @@ fn capturer(
     // Pour que la capture montre une table bien remplie : des cartes posées sans réfléchir.
     let voulues = match nom {
         "2-partie" => 28,
-        "3-fin" => passage_core::DECK_SIZE,
         _ => 0,
     };
     while partie.jeu.played() < voulues {
@@ -70,4 +75,33 @@ fn capturer(
         cap.pris = false;
         cap.depuis = t;
     }
+}
+
+/// Une grille où le rail relie les deux gares de départ, la route les deux
+/// parkings, et les deux se croisent dans une gare routière à 4 entrées.
+fn grille_d_exemple() -> passage_core::Board {
+    use passage_core::{Board, Card, Piece};
+    let mut board = Board::default();
+    for (r, c, piece, rot) in [
+        (1, 1, Piece::RailDroit, 1),
+        (1, 2, Piece::RailDroit, 1),
+        (1, 3, Piece::RailCourbe, 2),
+        (2, 3, Piece::RailDroit, 0),
+        (4, 3, Piece::RailDroit, 0),
+        (5, 3, Piece::RailCourbe, 0),
+        (5, 4, Piece::RailDroit, 1),
+        (5, 5, Piece::RailDroit, 1),
+        (1, 5, Piece::RouteDroite, 0),
+        (2, 5, Piece::RouteDroite, 0),
+        (3, 5, Piece::RouteCourbe, 3),
+        (3, 4, Piece::RouteDroite, 1),
+        (3, 2, Piece::RouteDroite, 1),
+        (3, 1, Piece::RouteCourbe, 1),
+        (4, 1, Piece::RouteDroite, 0),
+        (5, 1, Piece::RouteDroite, 0),
+        (3, 3, Piece::Gare4, 0),
+    ] {
+        board.place(r * N + c, Card { piece, rot });
+    }
+    board
 }

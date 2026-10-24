@@ -270,16 +270,23 @@ fn redessiner(mut commands: Commands, mut partie: ResMut<Partie>, look: Res<Look
     }
 }
 
-/// Au menu et à la fin, la table glisse à droite pour laisser la place au panneau.
-fn cadrer(time: Res<Time>, state: Res<State<GameState>>, mut decalage: Local<f32>, mut q: Query<&mut Transform, With<Camera>>) {
-    let voulu = match state.get() {
-        GameState::Menu | GameState::Fini => -3.4,
-        GameState::Playing => 2.2,
+/// Au menu et à la fin, la table glisse à droite pour laisser la place au
+/// panneau ; à la fin, la caméra s'incline pour regarder rouler le convoi.
+fn cadrer(time: Res<Time>, state: Res<State<GameState>>, mut vue: Local<(f32, Vec3)>, mut q: Query<&mut Transform, With<Camera>>) {
+    let (decalage, recul) = match state.get() {
+        GameState::Menu => (-3.4, CAMERA),
+        GameState::Fini => (-3.4, Vec3::new(0.0, 11.0, 8.5)),
+        GameState::Playing => (2.2, CAMERA),
     };
-    *decalage += (voulu - *decalage) * (4.0 * time.delta_secs()).min(1.0);
-    let regard = Vec3::new(*decalage, 0.0, 0.0);
+    let k = (4.0 * time.delta_secs()).min(1.0);
+    if vue.1 == Vec3::ZERO {
+        vue.1 = CAMERA;
+    }
+    vue.0 += (decalage - vue.0) * k;
+    vue.1 = vue.1.lerp(recul, k);
+    let regard = Vec3::new(vue.0, 0.0, 0.0);
     for mut tr in &mut q {
-        *tr = Transform::from_translation(regard + CAMERA).looking_at(regard, Vec3::Y);
+        *tr = Transform::from_translation(regard + vue.1).looking_at(regard, Vec3::Y);
     }
 }
 

@@ -147,12 +147,13 @@ facteur, petite et ronde, fait la route. Ambiance
   C'est léger (on vise 55 images par seconde sur la puce Intel d'Olivier,
   comme pour les autres jeux) et lisible.
 - **À la fin, la scène passe en 3D** : la caméra s'incline, le **petit
-  train** (locomotive rouge, deux wagons, en low-poly) parcourt **la plus
-  longue voie ferrée** qu'on a posée, **la camionnette suit la plus longue
-  route**, et les barrières des passages à niveau s'abaissent à leur
-  passage. Fumée, sifflet. Plus la voie est longue, plus le voyage est
-  beau. La 3D n'est chargée que pour cette séquence, de sorte que le jeu
-  reste fluide pendant la partie.
+  train** (locomotive rouge, deux wagons, en low-poly, avec sa fumée)
+  parcourt **la plus longue voie ferrée** posée, et **la camionnette**
+  suit **la plus longue route**. Ils repartent du début quand ils sont
+  arrivés. Plus la voie est longue, plus le voyage est beau. La 3D ne
+  sert qu'à cet écran, le jeu reste léger pendant la partie. *(Les
+  barrières des passages à niveau qui s'abaissent au passage du train
+  sont prévues, pas encore faites.)*
 - Un train **de bois** (une locomotive de jouet) : enfantin et sympa,
   comme le reste de l'univers.
 

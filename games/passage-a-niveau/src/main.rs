@@ -8,6 +8,7 @@ mod capture;
 mod jeu;
 mod plateau;
 mod ui;
+mod voyage;
 
 use bevy::prelude::*;
 use game_common::StudioPlugin;
@@ -32,7 +33,7 @@ fn main() {
         .init_state::<GameState>()
         // Tout le commun : style, démarrage, univers, son, langues, Options, ambiance.
         .add_plugins(StudioPlugin::new(Universe::Croa, AmbiancePlugin::exterieur()))
-        .add_plugins((jeu::JeuPlugin, ui::UiPlugin, audio::AudioPlugin, capture::CapturePlugin))
+        .add_plugins((jeu::JeuPlugin, voyage::VoyagePlugin, ui::UiPlugin, audio::AudioPlugin, capture::CapturePlugin))
         // Langue changée dans les Options : le menu est rebâti dans la nouvelle langue.
         .add_systems(Update, game_common::langue::rebatir_menu(GameState::Menu))
         .run();

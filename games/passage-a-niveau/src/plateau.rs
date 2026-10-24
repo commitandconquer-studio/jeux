@@ -37,6 +37,8 @@ pub struct Look {
     pub bleu: Handle<StandardMaterial>,
     pub vide: Handle<StandardMaterial>,
     pub bloque: Handle<StandardMaterial>,
+    pub noir: Handle<StandardMaterial>,
+    pub jaune: Handle<StandardMaterial>,
 }
 
 impl FromWorld for Look {
@@ -66,6 +68,8 @@ impl FromWorld for Look {
             bleu: uni(0x2F, 0x6F, 0xD6),
             vide: uni(0xE0, 0x4A, 0x3C),
             bloque: uni(0xC4, 0x12, 0x12),
+            noir: uni(0x2E, 0x2E, 0x38),
+            jaune: uni(0xF2, 0xC2, 0x30),
         }
     }
 }

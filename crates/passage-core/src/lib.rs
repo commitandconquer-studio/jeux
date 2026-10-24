@@ -405,6 +405,50 @@ impl Board {
         score
     }
 
+    /// La plus longue suite de cartes qu'un convoi peut parcourir sur cette
+    /// voie, sans repasser deux fois par la même case : les cases dans
+    /// l'ordre du trajet. Vide s'il n'y a aucune carte de cette voie.
+    pub fn longest_path(&self, network: Network) -> Vec<usize> {
+        let nodes: Vec<usize> = (0..N * N).filter(|&c| self.cells[c].is_some_and(|k| k.sides(network) != 0)).collect();
+        let voisines = |cell: usize| -> Vec<usize> {
+            (0..4).filter(|&s| self.is_linked(cell, s, network)).map(|s| neighbor(cell, s).unwrap()).collect()
+        };
+        let adjacence: Vec<Vec<usize>> = (0..N * N).map(voisines).collect();
+        // On part d'abord des bouts (une seule voisine), puis du reste (boucles).
+        let mut departs: Vec<usize> = nodes.iter().copied().filter(|&c| adjacence[c].len() <= 1).collect();
+        departs.extend(nodes.iter().copied().filter(|&c| adjacence[c].len() > 1));
+        let mut meilleur: Vec<usize> = Vec::new();
+        let mut budget = 300_000usize;
+        fn explorer(cell: usize, adjacence: &[Vec<usize>], chemin: &mut Vec<usize>, pris: &mut [bool], meilleur: &mut Vec<usize>, budget: &mut usize) {
+            if chemin.len() > meilleur.len() {
+                *meilleur = chemin.clone();
+            }
+            for &j in &adjacence[cell] {
+                if *budget == 0 {
+                    return;
+                }
+                if pris[j] {
+                    continue;
+                }
+                *budget -= 1;
+                pris[j] = true;
+                chemin.push(j);
+                explorer(j, adjacence, chemin, pris, meilleur, budget);
+                chemin.pop();
+                pris[j] = false;
+            }
+        }
+        for start in departs {
+            if budget == 0 {
+                break;
+            }
+            let mut pris = [false; N * N];
+            pris[start] = true;
+            explorer(start, &adjacence, &mut vec![start], &mut pris, &mut meilleur, &mut budget);
+        }
+        meilleur
+    }
+
     /// Taille du plus grand groupe de cartes raccordées d'une même voie.
     fn largest(&self, network: Network) -> u32 {
         let mut seen = [false; N * N];
