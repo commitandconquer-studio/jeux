@@ -17,7 +17,7 @@ CARGO="$(command -v cargo || echo "$HOME/.cargo/bin/cargo")"
 BINDGEN="$(command -v wasm-bindgen || echo "$HOME/.cargo/bin/wasm-bindgen")"
 
 # nom de la page | paquet cargo
-JEUX=(snake\|snake traversee\|traversee tour\|tour nova\|nova 2048\|eureka-2048 concile\|concile parsecs\|parsecs observatoire\|observatoire)
+JEUX=(snake\|snake traversee\|traversee tour\|tour nova\|nova 2048\|eureka-2048 concile\|concile parsecs\|parsecs observatoire\|observatoire berger\|berger)
 voulus=("$@")
 
 mkdir -p "$OUT"

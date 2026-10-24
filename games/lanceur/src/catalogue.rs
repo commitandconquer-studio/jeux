@@ -141,6 +141,19 @@ pub const JEUX: &[Jeu] = &[
         univers: Universe::Eureka,
         icone: icone!("observatoire"),
     },
+    Jeu {
+        id: "berger",
+        nom: tx!("Le Chien de berger", "The Sheepdog", "Der Schäferhund", "Il Cane pastore", "El Perro pastor"),
+        description: tx!(
+            "Rassemblez le troupeau et rentrez-le dans l'enclos, avant que les loups n'arrivent.",
+            "Gather the flock and bring it into the pen before the wolves arrive.",
+            "Treibe die Herde ins Gehege, bevor die Wölfe kommen.",
+            "Raduna il gregge e portalo nel recinto prima che arrivino i lupi.",
+            "Reúne el rebaño y llévalo al corral antes de que lleguen los lobos.",
+        ),
+        univers: Universe::Croa,
+        icone: icone!("berger"),
+    },
 ];
 
 /// Les univers, dans l'ordre d'affichage.
