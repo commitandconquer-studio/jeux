@@ -4610,6 +4610,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "passage-a-niveau"
+version = "0.1.0"
+dependencies = [
+ "bevy",
+ "game-common",
+ "passage-core",
+]
+
+[[package]]
 name = "passage-core"
 version = "0.1.0"
 

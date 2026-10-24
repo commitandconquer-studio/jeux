@@ -1,0 +1,301 @@
+//! La partie : le numéro, le paquet, la grille, la carte à poser et son sens,
+//! la case visée, les records par numéro.
+use bevy::prelude::*;
+use game_common::decor3d::Kit;
+use game_common::{ISO_OFFSET, iso_projection};
+use game_common::models::FrogKit;
+use passage_core::{Card, DECK_SIZE, Game, N, Network};
+
+use crate::GameState;
+use crate::plateau::{self, Carte, DESSUS, Look};
+
+const SAVE: &str = "passage-a-niveau";
+/// La caméra regarde la table d'en haut, un peu de biais.
+const CAMERA: Vec3 = Vec3::new(0.0, 15.0, 4.5);
+/// Les plus grands numéros qu'on peut taper (neuf chiffres).
+pub const NUMERO_MAX: u64 = 999_999_999;
+
+pub struct JeuPlugin;
+
+impl Plugin for JeuPlugin {
+    fn build(&self, app: &mut App) {
+        let progres = Progres::charger();
+        app.insert_resource(Partie::nouvelle(progres.numero))
+            .insert_resource(progres)
+            .init_resource::<Look>()
+            .init_resource::<Kit>()
+            .init_resource::<FrogKit>()
+            .add_message::<JeuEvenement>()
+            .add_systems(Startup, preparer)
+            .add_systems(Update, (viser, tourner, poser, fin).chain().run_if(in_state(GameState::Playing)))
+            // La table reste visible derrière le menu et l'écran de fin.
+            .add_systems(Update, (redessiner, cadrer).chain().after(fin));
+    }
+}
+
+#[derive(Message, Clone, Copy, PartialEq, Eq)]
+pub enum JeuEvenement {
+    Pose,
+    Tourne,
+    Fin,
+}
+
+/// Le numéro choisi au menu et les meilleurs scores de chaque numéro joué.
+#[derive(Resource)]
+pub struct Progres {
+    pub numero: u64,
+    records: Vec<(u64, i32)>,
+}
+
+impl Progres {
+    fn charger() -> Progres {
+        let l = |cle: &str| game_common::save::load(SAVE, cle);
+        let records = l("records")
+            .map(|s| {
+                s.split_whitespace()
+                    .filter_map(|p| {
+                        let (n, v) = p.split_once(':')?;
+                        Some((n.parse().ok()?, v.parse().ok()?))
+                    })
+                    .collect()
+            })
+            .unwrap_or_default();
+        Progres { numero: l("numero").and_then(|v| v.parse().ok()).unwrap_or(1), records }
+    }
+
+    fn enregistrer(&self) {
+        let r: Vec<String> = self.records.iter().map(|(n, v)| format!("{n}:{v}")).collect();
+        game_common::save::store(SAVE, "records", &r.join(" "));
+        game_common::save::store(SAVE, "numero", &self.numero.to_string());
+    }
+
+    pub fn choisir(&mut self, numero: u64) {
+        self.numero = numero.min(NUMERO_MAX);
+        self.enregistrer();
+    }
+
+    pub fn record(&self, numero: u64) -> Option<i32> {
+        self.records.iter().find(|(n, _)| *n == numero).map(|(_, v)| *v)
+    }
+
+    /// Retient le score s'il bat le record du numéro. Vrai si c'est un nouveau record.
+    pub fn proposer(&mut self, numero: u64, score: i32) -> bool {
+        match self.records.iter_mut().find(|(n, _)| *n == numero) {
+            Some((_, v)) if *v >= score => return false,
+            Some((_, v)) => *v = score,
+            None => self.records.push((numero, score)),
+        }
+        self.enregistrer();
+        true
+    }
+}
+
+/// La partie en cours.
+#[derive(Resource)]
+pub struct Partie {
+    pub jeu: Game,
+    /// Le sens de la carte à poser (quarts de tour).
+    pub rot: u8,
+    /// La case sous la souris.
+    pub survol: Option<usize>,
+    /// Ce que rapporterait la carte posée sur la case visée.
+    pub gain: Option<i32>,
+    /// Côtés bloqués si on posait ici (pour avertir).
+    pub bloques: Option<u32>,
+    /// Faux dès que quelque chose change : la table est redessinée.
+    pub dessinee: bool,
+    pub nouveau_record: bool,
+    /// Le joueur a demandé à terminer : une seconde demande confirme.
+    pub fin_demandee: bool,
+}
+
+impl Partie {
+    pub fn nouvelle(numero: u64) -> Partie {
+        Partie { jeu: Game::new(numero), rot: 0, survol: None, gain: None, bloques: None, dessinee: false, nouveau_record: false, fin_demandee: false }
+    }
+
+    pub fn carte(&self) -> Option<Card> {
+        self.jeu.current().map(|piece| Card { piece, rot: self.rot })
+    }
+
+    pub fn annuler(&mut self) {
+        if self.jeu.undo() {
+            self.dessinee = false;
+        }
+    }
+
+    pub fn tourner(&mut self) {
+        self.rot = (self.rot + 1) % 4;
+        self.dessinee = false;
+    }
+
+    fn calculer_gain(&mut self) {
+        let avant = self.jeu.score();
+        let essai = self.survol.filter(|&i| self.jeu.board.cells[i].is_none()).and_then(|i| {
+            let mut essai = self.jeu.clone();
+            essai.play(i, self.rot).then(|| essai.score())
+        });
+        self.gain = essai.map(|s| s.total() - avant.total());
+        self.bloques = essai.map(|s| s.blocked.saturating_sub(avant.blocked));
+    }
+}
+
+#[derive(Component)]
+pub struct Camera;
+
+fn preparer(mut commands: Commands, look: Res<Look>, kit: Res<Kit>) {
+    // La lumière vient du studio (comme dans La Traversée) : pas de seconde lampe.
+    commands.spawn((Camera3d::default(), iso_projection(17.0, 11.0), Transform::from_translation(CAMERA).looking_at(Vec3::ZERO, Vec3::Y), Camera));
+    plateau::decor(&mut commands, &look, &kit);
+}
+
+/// La case sous la souris (ou le doigt) : on vise le plan de la table.
+fn case_visee(camera: &bevy::camera::Camera, cam: &GlobalTransform, ecran: Vec2) -> Option<usize> {
+    let rayon = camera.viewport_to_world(cam, ecran).ok()?;
+    let d = rayon.intersect_plane(Vec3::Y * DESSUS, InfinitePlane3d::new(Vec3::Y))?;
+    let p = rayon.get_point(d);
+    let m = N as f32 / 2.0;
+    let (c, r) = ((p.x + m).floor(), (p.z + m).floor());
+    (c >= 0.0 && r >= 0.0 && c < N as f32 && r < N as f32).then(|| r as usize * N + c as usize)
+}
+
+fn viser(windows: Query<&Window>, cam: Query<(&bevy::camera::Camera, &GlobalTransform), With<Camera>>, mut partie: ResMut<Partie>) {
+    let Ok((camera, cam_tf)) = cam.single() else { return };
+    let survol = windows.single().ok().and_then(|w| w.cursor_position()).and_then(|p| case_visee(camera, cam_tf, p));
+    if survol != partie.survol {
+        partie.survol = survol;
+        partie.calculer_gain();
+        partie.dessinee = false;
+    }
+}
+
+fn tourner(
+    mouse: Res<ButtonInput<MouseButton>>,
+    keys: Res<ButtonInput<KeyCode>>,
+    mut molette: MessageReader<bevy::input::mouse::MouseWheel>,
+    mut partie: ResMut<Partie>,
+    mut evenements: MessageWriter<JeuEvenement>,
+) {
+    let roulee = molette.read().any(|m| m.y != 0.0);
+    if mouse.just_pressed(MouseButton::Right) || keys.any_just_pressed([KeyCode::KeyR, KeyCode::Space]) || roulee {
+        partie.tourner();
+        partie.calculer_gain();
+        evenements.write(JeuEvenement::Tourne);
+    }
+}
+
+fn poser(
+    mouse: Res<ButtonInput<MouseButton>>,
+    touches: Res<Touches>,
+    windows: Query<&Window>,
+    cam: Query<(&bevy::camera::Camera, &GlobalTransform), With<Camera>>,
+    mut partie: ResMut<Partie>,
+    mut evenements: MessageWriter<JeuEvenement>,
+) {
+    let Ok((camera, cam_tf)) = cam.single() else { return };
+    let pos = if let Some(t) = touches.iter_just_pressed().next() {
+        Some(t.position())
+    } else if mouse.just_pressed(MouseButton::Left) {
+        windows.single().ok().and_then(|w| w.cursor_position())
+    } else {
+        return;
+    };
+    let Some(i) = pos.and_then(|p| case_visee(camera, cam_tf, p)) else { return };
+    let rot = partie.rot;
+    if partie.jeu.play(i, rot) {
+        partie.survol = Some(i);
+        partie.fin_demandee = false;
+        partie.calculer_gain();
+        partie.dessinee = false;
+        evenements.write(JeuEvenement::Pose);
+    }
+}
+
+/// Le paquet est épuisé : on enregistre le score et on passe à l'écran de fin.
+fn fin(mut partie: ResMut<Partie>, mut progres: ResMut<Progres>, mut evenements: MessageWriter<JeuEvenement>, mut next: ResMut<NextState<GameState>>) {
+    if !partie.jeu.is_finished() {
+        return;
+    }
+    let (numero, total) = (partie.jeu.number, partie.jeu.score().total());
+    partie.nouveau_record = progres.proposer(numero, total);
+    partie.survol = None;
+    partie.gain = None;
+    partie.bloques = None;
+    partie.dessinee = false;
+    evenements.write(JeuEvenement::Fin);
+    next.set(GameState::Fini);
+}
+
+/// Redessine les cartes, les bouts dans le vide, le fantôme et la file quand quelque chose change.
+fn redessiner(mut commands: Commands, mut partie: ResMut<Partie>, look: Res<Look>, anciennes: Query<Entity, With<Carte>>) {
+    if partie.dessinee {
+        return;
+    }
+    partie.dessinee = true;
+    anciennes.iter().for_each(|e| commands.entity(e).despawn());
+    let board = &partie.jeu.board;
+    // La carte à poser, en fantôme sur la case visée.
+    let fantome = partie.survol.filter(|&i| board.cells[i].is_none()).zip(partie.carte());
+    // La vue : la grille, avec le fantôme posé. Les côtés qui posent problème
+    // (même ceux des cartes voisines) sont marqués avant même de poser.
+    let mut vue = board.clone();
+    if let Some((i, card)) = fantome {
+        vue.place(i, card);
+    }
+    for (i, card) in board.cells.iter().enumerate() {
+        let Some(card) = *card else { continue };
+        plateau::carte(&mut commands, &look, card, plateau::pos_case(i), 1.0, i / N + i % N, ());
+    }
+    if let Some((i, card)) = fantome {
+        plateau::carte(&mut commands, &look, card, plateau::pos_case(i) + Vec3::Y * 0.12, 1.0, i / N + i % N, ());
+        plateau::cadre(&mut commands, &look, plateau::pos_case(i) + Vec3::Y * 0.12);
+    }
+    for (i, card) in vue.cells.iter().enumerate() {
+        let Some(card) = *card else { continue };
+        for net in Network::ALL {
+            for side in 0..4 {
+                if card.sides(net) & (1 << side) != 0 {
+                    plateau::marque_cote(&mut commands, &look, i, side, vue.side_status(i, side, net));
+                }
+            }
+        }
+    }
+    // La file : la carte à poser en grand, puis les deux suivantes.
+    if let Some(card) = partie.carte() {
+        let x = N as f32 / 2.0 + 2.6;
+        plateau::carte(&mut commands, &look, card, Vec3::new(x, DESSUS, -2.0), 1.5, 0, ());
+        for (k, piece) in partie.jeu.upcoming().iter().enumerate() {
+            plateau::carte(&mut commands, &look, Card::new(*piece), Vec3::new(x, DESSUS, 0.5 + k as f32 * 1.3), 0.95, 1, ());
+        }
+    }
+}
+
+/// Au menu, en partie et à la fin, la caméra cadre la table ; à la fin elle
+/// passe lentement de la vue de dessus (2D) à la vue isométrique de La
+/// Traversée (3D), puis le convoi se met en route (voir `voyage`).
+fn cadrer(time: Res<Time>, state: Res<State<GameState>>, mut vue: Local<(f32, Vec3)>, mut q: Query<&mut Transform, With<Camera>>) {
+    let (decalage, recul, vitesse) = match state.get() {
+        GameState::Menu => (-3.4, CAMERA, 4.0),
+        GameState::Fini => (-3.4, ISO_OFFSET, 1.6),
+        GameState::Playing => (2.2, CAMERA, 4.0),
+    };
+    let k = (vitesse * time.delta_secs()).min(1.0);
+    if vue.1 == Vec3::ZERO {
+        vue.1 = CAMERA;
+    }
+    vue.0 += (decalage - vue.0) * k;
+    vue.1 = vue.1.lerp(recul, k);
+    let regard = Vec3::new(vue.0, 0.0, 0.0);
+    for mut tr in &mut q {
+        *tr = Transform::from_translation(regard + vue.1).looking_at(regard, Vec3::Y);
+    }
+}
+
+/// Commence une nouvelle partie du numéro donné.
+pub fn commencer(commands: &mut Commands, progres: &mut Progres, numero: u64) {
+    progres.choisir(numero);
+    commands.insert_resource(Partie::nouvelle(numero.min(NUMERO_MAX)));
+}
+
+/// Le nombre de cartes d'une partie (pour l'affichage).
+pub const CARTES: usize = DECK_SIZE;

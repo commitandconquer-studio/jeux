@@ -11,6 +11,7 @@ members = [
     "games/concile",
     "games/modele",
     "games/berger",
+    "games/passage-a-niveau",
     "games/observatoire",
     "games/parsecs",
     "games/lanceur",
