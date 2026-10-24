@@ -12,6 +12,7 @@ pub mod audio;
 pub mod options;
 pub mod brand;
 pub mod calendar;
+pub mod decor3d;
 pub mod models;
 pub mod save;
 pub mod sounds;

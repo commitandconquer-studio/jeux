@@ -7,7 +7,7 @@ use crate::GameState;
 use crate::jeu::Partie;
 use passage_core::N;
 
-const CLICHES: [(&str, GameState, f32); 3] = [("1-menu", GameState::Menu, 4.0), ("2-partie", GameState::Playing, 2.0), ("3-fin", GameState::Fini, 3.0)];
+const CLICHES: [(&str, GameState, f32); 4] = [("1-menu", GameState::Menu, 4.0), ("2-partie", GameState::Playing, 2.0), ("3-transition", GameState::Fini, 0.9), ("4-fin", GameState::Fini, 3.2)];
 
 #[derive(Resource)]
 struct Capture {
@@ -41,7 +41,7 @@ fn capturer(
         exit.write(AppExit::Success);
         return;
     };
-    if nom == "3-fin" && *state.get() != etat {
+    if nom == "3-transition" && *state.get() != etat {
         // Pour voir rouler le convoi : une grille bien raccordée, posée d'office.
         partie.jeu.board = grille_d_exemple();
         partie.jeu.finish();

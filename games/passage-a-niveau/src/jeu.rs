@@ -1,7 +1,9 @@
 //! La partie : le numéro, le paquet, la grille, la carte à poser et son sens,
 //! la case visée, les records par numéro.
 use bevy::prelude::*;
-use game_common::iso_projection;
+use game_common::decor3d::Kit;
+use game_common::{ISO_OFFSET, iso_projection};
+use game_common::models::FrogKit;
 use passage_core::{Card, DECK_SIZE, Game, N, Network};
 
 use crate::GameState;
@@ -21,6 +23,8 @@ impl Plugin for JeuPlugin {
         app.insert_resource(Partie::nouvelle(progres.numero))
             .insert_resource(progres)
             .init_resource::<Look>()
+            .init_resource::<Kit>()
+            .init_resource::<FrogKit>()
             .add_message::<JeuEvenement>()
             .add_systems(Startup, preparer)
             .add_systems(Update, (viser, tourner, poser, fin).chain().run_if(in_state(GameState::Playing)))
@@ -139,14 +143,10 @@ impl Partie {
 #[derive(Component)]
 pub struct Camera;
 
-fn preparer(mut commands: Commands, look: Res<Look>, mut meshes: ResMut<Assets<Mesh>>, mut mats: ResMut<Assets<StandardMaterial>>) {
-    // Sans tonemapping : les couleurs unies restent franches.
-    commands.spawn((Camera3d::default(), bevy::core_pipeline::tonemapping::Tonemapping::None, iso_projection(17.0, 11.0), Transform::from_translation(CAMERA).looking_at(Vec3::ZERO, Vec3::Y), Camera));
-    commands.spawn((
-        DirectionalLight { illuminance: 4_500.0, shadow_maps_enabled: true, ..default() },
-        Transform::from_xyz(-4.0, 12.0, 6.0).looking_at(Vec3::ZERO, Vec3::Y),
-    ));
-    plateau::decor(&mut commands, &look, &mut meshes, &mut mats);
+fn preparer(mut commands: Commands, look: Res<Look>, kit: Res<Kit>) {
+    // La lumière vient du studio (comme dans La Traversée) : pas de seconde lampe.
+    commands.spawn((Camera3d::default(), iso_projection(17.0, 11.0), Transform::from_translation(CAMERA).looking_at(Vec3::ZERO, Vec3::Y), Camera));
+    plateau::decor(&mut commands, &look, &kit);
 }
 
 /// La case sous la souris (ou le doigt) : on vise le plan de la table.
@@ -270,15 +270,16 @@ fn redessiner(mut commands: Commands, mut partie: ResMut<Partie>, look: Res<Look
     }
 }
 
-/// Au menu et à la fin, la table glisse à droite pour laisser la place au
-/// panneau ; à la fin, la caméra s'incline pour regarder rouler le convoi.
+/// Au menu, en partie et à la fin, la caméra cadre la table ; à la fin elle
+/// passe lentement de la vue de dessus (2D) à la vue isométrique de La
+/// Traversée (3D), puis le convoi se met en route (voir `voyage`).
 fn cadrer(time: Res<Time>, state: Res<State<GameState>>, mut vue: Local<(f32, Vec3)>, mut q: Query<&mut Transform, With<Camera>>) {
-    let (decalage, recul) = match state.get() {
-        GameState::Menu => (-3.4, CAMERA),
-        GameState::Fini => (-3.4, Vec3::new(0.0, 11.0, 8.5)),
-        GameState::Playing => (2.2, CAMERA),
+    let (decalage, recul, vitesse) = match state.get() {
+        GameState::Menu => (-3.4, CAMERA, 4.0),
+        GameState::Fini => (-3.4, ISO_OFFSET, 1.6),
+        GameState::Playing => (2.2, CAMERA, 4.0),
     };
-    let k = (4.0 * time.delta_secs()).min(1.0);
+    let k = (vitesse * time.delta_secs()).min(1.0);
     if vue.1 == Vec3::ZERO {
         vue.1 = CAMERA;
     }

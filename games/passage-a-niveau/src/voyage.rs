@@ -4,26 +4,31 @@
 //! regarder rouler ; le convoi repart du début quand il est arrivé.
 use std::f32::consts::FRAC_PI_2;
 
-use bevy::light::NotShadowCaster;
 use bevy::prelude::*;
+use game_common::decor3d::{Kit, spawn_car, spawn_train_car};
+use game_common::models::{FrogKit, spawn_frog};
 use passage_core::{Board, Network, neighbor};
 
 use crate::GameState;
 use crate::jeu::Partie;
-use crate::plateau::{DESSUS, Look, pos_case};
+use crate::plateau::{DESSUS, pos_case};
 
+/// Attente avant le départ : la caméra finit de passer à la vue isométrique.
+const DELAI: f32 = 2.2;
 /// Vitesse des véhicules, en cases par seconde.
 const VITESSE: f32 = 2.2;
 /// Pause en bout de voie avant de repartir, en cases (de distance équivalente).
 const PAUSE: f32 = 3.0;
 const PAS: usize = 8;
+/// Distance entre deux éléments du train (longueur d'un élément et un petit jeu).
+const ECART: f32 = 0.95;
 
 pub struct VoyagePlugin;
 
 impl Plugin for VoyagePlugin {
     fn build(&self, app: &mut App) {
         app.add_systems(OnEnter(GameState::Fini), partir)
-            .add_systems(Update, (rouler, fumee).run_if(in_state(GameState::Fini)));
+            .add_systems(Update, rouler.run_if(in_state(GameState::Fini)));
     }
 }
 
@@ -124,6 +129,10 @@ struct Voyage {
     t: f32,
 }
 
+/// Le chef de gare : il apparaît en même temps que le convoi.
+#[derive(Component)]
+struct ChefDeGare;
+
 #[derive(Component)]
 struct Vehicule {
     reseau: Network,
@@ -131,121 +140,67 @@ struct Vehicule {
     retard: f32,
 }
 
-#[derive(Component)]
-struct Locomotive;
-
-#[derive(Component)]
-struct Fumee(f32);
-
-fn partir(mut commands: Commands, partie: Res<Partie>, look: Res<Look>) {
+fn partir(mut commands: Commands, partie: Res<Partie>, kit: Res<Kit>, frog: Res<FrogKit>) {
     let board = &partie.jeu.board;
     let rail = tracer(board, &board.longest_path(Network::Rail), Network::Rail, DESSUS + 0.04);
     let route = tracer(board, &board.longest_path(Network::Route), Network::Route, DESSUS + 0.02);
     if !rail.points.is_empty() {
-        let loco = vehicule(&mut commands, &look, Network::Rail, 0.0);
-        commands.entity(loco).insert(Locomotive);
-        for (k, couleur) in [&look.jaune, &look.bois].into_iter().enumerate() {
-            let wagon = vehicule(&mut commands, &look, Network::Rail, 0.9 * (k + 1) as f32);
-            wagon_caisse(&mut commands, wagon, &look, couleur);
+        // La locomotive, puis deux wagons : les modèles de La Traversée, en petit.
+        for k in 0..3 {
+            vehicule(&mut commands, &kit, Network::Rail, ECART * k as f32, k == 0);
         }
     }
     if !route.points.is_empty() {
-        let camion = vehicule(&mut commands, &look, Network::Route, 0.0);
-        camionnette(&mut commands, camion, &look);
+        vehicule(&mut commands, &kit, Network::Route, 0.0, false);
     }
-    commands.insert_resource(Voyage { rail, route, t: 0.0 });
+    // Le crapaud, chef de gare, regarde passer son train depuis la prairie.
+    let crapaud = spawn_frog(&mut commands, &frog);
+    commands.entity(crapaud).insert((
+        Transform::from_xyz(4.6, 0.0, 2.6).with_rotation(Quat::from_rotation_y(FRAC_PI_2 + 0.3)).with_scale(Vec3::splat(1.3)),
+        ChefDeGare,
+        DespawnOnExit(GameState::Fini),
+    ));
+    commands.insert_resource(Voyage { rail, route, t: -DELAI });
 }
 
-fn bloc(c: &mut Commands, parent: Entity, look: &Look, mat: &Handle<StandardMaterial>, centre: Vec3, taille: Vec3) {
-    c.spawn((Mesh3d(look.cube.clone()), MeshMaterial3d(mat.clone()), Transform::from_translation(centre).with_scale(taille), NotShadowCaster, ChildOf(parent)));
-}
-
-fn cylindre(c: &mut Commands, parent: Entity, look: &Look, mat: &Handle<StandardMaterial>, centre: Vec3, taille: Vec3, couche: bool) {
-    let rot = if couche { Quat::from_rotation_x(FRAC_PI_2) } else { Quat::IDENTITY };
-    c.spawn((Mesh3d(look.disque.clone()), MeshMaterial3d(mat.clone()), Transform::from_translation(centre).with_rotation(rot).with_scale(taille), NotShadowCaster, ChildOf(parent)));
-}
-
-/// Un véhicule vide : la locomotive (le train), ou un châssis de wagon ou de camionnette.
-fn vehicule(c: &mut Commands, look: &Look, reseau: Network, retard: f32) -> Entity {
+/// Un véhicule : la locomotive, un wagon (voie ferrée) ou la camionnette
+/// jaune (route), avec les modèles de La Traversée réduits à la taille d'une case.
+fn vehicule(c: &mut Commands, kit: &Kit, reseau: Network, retard: f32, locomotive: bool) {
     let racine = c.spawn((Transform::default(), Visibility::default(), Vehicule { reseau, retard }, DespawnOnExit(GameState::Fini))).id();
-    if reseau == Network::Rail {
-        bloc(c, racine, look, &look.noir, Vec3::new(0.0, 0.09, 0.0), Vec3::new(0.3, 0.07, 0.62));
-        for (x, z) in [(-0.17, -0.2), (0.17, -0.2), (-0.17, 0.2), (0.17, 0.2)] {
-            bloc(c, racine, look, &look.noir, Vec3::new(x, 0.05, z), Vec3::new(0.05, 0.1, 0.13));
-        }
-        if retard == 0.0 {
-            // La locomotive : chaudière, cheminée, cabine et toit.
-            cylindre(c, racine, look, &look.rouge, Vec3::new(0.0, 0.25, -0.12), Vec3::new(0.26, 0.5, 0.26), true);
-            cylindre(c, racine, look, &look.noir, Vec3::new(0.0, 0.43, -0.27), Vec3::new(0.1, 0.2, 0.1), false);
-            bloc(c, racine, look, &look.rouge, Vec3::new(0.0, 0.28, 0.24), Vec3::new(0.3, 0.28, 0.26));
-            bloc(c, racine, look, &look.noir, Vec3::new(0.0, 0.44, 0.24), Vec3::new(0.34, 0.04, 0.3));
-        }
+    // Les modèles regardent vers +X ; le convoi avance vers -Z.
+    let echelle = if reseau == Network::Rail { 0.3 } else { 0.4 };
+    let modele = c.spawn((Transform::from_rotation(Quat::from_rotation_y(FRAC_PI_2)).with_scale(Vec3::splat(echelle)), Visibility::default(), ChildOf(racine))).id();
+    match reseau {
+        Network::Rail => spawn_train_car(c, kit, modele, locomotive),
+        Network::Route => spawn_car(c, kit, modele, 2),
     }
-    racine
 }
 
-fn wagon_caisse(c: &mut Commands, wagon: Entity, look: &Look, couleur: &Handle<StandardMaterial>) {
-    bloc(c, wagon, look, couleur, Vec3::new(0.0, 0.21, 0.0), Vec3::new(0.3, 0.2, 0.56));
-}
-
-fn camionnette(c: &mut Commands, camion: Entity, look: &Look) {
-    bloc(c, camion, look, &look.jaune, Vec3::new(0.0, 0.2, 0.1), Vec3::new(0.34, 0.22, 0.46));
-    bloc(c, camion, look, &look.blanc, Vec3::new(0.0, 0.18, -0.26), Vec3::new(0.34, 0.18, 0.22));
-    bloc(c, camion, look, &look.noir, Vec3::new(0.0, 0.22, -0.375), Vec3::new(0.28, 0.08, 0.02));
-    for (x, z) in [(-0.19, -0.2), (0.19, -0.2), (-0.19, 0.22), (0.19, 0.22)] {
-        bloc(c, camion, look, &look.noir, Vec3::new(x, 0.06, z), Vec3::new(0.06, 0.12, 0.12));
-    }
+/// L'apparition : de rien à la taille normale, juste avant le départ.
+fn apparition(t: f32) -> f32 {
+    let x = ((t + 0.7) / 0.7).clamp(0.0, 1.0);
+    x * x * (3.0 - 2.0 * x)
 }
 
 /// Les véhicules roulent ; la tête du convoi avance, les wagons la suivent.
-fn rouler(time: Res<Time>, mut voyage: ResMut<Voyage>, mut q: Query<(&Vehicule, &mut Transform)>) {
+fn rouler(
+    time: Res<Time>,
+    mut voyage: ResMut<Voyage>,
+    mut q: Query<(&Vehicule, &mut Transform), Without<ChefDeGare>>,
+    mut chef: Query<&mut Transform, With<ChefDeGare>>,
+) {
     voyage.t += time.delta_secs();
+    let pop = apparition(voyage.t);
+    for mut tr in &mut chef {
+        tr.scale = Vec3::splat(1.3 * pop);
+    }
     for (v, mut tr) in &mut q {
         let trace = if v.reseau == Network::Rail { &voyage.rail } else { &voyage.route };
         let longueur = trace.longueur();
         let cycle = (longueur + PAUSE) / VITESSE;
-        let tete = ((voyage.t % cycle) * VITESSE).min(longueur);
+        let tete = ((voyage.t.max(0.0) % cycle) * VITESSE).min(longueur);
         let Some((pos, dir)) = trace.echantillon((tete - v.retard).max(0.0)) else { continue };
         let regard = if dir == Vec3::ZERO { Vec3::NEG_Z } else { dir };
-        *tr = Transform::from_translation(pos).looking_to(regard, Vec3::Y);
+        *tr = Transform::from_translation(pos).looking_to(regard, Vec3::Y).with_scale(Vec3::splat(pop));
     }
 }
-
-/// De petits cubes de fumée blanche montent de la cheminée de la locomotive.
-fn fumee(
-    mut commands: Commands,
-    time: Res<Time>,
-    look: Res<Look>,
-    mut prochaine: Local<f32>,
-    loco: Query<&Transform, (With<Locomotive>, Without<Fumee>)>,
-    mut bouffees: Query<(Entity, &mut Fumee, &mut Transform)>,
-) {
-    let dt = time.delta_secs();
-    *prochaine -= dt;
-    if *prochaine <= 0.0
-        && let Ok(tr) = loco.single()
-    {
-        *prochaine = 0.22;
-        let cheminee = tr.translation + tr.rotation * Vec3::new(0.0, 0.55, -0.27);
-        commands.spawn((
-            Mesh3d(look.cube.clone()),
-            MeshMaterial3d(look.blanc.clone()),
-            Transform::from_translation(cheminee).with_scale(Vec3::splat(0.08)),
-            NotShadowCaster,
-            Fumee(0.0),
-            DespawnOnExit(GameState::Fini),
-        ));
-    }
-    for (e, mut f, mut tr) in &mut bouffees {
-        f.0 += dt;
-        if f.0 > 1.3 {
-            commands.entity(e).despawn();
-            continue;
-        }
-        tr.translation.y += 0.35 * dt;
-        tr.rotate_y(1.5 * dt);
-        let taille = 0.08 + 0.16 * (f.0 / 1.3) * (1.0 - f.0 / 1.3).sqrt().max(0.2);
-        tr.scale = Vec3::splat(taille);
-    }
-}
-

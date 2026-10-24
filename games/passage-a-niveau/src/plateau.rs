@@ -7,7 +7,7 @@ use std::f32::consts::FRAC_PI_2;
 
 use bevy::light::NotShadowCaster;
 use bevy::prelude::*;
-use game_common::{flat_material, palette};
+use game_common::decor3d::{Kit, Prop, spawn_prop};
 use passage_core::{Card, EAST, N, NORTH, Network, Piece, SOUTH, SideStatus, WEST};
 
 /// Hauteur du dessus des cases.
@@ -37,8 +37,6 @@ pub struct Look {
     pub bleu: Handle<StandardMaterial>,
     pub vide: Handle<StandardMaterial>,
     pub bloque: Handle<StandardMaterial>,
-    pub noir: Handle<StandardMaterial>,
-    pub jaune: Handle<StandardMaterial>,
 }
 
 impl FromWorld for Look {
@@ -53,8 +51,8 @@ impl FromWorld for Look {
             cube,
             disque,
             secteur,
-            tuile_a: uni(0xE6, 0xEF, 0xC8),
-            tuile_b: uni(0xDA, 0xE8, 0xB8),
+            tuile_a: uni(0xF4, 0xFB, 0xD2),
+            tuile_b: uni(0xE6, 0xF4, 0xB6),
             bois: uni(0xB8, 0x8C, 0x58),
             traverse: uni(0x8A, 0x5C, 0x34),
             rail: uni(0xC9, 0xA9, 0x7C),
@@ -68,8 +66,6 @@ impl FromWorld for Look {
             bleu: uni(0x2F, 0x6F, 0xD6),
             vide: uni(0xE0, 0x4A, 0x3C),
             bloque: uni(0xC4, 0x12, 0x12),
-            noir: uni(0x2E, 0x2E, 0x38),
-            jaune: uni(0xF2, 0xC2, 0x30),
         }
     }
 }
@@ -344,37 +340,42 @@ pub fn marque_cote(c: &mut Commands, look: &Look, case: usize, side: usize, stat
     }
 }
 
-/// La prairie, la table de bois, les cases vides et le décor (une fois pour toutes).
-pub fn decor(c: &mut Commands, look: &Look, meshes: &mut Assets<Mesh>, mats: &mut Assets<StandardMaterial>) {
-    let mut sans_ombre = |c: Color| mats.add(StandardMaterial { unlit: true, ..flat_material(c) });
-    let herbe = sans_ombre(palette::GRASS);
-    let clair = sans_ombre(palette::GRASS_LIGHT);
-    let feuillage = sans_ombre(palette::FOLIAGE);
-    let tronc = sans_ombre(Color::srgb(0.42, 0.28, 0.16));
-    let eau = sans_ombre(Color::srgb_u8(0x58, 0xB4, 0xE6));
-    let cone = meshes.add(Cone { radius: 0.5, height: 1.0 }.mesh().resolution(6));
+/// La prairie en bandes (comme dans La Traversée), la table de bois, les
+/// cases vides et le décor (une fois pour toutes).
+pub fn decor(c: &mut Commands, look: &Look, kit: &Kit) {
     let cube = look.cube.clone();
-    let mut p = |mesh: &Handle<Mesh>, mat: &Handle<StandardMaterial>, t: Transform| {
-        c.spawn((Mesh3d(mesh.clone()), MeshMaterial3d(mat.clone()), t));
-    };
-    // La prairie.
-    p(&cube, &herbe, Transform::from_xyz(2.0, -0.35, 0.0).with_scale(Vec3::new(40.0, 0.5, 30.0)));
-    for (x, z, w, d) in [(-6.5, -5.5, 4.0, 3.0), (9.0, 6.0, 5.0, 3.0), (-9.0, 4.5, 3.0, 4.0), (10.5, -6.0, 3.0, 2.5)] {
-        p(&cube, &clair, Transform::from_xyz(x, -0.09, z).with_scale(Vec3::new(w, 0.02, d)));
+    // La prairie : des bandes de deux verts, dans le style de La Traversée.
+    for k in -7i32..=7 {
+        let mat = &kit.m.grass[k.rem_euclid(2) as usize];
+        c.spawn((Mesh3d(cube.clone()), MeshMaterial3d(mat.clone()), Transform::from_xyz(2.0, -0.3, k as f32 * 2.0).with_scale(Vec3::new(44.0, 0.4, 2.0))));
     }
     // La table de jeu : un cadre de bois clair autour des 7 × 7 cases.
     let t = N as f32 + 0.7;
-    p(&cube, &look.bois, Transform::from_xyz(0.0, -0.06, 0.0).with_scale(Vec3::new(t, 0.12, t)));
-    // L'étang et quelques arbres autour.
-    p(&look.disque, &eau, Transform::from_xyz(-8.0, -0.07, -2.0).with_scale(Vec3::new(3.2, 0.05, 2.2)));
-    for (x, z, h) in [(-6.5, 5.5, 1.8), (-9.5, 1.5, 1.4), (7.5, -5.5, 2.0), (11.5, 4.5, 1.6), (-5.0, -6.5, 1.5), (6.0, 6.5, 1.3)] {
-        p(&cube, &tronc, Transform::from_xyz(x, h * 0.2, z).with_scale(Vec3::new(0.25, h * 0.4, 0.25)));
-        p(&cone, &feuillage, Transform::from_xyz(x, h * 0.55 + 0.4, z).with_scale(Vec3::new(1.2, h, 1.2)));
+    c.spawn((Mesh3d(cube.clone()), MeshMaterial3d(look.bois.clone()), Transform::from_xyz(0.0, -0.06, 0.0).with_scale(Vec3::new(t, 0.12, t))));
+    // L'étang, et des arbres, sapins, rochers et buissons autour.
+    c.spawn((Mesh3d(look.disque.clone()), MeshMaterial3d(kit.m.water.clone()), Transform::from_xyz(-8.4, -0.06, -2.4).with_scale(Vec3::new(3.4, 0.06, 2.4))));
+    let racine = c.spawn((Transform::default(), Visibility::default())).id();
+    let accessoires = [
+        (Prop::Tree, -6.6, 5.4),
+        (Prop::Pine, -9.4, 1.6),
+        (Prop::Tree, 7.4, -5.6),
+        (Prop::Pine, 10.6, 4.6),
+        (Prop::Pine, -5.2, -6.4),
+        (Prop::Tree, 6.2, 6.6),
+        (Prop::Rock, -7.6, 3.4),
+        (Prop::Rock, 8.8, 0.8),
+        (Prop::Bush, 5.4, -6.8),
+        (Prop::Bush, -4.6, 6.8),
+        (Prop::Bush, 9.6, -3.0),
+        (Prop::Tree, 12.4, -1.4),
+    ];
+    for (k, (prop, x, z)) in accessoires.into_iter().enumerate() {
+        spawn_prop(c, kit, racine, prop, Vec3::new(x, -0.1, z), k);
     }
     // Les cases vides.
     for i in 0..N * N {
         let tuile = if (i / N + i % N).is_multiple_of(2) { &look.tuile_a } else { &look.tuile_b };
         let pos = pos_case(i);
-        p(&cube, tuile, Transform::from_translation(pos - Vec3::Y * 0.05).with_scale(Vec3::new(0.94, 0.1, 0.94)));
+        c.spawn((Mesh3d(cube.clone()), MeshMaterial3d(tuile.clone()), Transform::from_translation(pos - Vec3::Y * 0.05).with_scale(Vec3::new(0.94, 0.1, 0.94))));
     }
 }
