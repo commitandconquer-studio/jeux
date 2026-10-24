@@ -1,345 +1,318 @@
-//! Passage à niveau — règles, solveurs et générateur, sans affichage.
+//! Passage à niveau — règles et score, sans affichage.
 //!
-//! Une grille N × N, deux voies à tracer : une **voie ferrée** et une
-//! **route**, chacune d'une gare (ou d'un village) de départ à une
-//! d'arrivée, continue, sans bifurcation et sans jamais se toucher
-//! elle-même. Elles ne se croisent qu'aux **passages à niveau**, des cases
-//! marquées où elles se coupent à angle droit. Les chiffres des bords
-//! donnent le nombre de cases de rail et de route de chaque rangée et de
-//! chaque colonne. Chaque grille a une seule solution, trouvable par la
-//! logique.
+//! Un paquet de 40 cartes de rails et de routes, déterminé par un numéro
+//! de partie ; on les pose une à une sur une grille de 7 × 7 et on cherche
+//! le meilleur score. Le même numéro donne toujours les mêmes cartes, dans
+//! le même ordre.
 //!
-//! Partagé par le jeu (`games/passage-a-niveau`) et le générateur de
-//! grilles (`tools/passage-gen`).
+//! Partagé par le jeu (`games/passage-a-niveau`).
 
-mod logic;
 mod rng;
 
-pub use logic::{Deduction, Technique, logic_solve, next_deduction, solutions};
 pub use rng::Rng;
 
-/// Taille maximale d'une grille.
-pub const MAX: usize = 9;
+/// Côté de la grille.
+pub const N: usize = 7;
+/// Nombre de cartes d'une partie.
+pub const DECK_SIZE: usize = 40;
+/// Cartes de chaque sorte dans le paquet.
+pub const PER_PIECE: usize = DECK_SIZE / Piece::ALL.len();
 
-/// Les quatre côtés d'une case : nord, est, sud, ouest (rangée, colonne).
-pub const DIRS: [(isize, isize); 4] = [(-1, 0), (0, 1), (1, 0), (0, -1)];
+/// Points par passage à niveau dont les quatre côtés sont raccordés.
+pub const CROSSING_BONUS: i32 = 5;
 
-/// Ce qu'une case contient dans la solution (et dans la partie).
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
-pub enum Kind {
-    Vide,
-    Rail,
-    Route,
-    /// Passage à niveau : un rail et une route qui se croisent.
-    Croisement,
-}
+/// Les côtés d'une carte, du nord dans le sens des aiguilles d'une montre.
+pub const NORTH: u8 = 1;
+pub const EAST: u8 = 2;
+pub const SOUTH: u8 = 4;
+pub const WEST: u8 = 8;
 
-/// Les types de case comme masques de bits, pour les domaines du solveur.
-pub const VIDE: u8 = 1;
-pub const RAIL: u8 = 2;
-pub const ROUTE: u8 = 4;
-pub const CROIX: u8 = 8;
-
-impl Kind {
-    pub const fn bit(self) -> u8 {
-        match self {
-            Kind::Vide => VIDE,
-            Kind::Rail => RAIL,
-            Kind::Route => ROUTE,
-            Kind::Croisement => CROIX,
-        }
-    }
-
-    pub fn from_bit(bit: u8) -> Option<Kind> {
-        match bit {
-            VIDE => Some(Kind::Vide),
-            RAIL => Some(Kind::Rail),
-            ROUTE => Some(Kind::Route),
-            CROIX => Some(Kind::Croisement),
-            _ => None,
-        }
-    }
-
-    pub fn to_char(self) -> char {
-        match self {
-            Kind::Vide => '.',
-            Kind::Rail => 'r',
-            Kind::Route => 'o',
-            Kind::Croisement => 'x',
-        }
-    }
-
-    pub fn from_char(c: char) -> Option<Kind> {
-        match c {
-            '.' => Some(Kind::Vide),
-            'r' => Some(Kind::Rail),
-            'o' => Some(Kind::Route),
-            'x' => Some(Kind::Croisement),
-            _ => None,
-        }
-    }
-}
-
-/// Les deux voies : la voie ferrée et la route.
+/// Les deux voies.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum Network {
-    Rail = 0,
-    Route = 1,
+    Rail,
+    Route,
 }
 
 impl Network {
     pub const ALL: [Network; 2] = [Network::Rail, Network::Route];
+}
 
-    /// Les types de case qui font partie de cette voie (le passage à niveau
-    /// fait partie des deux).
-    pub const fn member_mask(self) -> u8 {
-        match self {
-            Network::Rail => RAIL | CROIX,
-            Network::Route => ROUTE | CROIX,
-        }
+/// Les cinq pièces de voie.
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
+pub enum Piece {
+    RailDroit,
+    RailCourbe,
+    RouteDroite,
+    RouteCourbe,
+    /// Passage à niveau : un rail et une route qui se croisent à angle droit.
+    Croisement,
+}
+
+impl Piece {
+    pub const ALL: [Piece; 5] =
+        [Piece::RailDroit, Piece::RailCourbe, Piece::RouteDroite, Piece::RouteCourbe, Piece::Croisement];
+}
+
+/// Fait tourner un masque de côtés de `quarts` quarts de tour, dans le sens
+/// des aiguilles d'une montre.
+fn rotate_mask(mask: u8, quarts: u8) -> u8 {
+    (0..quarts % 4).fold(mask, |m, _| ((m << 1) | (m >> 3)) & 0b1111)
+}
+
+/// Une carte posée : sa pièce et son sens (nombre de quarts de tour).
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
+pub struct Card {
+    pub piece: Piece,
+    pub rot: u8,
+}
+
+impl Card {
+    pub fn new(piece: Piece) -> Card {
+        Card { piece, rot: 0 }
     }
 
-    /// Le type de case d'une gare (ou d'un village) de cette voie.
-    pub const fn pure_kind(self) -> Kind {
-        match self {
-            Network::Rail => Kind::Rail,
-            Network::Route => Kind::Route,
-        }
+    /// La même carte, tournée d'un quart de tour.
+    pub fn rotated(self) -> Card {
+        Card { rot: (self.rot + 1) % 4, ..self }
+    }
+
+    /// Les côtés ouverts de cette voie sur cette carte (masque de bits).
+    pub fn sides(self, network: Network) -> u8 {
+        let base = match (self.piece, network) {
+            (Piece::RailDroit, Network::Rail) | (Piece::RouteDroite, Network::Route) => NORTH | SOUTH,
+            (Piece::RailCourbe, Network::Rail) | (Piece::RouteCourbe, Network::Route) => NORTH | EAST,
+            (Piece::Croisement, Network::Rail) => NORTH | SOUTH,
+            (Piece::Croisement, Network::Route) => EAST | WEST,
+            _ => 0,
+        };
+        rotate_mask(base, self.rot)
     }
 }
 
-/// Une entrée de voie sur un bord de la grille : la case et le côté (0 nord,
-/// 1 est, 2 sud, 3 ouest) par lequel la voie arrive de l'extérieur.
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
-pub struct Gate {
-    pub row: usize,
-    pub col: usize,
-    pub side: usize,
+/// Le paquet d'une partie : le même numéro donne toujours le même ordre.
+pub fn deck(number: u64) -> Vec<Piece> {
+    let mut cards: Vec<Piece> = Piece::ALL.iter().flat_map(|&p| std::iter::repeat_n(p, PER_PIECE)).collect();
+    Rng::new(number).shuffle(&mut cards);
+    cards
 }
 
-impl Gate {
-    pub fn cell(self, n: usize) -> usize {
-        self.row * n + self.col
-    }
+/// Le numéro « du jour » : la date écrite en un seul nombre (20261024).
+pub fn day_number(year: u32, month: u32, day: u32) -> u64 {
+    year as u64 * 10_000 + month as u64 * 100 + day as u64
+}
 
-    /// Le côté est-il bien sur un bord de la grille ?
-    fn on_border(self, n: usize) -> bool {
-        match self.side {
-            0 => self.row == 0,
-            1 => self.col == n - 1,
-            2 => self.row == n - 1,
-            3 => self.col == 0,
-            _ => false,
-        }
+/// La case voisine dans la direction `side` (0 nord, 1 est, 2 sud, 3 ouest).
+pub fn neighbor(cell: usize, side: usize) -> Option<usize> {
+    let (r, c) = (cell / N, cell % N);
+    match side {
+        0 => r.checked_sub(1).map(|r| r * N + c),
+        1 => (c + 1 < N).then(|| r * N + c + 1),
+        2 => (r + 1 < N).then(|| (r + 1) * N + c),
+        _ => c.checked_sub(1).map(|c| r * N + c),
     }
 }
 
-/// Pourquoi une grille remplie n'est pas une solution.
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
-pub enum Fault {
-    /// Une gare n'est pas sur un bord, ou pas sur une case de sa voie.
-    Gate(Network),
-    /// Une case de la voie n'a pas le bon nombre de voisines : elle
-    /// bifurque, se touche elle-même, ou s'arrête.
-    Degree { cell: usize, network: Network },
-    /// Un passage à niveau où les deux voies ne se croisent pas à angle droit.
-    Crossing(usize),
-    /// La voie n'est pas d'un seul tenant entre ses deux gares.
-    Broken(Network),
-    /// Une rangée ou une colonne n'a pas le bon nombre de cases.
-    Count,
+/// Le détail du score d'une grille.
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
+pub struct Score {
+    /// Raccords entre deux cartes voisines de la même voie.
+    pub links: u32,
+    /// Cartes de la plus longue voie ferrée d'un seul tenant.
+    pub longest_rail: u32,
+    /// Cartes de la plus longue route d'un seul tenant.
+    pub longest_route: u32,
+    /// Passages à niveau dont les quatre côtés sont raccordés.
+    pub crossings: u32,
+    /// Côtés ouverts qui n'arrivent sur rien (case vide, bord, ou une
+    /// carte qui ne s'y raccorde pas).
+    pub open_ends: u32,
 }
 
+impl Score {
+    pub fn total(&self) -> i32 {
+        (self.links + self.longest_rail + self.longest_route) as i32 + CROSSING_BONUS * self.crossings as i32
+            - self.open_ends as i32
+    }
+
+    /// Une à trois étoiles (zéro en dessous de la première marche).
+    pub fn stars(&self) -> u32 {
+        let total = self.total();
+        (total >= STARS[0]) as u32 + (total >= STARS[1]) as u32 + (total >= STARS[2]) as u32
+    }
+}
+
+/// Scores à atteindre pour une, deux et trois étoiles.
+/// Réglés d'après le joueur glouton (moyenne 35 sur 200 numéros) ; à ajuster à l'essai.
+pub const STARS: [i32; 3] = [25, 40, 55];
+
+/// La grille de jeu.
 #[derive(Clone, Debug, PartialEq, Eq)]
-pub struct Puzzle {
-    pub n: usize,
-    /// Les deux gares de chaque voie, indexées par `Network as usize`.
-    pub gates: [[Gate; 2]; 2],
-    /// La solution, rangée par rangée.
-    pub solution: Vec<Kind>,
-    /// Les cases dévoilées au départ.
-    pub givens: Vec<bool>,
-    /// Nombre de cases de chaque voie par rangée : `row_counts[réseau][rangée]`.
-    pub row_counts: [Vec<u8>; 2],
-    /// Nombre de cases de chaque voie par colonne.
-    pub col_counts: [Vec<u8>; 2],
-    /// Difficulté estimée (plus c'est grand, plus c'est dur).
-    pub difficulty: u32,
+pub struct Board {
+    pub cells: Vec<Option<Card>>,
 }
 
-/// Les voisines d'une case (nord, est, sud, ouest), `None` hors de la grille.
-pub fn neighbors(n: usize, cell: usize) -> [Option<usize>; 4] {
-    let (r, c) = ((cell / n) as isize, (cell % n) as isize);
-    DIRS.map(|(dr, dc)| {
-        let (nr, nc) = (r + dr, c + dc);
-        (nr >= 0 && nc >= 0 && (nr as usize) < n && (nc as usize) < n).then(|| nr as usize * n + nc as usize)
-    })
+impl Default for Board {
+    fn default() -> Self {
+        Board { cells: vec![None; N * N] }
+    }
 }
 
-fn is_member(kind: Kind, network: Network) -> bool {
-    kind.bit() & network.member_mask() != 0
-}
-
-/// Vérifie que `cells` forme bien deux voies valides entre les gares données,
-/// sans regarder les chiffres des bords.
-pub fn check_structure(n: usize, gates: &[[Gate; 2]; 2], cells: &[Kind]) -> Result<(), Fault> {
-    for network in Network::ALL {
-        let [a, b] = gates[network as usize];
-        for g in [a, b] {
-            if g.row >= n || g.col >= n || !g.on_border(n) || cells[g.cell(n)] != network.pure_kind() {
-                return Err(Fault::Gate(network));
-            }
-        }
-        if a.cell(n) == b.cell(n) {
-            return Err(Fault::Gate(network));
-        }
-    }
-    for network in Network::ALL {
-        let ends = gates[network as usize].map(|g| g.cell(n));
-        let mut total = 0;
-        for (i, &kind) in cells.iter().enumerate() {
-            if !is_member(kind, network) {
-                continue;
-            }
-            total += 1;
-            let degree = neighbors(n, i).iter().flatten().filter(|&&j| is_member(cells[j], network)).count();
-            let needed = if ends.contains(&i) { 1 } else { 2 };
-            if degree != needed {
-                return Err(Fault::Degree { cell: i, network });
-            }
-        }
-        // On suit la voie de la première gare : elle doit atteindre la
-        // seconde en passant par toutes les cases.
-        let (mut prev, mut cur, mut seen) = (usize::MAX, ends[0], 1);
-        while cur != ends[1] {
-            let next = neighbors(n, cur)
-                .iter()
-                .flatten()
-                .copied()
-                .find(|&j| j != prev && is_member(cells[j], network));
-            let Some(next) = next else { return Err(Fault::Broken(network)) };
-            (prev, cur) = (cur, next);
-            seen += 1;
-            if seen > total {
-                return Err(Fault::Broken(network));
-            }
-        }
-        if seen != total {
-            return Err(Fault::Broken(network));
-        }
-    }
-    for (i, &kind) in cells.iter().enumerate() {
-        if kind != Kind::Croisement {
-            continue;
-        }
-        let nbs = neighbors(n, i);
-        if nbs.iter().any(Option::is_none) {
-            return Err(Fault::Crossing(i));
-        }
-        let side_mask = |network: Network| {
-            (0..4).filter(|&d| is_member(cells[nbs[d].unwrap()], network)).fold(0u8, |m, d| m | (1 << d))
-        };
-        let (rail, route) = (side_mask(Network::Rail), side_mask(Network::Route));
-        const VERTICAL: u8 = 0b0101;
-        const HORIZONTAL: u8 = 0b1010;
-        if !((rail == VERTICAL && route == HORIZONTAL) || (rail == HORIZONTAL && route == VERTICAL)) {
-            return Err(Fault::Crossing(i));
-        }
-    }
-    Ok(())
-}
-
-impl Puzzle {
-    /// Construit une grille à partir de sa solution ; les chiffres des bords
-    /// en sont déduits. Refuse une solution qui ne respecte pas les règles.
-    pub fn new(
-        n: usize,
-        gates: [[Gate; 2]; 2],
-        solution: Vec<Kind>,
-        givens: Vec<bool>,
-        difficulty: u32,
-    ) -> Result<Puzzle, Fault> {
-        assert!(n <= MAX && solution.len() == n * n && givens.len() == n * n);
-        check_structure(n, &gates, &solution)?;
-        let count = |network: Network, cells: &mut dyn Iterator<Item = usize>| {
-            cells.filter(|&i| is_member(solution[i], network)).count() as u8
-        };
-        let row_counts = Network::ALL.map(|net| (0..n).map(|r| count(net, &mut (0..n).map(|c| r * n + c))).collect());
-        let col_counts = Network::ALL.map(|net| (0..n).map(|c| count(net, &mut (0..n).map(|r| r * n + c))).collect());
-        Ok(Puzzle { n, gates, solution, givens, row_counts, col_counts, difficulty })
+impl Board {
+    pub fn get(&self, row: usize, col: usize) -> Option<Card> {
+        self.cells[row * N + col]
     }
 
-    pub fn kind(&self, row: usize, col: usize) -> Kind {
-        self.solution[row * self.n + col]
-    }
-
-    /// Cette case est-elle un passage à niveau (marqué dès le départ) ?
-    pub fn is_crossing(&self, cell: usize) -> bool {
-        self.solution[cell] == Kind::Croisement
-    }
-
-    /// Une ligne de texte : `n gares-rail gares-route solution dévoilées difficulté`.
-    /// Une gare s'écrit en trois chiffres (rangée, colonne, côté), deux gares
-    /// sont séparées par un point, par exemple `203.451`.
-    pub fn to_line(&self) -> String {
-        let gates = |net: Network| {
-            self.gates[net as usize].map(|g| format!("{}{}{}", g.row, g.col, g.side)).join(".")
-        };
-        let solution: String = self.solution.iter().map(|k| k.to_char()).collect();
-        let givens: String = self.givens.iter().map(|&g| if g { '1' } else { '0' }).collect();
-        format!(
-            "{} {} {} {} {} {}",
-            self.n,
-            gates(Network::Rail),
-            gates(Network::Route),
-            solution,
-            givens,
-            self.difficulty
-        )
-    }
-
-    pub fn from_line(line: &str) -> Option<Puzzle> {
-        let mut parts = line.split_whitespace();
-        let n: usize = parts.next()?.parse().ok()?;
-        let mut gates = [[Gate { row: 0, col: 0, side: 0 }; 2]; 2];
-        for net in Network::ALL {
-            let text = parts.next()?;
-            let mut it = text.split('.');
-            for k in 0..2 {
-                let d: Vec<usize> = it.next()?.chars().map(|c| c.to_digit(10).map(|v| v as usize)).collect::<Option<_>>()?;
-                let [row, col, side] = d[..] else { return None };
-                gates[net as usize][k] = Gate { row, col, side };
-            }
+    /// Pose une carte sur une case libre. Faux si la case est prise.
+    pub fn place(&mut self, cell: usize, card: Card) -> bool {
+        if self.cells[cell].is_some() {
+            return false;
         }
-        let solution: Vec<Kind> = parts.next()?.chars().map(Kind::from_char).collect::<Option<_>>()?;
-        let givens: Vec<bool> = parts.next()?.chars().map(|c| c == '1').collect();
-        let difficulty = parts.next()?.parse().ok()?;
-        if n == 0 || n > MAX || solution.len() != n * n || givens.len() != n * n {
-            return None;
+        self.cells[cell] = Some(card);
+        true
+    }
+
+    pub fn remove(&mut self, cell: usize) -> Option<Card> {
+        self.cells[cell].take()
+    }
+
+    /// Ce côté de cette case est-il raccordé à une carte voisine de la même voie ?
+    pub fn is_linked(&self, cell: usize, side: usize, network: Network) -> bool {
+        let Some(card) = self.cells[cell] else { return false };
+        if card.sides(network) & (1 << side) == 0 {
+            return false;
         }
-        Puzzle::new(n, gates, solution, givens, difficulty).ok()
+        neighbor(cell, side)
+            .and_then(|j| self.cells[j])
+            .is_some_and(|other| other.sides(network) & (1 << ((side + 2) % 4)) != 0)
     }
 
-    /// La grille remplie par le joueur est-elle la solution ? (La solution
-    /// est unique : il n'y en a pas d'autre.)
-    pub fn is_solved_by(&self, cells: &[Kind]) -> bool {
-        cells == self.solution.as_slice()
-    }
-
-    /// Vérifie une grille remplie : règles de tracé, puis chiffres des bords.
-    pub fn check(&self, cells: &[Kind]) -> Result<(), Fault> {
-        check_structure(self.n, &self.gates, cells)?;
-        let n = self.n;
-        for net in Network::ALL {
-            for k in 0..n {
-                let row = (0..n).filter(|&c| is_member(cells[k * n + c], net)).count();
-                let col = (0..n).filter(|&r| is_member(cells[r * n + k], net)).count();
-                if row != self.row_counts[net as usize][k] as usize || col != self.col_counts[net as usize][k] as usize {
-                    return Err(Fault::Count);
+    pub fn score(&self) -> Score {
+        let mut score = Score::default();
+        let mut link_sides = 0;
+        for network in Network::ALL {
+            for (cell, card) in self.cells.iter().enumerate() {
+                let Some(card) = card else { continue };
+                for side in 0..4 {
+                    if card.sides(network) & (1 << side) == 0 {
+                        continue;
+                    }
+                    if self.is_linked(cell, side, network) {
+                        link_sides += 1;
+                    } else {
+                        score.open_ends += 1;
+                    }
                 }
             }
+            let longest = self.longest(network);
+            match network {
+                Network::Rail => score.longest_rail = longest,
+                Network::Route => score.longest_route = longest,
+            }
         }
-        Ok(())
+        // Chaque raccord a été compté une fois par côté, donc deux fois.
+        score.links = link_sides / 2;
+        score.crossings = (0..N * N)
+            .filter(|&cell| {
+                self.cells[cell].is_some_and(|c| c.piece == Piece::Croisement)
+                    && Network::ALL.iter().all(|&net| {
+                        (0..4).filter(|&s| self.cells[cell].unwrap().sides(net) & (1 << s) != 0)
+                            .all(|s| self.is_linked(cell, s, net))
+                    })
+            })
+            .count() as u32;
+        score
+    }
+
+    /// Taille du plus grand groupe de cartes raccordées d'une même voie.
+    fn longest(&self, network: Network) -> u32 {
+        let mut seen = [false; N * N];
+        let mut best = 0;
+        for start in 0..N * N {
+            let on_network = |i: usize| self.cells[i].is_some_and(|c| c.sides(network) != 0);
+            if seen[start] || !on_network(start) {
+                continue;
+            }
+            let (mut stack, mut size) = (vec![start], 0);
+            seen[start] = true;
+            while let Some(i) = stack.pop() {
+                size += 1;
+                for side in 0..4 {
+                    if !self.is_linked(i, side, network) {
+                        continue;
+                    }
+                    let j = neighbor(i, side).unwrap();
+                    if !seen[j] {
+                        seen[j] = true;
+                        stack.push(j);
+                    }
+                }
+            }
+            best = best.max(size);
+        }
+        best
+    }
+}
+
+/// Une partie en cours : un numéro, le paquet, la grille, l'historique.
+#[derive(Clone, Debug)]
+pub struct Game {
+    pub number: u64,
+    pub deck: Vec<Piece>,
+    pub board: Board,
+    /// Cases où l'on a posé les cartes, dans l'ordre (pour annuler).
+    pub history: Vec<usize>,
+}
+
+impl Game {
+    pub fn new(number: u64) -> Game {
+        Game { number, deck: deck(number), board: Board::default(), history: Vec::new() }
+    }
+
+    /// Combien de cartes ont déjà été posées.
+    pub fn played(&self) -> usize {
+        self.history.len()
+    }
+
+    pub fn is_finished(&self) -> bool {
+        self.played() >= DECK_SIZE
+    }
+
+    /// La carte à poser maintenant.
+    pub fn current(&self) -> Option<Piece> {
+        self.deck.get(self.played()).copied()
+    }
+
+    /// Les deux cartes suivantes (moins s'il n'en reste plus).
+    pub fn upcoming(&self) -> &[Piece] {
+        let from = (self.played() + 1).min(DECK_SIZE);
+        &self.deck[from..(from + 2).min(DECK_SIZE)]
+    }
+
+    /// Pose la carte du dessus sur `cell`, tournée de `rot` quarts de tour.
+    /// Faux si la partie est finie ou si la case est prise.
+    pub fn play(&mut self, cell: usize, rot: u8) -> bool {
+        let Some(piece) = self.current() else { return false };
+        if !self.board.place(cell, Card { piece, rot: rot % 4 }) {
+            return false;
+        }
+        self.history.push(cell);
+        true
+    }
+
+    /// Reprend la dernière carte posée.
+    pub fn undo(&mut self) -> bool {
+        match self.history.pop() {
+            Some(cell) => {
+                self.board.remove(cell);
+                true
+            }
+            None => false,
+        }
+    }
+
+    pub fn score(&self) -> Score {
+        self.board.score()
     }
 }
 
