@@ -1,0 +1,1270 @@
+{
+ "vehicules": [
+  {
+   "id": "aerotaxi",
+   "univers": "cyberpunk",
+   "classe": "voiture",
+   "noms": {
+    "fr": "Aérotaxi",
+    "en": "Air Taxi",
+    "de": "Lufttaxi",
+    "es": "Aerotaxi",
+    "it": "Aerotaxi"
+   },
+   "longueur": 1.8,
+   "largeur": 0.9,
+   "points_deblocage": 0,
+   "couleur_2": "#ffd23f",
+   "couleur_3": "#2d3142",
+   "pieces": [
+    {
+     "forme": "cube",
+     "position": [
+      0,
+      0.5,
+      0
+     ],
+     "taille": [
+      1.6,
+      0.28,
+      0.82
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      0
+     ],
+     "matiere": "couleur_2"
+    },
+    {
+     "forme": "cube",
+     "position": [
+      -0.1,
+      0.78,
+      0
+     ],
+     "taille": [
+      0.9,
+      0.3,
+      0.74
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      0
+     ],
+     "matiere": "bulle"
+    },
+    {
+     "forme": "cube",
+     "position": [
+      -0.1,
+      0.96,
+      0
+     ],
+     "taille": [
+      0.95,
+      0.05,
+      0.78
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      0
+     ],
+     "matiere": "couleur_2"
+    },
+    {
+     "forme": "cube",
+     "position": [
+      0.4,
+      0.72,
+      0
+     ],
+     "taille": [
+      0.4,
+      0.24,
+      0.7
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      -20
+     ],
+     "matiere": "couleur_2"
+    },
+    {
+     "forme": "cube",
+     "position": [
+      -0.1,
+      1.06,
+      0
+     ],
+     "taille": [
+      0.3,
+      0.1,
+      0.14
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      0
+     ],
+     "matiere": "phare",
+     "nom": "enseigne"
+    },
+    {
+     "forme": "cube",
+     "position": [
+      0.82,
+      0.5,
+      0.25
+     ],
+     "taille": [
+      0.04,
+      0.08,
+      0.14
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      0
+     ],
+     "matiere": "phare"
+    },
+    {
+     "forme": "cube",
+     "position": [
+      0.82,
+      0.5,
+      -0.25
+     ],
+     "taille": [
+      0.04,
+      0.08,
+      0.14
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      0
+     ],
+     "matiere": "phare"
+    },
+    {
+     "forme": "cube",
+     "position": [
+      -0.82,
+      0.5,
+      0.25
+     ],
+     "taille": [
+      0.04,
+      0.08,
+      0.14
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      0
+     ],
+     "matiere": "lumiere_rouge"
+    },
+    {
+     "forme": "cube",
+     "position": [
+      -0.82,
+      0.5,
+      -0.25
+     ],
+     "taille": [
+      0.04,
+      0.08,
+      0.14
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      0
+     ],
+     "matiere": "lumiere_rouge"
+    },
+    {
+     "forme": "cube",
+     "position": [
+      0.0,
+      0.33,
+      0
+     ],
+     "taille": [
+      1.6,
+      0.04,
+      0.6
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      0
+     ],
+     "matiere": "couleur_3"
+    },
+    {
+     "forme": "cube",
+     "position": [
+      0.5,
+      0.2,
+      0.28
+     ],
+     "taille": [
+      0.5,
+      0.05,
+      0.3
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      0
+     ],
+     "matiere": "lumiere_bleue",
+     "nom": "coussin"
+    },
+    {
+     "forme": "cube",
+     "position": [
+      0.5,
+      0.2,
+      -0.28
+     ],
+     "taille": [
+      0.5,
+      0.05,
+      0.3
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      0
+     ],
+     "matiere": "lumiere_bleue",
+     "nom": "coussin"
+    },
+    {
+     "forme": "cube",
+     "position": [
+      -0.5,
+      0.2,
+      0.28
+     ],
+     "taille": [
+      0.5,
+      0.05,
+      0.3
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      0
+     ],
+     "matiere": "lumiere_bleue",
+     "nom": "coussin"
+    },
+    {
+     "forme": "cube",
+     "position": [
+      -0.5,
+      0.2,
+      -0.28
+     ],
+     "taille": [
+      0.5,
+      0.05,
+      0.3
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      0
+     ],
+     "matiere": "lumiere_bleue",
+     "nom": "coussin"
+    }
+   ],
+   "parties_mobiles": [
+    {
+     "piece": "enseigne",
+     "animation": "clignote"
+    },
+    {
+     "piece": "coussin",
+     "animation": "pulse"
+    },
+    {
+     "piece": "*",
+     "animation": "flotte_verticale_0.03"
+    }
+   ]
+  },
+  {
+   "id": "camion_cyber",
+   "univers": "cyberpunk",
+   "classe": "camion",
+   "noms": {
+    "fr": "Camion Autonome",
+    "en": "Self-Driving Truck",
+    "de": "Autonomer Laster",
+    "es": "Camión Autónomo",
+    "it": "Camion Autonomo"
+   },
+   "longueur": 3.0,
+   "largeur": 1.0,
+   "points_deblocage": 300,
+   "couleur_2": "#3a3f5a",
+   "couleur_3": "#d8dce8",
+   "pieces": [
+    {
+     "forme": "cube",
+     "position": [
+      0,
+      0.3,
+      0
+     ],
+     "taille": [
+      2.8,
+      0.1,
+      0.7
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      0
+     ],
+     "matiere": "sombre"
+    },
+    {
+     "forme": "cube",
+     "position": [
+      0.95,
+      0.65,
+      0
+     ],
+     "taille": [
+      0.9,
+      0.7,
+      0.86
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      0
+     ],
+     "matiere": "couleur_2"
+    },
+    {
+     "forme": "cube",
+     "position": [
+      1.15,
+      0.9,
+      0
+     ],
+     "taille": [
+      0.45,
+      0.24,
+      0.78
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      0
+     ],
+     "matiere": "bulle"
+    },
+    {
+     "forme": "cube",
+     "position": [
+      -0.4,
+      0.9,
+      0
+     ],
+     "taille": [
+      1.9,
+      1.1,
+      0.96
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      0
+     ],
+     "matiere": "couleur_3"
+    },
+    {
+     "forme": "cube",
+     "position": [
+      -0.4,
+      0.9,
+      0.49
+     ],
+     "taille": [
+      1.7,
+      0.08,
+      0.02
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      0
+     ],
+     "matiere": "lumiere_bleue",
+     "nom": "bande"
+    },
+    {
+     "forme": "cube",
+     "position": [
+      -0.4,
+      0.9,
+      -0.49
+     ],
+     "taille": [
+      1.7,
+      0.08,
+      0.02
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      0
+     ],
+     "matiere": "lumiere_bleue",
+     "nom": "bande"
+    },
+    {
+     "forme": "cube",
+     "position": [
+      1.46,
+      0.5,
+      0.28
+     ],
+     "taille": [
+      0.04,
+      0.08,
+      0.14
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      0
+     ],
+     "matiere": "phare"
+    },
+    {
+     "forme": "cube",
+     "position": [
+      1.46,
+      0.5,
+      -0.28
+     ],
+     "taille": [
+      0.04,
+      0.08,
+      0.14
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      0
+     ],
+     "matiere": "phare"
+    },
+    {
+     "forme": "sphere",
+     "position": [
+      -1.0,
+      1.55,
+      0
+     ],
+     "taille": [
+      0.12,
+      0.12,
+      0.12
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      0
+     ],
+     "matiere": "lumiere_rouge",
+     "nom": "gyro"
+    },
+    {
+     "forme": "cube",
+     "position": [
+      1.0,
+      0.2,
+      0.3
+     ],
+     "taille": [
+      0.5,
+      0.05,
+      0.3
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      0
+     ],
+     "matiere": "lumiere_bleue",
+     "nom": "coussin"
+    },
+    {
+     "forme": "cube",
+     "position": [
+      1.0,
+      0.2,
+      -0.3
+     ],
+     "taille": [
+      0.5,
+      0.05,
+      0.3
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      0
+     ],
+     "matiere": "lumiere_bleue",
+     "nom": "coussin"
+    },
+    {
+     "forme": "cube",
+     "position": [
+      0.0,
+      0.2,
+      0.3
+     ],
+     "taille": [
+      0.5,
+      0.05,
+      0.3
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      0
+     ],
+     "matiere": "lumiere_bleue",
+     "nom": "coussin"
+    },
+    {
+     "forme": "cube",
+     "position": [
+      0.0,
+      0.2,
+      -0.3
+     ],
+     "taille": [
+      0.5,
+      0.05,
+      0.3
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      0
+     ],
+     "matiere": "lumiere_bleue",
+     "nom": "coussin"
+    },
+    {
+     "forme": "cube",
+     "position": [
+      -1.0,
+      0.2,
+      0.3
+     ],
+     "taille": [
+      0.5,
+      0.05,
+      0.3
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      0
+     ],
+     "matiere": "lumiere_bleue",
+     "nom": "coussin"
+    },
+    {
+     "forme": "cube",
+     "position": [
+      -1.0,
+      0.2,
+      -0.3
+     ],
+     "taille": [
+      0.5,
+      0.05,
+      0.3
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      0
+     ],
+     "matiere": "lumiere_bleue",
+     "nom": "coussin"
+    }
+   ],
+   "parties_mobiles": [
+    {
+     "piece": "gyro",
+     "animation": "pulse"
+    },
+    {
+     "piece": "bande",
+     "animation": "pulse"
+    },
+    {
+     "piece": "coussin",
+     "animation": "pulse"
+    },
+    {
+     "piece": "*",
+     "animation": "flotte_verticale_0.03"
+    }
+   ]
+  },
+  {
+   "id": "bus_maglev",
+   "univers": "cyberpunk",
+   "classe": "bus",
+   "noms": {
+    "fr": "Bus Maglev",
+    "en": "Maglev Bus",
+    "de": "Maglev-Bus",
+    "es": "Autobús Maglev",
+    "it": "Bus Maglev"
+   },
+   "longueur": 3.7,
+   "largeur": 0.95,
+   "points_deblocage": 800,
+   "couleur_2": "#aab0c4",
+   "couleur_3": "#ff3fa8",
+   "pieces": [
+    {
+     "forme": "cube",
+     "position": [
+      0,
+      0.3,
+      0
+     ],
+     "taille": [
+      3.5,
+      0.1,
+      0.72
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      0
+     ],
+     "matiere": "sombre"
+    },
+    {
+     "forme": "cube",
+     "position": [
+      0,
+      0.72,
+      0
+     ],
+     "taille": [
+      3.6,
+      0.8,
+      0.9
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      0
+     ],
+     "matiere": "couleur_2"
+    },
+    {
+     "forme": "cube",
+     "position": [
+      0.0,
+      0.95,
+      0.455
+     ],
+     "taille": [
+      3.0,
+      0.3,
+      0.02
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      0
+     ],
+     "matiere": "bulle"
+    },
+    {
+     "forme": "cube",
+     "position": [
+      0.0,
+      0.95,
+      -0.455
+     ],
+     "taille": [
+      3.0,
+      0.3,
+      0.02
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      0
+     ],
+     "matiere": "bulle"
+    },
+    {
+     "forme": "cone",
+     "position": [
+      1.9,
+      0.72,
+      0
+     ],
+     "taille": [
+      0.7,
+      0.8,
+      0.9
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      -90
+     ],
+     "matiere": "couleur_2"
+    },
+    {
+     "forme": "cube",
+     "position": [
+      0.0,
+      1.15,
+      0
+     ],
+     "taille": [
+      3.5,
+      0.06,
+      0.84
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      0
+     ],
+     "matiere": "couleur_3"
+    },
+    {
+     "forme": "cube",
+     "position": [
+      0.0,
+      0.55,
+      0.455
+     ],
+     "taille": [
+      3.6,
+      0.05,
+      0.02
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      0
+     ],
+     "matiere": "lumiere_bleue",
+     "nom": "bande"
+    },
+    {
+     "forme": "cube",
+     "position": [
+      0.0,
+      0.55,
+      -0.455
+     ],
+     "taille": [
+      3.6,
+      0.05,
+      0.02
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      0
+     ],
+     "matiere": "lumiere_bleue",
+     "nom": "bande"
+    },
+    {
+     "forme": "cube",
+     "position": [
+      2.2,
+      0.8,
+      0.0
+     ],
+     "taille": [
+      0.04,
+      0.1,
+      0.5
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      0
+     ],
+     "matiere": "phare"
+    },
+    {
+     "forme": "cube",
+     "position": [
+      1.2,
+      0.2,
+      0.32
+     ],
+     "taille": [
+      0.5,
+      0.05,
+      0.3
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      0
+     ],
+     "matiere": "lumiere_bleue",
+     "nom": "coussin"
+    },
+    {
+     "forme": "cube",
+     "position": [
+      1.2,
+      0.2,
+      -0.32
+     ],
+     "taille": [
+      0.5,
+      0.05,
+      0.3
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      0
+     ],
+     "matiere": "lumiere_bleue",
+     "nom": "coussin"
+    },
+    {
+     "forme": "cube",
+     "position": [
+      -0.2,
+      0.2,
+      0.32
+     ],
+     "taille": [
+      0.5,
+      0.05,
+      0.3
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      0
+     ],
+     "matiere": "lumiere_bleue",
+     "nom": "coussin"
+    },
+    {
+     "forme": "cube",
+     "position": [
+      -0.2,
+      0.2,
+      -0.32
+     ],
+     "taille": [
+      0.5,
+      0.05,
+      0.3
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      0
+     ],
+     "matiere": "lumiere_bleue",
+     "nom": "coussin"
+    },
+    {
+     "forme": "cube",
+     "position": [
+      -1.4,
+      0.2,
+      0.32
+     ],
+     "taille": [
+      0.5,
+      0.05,
+      0.3
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      0
+     ],
+     "matiere": "lumiere_bleue",
+     "nom": "coussin"
+    },
+    {
+     "forme": "cube",
+     "position": [
+      -1.4,
+      0.2,
+      -0.32
+     ],
+     "taille": [
+      0.5,
+      0.05,
+      0.3
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      0
+     ],
+     "matiere": "lumiere_bleue",
+     "nom": "coussin"
+    }
+   ],
+   "parties_mobiles": [
+    {
+     "piece": "bande",
+     "animation": "pulse"
+    },
+    {
+     "piece": "coussin",
+     "animation": "pulse"
+    },
+    {
+     "piece": "*",
+     "animation": "flotte_verticale_0.03"
+    }
+   ]
+  },
+  {
+   "id": "muscle_neon",
+   "univers": "cyberpunk",
+   "classe": "voiture",
+   "noms": {
+    "fr": "Bolide Néon",
+    "en": "Neon Muscle Car",
+    "de": "Neon-Bolide",
+    "es": "Bólido de Neón",
+    "it": "Bolide al Neon"
+   },
+   "longueur": 2.0,
+   "largeur": 0.9,
+   "points_deblocage": 500,
+   "couleur_2": "#ff3fa8",
+   "couleur_3": "#37e6ff",
+   "pieces": [
+    {
+     "forme": "cube",
+     "position": [
+      0,
+      0.5,
+      0
+     ],
+     "taille": [
+      1.9,
+      0.3,
+      0.85
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      0
+     ],
+     "matiere": "couleur_2"
+    },
+    {
+     "forme": "cube",
+     "position": [
+      -0.2,
+      0.8,
+      0
+     ],
+     "taille": [
+      0.9,
+      0.3,
+      0.74
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      0
+     ],
+     "matiere": "bulle"
+    },
+    {
+     "forme": "cube",
+     "position": [
+      -0.2,
+      0.97,
+      0
+     ],
+     "taille": [
+      0.95,
+      0.05,
+      0.78
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      0
+     ],
+     "matiere": "couleur_2"
+    },
+    {
+     "forme": "cube",
+     "position": [
+      0.7,
+      0.62,
+      0
+     ],
+     "taille": [
+      0.6,
+      0.12,
+      0.8
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      -8
+     ],
+     "matiere": "couleur_2"
+    },
+    {
+     "forme": "cube",
+     "position": [
+      0.0,
+      0.62,
+      0.43
+     ],
+     "taille": [
+      1.9,
+      0.05,
+      0.02
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      0
+     ],
+     "matiere": "couleur_3",
+     "nom": "bande"
+    },
+    {
+     "forme": "cube",
+     "position": [
+      0.0,
+      0.62,
+      -0.43
+     ],
+     "taille": [
+      1.9,
+      0.05,
+      0.02
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      0
+     ],
+     "matiere": "couleur_3",
+     "nom": "bande"
+    },
+    {
+     "forme": "cube",
+     "position": [
+      0.95,
+      0.5,
+      0.28
+     ],
+     "taille": [
+      0.04,
+      0.08,
+      0.16
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      0
+     ],
+     "matiere": "phare"
+    },
+    {
+     "forme": "cube",
+     "position": [
+      0.95,
+      0.5,
+      -0.28
+     ],
+     "taille": [
+      0.04,
+      0.08,
+      0.16
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      0
+     ],
+     "matiere": "phare"
+    },
+    {
+     "forme": "cube",
+     "position": [
+      -0.95,
+      0.55,
+      0.0
+     ],
+     "taille": [
+      0.04,
+      0.08,
+      0.7
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      0
+     ],
+     "matiere": "lumiere_rouge"
+    },
+    {
+     "forme": "cube",
+     "position": [
+      -0.8,
+      0.95,
+      0
+     ],
+     "taille": [
+      0.3,
+      0.05,
+      0.9
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      0
+     ],
+     "matiere": "couleur_3"
+    },
+    {
+     "forme": "cube",
+     "position": [
+      0.6,
+      0.2,
+      0.3
+     ],
+     "taille": [
+      0.5,
+      0.05,
+      0.3
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      0
+     ],
+     "matiere": "lumiere_bleue",
+     "nom": "coussin"
+    },
+    {
+     "forme": "cube",
+     "position": [
+      0.6,
+      0.2,
+      -0.3
+     ],
+     "taille": [
+      0.5,
+      0.05,
+      0.3
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      0
+     ],
+     "matiere": "lumiere_bleue",
+     "nom": "coussin"
+    },
+    {
+     "forme": "cube",
+     "position": [
+      -0.6,
+      0.2,
+      0.3
+     ],
+     "taille": [
+      0.5,
+      0.05,
+      0.3
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      0
+     ],
+     "matiere": "lumiere_bleue",
+     "nom": "coussin"
+    },
+    {
+     "forme": "cube",
+     "position": [
+      -0.6,
+      0.2,
+      -0.3
+     ],
+     "taille": [
+      0.5,
+      0.05,
+      0.3
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      0
+     ],
+     "matiere": "lumiere_bleue",
+     "nom": "coussin"
+    }
+   ],
+   "parties_mobiles": [
+    {
+     "piece": "bande",
+     "animation": "pulse"
+    },
+    {
+     "piece": "coussin",
+     "animation": "pulse"
+    },
+    {
+     "piece": "*",
+     "animation": "flotte_verticale_0.03"
+    }
+   ]
+  }
+ ]
+}

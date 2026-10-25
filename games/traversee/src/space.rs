@@ -105,6 +105,8 @@ fn update_sky(
         Some(game_common::ambiance::Moment::Jour)
     } else if biome == Biome::Halloween {
         Some(game_common::ambiance::Moment::Soir)
+    } else if biome == Biome::Cyber {
+        Some(game_common::ambiance::Moment::Nuit)
     } else {
         None
     };

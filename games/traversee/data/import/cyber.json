@@ -1,0 +1,5178 @@
+{
+ "monde": {
+  "id": "cyberpunk",
+  "nom": {
+   "fr": "Néo-Croâ",
+   "en": "Neo-Croak",
+   "de": "Neo-Quak",
+   "es": "Neo-Croa",
+   "it": "Neo-Gra"
+  },
+  "points_deblocage": 4200,
+  "ciel": "#0b0d1a",
+  "brume": "#1a1030",
+  "sol_voie_route": "#171a26",
+  "marquage": "#37e6ff",
+  "herbe_a": "#363b52",
+  "herbe_b": "#2f3348",
+  "eau": "#1a6fd0",
+  "rondin": "#2d3142",
+  "obstacles": [
+   {
+    "id": "lampadaire",
+    "nom": {
+     "fr": "Lampadaire Néon",
+     "en": "Neon Lamppost",
+     "de": "Neon-Laterne",
+     "es": "Farola de Neón",
+     "it": "Lampione al Neon"
+    },
+    "couleur_2": "#2d3142",
+    "couleur_3": "#37e6ff",
+    "pieces": [
+     {
+      "forme": "cube",
+      "position": [
+       0,
+       0.04,
+       0
+      ],
+      "taille": [
+       0.45,
+       0.08,
+       0.45
+      ],
+      "rotation_deg": [
+       0,
+       0,
+       0
+      ],
+      "matiere": "couleur_2"
+     },
+     {
+      "forme": "cylindre",
+      "position": [
+       0,
+       0.6,
+       0
+      ],
+      "taille": [
+       0.1,
+       1.2,
+       0.1
+      ],
+      "rotation_deg": [
+       0,
+       0,
+       0
+      ],
+      "matiere": "couleur_2"
+     },
+     {
+      "forme": "cylindre",
+      "position": [
+       0,
+       1.25,
+       0
+      ],
+      "taille": [
+       0.5,
+       0.05,
+       0.5
+      ],
+      "rotation_deg": [
+       0,
+       0,
+       0
+      ],
+      "matiere": "lumiere_bleue",
+      "nom": "anneau"
+     },
+     {
+      "forme": "sphere",
+      "position": [
+       0,
+       1.32,
+       0
+      ],
+      "taille": [
+       0.18,
+       0.12,
+       0.18
+      ],
+      "rotation_deg": [
+       0,
+       0,
+       0
+      ],
+      "matiere": "phare"
+     }
+    ],
+    "parties_mobiles": [
+     {
+      "piece": "anneau",
+      "animation": "pulse"
+     }
+    ],
+    "roll": 1,
+    "taille_case": 1
+   },
+   {
+    "id": "distributeur_neon",
+    "nom": {
+     "fr": "Distributeur Néon",
+     "en": "Neon Vending Machine",
+     "de": "Neon-Automat",
+     "es": "Máquina de Neón",
+     "it": "Distributore al Neon"
+    },
+    "couleur_2": "#3a3f5a",
+    "couleur_3": "#ff3fa8",
+    "pieces": [
+     {
+      "forme": "cube",
+      "position": [
+       0,
+       0.55,
+       0
+      ],
+      "taille": [
+       0.7,
+       1.1,
+       0.6
+      ],
+      "rotation_deg": [
+       0,
+       0,
+       0
+      ],
+      "matiere": "couleur_2"
+     },
+     {
+      "forme": "cube",
+      "position": [
+       0.0,
+       0.7,
+       0.31
+      ],
+      "taille": [
+       0.5,
+       0.5,
+       0.02
+      ],
+      "rotation_deg": [
+       0,
+       0,
+       0
+      ],
+      "matiere": "lumiere_bleue",
+      "nom": "ecran"
+     },
+     {
+      "forme": "cube",
+      "position": [
+       0.0,
+       0.25,
+       0.31
+      ],
+      "taille": [
+       0.5,
+       0.12,
+       0.02
+      ],
+      "rotation_deg": [
+       0,
+       0,
+       0
+      ],
+      "matiere": "couleur_3"
+     },
+     {
+      "forme": "cube",
+      "position": [
+       0.0,
+       1.12,
+       0
+      ],
+      "taille": [
+       0.74,
+       0.04,
+       0.64
+      ],
+      "rotation_deg": [
+       0,
+       0,
+       0
+      ],
+      "matiere": "sombre"
+     },
+     {
+      "forme": "cube",
+      "position": [
+       0.36,
+       0.55,
+       0.0
+      ],
+      "taille": [
+       0.02,
+       1.0,
+       0.5
+      ],
+      "rotation_deg": [
+       0,
+       0,
+       0
+      ],
+      "matiere": "couleur_3"
+     }
+    ],
+    "parties_mobiles": [
+     {
+      "piece": "ecran",
+      "animation": "clignote_lent"
+     }
+    ],
+    "roll": 2,
+    "taille_case": 1
+   },
+   {
+    "id": "conteneur",
+    "nom": {
+     "fr": "Conteneur Louche",
+     "en": "Dodgy Container",
+     "de": "Verdächtiger Container",
+     "es": "Contenedor Sospechoso",
+     "it": "Container Sospetto"
+    },
+    "couleur_2": "#2d3142",
+    "couleur_3": "#ff9a3f",
+    "pieces": [
+     {
+      "forme": "cube",
+      "position": [
+       0,
+       0.4,
+       0
+      ],
+      "taille": [
+       1.0,
+       0.8,
+       0.7
+      ],
+      "rotation_deg": [
+       0,
+       0,
+       0
+      ],
+      "matiere": "couleur_2"
+     },
+     {
+      "forme": "cube",
+      "position": [
+       0,
+       0.4,
+       0.36
+      ],
+      "taille": [
+       0.9,
+       0.6,
+       0.02
+      ],
+      "rotation_deg": [
+       0,
+       0,
+       0
+      ],
+      "matiere": "couleur_3"
+     },
+     {
+      "forme": "cube",
+      "position": [
+       0,
+       0.4,
+       -0.36
+      ],
+      "taille": [
+       0.9,
+       0.6,
+       0.02
+      ],
+      "rotation_deg": [
+       0,
+       0,
+       0
+      ],
+      "matiere": "couleur_3"
+     },
+     {
+      "forme": "cube",
+      "position": [
+       0,
+       0.82,
+       0
+      ],
+      "taille": [
+       1.04,
+       0.04,
+       0.74
+      ],
+      "rotation_deg": [
+       0,
+       0,
+       0
+      ],
+      "matiere": "sombre"
+     },
+     {
+      "forme": "cube",
+      "position": [
+       0.2,
+       0.2,
+       0.36
+      ],
+      "taille": [
+       0.05,
+       0.05,
+       0.03
+      ],
+      "rotation_deg": [
+       0,
+       0,
+       0
+      ],
+      "matiere": "lumiere_rouge",
+      "nom": "voyant"
+     }
+    ],
+    "parties_mobiles": [
+     {
+      "piece": "voyant",
+      "animation": "clignote"
+     }
+    ],
+    "roll": 3,
+    "taille_case": 1
+   },
+   {
+    "id": "borne_holo",
+    "nom": {
+     "fr": "Borne Holographique",
+     "en": "Holo Kiosk",
+     "de": "Holo-Säule",
+     "es": "Tótem Holográfico",
+     "it": "Colonna Olografica"
+    },
+    "couleur_2": "#3a3f5a",
+    "couleur_3": "#37e6ff",
+    "pieces": [
+     {
+      "forme": "cylindre",
+      "position": [
+       0,
+       0.35,
+       0
+      ],
+      "taille": [
+       0.4,
+       0.7,
+       0.4
+      ],
+      "rotation_deg": [
+       0,
+       0,
+       0
+      ],
+      "matiere": "couleur_2"
+     },
+     {
+      "forme": "cylindre",
+      "position": [
+       0,
+       0.72,
+       0
+      ],
+      "taille": [
+       0.46,
+       0.05,
+       0.46
+      ],
+      "rotation_deg": [
+       0,
+       0,
+       0
+      ],
+      "matiere": "couleur_3"
+     },
+     {
+      "forme": "sphere",
+      "position": [
+       0,
+       1.05,
+       0
+      ],
+      "taille": [
+       0.46,
+       0.46,
+       0.46
+      ],
+      "rotation_deg": [
+       0,
+       0,
+       0
+      ],
+      "matiere": "bulle",
+      "nom": "holo"
+     },
+     {
+      "forme": "sphere",
+      "position": [
+       0,
+       1.05,
+       0
+      ],
+      "taille": [
+       0.18,
+       0.18,
+       0.18
+      ],
+      "rotation_deg": [
+       0,
+       0,
+       0
+      ],
+      "matiere": "lumiere_bleue",
+      "nom": "holo"
+     }
+    ],
+    "parties_mobiles": [
+     {
+      "piece": "holo",
+      "animation": "pulse"
+     }
+    ],
+    "roll": 4,
+    "taille_case": 1
+   }
+  ],
+  "bords": [
+   {
+    "id": "gratte_ciel_a",
+    "nom": {
+     "fr": "Gratte-Ciel Néon",
+     "en": "Neon Skyscraper",
+     "de": "Neon-Wolkenkratzer",
+     "es": "Rascacielos de Neón",
+     "it": "Grattacielo al Neon"
+    },
+    "couleur_2": "#1c1f2e",
+    "couleur_3": "#37e6ff",
+    "pieces": [
+     {
+      "forme": "cube",
+      "position": [
+       0,
+       2.1,
+       0
+      ],
+      "taille": [
+       1.4,
+       4.2,
+       1.2
+      ],
+      "rotation_deg": [
+       0,
+       0,
+       0
+      ],
+      "matiere": "couleur_2"
+     },
+     {
+      "forme": "cube",
+      "position": [
+       0,
+       4.25,
+       0
+      ],
+      "taille": [
+       1.5,
+       0.1,
+       1.3
+      ],
+      "rotation_deg": [
+       0,
+       0,
+       0
+      ],
+      "matiere": "sombre"
+     },
+     {
+      "forme": "cube",
+      "position": [
+       -0.45,
+       0.7,
+       0.61
+      ],
+      "taille": [
+       0.28,
+       0.3,
+       0.03
+      ],
+      "rotation_deg": [
+       0,
+       0,
+       0
+      ],
+      "matiere": "phare"
+     },
+     {
+      "forme": "cube",
+      "position": [
+       0.0,
+       0.7,
+       0.61
+      ],
+      "taille": [
+       0.28,
+       0.3,
+       0.03
+      ],
+      "rotation_deg": [
+       0,
+       0,
+       0
+      ],
+      "matiere": "phare"
+     },
+     {
+      "forme": "cube",
+      "position": [
+       0.45,
+       0.7,
+       0.61
+      ],
+      "taille": [
+       0.28,
+       0.3,
+       0.03
+      ],
+      "rotation_deg": [
+       0,
+       0,
+       0
+      ],
+      "matiere": "phare"
+     },
+     {
+      "forme": "cube",
+      "position": [
+       -0.45,
+       1.25,
+       0.61
+      ],
+      "taille": [
+       0.28,
+       0.3,
+       0.03
+      ],
+      "rotation_deg": [
+       0,
+       0,
+       0
+      ],
+      "matiere": "couleur_3"
+     },
+     {
+      "forme": "cube",
+      "position": [
+       0.0,
+       1.25,
+       0.61
+      ],
+      "taille": [
+       0.28,
+       0.3,
+       0.03
+      ],
+      "rotation_deg": [
+       0,
+       0,
+       0
+      ],
+      "matiere": "couleur_3"
+     },
+     {
+      "forme": "cube",
+      "position": [
+       0.45,
+       1.25,
+       0.61
+      ],
+      "taille": [
+       0.28,
+       0.3,
+       0.03
+      ],
+      "rotation_deg": [
+       0,
+       0,
+       0
+      ],
+      "matiere": "couleur_3"
+     },
+     {
+      "forme": "cube",
+      "position": [
+       -0.45,
+       1.8,
+       0.61
+      ],
+      "taille": [
+       0.28,
+       0.3,
+       0.03
+      ],
+      "rotation_deg": [
+       0,
+       0,
+       0
+      ],
+      "matiere": "couleur_3"
+     },
+     {
+      "forme": "cube",
+      "position": [
+       0.0,
+       1.8,
+       0.61
+      ],
+      "taille": [
+       0.28,
+       0.3,
+       0.03
+      ],
+      "rotation_deg": [
+       0,
+       0,
+       0
+      ],
+      "matiere": "couleur_3"
+     },
+     {
+      "forme": "cube",
+      "position": [
+       0.45,
+       1.8,
+       0.61
+      ],
+      "taille": [
+       0.28,
+       0.3,
+       0.03
+      ],
+      "rotation_deg": [
+       0,
+       0,
+       0
+      ],
+      "matiere": "couleur_3"
+     },
+     {
+      "forme": "cube",
+      "position": [
+       -0.45,
+       2.35,
+       0.61
+      ],
+      "taille": [
+       0.28,
+       0.3,
+       0.03
+      ],
+      "rotation_deg": [
+       0,
+       0,
+       0
+      ],
+      "matiere": "phare"
+     },
+     {
+      "forme": "cube",
+      "position": [
+       0.0,
+       2.35,
+       0.61
+      ],
+      "taille": [
+       0.28,
+       0.3,
+       0.03
+      ],
+      "rotation_deg": [
+       0,
+       0,
+       0
+      ],
+      "matiere": "phare"
+     },
+     {
+      "forme": "cube",
+      "position": [
+       0.45,
+       2.35,
+       0.61
+      ],
+      "taille": [
+       0.28,
+       0.3,
+       0.03
+      ],
+      "rotation_deg": [
+       0,
+       0,
+       0
+      ],
+      "matiere": "phare"
+     },
+     {
+      "forme": "cube",
+      "position": [
+       -0.45,
+       2.9,
+       0.61
+      ],
+      "taille": [
+       0.28,
+       0.3,
+       0.03
+      ],
+      "rotation_deg": [
+       0,
+       0,
+       0
+      ],
+      "matiere": "couleur_3"
+     },
+     {
+      "forme": "cube",
+      "position": [
+       0.0,
+       2.9,
+       0.61
+      ],
+      "taille": [
+       0.28,
+       0.3,
+       0.03
+      ],
+      "rotation_deg": [
+       0,
+       0,
+       0
+      ],
+      "matiere": "couleur_3"
+     },
+     {
+      "forme": "cube",
+      "position": [
+       0.45,
+       2.9,
+       0.61
+      ],
+      "taille": [
+       0.28,
+       0.3,
+       0.03
+      ],
+      "rotation_deg": [
+       0,
+       0,
+       0
+      ],
+      "matiere": "couleur_3"
+     },
+     {
+      "forme": "cube",
+      "position": [
+       -0.45,
+       3.45,
+       0.61
+      ],
+      "taille": [
+       0.28,
+       0.3,
+       0.03
+      ],
+      "rotation_deg": [
+       0,
+       0,
+       0
+      ],
+      "matiere": "couleur_3"
+     },
+     {
+      "forme": "cube",
+      "position": [
+       0.0,
+       3.45,
+       0.61
+      ],
+      "taille": [
+       0.28,
+       0.3,
+       0.03
+      ],
+      "rotation_deg": [
+       0,
+       0,
+       0
+      ],
+      "matiere": "couleur_3"
+     },
+     {
+      "forme": "cube",
+      "position": [
+       0.45,
+       3.45,
+       0.61
+      ],
+      "taille": [
+       0.28,
+       0.3,
+       0.03
+      ],
+      "rotation_deg": [
+       0,
+       0,
+       0
+      ],
+      "matiere": "couleur_3"
+     },
+     {
+      "forme": "cube",
+      "position": [
+       -0.45,
+       4.0,
+       0.61
+      ],
+      "taille": [
+       0.28,
+       0.3,
+       0.03
+      ],
+      "rotation_deg": [
+       0,
+       0,
+       0
+      ],
+      "matiere": "phare"
+     },
+     {
+      "forme": "cube",
+      "position": [
+       0.0,
+       4.0,
+       0.61
+      ],
+      "taille": [
+       0.28,
+       0.3,
+       0.03
+      ],
+      "rotation_deg": [
+       0,
+       0,
+       0
+      ],
+      "matiere": "phare"
+     },
+     {
+      "forme": "cube",
+      "position": [
+       0.45,
+       4.0,
+       0.61
+      ],
+      "taille": [
+       0.28,
+       0.3,
+       0.03
+      ],
+      "rotation_deg": [
+       0,
+       0,
+       0
+      ],
+      "matiere": "phare"
+     },
+     {
+      "forme": "cylindre",
+      "position": [
+       0.4,
+       4.6,
+       0
+      ],
+      "taille": [
+       0.05,
+       0.6,
+       0.05
+      ],
+      "rotation_deg": [
+       0,
+       0,
+       0
+      ],
+      "matiere": "sombre"
+     },
+     {
+      "forme": "sphere",
+      "position": [
+       0.4,
+       4.92,
+       0
+      ],
+      "taille": [
+       0.1,
+       0.1,
+       0.1
+      ],
+      "rotation_deg": [
+       0,
+       0,
+       0
+      ],
+      "matiere": "lumiere_rouge",
+      "nom": "balise"
+     },
+     {
+      "forme": "cube",
+      "position": [
+       0,
+       0.05,
+       0
+      ],
+      "taille": [
+       1.7,
+       0.1,
+       1.5
+      ],
+      "rotation_deg": [
+       0,
+       0,
+       0
+      ],
+      "matiere": "sombre"
+     }
+    ],
+    "parties_mobiles": [
+     {
+      "piece": "balise",
+      "animation": "clignote"
+     }
+    ]
+   },
+   {
+    "id": "gratte_ciel_b",
+    "nom": {
+     "fr": "Gratte-Ciel Néon",
+     "en": "Neon Skyscraper",
+     "de": "Neon-Wolkenkratzer",
+     "es": "Rascacielos de Neón",
+     "it": "Grattacielo al Neon"
+    },
+    "couleur_2": "#2a2438",
+    "couleur_3": "#ff3fa8",
+    "pieces": [
+     {
+      "forme": "cube",
+      "position": [
+       0,
+       1.5,
+       0
+      ],
+      "taille": [
+       1.4,
+       3.0,
+       1.2
+      ],
+      "rotation_deg": [
+       0,
+       0,
+       0
+      ],
+      "matiere": "couleur_2"
+     },
+     {
+      "forme": "cube",
+      "position": [
+       0,
+       3.05,
+       0
+      ],
+      "taille": [
+       1.5,
+       0.1,
+       1.3
+      ],
+      "rotation_deg": [
+       0,
+       0,
+       0
+      ],
+      "matiere": "sombre"
+     },
+     {
+      "forme": "cube",
+      "position": [
+       -0.45,
+       0.7,
+       0.61
+      ],
+      "taille": [
+       0.28,
+       0.3,
+       0.03
+      ],
+      "rotation_deg": [
+       0,
+       0,
+       0
+      ],
+      "matiere": "phare"
+     },
+     {
+      "forme": "cube",
+      "position": [
+       0.0,
+       0.7,
+       0.61
+      ],
+      "taille": [
+       0.28,
+       0.3,
+       0.03
+      ],
+      "rotation_deg": [
+       0,
+       0,
+       0
+      ],
+      "matiere": "phare"
+     },
+     {
+      "forme": "cube",
+      "position": [
+       0.45,
+       0.7,
+       0.61
+      ],
+      "taille": [
+       0.28,
+       0.3,
+       0.03
+      ],
+      "rotation_deg": [
+       0,
+       0,
+       0
+      ],
+      "matiere": "phare"
+     },
+     {
+      "forme": "cube",
+      "position": [
+       -0.45,
+       1.25,
+       0.61
+      ],
+      "taille": [
+       0.28,
+       0.3,
+       0.03
+      ],
+      "rotation_deg": [
+       0,
+       0,
+       0
+      ],
+      "matiere": "couleur_3"
+     },
+     {
+      "forme": "cube",
+      "position": [
+       0.0,
+       1.25,
+       0.61
+      ],
+      "taille": [
+       0.28,
+       0.3,
+       0.03
+      ],
+      "rotation_deg": [
+       0,
+       0,
+       0
+      ],
+      "matiere": "couleur_3"
+     },
+     {
+      "forme": "cube",
+      "position": [
+       0.45,
+       1.25,
+       0.61
+      ],
+      "taille": [
+       0.28,
+       0.3,
+       0.03
+      ],
+      "rotation_deg": [
+       0,
+       0,
+       0
+      ],
+      "matiere": "couleur_3"
+     },
+     {
+      "forme": "cube",
+      "position": [
+       -0.45,
+       1.8,
+       0.61
+      ],
+      "taille": [
+       0.28,
+       0.3,
+       0.03
+      ],
+      "rotation_deg": [
+       0,
+       0,
+       0
+      ],
+      "matiere": "couleur_3"
+     },
+     {
+      "forme": "cube",
+      "position": [
+       0.0,
+       1.8,
+       0.61
+      ],
+      "taille": [
+       0.28,
+       0.3,
+       0.03
+      ],
+      "rotation_deg": [
+       0,
+       0,
+       0
+      ],
+      "matiere": "couleur_3"
+     },
+     {
+      "forme": "cube",
+      "position": [
+       0.45,
+       1.8,
+       0.61
+      ],
+      "taille": [
+       0.28,
+       0.3,
+       0.03
+      ],
+      "rotation_deg": [
+       0,
+       0,
+       0
+      ],
+      "matiere": "couleur_3"
+     },
+     {
+      "forme": "cube",
+      "position": [
+       -0.45,
+       2.35,
+       0.61
+      ],
+      "taille": [
+       0.28,
+       0.3,
+       0.03
+      ],
+      "rotation_deg": [
+       0,
+       0,
+       0
+      ],
+      "matiere": "phare"
+     },
+     {
+      "forme": "cube",
+      "position": [
+       0.0,
+       2.35,
+       0.61
+      ],
+      "taille": [
+       0.28,
+       0.3,
+       0.03
+      ],
+      "rotation_deg": [
+       0,
+       0,
+       0
+      ],
+      "matiere": "phare"
+     },
+     {
+      "forme": "cube",
+      "position": [
+       0.45,
+       2.35,
+       0.61
+      ],
+      "taille": [
+       0.28,
+       0.3,
+       0.03
+      ],
+      "rotation_deg": [
+       0,
+       0,
+       0
+      ],
+      "matiere": "phare"
+     },
+     {
+      "forme": "cube",
+      "position": [
+       -0.45,
+       2.9,
+       0.61
+      ],
+      "taille": [
+       0.28,
+       0.3,
+       0.03
+      ],
+      "rotation_deg": [
+       0,
+       0,
+       0
+      ],
+      "matiere": "couleur_3"
+     },
+     {
+      "forme": "cube",
+      "position": [
+       0.0,
+       2.9,
+       0.61
+      ],
+      "taille": [
+       0.28,
+       0.3,
+       0.03
+      ],
+      "rotation_deg": [
+       0,
+       0,
+       0
+      ],
+      "matiere": "couleur_3"
+     },
+     {
+      "forme": "cube",
+      "position": [
+       0.45,
+       2.9,
+       0.61
+      ],
+      "taille": [
+       0.28,
+       0.3,
+       0.03
+      ],
+      "rotation_deg": [
+       0,
+       0,
+       0
+      ],
+      "matiere": "couleur_3"
+     },
+     {
+      "forme": "cylindre",
+      "position": [
+       0.4,
+       3.4,
+       0
+      ],
+      "taille": [
+       0.05,
+       0.6,
+       0.05
+      ],
+      "rotation_deg": [
+       0,
+       0,
+       0
+      ],
+      "matiere": "sombre"
+     },
+     {
+      "forme": "sphere",
+      "position": [
+       0.4,
+       3.72,
+       0
+      ],
+      "taille": [
+       0.1,
+       0.1,
+       0.1
+      ],
+      "rotation_deg": [
+       0,
+       0,
+       0
+      ],
+      "matiere": "lumiere_rouge",
+      "nom": "balise"
+     },
+     {
+      "forme": "cube",
+      "position": [
+       0,
+       0.05,
+       0
+      ],
+      "taille": [
+       1.7,
+       0.1,
+       1.5
+      ],
+      "rotation_deg": [
+       0,
+       0,
+       0
+      ],
+      "matiere": "sombre"
+     }
+    ],
+    "parties_mobiles": [
+     {
+      "piece": "balise",
+      "animation": "clignote"
+     }
+    ]
+   },
+   {
+    "id": "enseigne_geante",
+    "nom": {
+     "fr": "Enseigne Géante",
+     "en": "Giant Sign",
+     "de": "Riesenschild",
+     "es": "Cartel Gigante",
+     "it": "Insegna Gigante"
+    },
+    "couleur_2": "#1c1f2e",
+    "couleur_3": "#ff3fa8",
+    "pieces": [
+     {
+      "forme": "cylindre",
+      "position": [
+       0,
+       1.2,
+       0
+      ],
+      "taille": [
+       0.12,
+       2.4,
+       0.12
+      ],
+      "rotation_deg": [
+       0,
+       0,
+       0
+      ],
+      "matiere": "sombre"
+     },
+     {
+      "forme": "cube",
+      "position": [
+       0,
+       2.7,
+       0
+      ],
+      "taille": [
+       1.8,
+       1.0,
+       0.12
+      ],
+      "rotation_deg": [
+       0,
+       0,
+       0
+      ],
+      "matiere": "couleur_2"
+     },
+     {
+      "forme": "cube",
+      "position": [
+       0,
+       2.7,
+       0.07
+      ],
+      "taille": [
+       1.6,
+       0.8,
+       0.03
+      ],
+      "rotation_deg": [
+       0,
+       0,
+       0
+      ],
+      "matiere": "couleur_3",
+      "nom": "neon"
+     },
+     {
+      "forme": "cube",
+      "position": [
+       0,
+       2.7,
+       0.09
+      ],
+      "taille": [
+       1.2,
+       0.1,
+       0.02
+      ],
+      "rotation_deg": [
+       0,
+       0,
+       0
+      ],
+      "matiere": "lumiere_bleue",
+      "nom": "neon"
+     },
+     {
+      "forme": "cube",
+      "position": [
+       0,
+       0.05,
+       0
+      ],
+      "taille": [
+       0.8,
+       0.1,
+       0.8
+      ],
+      "rotation_deg": [
+       0,
+       0,
+       0
+      ],
+      "matiere": "sombre"
+     }
+    ],
+    "parties_mobiles": [
+     {
+      "piece": "neon",
+      "animation": "clignote_lent"
+     }
+    ]
+   }
+  ],
+  "deco": [
+   {
+    "id": "flaque_neon",
+    "nom": {
+     "fr": "Flaque Néon",
+     "en": "Neon Puddle",
+     "de": "Neonpfütze",
+     "es": "Charco de Neón",
+     "it": "Pozzanghera al Neon"
+    },
+    "couleur_2": "#1a6fd0",
+    "couleur_3": "#37e6ff",
+    "pieces": [
+     {
+      "forme": "sphere",
+      "position": [
+       0,
+       0.0,
+       0
+      ],
+      "taille": [
+       0.6,
+       0.02,
+       0.4
+      ],
+      "rotation_deg": [
+       0,
+       0,
+       0
+      ],
+      "matiere": "couleur_2"
+     },
+     {
+      "forme": "sphere",
+      "position": [
+       0.05,
+       0.01,
+       0.02
+      ],
+      "taille": [
+       0.3,
+       0.02,
+       0.2
+      ],
+      "rotation_deg": [
+       0,
+       0,
+       0
+      ],
+      "matiere": "couleur_3"
+     }
+    ],
+    "parties_mobiles": []
+   },
+   {
+    "id": "cable",
+    "nom": {
+     "fr": "Câble",
+     "en": "Cable",
+     "de": "Kabel",
+     "es": "Cable",
+     "it": "Cavo"
+    },
+    "couleur_2": "#2d3142",
+    "couleur_3": "#ff3fa8",
+    "pieces": [
+     {
+      "forme": "cube",
+      "position": [
+       0,
+       0.015,
+       0
+      ],
+      "taille": [
+       0.7,
+       0.03,
+       0.04
+      ],
+      "rotation_deg": [
+       0,
+       20,
+       0
+      ],
+      "matiere": "couleur_2"
+     },
+     {
+      "forme": "cube",
+      "position": [
+       0.15,
+       0.015,
+       0.1
+      ],
+      "taille": [
+       0.4,
+       0.03,
+       0.04
+      ],
+      "rotation_deg": [
+       0,
+       -30,
+       0
+      ],
+      "matiere": "couleur_3"
+     }
+    ],
+    "parties_mobiles": []
+   },
+   {
+    "id": "canette",
+    "nom": {
+     "fr": "Canette",
+     "en": "Soda Can",
+     "de": "Dose",
+     "es": "Lata",
+     "it": "Lattina"
+    },
+    "couleur_2": "#c8ccd8",
+    "couleur_3": "#ff3fa8",
+    "pieces": [
+     {
+      "forme": "cylindre",
+      "position": [
+       0,
+       0.07,
+       0
+      ],
+      "taille": [
+       0.08,
+       0.14,
+       0.08
+      ],
+      "rotation_deg": [
+       0,
+       0,
+       0
+      ],
+      "matiere": "couleur_2"
+     },
+     {
+      "forme": "cylindre",
+      "position": [
+       0,
+       0.07,
+       0
+      ],
+      "taille": [
+       0.085,
+       0.05,
+       0.085
+      ],
+      "rotation_deg": [
+       0,
+       0,
+       0
+      ],
+      "matiere": "couleur_3"
+     }
+    ],
+    "parties_mobiles": []
+   },
+   {
+    "id": "led_sol",
+    "nom": {
+     "fr": "Balise au Sol",
+     "en": "Floor Beacon",
+     "de": "Bodenlicht",
+     "es": "Baliza de Suelo",
+     "it": "Luce a Terra"
+    },
+    "couleur_2": "#37e6ff",
+    "couleur_3": "#2d3142",
+    "pieces": [
+     {
+      "forme": "cube",
+      "position": [
+       0,
+       0.02,
+       0
+      ],
+      "taille": [
+       0.3,
+       0.04,
+       0.1
+      ],
+      "rotation_deg": [
+       0,
+       0,
+       0
+      ],
+      "matiere": "couleur_2"
+     },
+     {
+      "forme": "cube",
+      "position": [
+       0,
+       0.01,
+       0
+      ],
+      "taille": [
+       0.34,
+       0.02,
+       0.14
+      ],
+      "rotation_deg": [
+       0,
+       0,
+       0
+      ],
+      "matiere": "couleur_3"
+     }
+    ],
+    "parties_mobiles": []
+   }
+  ],
+  "voie_speciale": {
+   "remplace": "rail",
+   "description": "Monorail magnétique.",
+   "pieces": []
+  },
+  "vehicules_du_monde": [
+   "aerotaxi",
+   "camion_cyber",
+   "bus_maglev",
+   "muscle_neon"
+  ],
+  "animaux_du_monde": [
+   "drone_livreur",
+   "chat_robot",
+   "cyborg",
+   "robot_chien",
+   "hoverbike",
+   "mecha",
+   "drone_geant"
+  ],
+  "train": [
+   {
+    "id": "monorail_tete",
+    "longueur": 2.9,
+    "couleur_2": "#d8dce8",
+    "couleur_3": "#ff3fa8",
+    "pieces": [
+     {
+      "forme": "cube",
+      "position": [
+       0,
+       0.65,
+       0
+      ],
+      "taille": [
+       1.9,
+       0.7,
+       0.8
+      ],
+      "rotation_deg": [
+       0,
+       0,
+       0
+      ],
+      "matiere": "couleur_2"
+     },
+     {
+      "forme": "cone",
+      "position": [
+       1.2,
+       0.65,
+       0
+      ],
+      "taille": [
+       0.7,
+       0.7,
+       0.8
+      ],
+      "rotation_deg": [
+       0,
+       0,
+       -90
+      ],
+      "matiere": "couleur_2"
+     },
+     {
+      "forme": "cube",
+      "position": [
+       0.7,
+       0.88,
+       0
+      ],
+      "taille": [
+       0.7,
+       0.3,
+       0.72
+      ],
+      "rotation_deg": [
+       0,
+       0,
+       0
+      ],
+      "matiere": "bulle"
+     },
+     {
+      "forme": "cube",
+      "position": [
+       0.0,
+       0.5,
+       0.405
+      ],
+      "taille": [
+       1.9,
+       0.06,
+       0.02
+      ],
+      "rotation_deg": [
+       0,
+       0,
+       0
+      ],
+      "matiere": "lumiere_bleue",
+      "nom": "bande"
+     },
+     {
+      "forme": "cube",
+      "position": [
+       0.0,
+       0.5,
+       -0.405
+      ],
+      "taille": [
+       1.9,
+       0.06,
+       0.02
+      ],
+      "rotation_deg": [
+       0,
+       0,
+       0
+      ],
+      "matiere": "lumiere_bleue",
+      "nom": "bande"
+     },
+     {
+      "forme": "sphere",
+      "position": [
+       1.5,
+       0.65,
+       0.0
+      ],
+      "taille": [
+       0.14,
+       0.14,
+       0.14
+      ],
+      "rotation_deg": [
+       0,
+       0,
+       0
+      ],
+      "matiere": "phare"
+     },
+     {
+      "forme": "cube",
+      "position": [
+       0.0,
+       0.25,
+       0
+      ],
+      "taille": [
+       2.4,
+       0.1,
+       0.6
+      ],
+      "rotation_deg": [
+       0,
+       0,
+       0
+      ],
+      "matiere": "sombre"
+     }
+    ],
+    "parties_mobiles": [
+     {
+      "piece": "bande",
+      "animation": "pulse"
+     }
+    ]
+   },
+   {
+    "id": "monorail_queue",
+    "longueur": 1.6,
+    "couleur_2": "#d8dce8",
+    "couleur_3": "#ff3fa8",
+    "pieces": [
+     {
+      "forme": "cube",
+      "position": [
+       0,
+       0.65,
+       0
+      ],
+      "taille": [
+       1.9,
+       0.7,
+       0.8
+      ],
+      "rotation_deg": [
+       0,
+       0,
+       0
+      ],
+      "matiere": "couleur_2"
+     },
+     {
+      "forme": "cube",
+      "position": [
+       0,
+       0.9,
+       0.405
+      ],
+      "taille": [
+       1.5,
+       0.28,
+       0.02
+      ],
+      "rotation_deg": [
+       0,
+       0,
+       0
+      ],
+      "matiere": "bulle"
+     },
+     {
+      "forme": "cube",
+      "position": [
+       0,
+       0.9,
+       -0.405
+      ],
+      "taille": [
+       1.5,
+       0.28,
+       0.02
+      ],
+      "rotation_deg": [
+       0,
+       0,
+       0
+      ],
+      "matiere": "bulle"
+     },
+     {
+      "forme": "cube",
+      "position": [
+       0.0,
+       0.5,
+       0.405
+      ],
+      "taille": [
+       1.9,
+       0.06,
+       0.02
+      ],
+      "rotation_deg": [
+       0,
+       0,
+       0
+      ],
+      "matiere": "lumiere_bleue"
+     },
+     {
+      "forme": "cube",
+      "position": [
+       0.0,
+       0.5,
+       -0.405
+      ],
+      "taille": [
+       1.9,
+       0.06,
+       0.02
+      ],
+      "rotation_deg": [
+       0,
+       0,
+       0
+      ],
+      "matiere": "lumiere_bleue"
+     },
+     {
+      "forme": "cube",
+      "position": [
+       0.0,
+       0.25,
+       0
+      ],
+      "taille": [
+       1.5,
+       0.1,
+       0.6
+      ],
+      "rotation_deg": [
+       0,
+       0,
+       0
+      ],
+      "matiere": "sombre"
+     }
+    ],
+    "parties_mobiles": []
+   },
+   {
+    "id": "monorail_a",
+    "longueur": 2.1,
+    "couleur_2": "#d8dce8",
+    "couleur_3": "#37e6ff",
+    "pieces": [
+     {
+      "forme": "cube",
+      "position": [
+       0,
+       0.65,
+       0
+      ],
+      "taille": [
+       1.9,
+       0.7,
+       0.8
+      ],
+      "rotation_deg": [
+       0,
+       0,
+       0
+      ],
+      "matiere": "couleur_2"
+     },
+     {
+      "forme": "cube",
+      "position": [
+       0,
+       0.9,
+       0.405
+      ],
+      "taille": [
+       1.5,
+       0.28,
+       0.02
+      ],
+      "rotation_deg": [
+       0,
+       0,
+       0
+      ],
+      "matiere": "bulle"
+     },
+     {
+      "forme": "cube",
+      "position": [
+       0,
+       0.9,
+       -0.405
+      ],
+      "taille": [
+       1.5,
+       0.28,
+       0.02
+      ],
+      "rotation_deg": [
+       0,
+       0,
+       0
+      ],
+      "matiere": "bulle"
+     },
+     {
+      "forme": "cube",
+      "position": [
+       0.0,
+       0.5,
+       0.405
+      ],
+      "taille": [
+       1.9,
+       0.06,
+       0.02
+      ],
+      "rotation_deg": [
+       0,
+       0,
+       0
+      ],
+      "matiere": "lumiere_bleue"
+     },
+     {
+      "forme": "cube",
+      "position": [
+       0.0,
+       0.5,
+       -0.405
+      ],
+      "taille": [
+       1.9,
+       0.06,
+       0.02
+      ],
+      "rotation_deg": [
+       0,
+       0,
+       0
+      ],
+      "matiere": "lumiere_bleue"
+     },
+     {
+      "forme": "cube",
+      "position": [
+       0,
+       1.02,
+       0
+      ],
+      "taille": [
+       1.95,
+       0.05,
+       0.85
+      ],
+      "rotation_deg": [
+       0,
+       0,
+       0
+      ],
+      "matiere": "couleur_3"
+     },
+     {
+      "forme": "cube",
+      "position": [
+       0.0,
+       0.25,
+       0
+      ],
+      "taille": [
+       2.1,
+       0.1,
+       0.6
+      ],
+      "rotation_deg": [
+       0,
+       0,
+       0
+      ],
+      "matiere": "sombre"
+     }
+    ],
+    "parties_mobiles": []
+   },
+   {
+    "id": "monorail_b",
+    "longueur": 2.1,
+    "couleur_2": "#aab0c4",
+    "couleur_3": "#ff3fa8",
+    "pieces": [
+     {
+      "forme": "cube",
+      "position": [
+       0,
+       0.65,
+       0
+      ],
+      "taille": [
+       1.9,
+       0.7,
+       0.8
+      ],
+      "rotation_deg": [
+       0,
+       0,
+       0
+      ],
+      "matiere": "couleur_2"
+     },
+     {
+      "forme": "cube",
+      "position": [
+       0,
+       0.9,
+       0.405
+      ],
+      "taille": [
+       1.5,
+       0.28,
+       0.02
+      ],
+      "rotation_deg": [
+       0,
+       0,
+       0
+      ],
+      "matiere": "bulle"
+     },
+     {
+      "forme": "cube",
+      "position": [
+       0,
+       0.9,
+       -0.405
+      ],
+      "taille": [
+       1.5,
+       0.28,
+       0.02
+      ],
+      "rotation_deg": [
+       0,
+       0,
+       0
+      ],
+      "matiere": "bulle"
+     },
+     {
+      "forme": "cube",
+      "position": [
+       0.0,
+       0.5,
+       0.405
+      ],
+      "taille": [
+       1.9,
+       0.06,
+       0.02
+      ],
+      "rotation_deg": [
+       0,
+       0,
+       0
+      ],
+      "matiere": "lumiere_bleue"
+     },
+     {
+      "forme": "cube",
+      "position": [
+       0.0,
+       0.5,
+       -0.405
+      ],
+      "taille": [
+       1.9,
+       0.06,
+       0.02
+      ],
+      "rotation_deg": [
+       0,
+       0,
+       0
+      ],
+      "matiere": "lumiere_bleue"
+     },
+     {
+      "forme": "cube",
+      "position": [
+       0,
+       1.02,
+       0
+      ],
+      "taille": [
+       1.95,
+       0.05,
+       0.85
+      ],
+      "rotation_deg": [
+       0,
+       0,
+       0
+      ],
+      "matiere": "couleur_3"
+     },
+     {
+      "forme": "cube",
+      "position": [
+       0.0,
+       0.25,
+       0
+      ],
+      "taille": [
+       2.1,
+       0.1,
+       0.6
+      ],
+      "rotation_deg": [
+       0,
+       0,
+       0
+      ],
+      "matiere": "sombre"
+     },
+     {
+      "forme": "cube",
+      "position": [
+       0,
+       1.1,
+       0
+      ],
+      "taille": [
+       0.6,
+       0.08,
+       0.3
+      ],
+      "rotation_deg": [
+       0,
+       0,
+       0
+      ],
+      "matiere": "lumiere_rouge",
+      "nom": "voyant"
+     }
+    ],
+    "parties_mobiles": [
+     {
+      "piece": "voyant",
+      "animation": "clignote"
+     }
+    ]
+   }
+  ],
+  "musique": {
+   "tempo_bpm": 118,
+   "gamme": "phrygienne",
+   "instruments": [
+    "synthé",
+    "basse pulsée",
+    "boîte à rythmes",
+    "arpège"
+   ],
+   "ambiance": "Nuit néon, pluie sur le bitume."
+  },
+  "bannière": {
+   "fr": "Bienvenue à Néo-Croâ ! Les passages piétons sont désactivés pour votre confort.",
+   "en": "Welcome to Neo-Croak! Crosswalks have been disabled for your comfort.",
+   "de": "Willkommen in Neo-Quak! Fußgängerüberwege wurden zu Ihrem Komfort deaktiviert.",
+   "es": "¡Bienvenido a Neo-Croa! Los pasos de peatones están desactivados por tu comodidad.",
+   "it": "Benvenuto a Neo-Gra! Le strisce pedonali sono disattivate per il tuo comfort."
+  }
+ },
+ "animaux": [
+  {
+   "id": "drone_livreur",
+   "univers": "cyberpunk",
+   "classe": "petit",
+   "noms": {
+    "fr": "Drone Livreur",
+    "en": "Delivery Drone",
+    "de": "Lieferdrohne",
+    "es": "Dron Repartidor",
+    "it": "Drone Fattorino"
+   },
+   "longueur": 0.8,
+   "largeur": 0.8,
+   "comportement": "traverse",
+   "vitesse": 2.2,
+   "dangereux": false,
+   "points_deblocage": 300,
+   "couleur_2": "#c8ccd8",
+   "couleur_3": "#ff3fa8",
+   "pieces": [
+    {
+     "forme": "sphere",
+     "position": [
+      0,
+      0.7,
+      0
+     ],
+     "taille": [
+      0.5,
+      0.26,
+      0.5
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      0
+     ],
+     "matiere": "couleur_2",
+     "nom": "corps"
+    },
+    {
+     "forme": "cube",
+     "position": [
+      0,
+      0.5,
+      0
+     ],
+     "taille": [
+      0.3,
+      0.22,
+      0.3
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      0
+     ],
+     "matiere": "couleur_3",
+     "nom": "corps"
+    },
+    {
+     "forme": "sphere",
+     "position": [
+      0.22,
+      0.7,
+      0
+     ],
+     "taille": [
+      0.1,
+      0.1,
+      0.1
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      0
+     ],
+     "matiere": "lumiere_bleue",
+     "nom": "oeil"
+    },
+    {
+     "forme": "cube",
+     "position": [
+      0.18,
+      0.72,
+      0.18
+     ],
+     "taille": [
+      0.4,
+      0.04,
+      0.06
+     ],
+     "rotation_deg": [
+      0,
+      45,
+      0
+     ],
+     "matiere": "sombre",
+     "nom": "corps"
+    },
+    {
+     "forme": "cube",
+     "position": [
+      0.3,
+      0.8,
+      0.3
+     ],
+     "taille": [
+      0.4,
+      0.015,
+      0.06
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      0
+     ],
+     "matiere": "noir",
+     "nom": "helice0"
+    },
+    {
+     "forme": "cube",
+     "position": [
+      0.18,
+      0.72,
+      -0.18
+     ],
+     "taille": [
+      0.4,
+      0.04,
+      0.06
+     ],
+     "rotation_deg": [
+      0,
+      -45,
+      0
+     ],
+     "matiere": "sombre",
+     "nom": "corps"
+    },
+    {
+     "forme": "cube",
+     "position": [
+      0.3,
+      0.8,
+      -0.3
+     ],
+     "taille": [
+      0.4,
+      0.015,
+      0.06
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      0
+     ],
+     "matiere": "noir",
+     "nom": "helice1"
+    },
+    {
+     "forme": "cube",
+     "position": [
+      -0.18,
+      0.72,
+      0.18
+     ],
+     "taille": [
+      0.4,
+      0.04,
+      0.06
+     ],
+     "rotation_deg": [
+      0,
+      -45,
+      0
+     ],
+     "matiere": "sombre",
+     "nom": "corps"
+    },
+    {
+     "forme": "cube",
+     "position": [
+      -0.3,
+      0.8,
+      0.3
+     ],
+     "taille": [
+      0.4,
+      0.015,
+      0.06
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      0
+     ],
+     "matiere": "noir",
+     "nom": "helice2"
+    },
+    {
+     "forme": "cube",
+     "position": [
+      -0.18,
+      0.72,
+      -0.18
+     ],
+     "taille": [
+      0.4,
+      0.04,
+      0.06
+     ],
+     "rotation_deg": [
+      0,
+      45,
+      0
+     ],
+     "matiere": "sombre",
+     "nom": "corps"
+    },
+    {
+     "forme": "cube",
+     "position": [
+      -0.3,
+      0.8,
+      -0.3
+     ],
+     "taille": [
+      0.4,
+      0.015,
+      0.06
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      0
+     ],
+     "matiere": "noir",
+     "nom": "helice3"
+    }
+   ],
+   "parties_mobiles": [
+    {
+     "piece": "corps",
+     "animation": "rebond",
+     "amplitude": 0.05
+    },
+    {
+     "piece": "oeil",
+     "animation": "clignote_alterne"
+    },
+    {
+     "piece": "helice0",
+     "animation": "rotation_groupe"
+    },
+    {
+     "piece": "helice1",
+     "animation": "rotation_groupe"
+    },
+    {
+     "piece": "helice2",
+     "animation": "rotation_groupe"
+    },
+    {
+     "piece": "helice3",
+     "animation": "rotation_groupe"
+    }
+   ]
+  },
+  {
+   "id": "chat_robot",
+   "univers": "cyberpunk",
+   "classe": "petit",
+   "noms": {
+    "fr": "Chat Robot",
+    "en": "Robo Cat",
+    "de": "Roboterkatze",
+    "es": "Gato Robot",
+    "it": "Gatto Robot"
+   },
+   "longueur": 1.0,
+   "largeur": 0.4,
+   "comportement": "traverse",
+   "vitesse": 3.2,
+   "dangereux": false,
+   "points_deblocage": 500,
+   "couleur_2": "#8890a8",
+   "couleur_3": "#37e6ff",
+   "pieces": [
+    {
+     "forme": "cube",
+     "position": [
+      0,
+      0.4,
+      0
+     ],
+     "taille": [
+      0.55,
+      0.28,
+      0.28
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      0
+     ],
+     "matiere": "couleur_2",
+     "nom": "corps"
+    },
+    {
+     "forme": "cube",
+     "position": [
+      0.34,
+      0.5,
+      0
+     ],
+     "taille": [
+      0.28,
+      0.26,
+      0.26
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      0
+     ],
+     "matiere": "couleur_2",
+     "nom": "corps"
+    },
+    {
+     "forme": "cone",
+     "position": [
+      0.3,
+      0.72,
+      0.09
+     ],
+     "taille": [
+      0.1,
+      0.16,
+      0.06
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      0
+     ],
+     "matiere": "couleur_3",
+     "nom": "corps"
+    },
+    {
+     "forme": "cone",
+     "position": [
+      0.3,
+      0.72,
+      -0.09
+     ],
+     "taille": [
+      0.1,
+      0.16,
+      0.06
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      0
+     ],
+     "matiere": "couleur_3",
+     "nom": "corps"
+    },
+    {
+     "forme": "cube",
+     "position": [
+      0.48,
+      0.52,
+      0.0
+     ],
+     "taille": [
+      0.03,
+      0.07,
+      0.2
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      0
+     ],
+     "matiere": "lumiere_bleue",
+     "nom": "oeil"
+    },
+    {
+     "forme": "cylindre",
+     "position": [
+      -0.4,
+      0.62,
+      0
+     ],
+     "taille": [
+      0.05,
+      0.5,
+      0.05
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      25
+     ],
+     "matiere": "couleur_3",
+     "nom": "queue"
+    },
+    {
+     "forme": "sphere",
+     "position": [
+      -0.5,
+      0.88,
+      0
+     ],
+     "taille": [
+      0.08,
+      0.08,
+      0.08
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      0
+     ],
+     "matiere": "lumiere_rouge",
+     "nom": "oeil"
+    },
+    {
+     "forme": "cylindre",
+     "position": [
+      0.2,
+      0.2,
+      0.08
+     ],
+     "taille": [
+      0.07,
+      0.4,
+      0.07
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      0
+     ],
+     "matiere": "couleur_3",
+     "nom": "patte0"
+    },
+    {
+     "forme": "cylindre",
+     "position": [
+      0.2,
+      0.2,
+      -0.08
+     ],
+     "taille": [
+      0.07,
+      0.4,
+      0.07
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      0
+     ],
+     "matiere": "couleur_3",
+     "nom": "patte1"
+    },
+    {
+     "forme": "cylindre",
+     "position": [
+      -0.2,
+      0.2,
+      0.08
+     ],
+     "taille": [
+      0.07,
+      0.4,
+      0.07
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      0
+     ],
+     "matiere": "couleur_3",
+     "nom": "patte2"
+    },
+    {
+     "forme": "cylindre",
+     "position": [
+      -0.2,
+      0.2,
+      -0.08
+     ],
+     "taille": [
+      0.07,
+      0.4,
+      0.07
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      0
+     ],
+     "matiere": "couleur_3",
+     "nom": "patte3"
+    }
+   ],
+   "parties_mobiles": [
+    {
+     "piece": "corps",
+     "animation": "rebond",
+     "amplitude": 0.03
+    },
+    {
+     "piece": "queue",
+     "animation": "balance",
+     "axe": "y"
+    },
+    {
+     "piece": "oeil",
+     "animation": "clignote_alterne"
+    },
+    {
+     "piece": "patte0",
+     "animation": "pendule",
+     "phase": 0.0,
+     "axe": "z",
+     "pivot": "haut"
+    },
+    {
+     "piece": "patte1",
+     "animation": "pendule",
+     "phase": 0.5,
+     "axe": "z",
+     "pivot": "haut"
+    },
+    {
+     "piece": "patte2",
+     "animation": "pendule",
+     "phase": 0.5,
+     "axe": "z",
+     "pivot": "haut"
+    },
+    {
+     "piece": "patte3",
+     "animation": "pendule",
+     "phase": 0.0,
+     "axe": "z",
+     "pivot": "haut"
+    }
+   ]
+  },
+  {
+   "id": "cyborg",
+   "univers": "cyberpunk",
+   "classe": "moyen",
+   "noms": {
+    "fr": "Cyborg Pressé",
+    "en": "Hasty Cyborg",
+    "de": "Eiliger Cyborg",
+    "es": "Cíborg con Prisa",
+    "it": "Cyborg Frettoloso"
+   },
+   "longueur": 0.9,
+   "largeur": 0.8,
+   "comportement": "traverse",
+   "vitesse": 3.2,
+   "dangereux": true,
+   "points_deblocage": 900,
+   "couleur_2": "#3a3f5a",
+   "couleur_3": "#ff9a3f",
+   "pieces": [
+    {
+     "forme": "cube",
+     "position": [
+      0,
+      0.95,
+      0
+     ],
+     "taille": [
+      0.42,
+      0.75,
+      0.58
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      0
+     ],
+     "matiere": "couleur_2",
+     "nom": "corps"
+    },
+    {
+     "forme": "cube",
+     "position": [
+      0.2,
+      0.95,
+      0
+     ],
+     "taille": [
+      0.04,
+      0.5,
+      0.4
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      0
+     ],
+     "matiere": "couleur_3",
+     "nom": "corps"
+    },
+    {
+     "forme": "sphere",
+     "position": [
+      0.08,
+      1.55,
+      0
+     ],
+     "taille": [
+      0.4,
+      0.4,
+      0.38
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      0
+     ],
+     "matiere": "couleur_2",
+     "nom": "corps"
+    },
+    {
+     "forme": "cube",
+     "position": [
+      0.28,
+      1.58,
+      0
+     ],
+     "taille": [
+      0.04,
+      0.07,
+      0.3
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      0
+     ],
+     "matiere": "lumiere_bleue",
+     "nom": "oeil"
+    },
+    {
+     "forme": "cylindre",
+     "position": [
+      0.0,
+      1.9,
+      0.1
+     ],
+     "taille": [
+      0.03,
+      0.3,
+      0.03
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      0
+     ],
+     "matiere": "sombre",
+     "nom": "corps"
+    },
+    {
+     "forme": "sphere",
+     "position": [
+      0.0,
+      2.08,
+      0.1
+     ],
+     "taille": [
+      0.07,
+      0.07,
+      0.07
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      0
+     ],
+     "matiere": "lumiere_rouge",
+     "nom": "oeil"
+    },
+    {
+     "forme": "cube",
+     "position": [
+      0,
+      0.5,
+      0
+     ],
+     "taille": [
+      0.4,
+      0.2,
+      0.52
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      0
+     ],
+     "matiere": "sombre",
+     "nom": "corps"
+    },
+    {
+     "forme": "cylindre",
+     "position": [
+      0,
+      1.0,
+      0.38
+     ],
+     "taille": [
+      0.12,
+      0.7,
+      0.12
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      0
+     ],
+     "matiere": "couleur_3",
+     "nom": "bras_g"
+    },
+    {
+     "forme": "sphere",
+     "position": [
+      0,
+      0.62,
+      0.38
+     ],
+     "taille": [
+      0.18,
+      0.16,
+      0.18
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      0
+     ],
+     "matiere": "sombre",
+     "nom": "bras_g"
+    },
+    {
+     "forme": "cylindre",
+     "position": [
+      0,
+      1.0,
+      -0.38
+     ],
+     "taille": [
+      0.12,
+      0.7,
+      0.12
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      0
+     ],
+     "matiere": "couleur_3",
+     "nom": "bras_d"
+    },
+    {
+     "forme": "sphere",
+     "position": [
+      0,
+      0.62,
+      -0.38
+     ],
+     "taille": [
+      0.18,
+      0.16,
+      0.18
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      0
+     ],
+     "matiere": "sombre",
+     "nom": "bras_d"
+    },
+    {
+     "forme": "cylindre",
+     "position": [
+      0,
+      0.32,
+      0.15
+     ],
+     "taille": [
+      0.16,
+      0.64,
+      0.16
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      0
+     ],
+     "matiere": "couleur_3",
+     "nom": "patte_g"
+    },
+    {
+     "forme": "cube",
+     "position": [
+      0.09,
+      0.04,
+      0.15
+     ],
+     "taille": [
+      0.3,
+      0.08,
+      0.18
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      0
+     ],
+     "matiere": "sombre",
+     "nom": "patte_g"
+    },
+    {
+     "forme": "cylindre",
+     "position": [
+      0,
+      0.32,
+      -0.15
+     ],
+     "taille": [
+      0.16,
+      0.64,
+      0.16
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      0
+     ],
+     "matiere": "couleur_3",
+     "nom": "patte_d"
+    },
+    {
+     "forme": "cube",
+     "position": [
+      0.09,
+      0.04,
+      -0.15
+     ],
+     "taille": [
+      0.3,
+      0.08,
+      0.18
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      0
+     ],
+     "matiere": "sombre",
+     "nom": "patte_d"
+    }
+   ],
+   "parties_mobiles": [
+    {
+     "piece": "corps",
+     "animation": "rebond",
+     "amplitude": 0.03
+    },
+    {
+     "piece": "oeil",
+     "animation": "clignote_lent"
+    },
+    {
+     "piece": "bras_g",
+     "animation": "pendule",
+     "phase": 0.5,
+     "axe": "z",
+     "pivot": "haut"
+    },
+    {
+     "piece": "bras_d",
+     "animation": "pendule",
+     "phase": 0.0,
+     "axe": "z",
+     "pivot": "haut"
+    },
+    {
+     "piece": "patte_g",
+     "animation": "pendule",
+     "phase": 0.0,
+     "axe": "z",
+     "pivot": "haut"
+    },
+    {
+     "piece": "patte_d",
+     "animation": "pendule",
+     "phase": 0.5,
+     "axe": "z",
+     "pivot": "haut"
+    }
+   ]
+  },
+  {
+   "id": "robot_chien",
+   "univers": "cyberpunk",
+   "classe": "moyen",
+   "noms": {
+    "fr": "Robot-Chien Pas Gentil",
+    "en": "Not-So-Friendly Robodog",
+    "de": "Unfreundlicher Roboterhund",
+    "es": "Perro Robot Antipático",
+    "it": "Cane Robot Scorbutico"
+   },
+   "longueur": 1.6,
+   "largeur": 0.6,
+   "comportement": "traverse",
+   "vitesse": 3.8,
+   "dangereux": true,
+   "points_deblocage": 1400,
+   "couleur_2": "#8890a8",
+   "couleur_3": "#ff3fa8",
+   "pieces": [
+    {
+     "forme": "cube",
+     "position": [
+      0,
+      0.62,
+      0
+     ],
+     "taille": [
+      0.95,
+      0.34,
+      0.4
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      0
+     ],
+     "matiere": "couleur_2",
+     "nom": "corps"
+    },
+    {
+     "forme": "cube",
+     "position": [
+      0.58,
+      0.8,
+      0
+     ],
+     "taille": [
+      0.4,
+      0.3,
+      0.32
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      0
+     ],
+     "matiere": "couleur_2",
+     "nom": "corps"
+    },
+    {
+     "forme": "cube",
+     "position": [
+      0.82,
+      0.75,
+      0
+     ],
+     "taille": [
+      0.28,
+      0.16,
+      0.24
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      0
+     ],
+     "matiere": "couleur_3",
+     "nom": "corps"
+    },
+    {
+     "forme": "cube",
+     "position": [
+      0.8,
+      0.86,
+      0.0
+     ],
+     "taille": [
+      0.2,
+      0.05,
+      0.3
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      0
+     ],
+     "matiere": "lumiere_bleue",
+     "nom": "oeil"
+    },
+    {
+     "forme": "cylindre",
+     "position": [
+      -0.55,
+      0.78,
+      0
+     ],
+     "taille": [
+      0.05,
+      0.4,
+      0.05
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      40
+     ],
+     "matiere": "sombre",
+     "nom": "queue"
+    },
+    {
+     "forme": "cube",
+     "position": [
+      0.0,
+      0.8,
+      0.0
+     ],
+     "taille": [
+      0.6,
+      0.05,
+      0.3
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      0
+     ],
+     "matiere": "couleur_3",
+     "nom": "corps"
+    },
+    {
+     "forme": "cone",
+     "position": [
+      0.55,
+      1.05,
+      0.1
+     ],
+     "taille": [
+      0.07,
+      0.16,
+      0.05
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      0
+     ],
+     "matiere": "sombre",
+     "nom": "corps"
+    },
+    {
+     "forme": "cone",
+     "position": [
+      0.55,
+      1.05,
+      -0.1
+     ],
+     "taille": [
+      0.07,
+      0.16,
+      0.05
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      0
+     ],
+     "matiere": "sombre",
+     "nom": "corps"
+    },
+    {
+     "forme": "cylindre",
+     "position": [
+      0.35,
+      0.28,
+      0.16
+     ],
+     "taille": [
+      0.1,
+      0.56,
+      0.1
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      0
+     ],
+     "matiere": "couleur_3",
+     "nom": "patte0"
+    },
+    {
+     "forme": "cube",
+     "position": [
+      0.39,
+      0.03,
+      0.16
+     ],
+     "taille": [
+      0.16,
+      0.06,
+      0.12
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      0
+     ],
+     "matiere": "sombre",
+     "nom": "patte0"
+    },
+    {
+     "forme": "cylindre",
+     "position": [
+      0.35,
+      0.28,
+      -0.16
+     ],
+     "taille": [
+      0.1,
+      0.56,
+      0.1
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      0
+     ],
+     "matiere": "couleur_3",
+     "nom": "patte1"
+    },
+    {
+     "forme": "cube",
+     "position": [
+      0.39,
+      0.03,
+      -0.16
+     ],
+     "taille": [
+      0.16,
+      0.06,
+      0.12
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      0
+     ],
+     "matiere": "sombre",
+     "nom": "patte1"
+    },
+    {
+     "forme": "cylindre",
+     "position": [
+      -0.35,
+      0.28,
+      0.16
+     ],
+     "taille": [
+      0.1,
+      0.56,
+      0.1
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      0
+     ],
+     "matiere": "couleur_3",
+     "nom": "patte2"
+    },
+    {
+     "forme": "cube",
+     "position": [
+      -0.31,
+      0.03,
+      0.16
+     ],
+     "taille": [
+      0.16,
+      0.06,
+      0.12
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      0
+     ],
+     "matiere": "sombre",
+     "nom": "patte2"
+    },
+    {
+     "forme": "cylindre",
+     "position": [
+      -0.35,
+      0.28,
+      -0.16
+     ],
+     "taille": [
+      0.1,
+      0.56,
+      0.1
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      0
+     ],
+     "matiere": "couleur_3",
+     "nom": "patte3"
+    },
+    {
+     "forme": "cube",
+     "position": [
+      -0.31,
+      0.03,
+      -0.16
+     ],
+     "taille": [
+      0.16,
+      0.06,
+      0.12
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      0
+     ],
+     "matiere": "sombre",
+     "nom": "patte3"
+    }
+   ],
+   "parties_mobiles": [
+    {
+     "piece": "corps",
+     "animation": "rebond",
+     "amplitude": 0.04
+    },
+    {
+     "piece": "oeil",
+     "animation": "clignote_lent"
+    },
+    {
+     "piece": "queue",
+     "animation": "balance",
+     "axe": "y"
+    },
+    {
+     "piece": "patte0",
+     "animation": "pendule",
+     "phase": 0.0,
+     "axe": "z",
+     "pivot": "haut"
+    },
+    {
+     "piece": "patte1",
+     "animation": "pendule",
+     "phase": 0.5,
+     "axe": "z",
+     "pivot": "haut"
+    },
+    {
+     "piece": "patte2",
+     "animation": "pendule",
+     "phase": 0.5,
+     "axe": "z",
+     "pivot": "haut"
+    },
+    {
+     "piece": "patte3",
+     "animation": "pendule",
+     "phase": 0.0,
+     "axe": "z",
+     "pivot": "haut"
+    }
+   ]
+  },
+  {
+   "id": "hoverbike",
+   "univers": "cyberpunk",
+   "classe": "moyen",
+   "noms": {
+    "fr": "Moto Volante",
+    "en": "Hoverbike",
+    "de": "Schwebebike",
+    "es": "Moto Voladora",
+    "it": "Moto Volante"
+   },
+   "longueur": 1.8,
+   "largeur": 0.7,
+   "comportement": "charge",
+   "vitesse": 4.6,
+   "dangereux": true,
+   "points_deblocage": 1900,
+   "couleur_2": "#ff3fa8",
+   "couleur_3": "#2d3142",
+   "pieces": [
+    {
+     "forme": "cube",
+     "position": [
+      0,
+      0.55,
+      0
+     ],
+     "taille": [
+      1.5,
+      0.2,
+      0.36
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      0
+     ],
+     "matiere": "couleur_2",
+     "nom": "corps"
+    },
+    {
+     "forme": "cone",
+     "position": [
+      0.85,
+      0.55,
+      0
+     ],
+     "taille": [
+      0.4,
+      0.3,
+      0.34
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      -90
+     ],
+     "matiere": "couleur_2",
+     "nom": "corps"
+    },
+    {
+     "forme": "cube",
+     "position": [
+      0.35,
+      0.78,
+      0
+     ],
+     "taille": [
+      0.4,
+      0.24,
+      0.3
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      0
+     ],
+     "matiere": "bulle",
+     "nom": "corps"
+    },
+    {
+     "forme": "cube",
+     "position": [
+      -0.5,
+      0.78,
+      0
+     ],
+     "taille": [
+      0.5,
+      0.04,
+      0.5
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      0
+     ],
+     "matiere": "couleur_3",
+     "nom": "corps"
+    },
+    {
+     "forme": "cube",
+     "position": [
+      -0.75,
+      0.55,
+      0
+     ],
+     "taille": [
+      0.1,
+      0.4,
+      0.8
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      0
+     ],
+     "matiere": "couleur_3",
+     "nom": "corps"
+    },
+    {
+     "forme": "cube",
+     "position": [
+      -0.78,
+      0.55,
+      0.0
+     ],
+     "taille": [
+      0.03,
+      0.08,
+      0.7
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      0
+     ],
+     "matiere": "lumiere_rouge",
+     "nom": "feu"
+    },
+    {
+     "forme": "cube",
+     "position": [
+      0.0,
+      0.38,
+      0.0
+     ],
+     "taille": [
+      1.3,
+      0.04,
+      0.5
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      0
+     ],
+     "matiere": "lumiere_bleue",
+     "nom": "coussin"
+    },
+    {
+     "forme": "sphere",
+     "position": [
+      -0.2,
+      0.98,
+      0
+     ],
+     "taille": [
+      0.22,
+      0.26,
+      0.22
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      0
+     ],
+     "matiere": "couleur_3",
+     "nom": "corps"
+    },
+    {
+     "forme": "cube",
+     "position": [
+      0.0,
+      0.4,
+      0
+     ],
+     "taille": [
+      1.4,
+      0.08,
+      0.6
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      0
+     ],
+     "matiere": "sombre",
+     "nom": "corps"
+    }
+   ],
+   "parties_mobiles": [
+    {
+     "piece": "corps",
+     "animation": "flotte_verticale_0.04"
+    },
+    {
+     "piece": "coussin",
+     "animation": "pulse"
+    },
+    {
+     "piece": "feu",
+     "animation": "clignote"
+    }
+   ]
+  },
+  {
+   "id": "mecha",
+   "univers": "cyberpunk",
+   "classe": "grand",
+   "noms": {
+    "fr": "Mécha Colossal",
+    "en": "Colossal Mech",
+    "de": "Riesen-Mech",
+    "es": "Mecha Colosal",
+    "it": "Mecha Colossale"
+   },
+   "longueur": 1.8,
+   "largeur": 2.0,
+   "comportement": "traverse",
+   "vitesse": 1.6,
+   "dangereux": true,
+   "points_deblocage": 2600,
+   "couleur_2": "#3a3f5a",
+   "couleur_3": "#ff9a3f",
+   "pieces": [
+    {
+     "forme": "cube",
+     "position": [
+      0,
+      1.7,
+      0
+     ],
+     "taille": [
+      0.9,
+      1.0,
+      1.2
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      0
+     ],
+     "matiere": "couleur_2",
+     "nom": "corps"
+    },
+    {
+     "forme": "cube",
+     "position": [
+      0.46,
+      1.8,
+      0
+     ],
+     "taille": [
+      0.04,
+      0.5,
+      0.8
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      0
+     ],
+     "matiere": "couleur_3",
+     "nom": "corps"
+    },
+    {
+     "forme": "cube",
+     "position": [
+      0.15,
+      2.4,
+      0
+     ],
+     "taille": [
+      0.55,
+      0.45,
+      0.55
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      0
+     ],
+     "matiere": "couleur_2",
+     "nom": "corps"
+    },
+    {
+     "forme": "cube",
+     "position": [
+      0.44,
+      2.45,
+      0
+     ],
+     "taille": [
+      0.04,
+      0.12,
+      0.48
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      0
+     ],
+     "matiere": "lumiere_rouge",
+     "nom": "oeil"
+    },
+    {
+     "forme": "cylindre",
+     "position": [
+      -0.1,
+      2.9,
+      0.2
+     ],
+     "taille": [
+      0.04,
+      0.4,
+      0.04
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      0
+     ],
+     "matiere": "sombre",
+     "nom": "corps"
+    },
+    {
+     "forme": "sphere",
+     "position": [
+      -0.1,
+      3.12,
+      0.2
+     ],
+     "taille": [
+      0.1,
+      0.1,
+      0.1
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      0
+     ],
+     "matiere": "lumiere_bleue",
+     "nom": "oeil"
+    },
+    {
+     "forme": "cube",
+     "position": [
+      0.0,
+      1.05,
+      0
+     ],
+     "taille": [
+      0.8,
+      0.3,
+      1.0
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      0
+     ],
+     "matiere": "sombre",
+     "nom": "corps"
+    },
+    {
+     "forme": "cube",
+     "position": [
+      -0.55,
+      1.85,
+      0
+     ],
+     "taille": [
+      0.4,
+      0.7,
+      0.7
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      0
+     ],
+     "matiere": "couleur_3",
+     "nom": "corps"
+    },
+    {
+     "forme": "cylindre",
+     "position": [
+      0,
+      1.7,
+      0.78
+     ],
+     "taille": [
+      0.34,
+      1.3,
+      0.34
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      0
+     ],
+     "matiere": "couleur_3",
+     "nom": "bras_g"
+    },
+    {
+     "forme": "cube",
+     "position": [
+      0.2,
+      1.0,
+      0.78
+     ],
+     "taille": [
+      0.5,
+      0.36,
+      0.4
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      0
+     ],
+     "matiere": "sombre",
+     "nom": "bras_g"
+    },
+    {
+     "forme": "cylindre",
+     "position": [
+      0,
+      1.7,
+      -0.78
+     ],
+     "taille": [
+      0.34,
+      1.3,
+      0.34
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      0
+     ],
+     "matiere": "couleur_3",
+     "nom": "bras_d"
+    },
+    {
+     "forme": "cube",
+     "position": [
+      0.2,
+      1.0,
+      -0.78
+     ],
+     "taille": [
+      0.5,
+      0.36,
+      0.4
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      0
+     ],
+     "matiere": "sombre",
+     "nom": "bras_d"
+    },
+    {
+     "forme": "cylindre",
+     "position": [
+      0,
+      0.5,
+      0.36
+     ],
+     "taille": [
+      0.4,
+      1.0,
+      0.4
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      0
+     ],
+     "matiere": "couleur_3",
+     "nom": "patte_g"
+    },
+    {
+     "forme": "cube",
+     "position": [
+      0.2,
+      0.08,
+      0.36
+     ],
+     "taille": [
+      0.9,
+      0.16,
+      0.56
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      0
+     ],
+     "matiere": "sombre",
+     "nom": "patte_g"
+    },
+    {
+     "forme": "cylindre",
+     "position": [
+      0,
+      0.5,
+      -0.36
+     ],
+     "taille": [
+      0.4,
+      1.0,
+      0.4
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      0
+     ],
+     "matiere": "couleur_3",
+     "nom": "patte_d"
+    },
+    {
+     "forme": "cube",
+     "position": [
+      0.2,
+      0.08,
+      -0.36
+     ],
+     "taille": [
+      0.9,
+      0.16,
+      0.56
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      0
+     ],
+     "matiere": "sombre",
+     "nom": "patte_d"
+    }
+   ],
+   "parties_mobiles": [
+    {
+     "piece": "corps",
+     "animation": "rebond",
+     "amplitude": 0.02
+    },
+    {
+     "piece": "oeil",
+     "animation": "clignote_alterne"
+    },
+    {
+     "piece": "bras_g",
+     "animation": "pendule",
+     "phase": 0.5,
+     "axe": "z",
+     "pivot": "haut"
+    },
+    {
+     "piece": "bras_d",
+     "animation": "pendule",
+     "phase": 0.0,
+     "axe": "z",
+     "pivot": "haut"
+    },
+    {
+     "piece": "patte_g",
+     "animation": "pendule",
+     "phase": 0.0,
+     "axe": "z",
+     "pivot": "haut"
+    },
+    {
+     "piece": "patte_d",
+     "animation": "pendule",
+     "phase": 0.5,
+     "axe": "z",
+     "pivot": "haut"
+    }
+   ]
+  },
+  {
+   "id": "drone_geant",
+   "univers": "cyberpunk",
+   "classe": "volant",
+   "noms": {
+    "fr": "Drone Géant",
+    "en": "Giant Drone",
+    "de": "Riesendrohne",
+    "es": "Dron Gigante",
+    "it": "Drone Gigante"
+   },
+   "longueur": 1.8,
+   "largeur": 1.8,
+   "comportement": "vole_en_ligne",
+   "vitesse": 3.8,
+   "dangereux": true,
+   "points_deblocage": 3000,
+   "couleur_2": "#2d3142",
+   "couleur_3": "#37e6ff",
+   "pieces": [
+    {
+     "forme": "sphere",
+     "position": [
+      0,
+      0.95,
+      0
+     ],
+     "taille": [
+      0.7,
+      0.3,
+      0.7
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      0
+     ],
+     "matiere": "couleur_2",
+     "nom": "corps"
+    },
+    {
+     "forme": "cube",
+     "position": [
+      0,
+      0.75,
+      0
+     ],
+     "taille": [
+      0.4,
+      0.2,
+      0.4
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      0
+     ],
+     "matiere": "couleur_3",
+     "nom": "corps"
+    },
+    {
+     "forme": "sphere",
+     "position": [
+      0.32,
+      0.95,
+      0
+     ],
+     "taille": [
+      0.14,
+      0.14,
+      0.14
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      0
+     ],
+     "matiere": "lumiere_rouge",
+     "nom": "oeil"
+    },
+    {
+     "forme": "cube",
+     "position": [
+      0,
+      0.65,
+      0
+     ],
+     "taille": [
+      0.1,
+      0.1,
+      0.5
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      0
+     ],
+     "matiere": "lumiere_bleue",
+     "nom": "oeil"
+    },
+    {
+     "forme": "cube",
+     "position": [
+      0.44,
+      0.97,
+      0.44
+     ],
+     "taille": [
+      1.1,
+      0.06,
+      0.1
+     ],
+     "rotation_deg": [
+      0,
+      45,
+      0
+     ],
+     "matiere": "sombre",
+     "nom": "corps"
+    },
+    {
+     "forme": "cube",
+     "position": [
+      0.8,
+      1.05,
+      0.8
+     ],
+     "taille": [
+      0.8,
+      0.02,
+      0.1
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      0
+     ],
+     "matiere": "noir",
+     "nom": "helice0"
+    },
+    {
+     "forme": "sphere",
+     "position": [
+      0.8,
+      0.98,
+      0.8
+     ],
+     "taille": [
+      0.12,
+      0.12,
+      0.12
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      0
+     ],
+     "matiere": "lumiere_bleue",
+     "nom": "oeil"
+    },
+    {
+     "forme": "cube",
+     "position": [
+      0.44,
+      0.97,
+      -0.44
+     ],
+     "taille": [
+      1.1,
+      0.06,
+      0.1
+     ],
+     "rotation_deg": [
+      0,
+      -45,
+      0
+     ],
+     "matiere": "sombre",
+     "nom": "corps"
+    },
+    {
+     "forme": "cube",
+     "position": [
+      0.8,
+      1.05,
+      -0.8
+     ],
+     "taille": [
+      0.8,
+      0.02,
+      0.1
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      0
+     ],
+     "matiere": "noir",
+     "nom": "helice1"
+    },
+    {
+     "forme": "sphere",
+     "position": [
+      0.8,
+      0.98,
+      -0.8
+     ],
+     "taille": [
+      0.12,
+      0.12,
+      0.12
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      0
+     ],
+     "matiere": "lumiere_bleue",
+     "nom": "oeil"
+    },
+    {
+     "forme": "cube",
+     "position": [
+      -0.44,
+      0.97,
+      0.44
+     ],
+     "taille": [
+      1.1,
+      0.06,
+      0.1
+     ],
+     "rotation_deg": [
+      0,
+      -45,
+      0
+     ],
+     "matiere": "sombre",
+     "nom": "corps"
+    },
+    {
+     "forme": "cube",
+     "position": [
+      -0.8,
+      1.05,
+      0.8
+     ],
+     "taille": [
+      0.8,
+      0.02,
+      0.1
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      0
+     ],
+     "matiere": "noir",
+     "nom": "helice2"
+    },
+    {
+     "forme": "sphere",
+     "position": [
+      -0.8,
+      0.98,
+      0.8
+     ],
+     "taille": [
+      0.12,
+      0.12,
+      0.12
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      0
+     ],
+     "matiere": "lumiere_bleue",
+     "nom": "oeil"
+    },
+    {
+     "forme": "cube",
+     "position": [
+      -0.44,
+      0.97,
+      -0.44
+     ],
+     "taille": [
+      1.1,
+      0.06,
+      0.1
+     ],
+     "rotation_deg": [
+      0,
+      45,
+      0
+     ],
+     "matiere": "sombre",
+     "nom": "corps"
+    },
+    {
+     "forme": "cube",
+     "position": [
+      -0.8,
+      1.05,
+      -0.8
+     ],
+     "taille": [
+      0.8,
+      0.02,
+      0.1
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      0
+     ],
+     "matiere": "noir",
+     "nom": "helice3"
+    },
+    {
+     "forme": "sphere",
+     "position": [
+      -0.8,
+      0.98,
+      -0.8
+     ],
+     "taille": [
+      0.12,
+      0.12,
+      0.12
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      0
+     ],
+     "matiere": "lumiere_bleue",
+     "nom": "oeil"
+    }
+   ],
+   "parties_mobiles": [
+    {
+     "piece": "corps",
+     "animation": "rebond",
+     "amplitude": 0.05
+    },
+    {
+     "piece": "oeil",
+     "animation": "clignote_alterne"
+    },
+    {
+     "piece": "helice0",
+     "animation": "rotation_groupe"
+    },
+    {
+     "piece": "helice1",
+     "animation": "rotation_groupe"
+    },
+    {
+     "piece": "helice2",
+     "animation": "rotation_groupe"
+    },
+    {
+     "piece": "helice3",
+     "animation": "rotation_groupe"
+    }
+   ]
+  }
+ ],
+ "heros": {
+  "id": "grenouille_cyber",
+  "univers": "cyberpunk",
+  "noms": {
+   "fr": "Grenouille Cyber",
+   "en": "Cyber Frog",
+   "de": "Cyber-Frosch",
+   "es": "Rana Cíber",
+   "it": "Rana Cyber"
+  },
+  "longueur": 0.7,
+  "largeur": 0.6,
+  "couleur_2": "#3a3f5a",
+  "couleur_3": "#37e6ff",
+  "pieces": [
+   {
+    "forme": "sphere",
+    "position": [
+     -0.05,
+     0.26,
+     0
+    ],
+    "taille": [
+     0.5,
+     0.34,
+     0.46
+    ],
+    "rotation_deg": [
+     0,
+     0,
+     0
+    ],
+    "matiere": "peinture",
+    "nom": "corps"
+   },
+   {
+    "forme": "sphere",
+    "position": [
+     0.0,
+     0.17,
+     0
+    ],
+    "taille": [
+     0.38,
+     0.2,
+     0.4
+    ],
+    "rotation_deg": [
+     0,
+     0,
+     0
+    ],
+    "matiere": "couleur_2"
+   },
+   {
+    "forme": "sphere",
+    "position": [
+     0.2,
+     0.36,
+     0
+    ],
+    "taille": [
+     0.36,
+     0.26,
+     0.4
+    ],
+    "rotation_deg": [
+     0,
+     0,
+     0
+    ],
+    "matiere": "peinture"
+   },
+   {
+    "forme": "cube",
+    "position": [
+     0.37,
+     0.31,
+     0
+    ],
+    "taille": [
+     0.02,
+     0.02,
+     0.3
+    ],
+    "rotation_deg": [
+     0,
+     0,
+     0
+    ],
+    "matiere": "noir"
+   },
+   {
+    "forme": "sphere",
+    "position": [
+     0.2,
+     0.54,
+     0.14
+    ],
+    "taille": [
+     0.15,
+     0.15,
+     0.15
+    ],
+    "rotation_deg": [
+     0,
+     0,
+     0
+    ],
+    "matiere": "peinture"
+   },
+   {
+    "forme": "sphere",
+    "position": [
+     0.25,
+     0.56,
+     0.14
+    ],
+    "taille": [
+     0.11,
+     0.11,
+     0.11
+    ],
+    "rotation_deg": [
+     0,
+     0,
+     0
+    ],
+    "matiere": "blanc"
+   },
+   {
+    "forme": "sphere",
+    "position": [
+     0.3,
+     0.57,
+     0.14
+    ],
+    "taille": [
+     0.06,
+     0.06,
+     0.06
+    ],
+    "rotation_deg": [
+     0,
+     0,
+     0
+    ],
+    "matiere": "noir"
+   },
+   {
+    "forme": "sphere",
+    "position": [
+     -0.2,
+     0.2,
+     0.26
+    ],
+    "taille": [
+     0.22,
+     0.2,
+     0.14
+    ],
+    "rotation_deg": [
+     0,
+     0,
+     0
+    ],
+    "matiere": "peinture"
+   },
+   {
+    "forme": "cube",
+    "position": [
+     -0.1,
+     0.07,
+     0.27
+    ],
+    "taille": [
+     0.14,
+     0.1,
+     0.1
+    ],
+    "rotation_deg": [
+     0,
+     0,
+     0
+    ],
+    "matiere": "peinture"
+   },
+   {
+    "forme": "cube",
+    "position": [
+     -0.04,
+     0.025,
+     0.27
+    ],
+    "taille": [
+     0.26,
+     0.05,
+     0.12
+    ],
+    "rotation_deg": [
+     0,
+     0,
+     0
+    ],
+    "matiere": "couleur_2"
+   },
+   {
+    "forme": "cylindre",
+    "position": [
+     0.18,
+     0.1,
+     0.2
+    ],
+    "taille": [
+     0.07,
+     0.2,
+     0.07
+    ],
+    "rotation_deg": [
+     0,
+     0,
+     0
+    ],
+    "matiere": "peinture"
+   },
+   {
+    "forme": "cube",
+    "position": [
+     0.22,
+     0.015,
+     0.2
+    ],
+    "taille": [
+     0.1,
+     0.03,
+     0.08
+    ],
+    "rotation_deg": [
+     0,
+     0,
+     0
+    ],
+    "matiere": "couleur_2"
+   },
+   {
+    "forme": "sphere",
+    "position": [
+     0.2,
+     0.54,
+     -0.14
+    ],
+    "taille": [
+     0.15,
+     0.15,
+     0.15
+    ],
+    "rotation_deg": [
+     0,
+     0,
+     0
+    ],
+    "matiere": "peinture"
+   },
+   {
+    "forme": "sphere",
+    "position": [
+     0.25,
+     0.56,
+     -0.14
+    ],
+    "taille": [
+     0.11,
+     0.11,
+     0.11
+    ],
+    "rotation_deg": [
+     0,
+     0,
+     0
+    ],
+    "matiere": "blanc"
+   },
+   {
+    "forme": "sphere",
+    "position": [
+     0.3,
+     0.57,
+     -0.14
+    ],
+    "taille": [
+     0.06,
+     0.06,
+     0.06
+    ],
+    "rotation_deg": [
+     0,
+     0,
+     0
+    ],
+    "matiere": "noir"
+   },
+   {
+    "forme": "sphere",
+    "position": [
+     -0.2,
+     0.2,
+     -0.26
+    ],
+    "taille": [
+     0.22,
+     0.2,
+     0.14
+    ],
+    "rotation_deg": [
+     0,
+     0,
+     0
+    ],
+    "matiere": "peinture"
+   },
+   {
+    "forme": "cube",
+    "position": [
+     -0.1,
+     0.07,
+     -0.27
+    ],
+    "taille": [
+     0.14,
+     0.1,
+     0.1
+    ],
+    "rotation_deg": [
+     0,
+     0,
+     0
+    ],
+    "matiere": "peinture"
+   },
+   {
+    "forme": "cube",
+    "position": [
+     -0.04,
+     0.025,
+     -0.27
+    ],
+    "taille": [
+     0.26,
+     0.05,
+     0.12
+    ],
+    "rotation_deg": [
+     0,
+     0,
+     0
+    ],
+    "matiere": "couleur_2"
+   },
+   {
+    "forme": "cylindre",
+    "position": [
+     0.18,
+     0.1,
+     -0.2
+    ],
+    "taille": [
+     0.07,
+     0.2,
+     0.07
+    ],
+    "rotation_deg": [
+     0,
+     0,
+     0
+    ],
+    "matiere": "peinture"
+   },
+   {
+    "forme": "cube",
+    "position": [
+     0.22,
+     0.015,
+     -0.2
+    ],
+    "taille": [
+     0.1,
+     0.03,
+     0.08
+    ],
+    "rotation_deg": [
+     0,
+     0,
+     0
+    ],
+    "matiere": "couleur_2"
+   },
+   {
+    "forme": "sphere",
+    "position": [
+     -0.12,
+     0.42,
+     0.1
+    ],
+    "taille": [
+     0.08,
+     0.05,
+     0.08
+    ],
+    "rotation_deg": [
+     0,
+     0,
+     0
+    ],
+    "matiere": "couleur_3"
+   },
+   {
+    "forme": "sphere",
+    "position": [
+     -0.18,
+     0.4,
+     -0.08
+    ],
+    "taille": [
+     0.06,
+     0.04,
+     0.06
+    ],
+    "rotation_deg": [
+     0,
+     0,
+     0
+    ],
+    "matiere": "couleur_3"
+   }
+  ],
+  "parties_mobiles": [
+   {
+    "piece": "corps",
+    "animation": "rebond",
+    "amplitude": 0.02
+   }
+  ],
+  "accessoire": {
+   "nom": {
+    "fr": "Visière néon",
+    "en": "Neon visor",
+    "de": "Neon-Visier",
+    "es": "Visera de neón",
+    "it": "Visore al neon"
+   },
+   "pieces": [
+    {
+     "forme": "cube",
+     "position": [
+      0.3,
+      0.55,
+      0.0
+     ],
+     "taille": [
+      0.1,
+      0.1,
+      0.5
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      0
+     ],
+     "matiere": "lumiere_bleue",
+     "nom": "visiere"
+    },
+    {
+     "forme": "cube",
+     "position": [
+      0.2,
+      0.66,
+      0.0
+     ],
+     "taille": [
+      0.4,
+      0.05,
+      0.5
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      0
+     ],
+     "matiere": "couleur_3"
+    },
+    {
+     "forme": "cube",
+     "position": [
+      0.0,
+      0.5,
+      0.27
+     ],
+     "taille": [
+      0.12,
+      0.2,
+      0.06
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      0
+     ],
+     "matiere": "couleur_3"
+    },
+    {
+     "forme": "cube",
+     "position": [
+      0.0,
+      0.5,
+      -0.27
+     ],
+     "taille": [
+      0.12,
+      0.2,
+      0.06
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      0
+     ],
+     "matiere": "couleur_3"
+    },
+    {
+     "forme": "cylindre",
+     "position": [
+      0.0,
+      0.82,
+      0.15
+     ],
+     "taille": [
+      0.03,
+      0.3,
+      0.03
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      0
+     ],
+     "matiere": "sombre"
+    },
+    {
+     "forme": "sphere",
+     "position": [
+      0.0,
+      0.98,
+      0.15
+     ],
+     "taille": [
+      0.07,
+      0.07,
+      0.07
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      0
+     ],
+     "matiere": "lumiere_rouge",
+     "nom": "balise"
+    }
+   ],
+   "parties_mobiles": [
+    {
+     "piece": "balise",
+     "animation": "clignote"
+    },
+    {
+     "piece": "visiere",
+     "animation": "pulse"
+    }
+   ]
+  }
+ }
+}

@@ -277,7 +277,7 @@ fn world_sample(c: &mut Commands, kit: &Kit, x: &Extra, slot: Entity, biome: Bio
         }
         Biome::Desert => spawn_scenery(c, kit, x, slot, biome, Scenery::Block, Vec3::new(-0.2, 0.0, 0.0), 0, 0),
         Biome::Snow => spawn_scenery(c, kit, x, slot, biome, Scenery::Block, Vec3::new(-0.2, 0.0, 0.0), 4, 0),
-        Biome::Jurassic | Biome::Nippon | Biome::Space | Biome::FarWest | Biome::Halloween => {
+        Biome::Jurassic | Biome::Nippon | Biome::Space | Biome::FarWest | Biome::Halloween | Biome::Cyber => {
             spawn_scenery(c, kit, x, slot, biome, Scenery::Block, Vec3::new(-0.3, 0.0, 0.0), 0, 0);
             spawn_scenery(c, kit, x, slot, biome, Scenery::Block, Vec3::new(0.7, 0.0, 0.5), 3, 0);
         }
