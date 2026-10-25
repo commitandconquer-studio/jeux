@@ -472,15 +472,21 @@ pub enum Biome {
 pub const BIOME_LEN: i32 = 60;
 
 impl Biome {
-    pub fn of(row: i32) -> Self {
+    /// Le monde de ce rang ; un monde pas encore débloqué reste de la prairie.
+    pub fn of(row: i32, points: u32) -> Self {
         // TRAVERSEE_BIOME=1..3 : voir un monde tout de suite (essais et captures).
         static START: std::sync::OnceLock<i32> = std::sync::OnceLock::new();
         let start = *START.get_or_init(|| std::env::var("TRAVERSEE_BIOME").ok().and_then(|s| s.parse().ok()).unwrap_or(0));
-        match (row.max(0) / BIOME_LEN + start) % 4 {
+        let biome = match (row.max(0) / BIOME_LEN + start) % 4 {
             0 => Biome::Prairie,
             1 => Biome::Desert,
             2 => Biome::Snow,
             _ => Biome::Autumn,
+        };
+        if biome != Biome::Prairie && !crate::progress::unlocked(points, crate::progress::Item::World(biome)) {
+            Biome::Prairie
+        } else {
+            biome
         }
     }
 

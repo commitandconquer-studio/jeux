@@ -31,7 +31,6 @@ pub struct Frog {
     /// Rangée la plus lointaine atteinte, et points gagnés avec les mouches.
     max_row: i32,
     bonus: u32,
-    flies: u32,
     /// Temps restant de l'écrasement à l'atterrissage.
     land: f32,
 }
@@ -50,11 +49,6 @@ struct Hop {
 }
 
 impl Frog {
-    /// Mouches gobées pendant cette partie.
-    pub fn eaten(&self) -> u32 {
-        self.flies
-    }
-
     /// Où se trouve le crapaud à l'écran (au sol, en plein saut compris).
     pub fn visual_pos(&self) -> Vec3 {
         match &self.hop {
@@ -232,6 +226,7 @@ pub fn update_frog(
     mut fx: MessageWriter<Fx>,
     mut commands: Commands,
     flies: Query<(Entity, &crate::extra::Fly)>,
+    progress: Res<crate::progress::Progress>,
 ) {
     let dt = time.delta_secs();
     frog.land = (frog.land - dt).max(0.0);
@@ -254,7 +249,11 @@ pub fn update_frog(
             }
             // Un nouveau monde commence : on le dit à l'écran.
             if to_row > 0 && to_row % crate::extra::BIOME_LEN == 0 {
-                fx.write(Fx::World(crate::extra::Biome::of(to_row)));
+                let points = progress.total + frog.max_row as u32 + frog.bonus;
+                let world = crate::extra::Biome::of(to_row, points);
+                if world != crate::extra::Biome::Prairie {
+                    fx.write(Fx::World(world));
+                }
             }
         }
         // Une mouche sur la case : on la gobe.
@@ -262,7 +261,6 @@ pub fn update_frog(
         if let Some((e, fly)) = flies.iter().find(|(_, f)| f.row == to_row && f.col == col) {
             commands.entity(e).despawn();
             frog.bonus += fly.points();
-            frog.flies += 1;
             sfx.write(Sfx::Eat);
             fx.write(Fx::Gulp(Vec3::new(to.x, to.y + 0.5, to.z), fly.points()));
         }

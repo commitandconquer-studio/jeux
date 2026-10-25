@@ -172,7 +172,7 @@ fn spawn_lane(c: &mut Commands, kit: &Kit, x: &Extra, g: &mut LaneGen, points: u
     let row = g.next_row;
     g.next_row += 1;
     let kind = g.next_kind(row, points);
-    let biome = Biome::of(row);
+    let biome = Biome::of(row, points);
     let after_road = g.prev == LaneKind::Road;
     g.prev = kind;
 
@@ -246,10 +246,10 @@ fn spawn_lane(c: &mut Commands, kit: &Kit, x: &Extra, g: &mut LaneGen, points: u
                     spawn_deco(c, kit, x, root, deco, Vec3::new(col as f32, 0.0, 0.0) + jitter, variant);
                 }
                 // Une mouche à gober, parfois dorée
-                if row >= 3 && g.rand() < 0.3 {
+                if row >= 3 && crate::progress::unlocked(points, crate::progress::Item::Flies) && g.rand() < 0.3 {
                     let col = g.rng.below((COLS * 2 + 1) as u32) as i32 - COLS;
                     if !blocked.contains(&col) {
-                        let gold = g.rand() < 0.12;
+                        let gold = crate::progress::unlocked(points, crate::progress::Item::GoldFlies) && g.rand() < 0.12;
                         let phase = g.rand() * 6.28;
                         spawn_fly(c, kit, x, root, row, col, gold, phase);
                     }

@@ -1,10 +1,12 @@
-//! Progression : le total des points de toutes les parties débloque peu à peu
-//! de nouveaux véhicules et les trains. Sauvegardé entre deux parties.
+//! Progression : au début, presque rien ; le total des points de toutes les
+//! parties débloque peu à peu les mouches, les véhicules, les trains, les mondes,
+//! les personnages et leurs accessoires. Sauvegardé entre deux parties.
 use bevy::prelude::*;
 use game_common::{Score, tx};
 
 use crate::GameState;
-use crate::extra::Vehicle;
+use crate::characters::{Character, Costume};
+use crate::extra::{Biome, Vehicle};
 
 const SAVE: &str = "traversee";
 
@@ -13,25 +15,49 @@ const SAVE: &str = "traversee";
 pub enum Item {
     Vehicle(Vehicle),
     Trains,
+    World(Biome),
+    Character(Character),
+    Costume(Costume),
+    Flies,
+    GoldFlies,
 }
 
 /// Points cumulés nécessaires, dans l'ordre d'arrivée.
-pub const UNLOCKS: [(u32, Item); 12] = [
+pub const UNLOCKS: [(u32, Item); 31] = [
+    (15, Item::Flies),
     (25, Item::Vehicle(Vehicle::Truck)),
+    (40, Item::Costume(Costume::Cap)),
     (60, Item::Vehicle(Vehicle::Taxi)),
+    (80, Item::Character(Character::Rabbit)),
     (100, Item::Trains),
+    (130, Item::Costume(Costume::Shades)),
     (160, Item::Vehicle(Vehicle::Moto)),
+    (200, Item::World(Biome::Desert)),
     (240, Item::Vehicle(Vehicle::Bus)),
-    (340, Item::Vehicle(Vehicle::Pickup)),
-    (460, Item::Vehicle(Vehicle::Sport)),
-    (600, Item::Vehicle(Vehicle::Police)),
-    (760, Item::Vehicle(Vehicle::Tractor)),
-    (950, Item::Vehicle(Vehicle::Future)),
-    (1200, Item::Vehicle(Vehicle::Sheriff)),
-    (1500, Item::Vehicle(Vehicle::Fantastic)),
+    (280, Item::Character(Character::Badger)),
+    (330, Item::Costume(Costume::TopHat)),
+    (350, Item::GoldFlies),
+    (380, Item::Vehicle(Vehicle::Pickup)),
+    (440, Item::World(Biome::Snow)),
+    (500, Item::Character(Character::Raccoon)),
+    (560, Item::Vehicle(Vehicle::Sport)),
+    (640, Item::Costume(Costume::Pirate)),
+    (720, Item::Vehicle(Vehicle::Police)),
+    (800, Item::World(Biome::Autumn)),
+    (900, Item::Character(Character::Hedgehog)),
+    (1000, Item::Vehicle(Vehicle::Tractor)),
+    (1100, Item::Costume(Costume::Crown)),
+    (1250, Item::Character(Character::Fox)),
+    (1400, Item::Vehicle(Vehicle::Future)),
+    (1600, Item::Costume(Costume::Party)),
+    (1800, Item::Character(Character::Panda)),
+    (2000, Item::Vehicle(Vehicle::Sheriff)),
+    (2300, Item::Costume(Costume::Wizard)),
+    (2600, Item::Character(Character::Duck)),
+    (3000, Item::Vehicle(Vehicle::Fantastic)),
 ];
 
-/// Tous les objets, dans l'ordre d'affichage au garage.
+/// Les véhicules, dans l'ordre d'affichage au garage.
 pub const ALL: [Item; 13] = [
     Item::Vehicle(Vehicle::Car),
     Item::Vehicle(Vehicle::Truck),
@@ -49,10 +75,15 @@ pub const ALL: [Item; 13] = [
 ];
 
 impl Item {
-    /// Le petit nom de chaque véhicule.
+    /// Le nom à afficher (petit nom des véhicules, nom des mondes, des personnages…).
     pub fn name(self) -> &'static str {
         match self {
             Item::Trains => tx!("Le Rapide Rouge", "The Red Rocket", "Der Rote Blitz", "Il Rapido Rosso", "El Rayo Rojo"),
+            Item::World(b) => return b.name(),
+            Item::Character(c) => return c.name(),
+            Item::Costume(c) => return c.name(),
+            Item::Flies => tx!("Les mouches", "The flies", "Die Fliegen", "Le mosche", "Las moscas"),
+            Item::GoldFlies => tx!("Les mouches dorées", "The golden flies", "Die goldenen Fliegen", "Le mosche dorate", "Las moscas doradas"),
             Item::Vehicle(v) => match v {
                 Vehicle::Car => tx!("Pépette", "Penny", "Püppi", "Pepetta", "Pepita"),
                 Vehicle::Truck => tx!("Gros Bidon", "Big Barrel", "Dicker Brummer", "Gran Botte", "Gran Bidón"),
@@ -85,33 +116,32 @@ pub fn unlocked(points: u32, item: Item) -> bool {
 pub struct Progress {
     /// Points de toutes les parties terminées.
     pub total: u32,
-    /// Mouches gobées au total (elles débloquent les costumes).
-    pub flies: u32,
-    /// Personnages et costumes débloqués par la dernière partie.
-    pub fresh_characters: Vec<crate::characters::Character>,
-    pub fresh_costumes: Vec<crate::characters::Costume>,
     /// Objets débloqués par la dernière partie.
     pub fresh: Vec<Item>,
 }
 
 impl Default for Progress {
     fn default() -> Self {
-        // TRAVERSEE_POINTS=9999 : essayer tous les véhicules sans toucher à la sauvegarde.
+        // TRAVERSEE_POINTS=9999 : essayer tout sans toucher à la sauvegarde.
         let forced = std::env::var("TRAVERSEE_POINTS").ok().and_then(|s| s.parse().ok());
         let total = forced.or_else(|| game_common::save::load(SAVE, "total").and_then(|s| s.parse().ok())).unwrap_or(0);
-        let flies = forced.map(|_| 9999).or_else(|| game_common::save::load(SAVE, "mouches").and_then(|s| s.parse().ok())).unwrap_or(0);
-        Self { total, flies, fresh_characters: Vec::new(), fresh_costumes: Vec::new(), fresh: Vec::new() }
+        Self { total, fresh: Vec::new() }
     }
 }
 
 impl Progress {
+    /// Nombre d'objets gagnés jusqu'ici.
     pub fn count(&self) -> usize {
-        1 + UNLOCKS.iter().filter(|(t, _)| self.total >= *t).count()
+        UNLOCKS.iter().filter(|(t, _)| self.total >= *t).count()
     }
 
     /// Prochain objet à débloquer et son seuil.
     pub fn next(&self) -> Option<(u32, Item)> {
         UNLOCKS.iter().find(|(t, _)| self.total < *t).copied()
+    }
+
+    pub fn has(&self, item: Item) -> bool {
+        unlocked(self.total, item)
     }
 }
 
@@ -133,21 +163,15 @@ fn load_best(mut score: ResMut<Score>) {
 }
 
 /// Fin de partie : les points s'ajoutent au total ; ce qui passe un seuil se débloque.
-fn commit(mut progress: ResMut<Progress>, score: Res<Score>, frog: Res<crate::frog::Frog>) {
+fn commit(mut progress: ResMut<Progress>, score: Res<Score>) {
     let before = progress.total;
-    let flies_before = progress.flies;
-    progress.flies += frog.eaten();
     progress.total += score.current;
     let after = progress.total;
-    let flies_after = progress.flies;
-    progress.fresh_characters = crate::characters::CHARACTERS.iter().filter(|(_, t)| before < *t && *t <= after).map(|(c, _)| *c).collect();
-    progress.fresh_costumes = crate::characters::COSTUMES.iter().filter(|(_, t)| flies_before < *t && *t <= flies_after).map(|(c, _)| *c).collect();
     progress.fresh = UNLOCKS.iter().filter(|(t, _)| before < *t && *t <= after).map(|(_, i)| *i).collect();
     // Les modes d'essai (captures, mesures, points forcés) ne touchent pas la sauvegarde.
     if ["TRAVERSEE_CAPTURE", "TRAVERSEE_PERF", "TRAVERSEE_POINTS"].iter().any(|k| std::env::var(k).is_ok()) {
         return;
     }
     game_common::save::store(SAVE, "total", &after.to_string());
-    game_common::save::store(SAVE, "mouches", &flies_after.to_string());
     game_common::save::store(SAVE, "best", &score.best.to_string());
 }

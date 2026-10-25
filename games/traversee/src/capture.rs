@@ -11,7 +11,7 @@ use crate::models::Kit;
 use crate::frog::{Cause, Death, Frog, die};
 
 /// (nom, état, secondes avant la capture, pilote automatique)
-const SHOTS: [(&str, GameState, f32, bool); 11] = [
+const SHOTS: [(&str, GameState, f32, bool); 13] = [
     ("1-menu", GameState::Menu, 4.0, false),
     ("2-depart", GameState::Playing, 1.0, false),
     ("3-en-route", GameState::Playing, 2.5, true),
@@ -24,7 +24,9 @@ const SHOTS: [(&str, GameState, f32, bool); 11] = [
     ("8-mouche", GameState::Playing, 1.2, true),
     ("9-garage", GameState::Garage, 1.0, false),
     ("10-personnages", GameState::Garage, 1.2, false),
-    ("11-en-costume", GameState::Playing, 1.0, true),
+    ("11-accessoires", GameState::Garage, 1.2, false),
+    ("12-mondes", GameState::Garage, 1.2, false),
+    ("13-en-costume", GameState::Playing, 1.0, true),
 ];
 
 #[derive(Resource)]
@@ -121,9 +123,17 @@ fn run_capture(
         if cap.index == 9 {
             view.tab = crate::garage::Tab::Characters;
             view.dirty = true;
-            selection.costume = crate::characters::Costume::Pirate;
         }
         if cap.index == 10 {
+            view.tab = crate::garage::Tab::Costumes;
+            view.dirty = true;
+            selection.character = crate::characters::Character::Rabbit;
+        }
+        if cap.index == 11 {
+            view.tab = crate::garage::Tab::Worlds;
+            view.dirty = true;
+        }
+        if cap.index == 12 {
             selection.character = crate::characters::Character::Raccoon;
             selection.costume = crate::characters::Costume::Crown;
         }

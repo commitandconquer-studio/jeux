@@ -100,8 +100,8 @@ fn button(commands: &mut Commands, parent: Entity, label: &str, action: UiAction
 fn spawn_menu(mut commands: Commands, progress: Res<Progress>) {
     let panel = spawn_panel(&mut commands, DespawnOnExit(GameState::Menu));
     spawn_text(&mut commands, panel, tx!("TRAVERSÉE", "CROSSING", "ÜBERQUERUNG", "TRAVERSATA", "TRAVESÍA").t(), 64.0);
-    let total = crate::progress::ALL.len();
-    let line = tx!("Véhicules débloqués : {} / {}", "Vehicles unlocked: {} / {}", "Fahrzeuge freigeschaltet: {} / {}", "Veicoli sbloccati: {} / {}", "Vehículos desbloqueados: {} / {}")
+    let total = crate::progress::UNLOCKS.len();
+    let line = tx!("Déblocages : {} / {}", "Unlocked: {} / {}", "Freigeschaltet: {} / {}", "Sbloccati: {} / {}", "Desbloqueos: {} / {}")
         .avec(&[&progress.count(), &total]);
     spawn_text(&mut commands, panel, line, 20.0);
     spawn_gap(&mut commands, panel, 8.0);
@@ -130,14 +130,6 @@ pub fn spawn_game_over(mut commands: Commands, score: Res<Score>, death: Res<Dea
     // Ce que cette partie vient de débloquer, puis le prochain objectif.
     for item in &progress.fresh {
         let line = tx!("Débloqué : {} !", "Unlocked: {}!", "Freigeschaltet: {}!", "Sbloccato: {}!", "¡Desbloqueado: {}!").avec(&[&item.name()]);
-        spawn_text(&mut commands, panel, line, 26.0);
-    }
-    for ch in &progress.fresh_characters {
-        let line = tx!("Nouveau personnage : {} !", "New character: {}!", "Neue Figur: {}!", "Nuovo personaggio: {}!", "¡Nuevo personaje: {}!").avec(&[&ch.name()]);
-        spawn_text(&mut commands, panel, line, 26.0);
-    }
-    for co in &progress.fresh_costumes {
-        let line = tx!("Nouveau costume : {} !", "New costume: {}!", "Neues Kostüm: {}!", "Nuovo costume: {}!", "¡Nuevo disfraz: {}!").avec(&[&co.name()]);
         spawn_text(&mut commands, panel, line, 26.0);
     }
     if let Some((at, item)) = progress.next() {

@@ -10,8 +10,8 @@ use game_common::{flat_material, tx};
 use crate::GameState;
 use crate::audio::Sfx;
 use crate::characters::{CHARACTERS, COSTUMES, Cast, Character, Costume, Selection, spawn_character, unlocked_character, unlocked_costume};
-use crate::extra::{Extra, Vehicle, spawn_vehicle};
-use crate::models::{Kit, part, spawn_car, spawn_train_car, spawn_truck};
+use crate::extra::{Biome, Extra, Scenery, Vehicle, spawn_deco, spawn_scenery, spawn_vehicle};
+use crate::models::{Kit, Prop, part, spawn_car, spawn_prop, spawn_train_car, spawn_truck};
 use crate::progress::{ALL, Item, Progress, threshold};
 
 /// Le garage est bâti loin de la route, hors de vue du jeu.
@@ -36,6 +36,8 @@ pub enum Tab {
     #[default]
     Vehicles,
     Characters,
+    Costumes,
+    Worlds,
 }
 
 #[derive(Resource, Default)]
@@ -120,6 +122,7 @@ fn build(
                 let len = match *item {
                     Item::Trains => 2.95,
                     Item::Vehicle(v) => v.len(),
+                    _ => 2.0,
                 };
                 let slot = slot_entity(&mut commands, root, at, (2.7 / len).min(1.15), i);
                 let color = i * 5 + 1;
@@ -128,6 +131,7 @@ fn build(
                     Item::Vehicle(Vehicle::Car) => spawn_car(&mut commands, &kit, slot, color),
                     Item::Vehicle(Vehicle::Truck) => spawn_truck(&mut commands, &kit, slot, color),
                     Item::Vehicle(v) => spawn_vehicle(&mut commands, &kit, &extra, slot, v, color),
+                    _ => {}
                 }
                 let open = progress.total >= threshold(*item);
                 if !open {
@@ -138,21 +142,21 @@ fn build(
             }
         }
         Tab::Characters => {
-            let have = CHARACTERS.iter().filter(|(c, _)| unlocked_character(&progress, *c)).count();
-            heading = tx!("Personnages : {} / {}", "Characters: {} / {}", "Figuren: {} / {}", "Personaggi: {} / {}", "Personajes: {} / {}").avec(&[&have, &CHARACTERS.len()]);
-            for (i, (ch, need)) in CHARACTERS.iter().enumerate() {
+            let have = CHARACTERS.iter().filter(|c| unlocked_character(&progress, **c)).count();
+            heading = tx!("Choisis ton personnage : {} / {}", "Choose your character: {} / {}", "Wähle deine Figur: {} / {}", "Scegli il personaggio: {} / {}", "Elige tu personaje: {} / {}")
+                .avec(&[&have, &CHARACTERS.len()]);
+            for (i, ch) in CHARACTERS.iter().enumerate() {
                 let at = character_slot(i) - ORIGIN;
                 part(&mut commands, root, &kit.cyl, &plate, at + Vec3::Y * -0.15, Vec3::new(4.0, 0.2, 3.4));
                 let slot = slot_entity(&mut commands, root, at, 2.3, i);
-                // Tout le monde essaie le costume choisi.
-                spawn_character(&mut commands, *ch, selection.costume, &kit, &frog_kit, &cast, &mut mats, slot);
+                spawn_character(&mut commands, *ch, Costume::None, &kit, &frog_kit, &cast, &mut mats, slot);
                 let open = unlocked_character(&progress, *ch);
                 if !open {
                     commands.entity(slot).insert(Locked);
                 }
                 let chosen = open && selection.character == *ch;
                 let sub = if !open {
-                    pts(*need)
+                    pts(ch.threshold())
                 } else if chosen {
                     tx!("— choisi —", "— chosen —", "— gewählt —", "— scelto —", "— elegido —").t().to_string()
                 } else {
@@ -160,37 +164,48 @@ fn build(
                 };
                 label(&mut commands, character_slot(i) + Vec3::new(0.0, 0.0, 2.1), if open { ch.name() } else { "???" }, sub, open, chosen, open.then_some(Act::Char(*ch)));
             }
-            // Barre des costumes
-            let bar = commands
-                .spawn((
-                    Node {
-                        position_type: PositionType::Absolute,
-                        bottom: px(18),
-                        width: percent(100),
-                        flex_wrap: FlexWrap::Wrap,
-                        justify_content: JustifyContent::Center,
-                        column_gap: px(8),
-                        row_gap: px(8),
-                        padding: UiRect::horizontal(px(300)),
-                        ..default()
-                    },
-                    scope(),
-                ))
-                .id();
-            for (co, need) in COSTUMES {
-                let open = unlocked_costume(&progress, co);
-                let text = if open {
-                    co.name().to_string()
-                } else {
-                    format!("??? · {}", tx!("{} mouches", "{} flies", "{} Fliegen", "{} mosche", "{} moscas").avec(&[&need]))
-                };
-                let (b, _) = spawn_button_sized(&mut commands, bar, text, 200.0, 40.0, 15.0);
-                commands.entity(b).insert(Act::Costume(co));
-                if open && selection.costume == co {
-                    commands.entity(b).insert(BackgroundColor(Color::srgb(1.0, 0.88, 0.45)));
-                } else if !open {
-                    commands.entity(b).insert(BackgroundColor(Color::srgb(0.82, 0.82, 0.8)));
+        }
+        Tab::Costumes => {
+            let have = COSTUMES.iter().filter(|c| unlocked_costume(&progress, **c)).count();
+            heading = tx!("Accessoires de {} : {} / {}", "{}'s accessories: {} / {}", "Zubehör von {}: {} / {}", "Accessori di {}: {} / {}", "Accesorios de {}: {} / {}")
+                .avec(&[&selection.character.name(), &have, &COSTUMES.len()]);
+            for (i, co) in COSTUMES.iter().enumerate() {
+                let at = character_slot(i) - ORIGIN;
+                part(&mut commands, root, &kit.cyl, &plate, at + Vec3::Y * -0.15, Vec3::new(4.0, 0.2, 3.4));
+                let slot = slot_entity(&mut commands, root, at, 2.3, i);
+                spawn_character(&mut commands, selection.character, *co, &kit, &frog_kit, &cast, &mut mats, slot);
+                let open = unlocked_costume(&progress, *co);
+                if !open {
+                    commands.entity(slot).insert(Locked);
                 }
+                let chosen = open && selection.costume == *co;
+                let sub = if !open {
+                    pts(co.threshold())
+                } else if chosen {
+                    tx!("— choisi —", "— chosen —", "— gewählt —", "— scelto —", "— elegido —").t().to_string()
+                } else {
+                    String::new()
+                };
+                label(&mut commands, character_slot(i) + Vec3::new(0.0, 0.0, 2.1), if open { co.name() } else { "???" }, sub, open, chosen, open.then_some(Act::Costume(*co)));
+            }
+        }
+        Tab::Worlds => {
+            let worlds = [Biome::Prairie, Biome::Desert, Biome::Snow, Biome::Autumn];
+            let have = worlds.iter().filter(|b| progress.has(Item::World(**b))).count();
+            heading = tx!("Les mondes : {} / {}", "The worlds: {} / {}", "Die Welten: {} / {}", "I mondi: {} / {}", "Los mundos: {} / {}").avec(&[&have, &worlds.len()]);
+            for (i, b) in worlds.iter().enumerate() {
+                let center = ORIGIN + Vec3::new((i as f32 - 1.5) * 6.2, 0.0, -1.0);
+                let at = center - ORIGIN;
+                let (top, _) = extra.ground(&kit, *b, 0);
+                part(&mut commands, root, &kit.cyl, top, at + Vec3::Y * -0.15, Vec3::new(5.0, 0.2, 4.2));
+                let slot = slot_entity(&mut commands, root, at, 2.0, i);
+                world_sample(&mut commands, &kit, &extra, slot, *b);
+                let open = progress.has(Item::World(*b));
+                if !open {
+                    commands.entity(slot).insert(Locked);
+                }
+                let sub = if open { String::new() } else { pts(threshold(Item::World(*b))) };
+                label(&mut commands, center + Vec3::new(0.0, 0.0, 2.6), if open { b.name() } else { "???" }, sub, open, false, None);
             }
         }
     }
@@ -208,8 +223,10 @@ fn build(
     for (tab, name) in [
         (Tab::Vehicles, tx!("Véhicules", "Vehicles", "Fahrzeuge", "Veicoli", "Vehículos").t()),
         (Tab::Characters, tx!("Personnages", "Characters", "Figuren", "Personaggi", "Personajes").t()),
+        (Tab::Costumes, tx!("Accessoires", "Accessories", "Zubehör", "Accessori", "Accesorios").t()),
+        (Tab::Worlds, tx!("Mondes", "Worlds", "Welten", "Mondi", "Mundos").t()),
     ] {
-        let (b, _) = spawn_button_sized(&mut commands, tabs, name, 200.0, 44.0, 20.0);
+        let (b, _) = spawn_button_sized(&mut commands, tabs, name, 190.0, 44.0, 20.0);
         commands.entity(b).insert(Act::Tab(tab));
         if view.tab == tab {
             commands.entity(b).insert(BackgroundColor(Color::srgb(1.0, 0.88, 0.45)));
@@ -218,7 +235,22 @@ fn build(
     let corner = commands.spawn((Node { position_type: PositionType::Absolute, left: px(20), bottom: px(20), ..default() }, scope())).id();
     let (back, _) = spawn_button(&mut commands, corner, tx!("Retour", "Back", "Zurück", "Indietro", "Atrás").t());
     commands.entity(back).insert(Act::Back);
-    // En bas à gauche, le bouton gêne la barre des costumes : on la décale à droite.
+}
+
+/// Un petit bout de monde sur son plateau : un arbre, un cactus, un bonhomme de neige…
+fn world_sample(c: &mut Commands, kit: &Kit, x: &Extra, slot: Entity, biome: Biome) {
+    match biome {
+        Biome::Prairie => {
+            spawn_prop(c, kit, slot, Prop::Tree, Vec3::new(-0.3, 0.0, 0.0), 1);
+            spawn_deco(c, kit, x, slot, crate::extra::Deco::Flowers, Vec3::new(0.7, 0.0, 0.4), 2);
+        }
+        Biome::Desert => spawn_scenery(c, kit, x, slot, biome, Scenery::Block, Vec3::new(-0.2, 0.0, 0.0), 0, 0),
+        Biome::Snow => spawn_scenery(c, kit, x, slot, biome, Scenery::Block, Vec3::new(-0.2, 0.0, 0.0), 4, 0),
+        Biome::Autumn => {
+            spawn_scenery(c, kit, x, slot, biome, Scenery::Block, Vec3::new(-0.3, 0.0, 0.0), 0, 0);
+            spawn_scenery(c, kit, x, slot, biome, Scenery::Block, Vec3::new(0.6, 0.0, 0.4), 6, 0);
+        }
+    }
 }
 
 fn pts(n: u32) -> String {
@@ -328,6 +360,8 @@ fn on_click(
             if unlocked_character(&progress, c) {
                 selection.character = c;
                 selection.save();
+                // Personnage choisi : place à l'accessoire.
+                view.tab = Tab::Costumes;
                 view.dirty = true;
             }
         }

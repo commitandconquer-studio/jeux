@@ -23,16 +23,16 @@ pub enum Character {
     Duck,
 }
 
-/// Personnages et points cumulés nécessaires.
-pub const CHARACTERS: [(Character, u32); 8] = [
-    (Character::Frog, 0),
-    (Character::Rabbit, 80),
-    (Character::Badger, 200),
-    (Character::Raccoon, 350),
-    (Character::Hedgehog, 550),
-    (Character::Fox, 800),
-    (Character::Panda, 1100),
-    (Character::Duck, 1400),
+/// Les personnages ; les points nécessaires sont dans `progress::UNLOCKS`.
+pub const CHARACTERS: [Character; 8] = [
+    Character::Frog,
+    Character::Rabbit,
+    Character::Badger,
+    Character::Raccoon,
+    Character::Hedgehog,
+    Character::Fox,
+    Character::Panda,
+    Character::Duck,
 ];
 
 #[derive(Clone, Copy, PartialEq, Eq, Debug)]
@@ -47,16 +47,16 @@ pub enum Costume {
     Wizard,
 }
 
-/// Costumes et mouches gobées (au total) nécessaires.
-pub const COSTUMES: [(Costume, u32); 8] = [
-    (Costume::None, 0),
-    (Costume::Cap, 3),
-    (Costume::Shades, 8),
-    (Costume::TopHat, 15),
-    (Costume::Pirate, 25),
-    (Costume::Crown, 40),
-    (Costume::Party, 60),
-    (Costume::Wizard, 80),
+/// Les accessoires ; les points nécessaires sont dans `progress::UNLOCKS`.
+pub const COSTUMES: [Costume; 8] = [
+    Costume::None,
+    Costume::Cap,
+    Costume::Shades,
+    Costume::TopHat,
+    Costume::Pirate,
+    Costume::Crown,
+    Costume::Party,
+    Costume::Wizard,
 ];
 
 impl Character {
@@ -75,15 +75,15 @@ impl Character {
     }
 
     pub fn from_index(i: usize) -> Self {
-        CHARACTERS.get(i).map_or(Character::Frog, |c| c.0)
+        CHARACTERS.get(i).copied().unwrap_or(Character::Frog)
     }
 
     pub fn index(self) -> usize {
-        CHARACTERS.iter().position(|c| c.0 == self).unwrap_or(0)
+        CHARACTERS.iter().position(|c| *c == self).unwrap_or(0)
     }
 
     pub fn threshold(self) -> u32 {
-        CHARACTERS[self.index()].1
+        crate::progress::threshold(crate::progress::Item::Character(self))
     }
 
     /// Haut de la tête : là où se pose le chapeau.
@@ -126,15 +126,15 @@ impl Costume {
     }
 
     pub fn from_index(i: usize) -> Self {
-        COSTUMES.get(i).map_or(Costume::None, |c| c.0)
+        COSTUMES.get(i).copied().unwrap_or(Costume::None)
     }
 
     pub fn index(self) -> usize {
-        COSTUMES.iter().position(|c| c.0 == self).unwrap_or(0)
+        COSTUMES.iter().position(|c| *c == self).unwrap_or(0)
     }
 
     pub fn threshold(self) -> u32 {
-        COSTUMES[self.index()].1
+        crate::progress::threshold(crate::progress::Item::Costume(self))
     }
 }
 
@@ -476,9 +476,9 @@ pub fn rebuild_player(
 }
 
 pub fn unlocked_character(p: &Progress, ch: Character) -> bool {
-    p.total >= ch.threshold()
+    p.has(crate::progress::Item::Character(ch))
 }
 
 pub fn unlocked_costume(p: &Progress, co: Costume) -> bool {
-    p.flies >= co.threshold()
+    p.has(crate::progress::Item::Costume(co))
 }
