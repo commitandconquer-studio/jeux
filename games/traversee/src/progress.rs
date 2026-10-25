@@ -121,6 +121,9 @@ pub struct Progress {
     pub total: u32,
     /// Objets débloqués par la dernière partie.
     pub fresh: Vec<Item>,
+    /// Meilleur score d'avant la dernière partie, et si elle l'a battu.
+    pub best_before: u32,
+    pub new_record: bool,
 }
 
 impl Default for Progress {
@@ -128,7 +131,8 @@ impl Default for Progress {
         // TRAVERSEE_POINTS=9999 : essayer tout sans toucher à la sauvegarde.
         let forced = std::env::var("TRAVERSEE_POINTS").ok().and_then(|s| s.parse().ok());
         let total = forced.or_else(|| game_common::save::load(SAVE, "total").and_then(|s| s.parse().ok())).unwrap_or(0);
-        Self { total, fresh: Vec::new() }
+        let best_before = game_common::save::load(SAVE, "best").and_then(|s| s.parse().ok()).unwrap_or(0);
+        Self { total, fresh: Vec::new(), best_before, new_record: false }
     }
 }
 
@@ -141,6 +145,15 @@ impl Progress {
     /// Prochain objet à débloquer et son seuil.
     pub fn next(&self) -> Option<(u32, Item)> {
         UNLOCKS.iter().find(|(t, _)| self.total < *t).copied()
+    }
+
+    /// Avancement vers le prochain objet (0 à 1), seuil précédent et suivant.
+    pub fn next_fraction(&self) -> f32 {
+        let prev = UNLOCKS.iter().filter(|(t, _)| self.total >= *t).map(|(t, _)| *t).max().unwrap_or(0);
+        match self.next() {
+            Some((t, _)) => (self.total - prev) as f32 / (t - prev).max(1) as f32,
+            None => 1.0,
+        }
     }
 
     pub fn has(&self, item: Item) -> bool {
@@ -169,6 +182,8 @@ fn load_best(mut score: ResMut<Score>) {
 /// Fin de partie : les points s'ajoutent au total ; ce qui passe un seuil se débloque.
 fn commit(mut progress: ResMut<Progress>, score: Res<Score>) {
     let before = progress.total;
+    progress.new_record = score.current > progress.best_before && score.current > 0;
+    progress.best_before = progress.best_before.max(score.current);
     progress.total += score.current;
     let after = progress.total;
     progress.fresh = UNLOCKS.iter().filter(|(t, _)| before < *t && *t <= after).map(|(_, i)| *i).collect();

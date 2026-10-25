@@ -2,7 +2,9 @@
 use bevy::prelude::*;
 use game_common::Score;
 use game_common::tx;
-use game_common::ui::{GameHelp, pied_de_menu, spawn_button, spawn_gap, spawn_hud, spawn_panel, spawn_text};
+use game_common::ui::{GameHelp, ThemedText, pied_de_menu, spawn_button, spawn_button_sized, spawn_gap, spawn_hud, spawn_panel, spawn_panel_left, spawn_text};
+
+use crate::screens::{CountUp, Pop, Pulse, Wave, spawn_bar, spawn_chip};
 
 use crate::GameState;
 use crate::audio::Sfx;
@@ -97,15 +99,57 @@ fn button(commands: &mut Commands, parent: Entity, label: &str, action: UiAction
     text
 }
 
-fn spawn_menu(mut commands: Commands, progress: Res<Progress>) {
-    let panel = spawn_panel(&mut commands, DespawnOnExit(GameState::Menu));
-    spawn_text(&mut commands, panel, tx!("TRAVERSÉE", "CROSSING", "ÜBERQUERUNG", "TRAVERSATA", "TRAVESÍA").t(), 64.0);
+/// Couleurs des lettres du titre.
+const TITLE_COLORS: [Color; 6] = [
+    Color::srgb(0.30, 0.68, 0.30),
+    Color::srgb(0.95, 0.55, 0.15),
+    Color::srgb(0.25, 0.50, 0.90),
+    Color::srgb(0.90, 0.30, 0.35),
+    Color::srgb(0.60, 0.40, 0.85),
+    Color::srgb(0.95, 0.75, 0.15),
+];
+
+/// Ligne « Prochain : … à N pts » suivie de sa barre de progression.
+fn spawn_next_goal(commands: &mut Commands, parent: Entity, progress: &Progress, size: f32, width: f32) {
+    let Some((at, item)) = progress.next() else {
+        return;
+    };
+    let line = tx!("Prochain : {} — {} pts", "Next: {} — {} pts", "Nächstes: {} — {} Pkt.", "Prossimo: {} — {} pt", "Siguiente: {} — {} pts").avec(&[&item.name(), &at]);
+    spawn_text(commands, parent, line, size);
+    spawn_bar(commands, parent, progress.next_fraction(), width, item.color());
+}
+
+fn spawn_menu(mut commands: Commands, progress: Res<Progress>, score: Res<Score>) {
+    let panel = spawn_panel_left(&mut commands, DespawnOnExit(GameState::Menu));
+    commands.entity(panel).insert(UiTransform::from_scale(Vec2::ZERO)).insert(Pop::after(0.05));
+    // Titre : une lettre par texte, pour les faire onduler
+    let row = commands.spawn((Node { flex_direction: FlexDirection::Row, column_gap: px(1), ..default() }, ChildOf(panel))).id();
+    for (i, ch) in tx!("TRAVERSÉE", "CROSSING", "ÜBERQUERUNG", "TRAVERSATA", "TRAVESÍA").t().chars().enumerate() {
+        commands.spawn((
+            Text::new(ch.to_string()),
+            TextFont::from_font_size(78.0),
+            TextColor(TITLE_COLORS[i % TITLE_COLORS.len()]),
+            ThemedText,
+            UiTransform::default(),
+            Wave(i),
+            ChildOf(row),
+        ));
+    }
+    if score.best > 0 {
+        spawn_text(&mut commands, panel, tx!("Record : {}", "Best: {}", "Rekord: {}", "Record: {}", "Récord: {}").avec(&[&score.best]), 24.0);
+    }
+    spawn_next_goal(&mut commands, panel, &progress, 18.0, 360.0);
     let total = crate::progress::UNLOCKS.len();
-    let line = tx!("Déblocages : {} / {}", "Unlocked: {} / {}", "Freigeschaltet: {} / {}", "Sbloccati: {} / {}", "Desbloqueos: {} / {}")
-        .avec(&[&progress.count(), &total]);
-    spawn_text(&mut commands, panel, line, 20.0);
-    spawn_gap(&mut commands, panel, 8.0);
-    button(&mut commands, panel, tx!("Jouer", "Play", "Spielen", "Gioca", "Jugar").t(), UiAction::Play);
+    let line = tx!("Déblocages : {} / {}", "Unlocked: {} / {}", "Freigeschaltet: {} / {}", "Sbloccati: {} / {}", "Desbloqueos: {} / {}").avec(&[&progress.count(), &total]);
+    spawn_text(&mut commands, panel, line, 16.0);
+    spawn_gap(&mut commands, panel, 6.0);
+    let (play, _) = spawn_button_sized(&mut commands, panel, tx!("Jouer", "Play", "Spielen", "Gioca", "Jugar").t(), 360.0, 76.0, 36.0);
+    commands.entity(play).insert((
+        UiAction::Play,
+        BackgroundColor(Color::srgb(1.0, 0.86, 0.3)),
+        UiTransform::default(),
+        Pulse { speed: 3.0, amount: 0.03 },
+    ));
     button(&mut commands, panel, tx!("Garage", "Garage", "Garage", "Garage", "Garaje").t(), UiAction::Garage);
     pied_de_menu(&mut commands, panel);
 }
@@ -122,29 +166,58 @@ fn score_line(score: &Score) -> String {
     .avec(&[&score.current, &score.best])
 }
 
-pub fn spawn_game_over(mut commands: Commands, score: Res<Score>, death: Res<Death>, progress: Res<Progress>) {
+pub fn spawn_game_over(mut commands: Commands, score: Res<Score>, death: Res<Death>, progress: Res<Progress>, mut sfx: MessageWriter<Sfx>) {
     let panel = spawn_panel(&mut commands, DespawnOnExit(GameState::GameOver));
+    commands.entity(panel).insert(UiTransform::from_scale(Vec2::ZERO)).insert(Pop::after(0.0));
     let title = death.cause.map(|c| c.message()).unwrap_or(tx!("Perdu !", "Game over!", "Verloren!", "Hai perso!", "¡Has perdido!").t());
-    spawn_text(&mut commands, panel, title, 48.0);
-    spawn_text(&mut commands, panel, score_line(&score), 24.0);
-    // Ce que cette partie vient de débloquer, puis le prochain objectif.
-    for item in &progress.fresh {
-        let line = tx!("Débloqué : {} !", "Unlocked: {}!", "Freigeschaltet: {}!", "Sbloccato: {}!", "¡Desbloqueado: {}!").avec(&[&item.name()]);
-        spawn_text(&mut commands, panel, line, 26.0);
+    spawn_text(&mut commands, panel, title, 46.0);
+    // Le score grimpe jusqu'à sa valeur
+    let row = commands.spawn((Node { align_items: AlignItems::FlexEnd, column_gap: px(10), ..default() }, ChildOf(panel))).id();
+    commands.spawn((
+        Text::new("0"),
+        TextFont::from_font_size(96.0),
+        TextColor(Color::srgb(0.12, 0.14, 0.2)),
+        ThemedText,
+        CountUp { target: score.current, age: 0.0 },
+        ChildOf(row),
+    ));
+    commands.spawn((Text::new("pts"), TextFont::from_font_size(30.0), TextColor(Color::srgb(0.4, 0.4, 0.45)), ThemedText, Node { margin: UiRect::bottom(px(14)), ..default() }, ChildOf(row)));
+    if progress.new_record {
+        let badge = commands
+            .spawn((
+                Node { padding: UiRect::axes(px(22), px(8)), border_radius: BorderRadius::all(px(16)), ..default() },
+                BackgroundColor(Color::srgb(1.0, 0.82, 0.2)),
+                UiTransform::default(),
+                Pulse { speed: 6.0, amount: 0.06 },
+                ChildOf(panel),
+            ))
+            .id();
+        commands.spawn((
+            Text::new(tx!("NOUVEAU RECORD !", "NEW RECORD!", "NEUER REKORD!", "NUOVO RECORD!", "¡NUEVO RÉCORD!").t()),
+            TextFont::from_font_size(28.0),
+            TextColor(Color::srgb(0.35, 0.2, 0.0)),
+            ThemedText,
+            ChildOf(badge),
+        ));
+    } else {
+        spawn_text(&mut commands, panel, tx!("Record : {}", "Best: {}", "Rekord: {}", "Record: {}", "Récord: {}").avec(&[&score.best]), 22.0);
     }
-    if let Some((at, item)) = progress.next() {
-        let line = tx!(
-            "Total {} pts — prochain : {} à {} pts",
-            "Total {} pts — next: {} at {} pts",
-            "Gesamt {} Pkt. — nächstes: {} bei {} Pkt.",
-            "Totale {} pt — prossimo: {} a {} pt",
-            "Total {} pts — siguiente: {} a {} pts"
-        )
-        .avec(&[&progress.total, &item.name(), &at]);
-        spawn_text(&mut commands, panel, line, 18.0);
+    // Ce que cette partie vient de débloquer
+    for (i, item) in progress.fresh.iter().enumerate() {
+        spawn_chip(&mut commands, panel, item.kind(), item.name(), item.color(), 0.7 + i as f32 * 0.3);
+    }
+    spawn_next_goal(&mut commands, panel, &progress, 18.0, 400.0);
+    if progress.new_record || !progress.fresh.is_empty() {
+        sfx.write(Sfx::Win);
     }
     spawn_gap(&mut commands, panel, 6.0);
-    button(&mut commands, panel, tx!("Rejouer", "Play again", "Nochmal", "Rigioca", "Volver a jugar").t(), UiAction::Play);
+    let (again, _) = spawn_button_sized(&mut commands, panel, tx!("Rejouer", "Play again", "Nochmal", "Rigioca", "Volver a jugar").t(), 320.0, 64.0, 30.0);
+    commands.entity(again).insert((
+        UiAction::Play,
+        BackgroundColor(Color::srgb(1.0, 0.86, 0.3)),
+        UiTransform::default(),
+        Pulse { speed: 3.0, amount: 0.025 },
+    ));
     button(&mut commands, panel, tx!("Menu", "Menu", "Menü", "Menu", "Menú").t(), UiAction::Menu);
 }
 

@@ -13,6 +13,7 @@ mod lanes;
 mod merge;
 mod models;
 mod progress;
+mod screens;
 mod ui;
 
 use bevy::prelude::*;
@@ -60,7 +61,7 @@ fn main() {
     )
     .init_state::<GameState>()
     .add_plugins(StudioPlugin::new(Universe::Croa, game_common::ambiance::AmbiancePlugin::exterieur()))
-    .add_plugins((ui::UiPlugin, audio::AudioPlugin, capture::CapturePlugin, fx::FxPlugin, progress::ProgressPlugin, garage::GaragePlugin, eagle::EaglePlugin))
+    .add_plugins((ui::UiPlugin, audio::AudioPlugin, capture::CapturePlugin, fx::FxPlugin, progress::ProgressPlugin, garage::GaragePlugin, eagle::EaglePlugin, screens::ScreensPlugin))
     .init_resource::<characters::Selection>()
     .init_resource::<characters::Cast>()
     // Après le style commun : Traversée garde son ciel à elle.
@@ -83,6 +84,8 @@ fn main() {
         .add_systems(Startup, (extra::extend_palette, setup))
         .add_systems(OnEnter(GameState::Menu), reset_if_needed)
         .add_systems(OnEnter(GameState::Playing), reset_if_needed)
+        // Le menu fait défiler le décor : au départ du jeu, on repart de zéro.
+        .add_systems(OnExit(GameState::Menu), |mut r: ResMut<NeedsReset>| r.0 = true)
         .add_systems(OnEnter(GameState::GameOver), |mut r: ResMut<NeedsReset>| r.0 = true)
         .add_systems(
             Update,
@@ -152,6 +155,9 @@ fn follow_camera(
 ) {
     let dt = time.delta_secs();
     let playing = *state.get() == GameState::Playing;
+    if *state.get() == GameState::Menu {
+        cam.0 -= 0.8 * dt;
+    }
     if playing && frog.started {
         cam.0 -= (0.3 + frog.row as f32 * 0.004).min(1.0) * dt;
     }
