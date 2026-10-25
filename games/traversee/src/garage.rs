@@ -411,6 +411,7 @@ fn on_click(
         Act::World(b) => {
             if progress.has(Item::World(b)) {
                 crate::extra::START_WORLD.store(b.index(), std::sync::atomic::Ordering::Relaxed);
+                info!("monde de départ choisi : {:?}", b);
                 view.dirty = true;
             }
         }

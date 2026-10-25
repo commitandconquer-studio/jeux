@@ -135,6 +135,7 @@ fn reset_if_needed(
         return;
     }
     needs.0 = false;
+    info!("nouvelle partie : le monde de départ est {:?}", extra::Biome::of(0, u32::MAX));
     generator.request_reset(rng.next_u64());
     *frog = Frog::default();
     *death = Death::default();
