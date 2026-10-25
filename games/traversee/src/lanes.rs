@@ -335,7 +335,7 @@ fn spawn_lane(c: &mut Commands, kit: &Kit, x: &Extra, g: &mut LaneGen, points: u
                         let open: Vec<usize> = (0..crate::gen_worlds::JURA_ANIMALS.len())
                             .filter(|i| {
                                 let a = &crate::gen_worlds::JURA_ANIMALS[*i];
-                                !a.flying && points >= a.points.max(crate::gen_worlds::JURA_POINTS)
+                                !a.flying && points >= crate::progress::rescale(a.points.max(crate::gen_worlds::JURA_POINTS))
                             })
                             .collect();
                         if !open.is_empty() {

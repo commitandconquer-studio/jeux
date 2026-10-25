@@ -25,6 +25,13 @@ pub enum Item {
     Eagle,
 }
 
+/// Les seuils des tables sont des repères ; on les étire pour que les déblocages se méritent :
+/// les premiers restent rapides, les derniers demandent beaucoup de parties.
+pub fn rescale(t: u32) -> u32 {
+    let t = t as f32;
+    (t * 1.5 + t * t / 1500.0).round() as u32
+}
+
 /// Points cumulés nécessaires, dans l'ordre d'arrivée.
 const BASE_UNLOCKS: &[(u32, Item)] = &[
     (15, Item::Flies),
@@ -62,9 +69,9 @@ const BASE_UNLOCKS: &[(u32, Item)] = &[
 
 /// Tous les déblocages, par ordre de points : ceux ci-dessus et les véhicules décrits en pièces.
 pub static UNLOCKS: LazyLock<Vec<(u32, Item)>> = LazyLock::new(|| {
-    let mut all: Vec<(u32, Item)> = BASE_UNLOCKS.to_vec();
+    let mut all: Vec<(u32, Item)> = BASE_UNLOCKS.iter().map(|(t, i)| (rescale(*t), *i)).collect();
     for (i, g) in crate::gen_vehicles::GEN.iter().enumerate() {
-        all.push((g.points, Item::Vehicle(Vehicle::Gen(i))));
+        all.push((rescale(g.points), Item::Vehicle(Vehicle::Gen(i))));
     }
     all.sort_by_key(|(t, _)| *t);
     all
