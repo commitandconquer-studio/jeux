@@ -17,6 +17,8 @@ use crate::progress::{Item, Progress, unlocked};
 const SPEED: f32 = 15.0;
 const HEIGHT: f32 = 3.2;
 const WARNING: f32 = 1.7;
+/// Immobile aussi longtemps : l'aigle fond sur le crapaud.
+const IDLE_LIMIT: f32 = 4.0;
 
 #[derive(Clone, Copy)]
 enum Phase {
@@ -136,6 +138,7 @@ fn run_eagle(
     progress: Res<Progress>,
     score: Res<Score>,
     cam: Res<crate::CamZ>,
+    mut idle: Local<(i32, i32, f32)>,
     mut death: ResMut<Death>,
     mut next: ResMut<NextState<GameState>>,
     mut sfx: MessageWriter<Sfx>,
@@ -151,12 +154,21 @@ fn run_eagle(
             if !(playing && (frog.started || test) && unlocked(points, Item::Eagle)) {
                 return;
             }
+            // Immobile trop longtemps : il arrive tout de suite, sur sa colonne.
+            let here = (frog.row, frog.pos.x.round() as i32);
+            if here != (idle.0, idle.1) {
+                *idle = (here.0, here.1, 0.0);
+            } else {
+                idle.2 += dt;
+            }
+            let punish = frog.started && idle.2 >= IDLE_LIMIT;
             eagle.timer -= dt;
-            if eagle.timer > 0.0 {
+            if eagle.timer > 0.0 && !punish {
                 return;
             }
+            idle.2 = 0.0;
             // Le plus souvent sur la colonne du crapaud, parfois ailleurs.
-            let col = if unit(&mut rng) < 0.7 { frog.pos.x.round() as i32 } else { rng.below((COLS * 2 + 1) as u32) as i32 - COLS };
+            let col = if punish || unit(&mut rng) < 0.7 { frog.pos.x.round() as i32 } else { rng.below((COLS * 2 + 1) as u32) as i32 - COLS };
             let dir = if unit(&mut rng) < 0.5 { 1.0 } else { -1.0 };
             eagle.phase = Phase::Warning { col, dir, t: 0.0 };
             commands.spawn((
