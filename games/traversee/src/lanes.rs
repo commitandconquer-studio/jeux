@@ -7,6 +7,7 @@ use game_common::Rng;
 
 use crate::audio::{Mutable, Sfx, SoundOn, Sounds};
 use crate::frog::Frog;
+use crate::extra::{Deco, Extra, Vehicle, pick_vehicle, spawn_deco, spawn_fly, spawn_vehicle};
 use crate::models::{Kit, Prop, part, spawn_car, spawn_log, spawn_pad, spawn_prop, spawn_train, spawn_truck};
 
 /// Colonnes jouables : de -COLS à +COLS.
@@ -140,6 +141,7 @@ fn difficulty(row: i32) -> f32 {
 pub fn ensure_lanes(
     mut commands: Commands,
     kit: Res<Kit>,
+    extra: Res<Extra>,
     mut generator: ResMut<LaneGen>,
     cam: Res<crate::CamZ>,
     lanes: Query<(Entity, &Lane)>,
@@ -153,7 +155,7 @@ pub fn ensure_lanes(
     }
     let cam_row = (-cam.0).round() as i32;
     while generator.next_row <= cam_row + AHEAD {
-        spawn_lane(&mut commands, &kit, &mut generator);
+        spawn_lane(&mut commands, &kit, &extra, &mut generator);
     }
     for (e, lane) in &lanes {
         if lane.row < cam_row - BEHIND {
@@ -162,7 +164,7 @@ pub fn ensure_lanes(
     }
 }
 
-fn spawn_lane(c: &mut Commands, kit: &Kit, g: &mut LaneGen) {
+fn spawn_lane(c: &mut Commands, kit: &Kit, x: &Extra, g: &mut LaneGen) {
     let row = g.next_row;
     g.next_row += 1;
     let kind = g.next_kind(row);
@@ -201,17 +203,47 @@ fn spawn_lane(c: &mut Commands, kit: &Kit, g: &mut LaneGen) {
                 }
             }
             for &col in &blocked {
-                let prop = match g.rng.below(10) {
-                    0..=4 => Prop::Tree,
-                    5..=7 => Prop::Pine,
-                    _ => Prop::Rock,
-                };
                 let variant = g.rng.below(6) as usize;
-                spawn_prop(c, kit, root, prop, Vec3::new(col as f32, 0.0, 0.0), variant);
+                let at = Vec3::new(col as f32, 0.0, 0.0);
+                match g.rng.below(10) {
+                    0..=3 => spawn_prop(c, kit, root, Prop::Tree, at, variant),
+                    4..=6 => spawn_prop(c, kit, root, Prop::Pine, at, variant),
+                    7..=8 => spawn_prop(c, kit, root, Prop::Rock, at, variant),
+                    _ => spawn_deco(c, kit, x, root, Deco::Stump, at, variant),
+                }
+            }
+            // Fleurs, champignons et touffes dans la zone jouable (on passe dessus)
+            if row > 0 {
+                for _ in 0..g.rng.below(4) {
+                    let col = g.rng.below((COLS * 2 + 1) as u32) as i32 - COLS;
+                    if blocked.contains(&col) {
+                        continue;
+                    }
+                    let deco = match g.rng.below(10) {
+                        0..=2 => Deco::Flower,
+                        3..=4 => Deco::Flowers,
+                        5 => Deco::Mushroom,
+                        _ => Deco::Tuft,
+                    };
+                    let variant = g.rng.below(12) as usize;
+                    let jitter = Vec3::new(g.rand() * 0.3 - 0.15, 0.0, g.rand() * 0.3 - 0.15);
+                    spawn_deco(c, kit, x, root, deco, Vec3::new(col as f32, 0.0, 0.0) + jitter, variant);
+                }
+                // Une mouche à gober, parfois dorée
+                if row >= 3 && g.rand() < 0.3 {
+                    let col = g.rng.below((COLS * 2 + 1) as u32) as i32 - COLS;
+                    if !blocked.contains(&col) {
+                        let gold = g.rand() < 0.12;
+                        let phase = g.rand() * 6.28;
+                        spawn_fly(c, kit, x, root, row, col, gold, phase);
+                    }
+                }
             }
             // Décor sur les côtés
             for col in (COLS + 1)..(HALF as i32) {
                 for s in [-1, 1] {
+                    let at = Vec3::new((col * s) as f32, 0.0, 0.0);
+                    let variant = g.rng.below(12) as usize;
                     if g.rng.below(10) < 4 {
                         let prop = match g.rng.below(10) {
                             0..=3 => Prop::Tree,
@@ -219,8 +251,15 @@ fn spawn_lane(c: &mut Commands, kit: &Kit, g: &mut LaneGen) {
                             7 => Prop::Rock,
                             _ => Prop::Bush,
                         };
-                        let variant = g.rng.below(6) as usize;
-                        spawn_prop(c, kit, root, prop, Vec3::new((col * s) as f32, 0.0, 0.0), variant);
+                        spawn_prop(c, kit, root, prop, at, variant);
+                    } else if g.rng.below(10) < 2 {
+                        let deco = match g.rng.below(4) {
+                            0 => Deco::Flower,
+                            1 => Deco::Flowers,
+                            2 => Deco::Mushroom,
+                            _ => Deco::Tuft,
+                        };
+                        spawn_deco(c, kit, x, root, deco, at, variant);
                     }
                 }
             }
@@ -238,21 +277,21 @@ fn spawn_lane(c: &mut Commands, kit: &Kit, g: &mut LaneGen) {
             let d = difficulty(row);
             let dir = if g.rng.below(2) == 0 { 1.0 } else { -1.0 };
             let speed = (1.8 + g.rand() * 1.6 + d * 3.0) * dir;
-            let mut x = -WRAP + g.rand() * 3.0;
+            let mut x_pos = -WRAP + g.rand() * 3.0;
             loop {
-                let truck = g.rng.below(10) < 3;
-                let len = if truck { 2.9 } else { 1.6 };
-                if x + len > WRAP - 2.0 {
+                let vehicle = pick_vehicle(g.rng.below(100));
+                let len = vehicle.len();
+                if x_pos + len > WRAP - 2.0 {
                     break;
                 }
-                let color = g.rng.below(12) as usize;
-                let mover = spawn_mover(c, root, row, x + len / 2.0, speed, len, MoverKind::Car, dir);
-                if truck {
-                    spawn_truck(c, kit, mover, color);
-                } else {
-                    spawn_car(c, kit, mover, color);
+                let color = g.rng.below(24) as usize;
+                let mover = spawn_mover(c, root, row, x_pos + len / 2.0, speed, len, MoverKind::Car, dir);
+                match vehicle {
+                    Vehicle::Car => spawn_car(c, kit, mover, color),
+                    Vehicle::Truck => spawn_truck(c, kit, mover, color),
+                    v => spawn_vehicle(c, kit, x, mover, v, color),
                 }
-                x += len + 2.6 + g.rand() * (5.5 - 2.0 * d);
+                x_pos += len + 2.6 + g.rand() * (5.5 - 2.0 * d);
             }
         }
         LaneKind::River => {

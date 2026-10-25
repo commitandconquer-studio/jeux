@@ -28,6 +28,9 @@ pub struct Frog {
     /// Vrai dès le premier saut (la caméra commence alors à avancer).
     pub started: bool,
     hops: u32,
+    /// Rangée la plus lointaine atteinte, et points gagnés avec les mouches.
+    max_row: i32,
+    bonus: u32,
     /// Temps restant de l'écrasement à l'atterrissage.
     land: f32,
 }
@@ -221,6 +224,8 @@ pub fn update_frog(
     mut next: ResMut<NextState<GameState>>,
     mut sfx: MessageWriter<Sfx>,
     mut fx: MessageWriter<Fx>,
+    mut commands: Commands,
+    flies: Query<(Entity, &crate::extra::Fly)>,
 ) {
     let dt = time.delta_secs();
     frog.land = (frog.land - dt).max(0.0);
@@ -236,13 +241,22 @@ pub fn update_frog(
         frog.pos = to;
         frog.row = to_row;
         frog.land = LAND_TIME;
-        if to_row > score.current as i32 {
-            score.current = to_row as u32;
-            score.best = score.best.max(score.current);
-            if score.current % 10 == 0 {
+        if to_row > frog.max_row {
+            frog.max_row = to_row;
+            if to_row % 10 == 0 {
                 sfx.write(Sfx::Chime);
             }
         }
+        // Une mouche sur la case : on la gobe.
+        let col = to.x.round() as i32;
+        if let Some((e, fly)) = flies.iter().find(|(_, f)| f.row == to_row && f.col == col) {
+            commands.entity(e).despawn();
+            frog.bonus += fly.points();
+            sfx.write(Sfx::Eat);
+            fx.write(Fx::Gulp(Vec3::new(to.x, to.y + 0.5, to.z), fly.points()));
+        }
+        score.current = frog.max_row as u32 + frog.bonus;
+        score.best = score.best.max(score.current);
         // Atterrissage dans la rivière : sur un rondin / nénuphar, ou à l'eau.
         if lane_at(&lanes, to_row).map(|l| l.kind) == Some(LaneKind::River) {
             let support = movers.iter().find(|(_, m, tf)| {

@@ -36,6 +36,7 @@ pub enum Sfx {
     Honk,
     Chime,
     Click,
+    Eat,
     /// Passage du train, avec un volume selon la distance.
     Train(f32),
 }
@@ -51,6 +52,7 @@ pub struct Sounds {
     pub bell: Handle<AudioSource>,
     train: Handle<AudioSource>,
     chime: Handle<AudioSource>,
+    eat: Handle<AudioSource>,
     click: Handle<AudioSource>,
     music: Handle<AudioSource>,
 }
@@ -69,6 +71,7 @@ impl FromWorld for Sounds {
             bell: load(lib::BELL),
             train: load(lib::TRAIN),
             chime: load(lib::CHIME),
+            eat: load(lib::EAT),
             click: load(lib::CLICK),
             music: load(lib::MUSIC_CAMPAGNE),
         }
@@ -106,6 +109,7 @@ fn play_sfx(
             }
             Sfx::Chime => (&sounds.chime, 0.7),
             Sfx::Click => (&sounds.click, 0.6),
+            Sfx::Eat => (&sounds.eat, 0.9),
             Sfx::Train(v) => (&sounds.train, v),
         };
         commands.spawn((AudioPlayer::new(handle.clone()), PlaybackSettings::DESPAWN.with_volume(Volume::Linear(volume))));

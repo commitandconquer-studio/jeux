@@ -18,6 +18,8 @@ pub enum Fx {
     Splash(Vec3),
     /// Éclats verts, plumes et étoiles (écrasé).
     Burst(Vec3),
+    /// Une mouche gobée : étincelles et points gagnés.
+    Gulp(Vec3, u32),
 }
 
 /// Éclair blanc plein écran qui s'éteint tout seul.
@@ -81,7 +83,7 @@ impl Plugin for FxPlugin {
             .add_systems(Startup, setup)
             .add_systems(OnEnter(GameState::Dying), death_fx)
             .add_systems(OnExit(GameState::Dying), |mut t: ResMut<Time<Virtual>>| t.set_relative_speed(1.0))
-            .add_systems(Update, (spawn_fx, update_particles, update_rings, update_flash, update_pop).chain());
+            .add_systems(Update, (spawn_fx, update_particles, update_rings, update_flash, update_pop, update_rise).chain());
     }
 }
 
@@ -103,6 +105,10 @@ fn setup(mut commands: Commands, mut mats: ResMut<Assets<StandardMaterial>>, mut
         Pickable::IGNORE,
         FlashNode,
     ));
+}
+
+fn kit_ring(m: &FxMats) -> Handle<Mesh> {
+    m.ring.clone()
 }
 
 fn meshes_h(m: &FxMats) -> Handle<Mesh> {
@@ -170,6 +176,14 @@ fn spawn_fx(mut commands: Commands, mut reader: MessageReader<Fx>, kit: Res<Kit>
                     let v = Vec3::new(unit(&mut rng) * 3.0, 3.5 + unit(&mut rng).abs(), unit(&mut rng) * 2.0);
                     puff(&mut commands, &kit, &mats.star, p + Vec3::Y * 0.4, v, 0.32, 0.9, 6.0);
                 }
+            }
+            Fx::Gulp(p, points) => {
+                for _ in 0..14 {
+                    let v = Vec3::new(unit(&mut rng) * 2.0, 1.5 + 2.0 * unit(&mut rng).abs(), unit(&mut rng) * 2.0);
+                    puff(&mut commands, &kit, &mats.star, p, v, 0.14, 0.6, 5.0);
+                }
+                ring(&mut commands, &kit_ring(&mats), &mats.star, Vec3::new(p.x, p.y - 0.3, p.z), 1.6, 0.35);
+                points_text(&mut commands, points);
             }
             Fx::Ripple(p) => {
                 for _ in 0..4 {
@@ -294,5 +308,39 @@ fn update_rings(mut commands: Commands, time: Res<Time>, mut q: Query<(Entity, &
         let out = 1.0 - (1.0 - t) * (1.0 - t); // part vite, finit doucement
         let s = 0.2 + (r.size - 0.2) * out;
         tf.scale = Vec3::new(s, (1.0 - t).max(0.05), s);
+    }
+}
+
+/// Texte « +5 » qui monte et s'efface sous le score.
+#[derive(Component)]
+struct Rise {
+    age: f32,
+}
+
+fn points_text(commands: &mut Commands, points: u32) {
+    let gold = points >= 20;
+    commands.spawn((
+        Text::new(format!("+{points}")),
+        TextFont::from_font_size(if gold { 72.0 } else { 54.0 }),
+        TextColor(if gold { Color::srgb(1.0, 0.85, 0.2) } else { Color::srgb(0.55, 0.95, 0.4) }),
+        TextShadow { offset: Vec2::splat(3.0), color: Color::srgba(0.0, 0.0, 0.0, 0.7) },
+        TextLayout::justify(Justify::Center),
+        Node { position_type: PositionType::Absolute, width: percent(100), top: percent(12), ..default() },
+        GlobalZIndex(35),
+        Pickable::IGNORE,
+        ThemedText,
+        Rise { age: 0.0 },
+    ));
+}
+
+fn update_rise(mut commands: Commands, time: Res<Time<Real>>, mut q: Query<(Entity, &mut Rise, &mut Node, &mut TextColor)>) {
+    for (e, mut r, mut node, mut color) in &mut q {
+        r.age += time.delta_secs();
+        if r.age > 1.0 {
+            commands.entity(e).despawn();
+            continue;
+        }
+        node.top = percent(12.0 - 6.0 * r.age);
+        color.0 = color.0.with_alpha((1.0 - (r.age - 0.5).max(0.0) * 2.0).clamp(0.0, 1.0));
     }
 }

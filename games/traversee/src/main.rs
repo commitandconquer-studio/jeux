@@ -3,6 +3,7 @@
 // Aidez le crapaud à traverser routes, rivières et voies ferrées.
 mod audio;
 mod capture;
+mod extra;
 mod frog;
 mod fx;
 mod lanes;
@@ -62,6 +63,7 @@ fn main() {
     .insert_resource(bevy::light::DirectionalLightShadowMap { size: 2048 })
     .add_systems(Update, game_common::langue::rebatir_menu(GameState::Menu))
     .init_resource::<Kit>()
+    .init_resource::<extra::Extra>()
     .init_resource::<FrogKit>()
     .init_resource::<Score>()
     .init_resource::<Frog>()
@@ -71,7 +73,7 @@ fn main() {
     let seed = Rng::from_time().next_u64();
     app.insert_resource(Rng::new(seed))
         .insert_resource(LaneGen::new(seed))
-        .add_systems(Startup, setup)
+        .add_systems(Startup, (extra::extend_palette, setup))
         .add_systems(OnEnter(GameState::Menu), reset_if_needed)
         .add_systems(OnEnter(GameState::Playing), reset_if_needed)
         .add_systems(OnEnter(GameState::GameOver), |mut r: ResMut<NeedsReset>| r.0 = true)
@@ -81,6 +83,7 @@ fn main() {
                 lanes::ensure_lanes,
                 merge::merge_lanes,
                 lanes::move_movers,
+                extra::animate_flies,
                 lanes::run_rails,
                 (frog::read_input, frog::update_frog, frog::collide)
                     .chain()
@@ -151,18 +154,22 @@ fn follow_camera(
     }
     // La caméra glisse un peu vers le côté où se trouve le crapaud.
     *cam_x += (frog.pos.x * 0.4 - *cam_x) * (dt * 4.0).min(1.0);
-    let target = Vec3::new(*cam_x, 0.0, cam.0 - LOOK_AHEAD);
+    let mut target = Vec3::new(*cam_x, 0.0, cam.0 - LOOK_AHEAD);
+    // Gros zoom à l'impact : la caméra se recentre sur le crapaud.
+    let zoom = punch.0.clamp(0.0, 1.0);
+    let zoom = zoom * zoom * (3.0 - 2.0 * zoom);
+    target = target.lerp(frog.visual_pos(), 0.85 * zoom);
     // Tremblement : quelques oscillations rapides qui s'éteignent.
     shake.0 = (shake.0 - dt * 2.5).max(0.0);
     let t = time.elapsed_secs();
     let k = shake.0 * shake.0 * 0.5;
     let jolt = Vec3::new((t * 53.0).sin(), (t * 71.0).sin() * 0.6, (t * 47.0).cos()) * k;
     // Coup de zoom à l'impact, qui retombe vite.
-    punch.0 = (punch.0 - real.delta_secs() * 1.6).max(0.0);
+    punch.0 = (punch.0 - real.delta_secs() * 0.9).max(0.0);
     for (mut tf, mut proj) in &mut q {
         *tf = Transform::from_translation(target + CAM_OFFSET + jolt).looking_at(target + jolt, Vec3::Y);
         if let Projection::Orthographic(o) = &mut *proj {
-            o.scale = 1.0 - 0.18 * punch.0 * punch.0;
+            o.scale = 1.0 - 0.55 * zoom;
         }
     }
 }

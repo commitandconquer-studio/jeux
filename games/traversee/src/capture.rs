@@ -5,10 +5,13 @@ use bevy::prelude::*;
 use bevy::render::view::screenshot::{Screenshot, save_to_disk};
 
 use crate::GameState;
+use crate::extra::{Extra, spawn_fly};
+use crate::lanes::Lane;
+use crate::models::Kit;
 use crate::frog::{Cause, Death, Frog, die};
 
 /// (nom, état, secondes avant la capture, pilote automatique)
-const SHOTS: [(&str, GameState, f32, bool); 7] = [
+const SHOTS: [(&str, GameState, f32, bool); 8] = [
     ("1-menu", GameState::Menu, 4.0, false),
     ("2-depart", GameState::Playing, 1.0, false),
     ("3-en-route", GameState::Playing, 2.5, true),
@@ -17,6 +20,8 @@ const SHOTS: [(&str, GameState, f32, bool); 7] = [
     ("5-ecrase-impact", GameState::Dying, 0.08, true),
     ("6-ecrase-vol", GameState::Dying, 0.45, true),
     ("7-noye", GameState::Dying, 0.25, true),
+    // Une mouche posée sur la 3e case : le crapaud la gobe en avançant.
+    ("8-mouche", GameState::Playing, 1.2, true),
 ];
 
 #[derive(Resource)]
@@ -27,6 +32,7 @@ struct Capture {
     started: bool,
     shot: bool,
     last_hop: f32,
+    fly_done: bool,
 }
 
 pub struct CapturePlugin;
@@ -44,7 +50,7 @@ impl Plugin for CapturePlugin {
             .add_systems(Update, run_perf);
         }
         if let Ok(dir) = std::env::var("TRAVERSEE_CAPTURE") {
-            app.insert_resource(Capture { dir, index: 0, since: 0.0, started: false, shot: false, last_hop: 0.0 })
+            app.insert_resource(Capture { dir, index: 0, since: 0.0, started: false, shot: false, last_hop: 0.0, fly_done: false })
                 .add_systems(Update, run_capture);
         }
     }
@@ -56,6 +62,9 @@ fn run_capture(
     mut cap: ResMut<Capture>,
     mut frog: ResMut<Frog>,
     mut death: ResMut<Death>,
+    lanes: Query<(Entity, &Lane)>,
+    kit: Res<Kit>,
+    extra: Res<Extra>,
     state: Res<State<GameState>>,
     mut next: ResMut<NextState<GameState>>,
     mut exit: MessageWriter<AppExit>,
@@ -94,6 +103,12 @@ fn run_capture(
     if wanted == GameState::Dying && !cap.started && !cap.shot {
         cap.since = now;
         return; // encore la mort précédente
+    }
+    if cap.index == 7 && !cap.fly_done && *state.get() == GameState::Playing && frog.row <= 1 && now - cap.since > 0.25 {
+        if let Some((lane, _)) = lanes.iter().find(|(_, l)| l.row == 2) {
+            spawn_fly(&mut commands, &kit, &extra, lane, 2, 0, false, 0.0);
+            cap.fly_done = true;
+        }
     }
     let elapsed = now - cap.since;
     if !cap.started {
