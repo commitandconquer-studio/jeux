@@ -22,6 +22,8 @@ pub enum Fx {
     Gulp(Vec3, u32),
     /// Un nouveau monde commence.
     World(crate::extra::Biome),
+    /// Plumes qui volent (l'aigle).
+    Feathers(Vec3),
 }
 
 /// Éclair blanc plein écran qui s'éteint tout seul.
@@ -187,6 +189,12 @@ fn spawn_fx(mut commands: Commands, mut reader: MessageReader<Fx>, kit: Res<Kit>
                 ring(&mut commands, &kit_ring(&mats), &mats.star, Vec3::new(p.x, p.y - 0.3, p.z), 1.6, 0.35);
                 points_text(&mut commands, points);
             }
+            Fx::Feathers(p) => {
+                for _ in 0..22 {
+                    let v = Vec3::new(unit(&mut rng) * 2.5, 1.5 + 2.5 * unit(&mut rng).abs(), unit(&mut rng) * 2.5);
+                    puff(&mut commands, &kit, &mats.feather, p, v, 0.2, 1.3, 2.5);
+                }
+            }
             Fx::World(b) => {
                 let line = tx!("Bienvenue : {}", "Welcome: {}", "Willkommen: {}", "Benvenuti: {}", "Bienvenido: {}").avec(&[&b.name()]);
                 pop(&mut commands, &line, Color::srgb(1.0, 1.0, 1.0), 64.0);
@@ -241,6 +249,11 @@ fn death_fx(
             shake.0 = 0.5;
             punch.0 = 0.6;
             pop(&mut commands, tx!("PLOUF !", "SPLASH!", "PLATSCH!", "SPLASH!", "¡CHOF!").t(), Color::srgb(0.45, 0.8, 1.0), 120.0);
+        }
+        Some(Cause::Eagle) => {
+            fx.write(Fx::Feathers(p + Vec3::Y * 0.4));
+            shake.0 = 0.4;
+            pop(&mut commands, tx!("ENLEVÉ !", "SNATCHED!", "GEKRALLT!", "RAPITO!", "¡RAPTADO!").t(), Color::srgb(1.0, 0.7, 0.3), 100.0);
         }
         Some(Cause::TooSlow) => {
             fx.write(Fx::Burst(p));

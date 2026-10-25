@@ -37,6 +37,10 @@ pub enum Sfx {
     Chime,
     Click,
     Eat,
+    /// Sonnerie d'alerte (l'aigle approche).
+    Alarm,
+    /// Cri aigu de l'aigle.
+    Screech,
     /// Passage du train, avec un volume selon la distance.
     Train(f32),
 }
@@ -53,6 +57,8 @@ pub struct Sounds {
     train: Handle<AudioSource>,
     chime: Handle<AudioSource>,
     eat: Handle<AudioSource>,
+    alarm: Handle<AudioSource>,
+    howl: Handle<AudioSource>,
     click: Handle<AudioSource>,
     music: Handle<AudioSource>,
 }
@@ -72,6 +78,8 @@ impl FromWorld for Sounds {
             train: load(lib::TRAIN),
             chime: load(lib::CHIME),
             eat: load(lib::EAT),
+            alarm: load(lib::ALARM),
+            howl: load(lib::WOLF_HOWL),
             click: load(lib::CLICK),
             music: load(lib::MUSIC_CAMPAGNE),
         }
@@ -110,6 +118,12 @@ fn play_sfx(
             Sfx::Chime => (&sounds.chime, 0.7),
             Sfx::Click => (&sounds.click, 0.6),
             Sfx::Eat => (&sounds.eat, 0.9),
+            Sfx::Alarm => (&sounds.alarm, 0.5),
+            Sfx::Screech => {
+                // Le hurlement du loup, accéléré, fait un cri de rapace.
+                commands.spawn((AudioPlayer::new(sounds.howl.clone()), PlaybackSettings::DESPAWN.with_volume(Volume::Linear(0.6)).with_speed(2.6)));
+                continue;
+            }
             Sfx::Train(v) => (&sounds.train, v),
         };
         commands.spawn((AudioPlayer::new(handle.clone()), PlaybackSettings::DESPAWN.with_volume(Volume::Linear(volume))));

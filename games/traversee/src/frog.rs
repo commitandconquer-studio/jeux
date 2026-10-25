@@ -50,6 +50,11 @@ struct Hop {
 
 impl Frog {
     /// Où se trouve le crapaud à l'écran (au sol, en plein saut compris).
+    /// Rangée la plus lointaine atteinte (pour régler la difficulté).
+    pub fn max_row_f(&self) -> f32 {
+        self.max_row as f32
+    }
+
     pub fn visual_pos(&self) -> Vec3 {
         match &self.hop {
             Some(h) => h.from.lerp(h.to, h.t.min(1.0)),
@@ -116,6 +121,7 @@ pub enum Cause {
     Drowned,
     CarriedAway,
     TooSlow,
+    Eagle,
 }
 
 impl Cause {
@@ -135,6 +141,13 @@ impl Cause {
                 "Von der Strömung fortgerissen",
                 "Trascinato dalla corrente",
                 "Arrastrado por la corriente"
+            ),
+            Cause::Eagle => tx!(
+                "Enlevé par l'aigle !",
+                "Carried off by the eagle!",
+                "Vom Adler geholt!",
+                "Rapito dall'aquila!",
+                "¡Se lo llevó el águila!"
             ),
             Cause::TooSlow => tx!("Trop lent !", "Too slow!", "Zu langsam!", "Troppo lento!", "¡Demasiado lento!"),
         }
@@ -402,6 +415,7 @@ pub fn sync_model(
     death: Res<Death>,
     mut q: Query<&mut Transform, With<FrogModel>>,
     mut shadows: Query<(&mut Transform, &FrogShadow), Without<FrogModel>>,
+    eagle: Res<crate::eagle::Eagle>,
 ) {
     let mut pos = frog.pos;
     let mut ground = frog.pos;
@@ -446,6 +460,15 @@ pub fn sync_model(
         }
         Some(Cause::Drowned | Cause::CarriedAway) => {
             pos.y -= death.timer.min(1.0) * 0.8;
+            shadow_on = false;
+        }
+        Some(Cause::Eagle) => {
+            // Dans les serres de l'aigle : il se débat en l'air.
+            if let Some(g) = eagle.grip() {
+                pos = g + Vec3::new(0.0, -0.55, 0.0);
+            }
+            tumble = Vec3::new((death.timer * 9.0).sin() * 0.5, death.timer * 6.0, (death.timer * 7.0).cos() * 0.4);
+            scale = Vec3::splat(0.85);
             shadow_on = false;
         }
         Some(Cause::TooSlow) => {

@@ -20,10 +20,11 @@ pub enum Item {
     Costume(Costume),
     Flies,
     GoldFlies,
+    Eagle,
 }
 
 /// Points cumulés nécessaires, dans l'ordre d'arrivée.
-pub const UNLOCKS: [(u32, Item); 31] = [
+pub const UNLOCKS: [(u32, Item); 32] = [
     (15, Item::Flies),
     (25, Item::Vehicle(Vehicle::Truck)),
     (40, Item::Costume(Costume::Cap)),
@@ -32,6 +33,7 @@ pub const UNLOCKS: [(u32, Item); 31] = [
     (100, Item::Trains),
     (130, Item::Costume(Costume::Shades)),
     (160, Item::Vehicle(Vehicle::Moto)),
+    (180, Item::Eagle),
     (200, Item::World(Biome::Desert)),
     (240, Item::Vehicle(Vehicle::Bus)),
     (280, Item::Character(Character::Badger)),
@@ -83,6 +85,7 @@ impl Item {
             Item::Character(c) => return c.name(),
             Item::Costume(c) => return c.name(),
             Item::Flies => tx!("Les mouches", "The flies", "Die Fliegen", "Le mosche", "Las moscas"),
+            Item::Eagle => tx!("L'aigle (attention !)", "The eagle (watch out!)", "Der Adler (Vorsicht!)", "L'aquila (attenzione!)", "El águila (¡cuidado!)"),
             Item::GoldFlies => tx!("Les mouches dorées", "The golden flies", "Die goldenen Fliegen", "Le mosche dorate", "Las moscas doradas"),
             Item::Vehicle(v) => match v {
                 Vehicle::Car => tx!("Pépette", "Penny", "Püppi", "Pepetta", "Pepita"),

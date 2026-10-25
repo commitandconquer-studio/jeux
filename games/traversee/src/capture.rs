@@ -54,6 +54,11 @@ impl Plugin for CapturePlugin {
             ))
             .add_systems(Update, run_perf);
         }
+        // TRAVERSEE_EAGLE=1 : scène de l'aigle (alerte, vol, enlèvement), crapaud immobile.
+        if let (Ok(dir), Ok(_)) = (std::env::var("TRAVERSEE_CAPTURE"), std::env::var("TRAVERSEE_EAGLE")) {
+            app.insert_resource(EagleShots { dir, next: 0 }).add_systems(Update, run_eagle_capture);
+            return;
+        }
         if let Ok(dir) = std::env::var("TRAVERSEE_CAPTURE") {
             app.insert_resource(Capture { dir, index: 0, since: 0.0, started: false, shot: false, last_hop: 0.0, fly_done: false })
                 .add_systems(Update, run_capture);
@@ -183,5 +188,43 @@ fn run_perf(
             frog.queued = Some(IVec2::Y);
         }
         _ => {}
+    }
+}
+
+#[derive(Resource)]
+struct EagleShots {
+    dir: String,
+    next: usize,
+}
+
+/// Instants (en secondes) des photos de l'aigle : alerte, approche, enlèvement.
+const EAGLE_TIMES: [(&str, f32); 3] = [("eagle-1-alerte", 3.6), ("eagle-2-vol", 4.75), ("eagle-3-enleve", 5.35)];
+
+fn run_eagle_capture(
+    time: Res<Time<Real>>,
+    mut commands: Commands,
+    mut shots: ResMut<EagleShots>,
+    state: Res<State<GameState>>,
+    mut next: ResMut<NextState<GameState>>,
+    mut exit: MessageWriter<AppExit>,
+    mut start: Local<Option<f32>>,
+) {
+    let now = time.elapsed_secs();
+    if *state.get() == GameState::Menu && now > 1.0 {
+        next.set(GameState::Playing);
+    }
+    if *state.get() != GameState::Playing && *state.get() != GameState::Dying {
+        return;
+    }
+    let t0 = *start.get_or_insert(now);
+    let Some(&(name, at)) = EAGLE_TIMES.get(shots.next) else {
+        if now - t0 > 7.5 {
+            exit.write(AppExit::Success);
+        }
+        return;
+    };
+    if now - t0 >= at {
+        shots.next += 1;
+        commands.spawn(Screenshot::primary_window()).observe(save_to_disk(format!("{}/{name}.png", shots.dir)));
     }
 }
