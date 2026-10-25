@@ -486,6 +486,8 @@ pub enum Biome {
     Halloween,
     /// Néo-Croâ : ville futuriste, robots, monorail.
     Cyber,
+    /// Royaume de Croâ : Moyen Âge et dragon.
+    Medieval,
 }
 
 pub const BIOME_LEN: i32 = 60;
@@ -564,7 +566,7 @@ pub struct Theme {
 pub static START_WORLD: std::sync::atomic::AtomicI32 = std::sync::atomic::AtomicI32::new(0);
 
 impl Biome {
-    pub const ALL: [Biome; 10] = [Biome::Prairie, Biome::Desert, Biome::Snow, Biome::Autumn, Biome::Jurassic, Biome::Nippon, Biome::Space, Biome::FarWest, Biome::Halloween, Biome::Cyber];
+    pub const ALL: [Biome; 11] = [Biome::Prairie, Biome::Desert, Biome::Snow, Biome::Autumn, Biome::Jurassic, Biome::Nippon, Biome::Space, Biome::FarWest, Biome::Halloween, Biome::Cyber, Biome::Medieval];
 
     /// Le monde décrit en pièces, pour les mondes à thème.
     pub fn theme(self) -> Option<&'static Theme> {
@@ -579,6 +581,7 @@ impl Biome {
             Biome::FarWest => Some(2),
             Biome::Halloween => Some(4),
             Biome::Cyber => Some(5),
+            Biome::Medieval => Some(6),
             _ => None,
         }
     }
@@ -594,7 +597,7 @@ impl Biome {
         // TRAVERSEE_BIOME=1..3 : voir un monde tout de suite (essais et captures).
         static ENV: std::sync::OnceLock<i32> = std::sync::OnceLock::new();
         let start = *ENV.get_or_init(|| std::env::var("TRAVERSEE_BIOME").ok().and_then(|s| s.parse().ok()).unwrap_or(0)) + START_WORLD.load(std::sync::atomic::Ordering::Relaxed);
-        let biome = match (row.max(0) / BIOME_LEN + start) % 10 {
+        let biome = match (row.max(0) / BIOME_LEN + start) % 11 {
             0 => Biome::Prairie,
             1 => Biome::Desert,
             2 => Biome::Snow,
@@ -604,7 +607,8 @@ impl Biome {
             6 => Biome::Space,
             7 => Biome::FarWest,
             8 => Biome::Halloween,
-            _ => Biome::Cyber,
+            9 => Biome::Cyber,
+            _ => Biome::Medieval,
         };
         if biome != Biome::Prairie && !crate::progress::unlocked(points, crate::progress::Item::World(biome)) {
             Biome::Prairie
@@ -620,7 +624,7 @@ impl Biome {
             Biome::Desert => tx!("Le désert", "The desert", "Die Wüste", "Il deserto", "El desierto"),
             Biome::Snow => tx!("La neige", "The snow", "Der Schnee", "La neve", "La nieve"),
             Biome::Autumn => tx!("L'automne", "Autumn", "Der Herbst", "L'autunno", "El otoño"),
-            Biome::Jurassic | Biome::Nippon | Biome::Space | Biome::FarWest | Biome::Halloween | Biome::Cyber => return (self.theme().unwrap().name)(),
+            Biome::Jurassic | Biome::Nippon | Biome::Space | Biome::FarWest | Biome::Halloween | Biome::Cyber | Biome::Medieval => return (self.theme().unwrap().name)(),
         }
         .t()
     }
@@ -703,7 +707,7 @@ impl BiomeMats {
 impl Extra {
     /// La piste du monde (terre battue), à la place de la route goudronnée.
     pub fn dirt_road(&self, biome: Biome) -> Option<&Handle<StandardMaterial>> {
-        matches!(biome, Biome::FarWest | Biome::Halloween | Biome::Cyber).then(|| &self.biome.themed[biome.theme_index().unwrap()].road)
+        matches!(biome, Biome::FarWest | Biome::Halloween | Biome::Cyber | Biome::Medieval).then(|| &self.biome.themed[biome.theme_index().unwrap()].road)
     }
 
     /// Sol de l'herbe (deux teintes en alternance) et bords, selon le monde.
@@ -714,7 +718,7 @@ impl Extra {
             Biome::Desert => (&self.biome.sand[i], &self.biome.sand_side),
             Biome::Snow => (&self.biome.snow[i], &self.biome.snow_side),
             Biome::Autumn => (&self.biome.autumn[i], &self.biome.autumn_side),
-            Biome::Jurassic | Biome::Nippon | Biome::Space | Biome::FarWest | Biome::Halloween | Biome::Cyber => {
+            Biome::Jurassic | Biome::Nippon | Biome::Space | Biome::FarWest | Biome::Halloween | Biome::Cyber | Biome::Medieval => {
                 let t = &self.biome.themed[biome.theme_index().unwrap()];
                 (&t.grass[i], &t.side)
             }
@@ -725,7 +729,7 @@ impl Extra {
     pub fn water<'a>(&'a self, kit: &'a Kit, biome: Biome) -> (&'a Handle<StandardMaterial>, &'a Handle<StandardMaterial>) {
         match biome {
             Biome::Snow => (&self.biome.ice, &self.biome.ice_side),
-            Biome::Jurassic | Biome::Nippon | Biome::Space | Biome::FarWest | Biome::Halloween | Biome::Cyber => {
+            Biome::Jurassic | Biome::Nippon | Biome::Space | Biome::FarWest | Biome::Halloween | Biome::Cyber | Biome::Medieval => {
                 let t = &self.biome.themed[biome.theme_index().unwrap()];
                 (&t.water, &t.water_side)
             }
@@ -829,7 +833,7 @@ pub fn spawn_scenery(c: &mut Commands, k: &Kit, x: &Extra, parent: Entity, biome
             }
         }
         // ---- Mondes à thème : modèles décrits en pièces
-        (Biome::Jurassic | Biome::Nippon | Biome::Space | Biome::FarWest | Biome::Halloween | Biome::Cyber, kind) => {
+        (Biome::Jurassic | Biome::Nippon | Biome::Space | Biome::FarWest | Biome::Halloween | Biome::Cyber | Biome::Medieval, kind) => {
             let t = biome.theme().unwrap();
             let pick = (roll as usize * 3 + variant) % 20;
             match kind {

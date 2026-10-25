@@ -37,6 +37,9 @@ WORLDS = [
     dict(tag="CYBER", file="data/import/cyber.json", extra_animals=[], hat=[], side_pct=9, only_own=True,
          blocks=[0] * 6 + [1] * 5 + [2] * 5 + [3] * 4,
          sides=[0] * 5 + [1] * 5 + [2] * 3 + [100] * 4 + [103] * 3),
+    dict(tag="MOYENAGE", file="data/import/moyenage.json", extra_animals=[], hat=[], side_pct=7, only_own=True,
+         blocks=[0] * 7 + [1] * 4 + [2] * 3 + [3] * 3 + [4] * 3,
+         sides=[100] * 12 + [1] * 3 + [2] * 3 + [0] * 2),
 ]
 SHAPE_RS = {"cube": "Shape::Cube", "cylindre": "Shape::Cyl", "cone": "Shape::Cone", "sphere": "Shape::Sphere"}
 MAT_RS = {"vitre": "Mat::Vitre", "sombre": "Mat::Sombre", "pneu": "Mat::Pneu", "enjoliveur": "Mat::Enjoliveur",

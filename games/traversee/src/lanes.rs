@@ -329,7 +329,7 @@ fn spawn_lane(c: &mut Commands, kit: &Kit, x: &Extra, g: &mut LaneGen, points: u
             } else {
                 ground(c, -0.02, &m.road, &m.road_side);
             }
-            if after_road && !matches!(biome, Biome::FarWest | Biome::Halloween) {
+            if after_road && !matches!(biome, Biome::FarWest | Biome::Halloween | Biome::Medieval) {
                 // Pointillés entre deux voies de route
                 let reach = if biome == Biome::Space { COLS as f32 + 0.5 } else { HALF };
                 let mut x = -reach;
@@ -494,9 +494,17 @@ fn spawn_lane(c: &mut Commands, kit: &Kit, x: &Extra, g: &mut LaneGen, points: u
             c.entity(root).insert(RailLane { train, light, bell: None, dir, timer: if std::env::var("TRAVERSEE_RAIL").is_ok() { 0.3 } else { 1.0 + g.rand() * 4.0 }, phase: RailPhase::Waiting });
         }
         LaneKind::Rail => {
-            ground(c, 0.0, &m.gravel, &m.gravel);
+            match x.dirt_road(biome) {
+                Some(dirt) if biome == Biome::Medieval => ground(c, 0.0, dirt, dirt),
+                _ => ground(c, 0.0, &m.gravel, &m.gravel),
+            }
             let reach = if biome == Biome::Space { COLS as f32 + 0.5 } else { HALF };
-            if biome == Biome::Cyber {
+            if biome == Biome::Medieval {
+                // Convoi royal : deux ornières creusées dans la terre, pas de rails.
+                for z in [-0.3, 0.3] {
+                    part(c, root, &kit.cube, &m.dark, Vec3::new(0.0, 0.03, z), Vec3::new(reach * 2.0, 0.04, 0.12));
+                }
+            } else if biome == Biome::Cyber {
                 // Monorail : une poutre sombre bordée de deux filets de néon.
                 part(c, root, &kit.cube, &m.dark, Vec3::new(0.0, 0.05, 0.0), Vec3::new(reach * 2.0, 0.1, 0.8));
                 for z in [-0.34, 0.34] {

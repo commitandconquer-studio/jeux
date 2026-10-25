@@ -1,0 +1,8229 @@
+{
+ "monde": {
+  "id": "moyen_age",
+  "nom": {
+   "fr": "Royaume de Croâ",
+   "en": "Kingdom of Croak",
+   "de": "Quak-Königreich",
+   "es": "Reino de Croa",
+   "it": "Regno di Gra"
+  },
+  "points_deblocage": 4800,
+  "ciel": "#9ad0f0",
+  "brume": "#d6ecf6",
+  "sol_voie_route": "#8d8171",
+  "marquage": "#a89a86",
+  "herbe_a": "#74a84c",
+  "herbe_b": "#6a9a46",
+  "eau": "#3f86a0",
+  "rondin": "#7a4d24",
+  "obstacles": [
+   {
+    "id": "chene",
+    "nom": {
+     "fr": "Vieux Chêne",
+     "en": "Old Oak",
+     "de": "Alte Eiche",
+     "es": "Viejo Roble",
+     "it": "Vecchia Quercia"
+    },
+    "couleur_2": "#4f8f3a",
+    "couleur_3": "#6b4a2b",
+    "pieces": [
+     {
+      "forme": "cylindre",
+      "position": [
+       0,
+       0.4,
+       0
+      ],
+      "taille": [
+       0.28,
+       0.8,
+       0.28
+      ],
+      "rotation_deg": [
+       0,
+       0,
+       0
+      ],
+      "matiere": "couleur_3"
+     },
+     {
+      "forme": "sphere",
+      "position": [
+       0,
+       1.0,
+       0
+      ],
+      "taille": [
+       1.0,
+       0.85,
+       1.0
+      ],
+      "rotation_deg": [
+       0,
+       0,
+       0
+      ],
+      "matiere": "couleur_2"
+     },
+     {
+      "forme": "sphere",
+      "position": [
+       0.3,
+       0.8,
+       0.15
+      ],
+      "taille": [
+       0.55,
+       0.5,
+       0.55
+      ],
+      "rotation_deg": [
+       0,
+       0,
+       0
+      ],
+      "matiere": "couleur_2"
+     },
+     {
+      "forme": "sphere",
+      "position": [
+       -0.28,
+       0.85,
+       -0.1
+      ],
+      "taille": [
+       0.5,
+       0.45,
+       0.5
+      ],
+      "rotation_deg": [
+       0,
+       0,
+       0
+      ],
+      "matiere": "couleur_2"
+     }
+    ],
+    "parties_mobiles": [],
+    "roll": 1,
+    "taille_case": 1
+   },
+   {
+    "id": "rocher_mousse",
+    "nom": {
+     "fr": "Rocher à Mousse",
+     "en": "Mossy Rock",
+     "de": "Moosfelsen",
+     "es": "Roca con Musgo",
+     "it": "Roccia Muschiosa"
+    },
+    "couleur_2": "#8d8f99",
+    "couleur_3": "#4f7a4a",
+    "pieces": [
+     {
+      "forme": "sphere",
+      "position": [
+       0,
+       0.3,
+       0
+      ],
+      "taille": [
+       0.95,
+       0.6,
+       0.8
+      ],
+      "rotation_deg": [
+       0,
+       0,
+       0
+      ],
+      "matiere": "couleur_2"
+     },
+     {
+      "forme": "sphere",
+      "position": [
+       0.25,
+       0.55,
+       0.1
+      ],
+      "taille": [
+       0.55,
+       0.45,
+       0.5
+      ],
+      "rotation_deg": [
+       0,
+       0,
+       0
+      ],
+      "matiere": "couleur_2"
+     },
+     {
+      "forme": "sphere",
+      "position": [
+       -0.05,
+       0.62,
+       -0.05
+      ],
+      "taille": [
+       0.5,
+       0.18,
+       0.4
+      ],
+      "rotation_deg": [
+       0,
+       0,
+       0
+      ],
+      "matiere": "couleur_3"
+     }
+    ],
+    "parties_mobiles": [],
+    "roll": 2,
+    "taille_case": 1
+   },
+   {
+    "id": "puits",
+    "nom": {
+     "fr": "Puits du Village",
+     "en": "Village Well",
+     "de": "Dorfbrunnen",
+     "es": "Pozo del Pueblo",
+     "it": "Pozzo del Villaggio"
+    },
+    "couleur_2": "#9a9aa4",
+    "couleur_3": "#7a4d24",
+    "pieces": [
+     {
+      "forme": "cylindre",
+      "position": [
+       0,
+       0.3,
+       0
+      ],
+      "taille": [
+       0.7,
+       0.6,
+       0.7
+      ],
+      "rotation_deg": [
+       0,
+       0,
+       0
+      ],
+      "matiere": "couleur_2"
+     },
+     {
+      "forme": "cylindre",
+      "position": [
+       0,
+       0.62,
+       0
+      ],
+      "taille": [
+       0.55,
+       0.05,
+       0.55
+      ],
+      "rotation_deg": [
+       0,
+       0,
+       0
+      ],
+      "matiere": "sombre"
+     },
+     {
+      "forme": "cube",
+      "position": [
+       0.3,
+       0.8,
+       0
+      ],
+      "taille": [
+       0.06,
+       0.8,
+       0.06
+      ],
+      "rotation_deg": [
+       0,
+       0,
+       0
+      ],
+      "matiere": "couleur_3"
+     },
+     {
+      "forme": "cube",
+      "position": [
+       -0.3,
+       0.8,
+       0
+      ],
+      "taille": [
+       0.06,
+       0.8,
+       0.06
+      ],
+      "rotation_deg": [
+       0,
+       0,
+       0
+      ],
+      "matiere": "couleur_3"
+     },
+     {
+      "forme": "cube",
+      "position": [
+       0,
+       1.22,
+       0
+      ],
+      "taille": [
+       0.8,
+       0.06,
+       0.5
+      ],
+      "rotation_deg": [
+       0,
+       0,
+       0
+      ],
+      "matiere": "couleur_3"
+     },
+     {
+      "forme": "cone",
+      "position": [
+       0,
+       1.38,
+       0
+      ],
+      "taille": [
+       0.9,
+       0.3,
+       0.6
+      ],
+      "rotation_deg": [
+       0,
+       0,
+       0
+      ],
+      "matiere": "couleur_3"
+     }
+    ],
+    "parties_mobiles": [],
+    "roll": 3,
+    "taille_case": 1
+   },
+   {
+    "id": "banniere",
+    "nom": {
+     "fr": "Bannière Royale",
+     "en": "Royal Banner",
+     "de": "Königliches Banner",
+     "es": "Estandarte Real",
+     "it": "Stendardo Reale"
+    },
+    "couleur_2": "#c0392b",
+    "couleur_3": "#7a4d24",
+    "pieces": [
+     {
+      "forme": "cylindre",
+      "position": [
+       0,
+       0.7,
+       0
+      ],
+      "taille": [
+       0.07,
+       1.4,
+       0.07
+      ],
+      "rotation_deg": [
+       0,
+       0,
+       0
+      ],
+      "matiere": "couleur_3"
+     },
+     {
+      "forme": "cube",
+      "position": [
+       0.0,
+       1.0,
+       0.25
+      ],
+      "taille": [
+       0.03,
+       0.55,
+       0.45
+      ],
+      "rotation_deg": [
+       0,
+       0,
+       0
+      ],
+      "matiere": "couleur_2",
+      "nom": "fanion"
+     },
+     {
+      "forme": "cube",
+      "position": [
+       0,
+       0.03,
+       0
+      ],
+      "taille": [
+       0.4,
+       0.06,
+       0.4
+      ],
+      "rotation_deg": [
+       0,
+       0,
+       0
+      ],
+      "matiere": "sombre"
+     },
+     {
+      "forme": "sphere",
+      "position": [
+       0,
+       1.42,
+       0
+      ],
+      "taille": [
+       0.12,
+       0.12,
+       0.12
+      ],
+      "rotation_deg": [
+       0,
+       0,
+       0
+      ],
+      "matiere": "phare"
+     }
+    ],
+    "parties_mobiles": [
+     {
+      "piece": "fanion",
+      "animation": "balance",
+      "axe": "y"
+     }
+    ],
+    "roll": 4,
+    "taille_case": 1
+   },
+   {
+    "id": "botte_foin",
+    "nom": {
+     "fr": "Botte de Foin",
+     "en": "Hay Bale",
+     "de": "Heuballen",
+     "es": "Fardo de Heno",
+     "it": "Balla di Fieno"
+    },
+    "couleur_2": "#e6c566",
+    "couleur_3": "#a98737",
+    "pieces": [
+     {
+      "forme": "cube",
+      "position": [
+       0,
+       0.3,
+       0
+      ],
+      "taille": [
+       0.75,
+       0.6,
+       0.6
+      ],
+      "rotation_deg": [
+       0,
+       0,
+       0
+      ],
+      "matiere": "couleur_2"
+     },
+     {
+      "forme": "cube",
+      "position": [
+       0,
+       0.3,
+       0.0
+      ],
+      "taille": [
+       0.04,
+       0.62,
+       0.62
+      ],
+      "rotation_deg": [
+       0,
+       0,
+       0
+      ],
+      "matiere": "couleur_3"
+     },
+     {
+      "forme": "cube",
+      "position": [
+       0.2,
+       0.3,
+       0.0
+      ],
+      "taille": [
+       0.04,
+       0.62,
+       0.62
+      ],
+      "rotation_deg": [
+       0,
+       0,
+       0
+      ],
+      "matiere": "couleur_3"
+     },
+     {
+      "forme": "cube",
+      "position": [
+       -0.2,
+       0.3,
+       0.0
+      ],
+      "taille": [
+       0.04,
+       0.62,
+       0.62
+      ],
+      "rotation_deg": [
+       0,
+       0,
+       0
+      ],
+      "matiere": "couleur_3"
+     }
+    ],
+    "parties_mobiles": [],
+    "roll": 5,
+    "taille_case": 1
+   }
+  ],
+  "bords": [
+   {
+    "id": "chateau",
+    "nom": {
+     "fr": "Château du Roi Crapaud",
+     "en": "Toad King's Castle",
+     "de": "Schloss des Krötenkönigs",
+     "es": "Castillo del Rey Sapo",
+     "it": "Castello del Re Rospo"
+    },
+    "couleur_2": "#b9b4aa",
+    "couleur_3": "#c0392b",
+    "pieces": [
+     {
+      "forme": "cylindre",
+      "position": [
+       -1.2,
+       1.3,
+       0
+      ],
+      "taille": [
+       1.0,
+       2.6,
+       1.0
+      ],
+      "rotation_deg": [
+       0,
+       0,
+       0
+      ],
+      "matiere": "couleur_2",
+      "nom": "t"
+     },
+     {
+      "forme": "cylindre",
+      "position": [
+       -1.2,
+       2.68,
+       0
+      ],
+      "taille": [
+       1.15,
+       0.16,
+       1.15
+      ],
+      "rotation_deg": [
+       0,
+       0,
+       0
+      ],
+      "matiere": "couleur_3",
+      "nom": "t"
+     },
+     {
+      "forme": "cone",
+      "position": [
+       -1.2,
+       3.15,
+       0
+      ],
+      "taille": [
+       1.2,
+       0.9,
+       1.2
+      ],
+      "rotation_deg": [
+       0,
+       0,
+       0
+      ],
+      "matiere": "couleur_3",
+      "nom": "t"
+     },
+     {
+      "forme": "cube",
+      "position": [
+       -1.2,
+       1.56,
+       0.5
+      ],
+      "taille": [
+       0.18,
+       0.35,
+       0.03
+      ],
+      "rotation_deg": [
+       0,
+       0,
+       0
+      ],
+      "matiere": "sombre",
+      "nom": "t"
+     },
+     {
+      "forme": "cylindre",
+      "position": [
+       1.2,
+       1.3,
+       0
+      ],
+      "taille": [
+       1.0,
+       2.6,
+       1.0
+      ],
+      "rotation_deg": [
+       0,
+       0,
+       0
+      ],
+      "matiere": "couleur_2",
+      "nom": "t"
+     },
+     {
+      "forme": "cylindre",
+      "position": [
+       1.2,
+       2.68,
+       0
+      ],
+      "taille": [
+       1.15,
+       0.16,
+       1.15
+      ],
+      "rotation_deg": [
+       0,
+       0,
+       0
+      ],
+      "matiere": "couleur_3",
+      "nom": "t"
+     },
+     {
+      "forme": "cone",
+      "position": [
+       1.2,
+       3.15,
+       0
+      ],
+      "taille": [
+       1.2,
+       0.9,
+       1.2
+      ],
+      "rotation_deg": [
+       0,
+       0,
+       0
+      ],
+      "matiere": "couleur_3",
+      "nom": "t"
+     },
+     {
+      "forme": "cube",
+      "position": [
+       1.2,
+       1.56,
+       0.5
+      ],
+      "taille": [
+       0.18,
+       0.35,
+       0.03
+      ],
+      "rotation_deg": [
+       0,
+       0,
+       0
+      ],
+      "matiere": "sombre",
+      "nom": "t"
+     },
+     {
+      "forme": "cube",
+      "position": [
+       0,
+       1.0,
+       0
+      ],
+      "taille": [
+       2.4,
+       2.0,
+       1.0
+      ],
+      "rotation_deg": [
+       0,
+       0,
+       0
+      ],
+      "matiere": "couleur_2"
+     },
+     {
+      "forme": "cube",
+      "position": [
+       0,
+       2.1,
+       0
+      ],
+      "taille": [
+       2.5,
+       0.2,
+       1.1
+      ],
+      "rotation_deg": [
+       0,
+       0,
+       0
+      ],
+      "matiere": "couleur_2"
+     },
+     {
+      "forme": "cube",
+      "position": [
+       0,
+       0.5,
+       0.52
+      ],
+      "taille": [
+       0.7,
+       1.0,
+       0.04
+      ],
+      "rotation_deg": [
+       0,
+       0,
+       0
+      ],
+      "matiere": "sombre"
+     },
+     {
+      "forme": "cone",
+      "position": [
+       0,
+       0.95,
+       0.52
+      ],
+      "taille": [
+       0.7,
+       0.3,
+       0.04
+      ],
+      "rotation_deg": [
+       0,
+       0,
+       0
+      ],
+      "matiere": "sombre"
+     },
+     {
+      "forme": "cube",
+      "position": [
+       -0.6,
+       2.35,
+       0
+      ],
+      "taille": [
+       0.3,
+       0.3,
+       0.3
+      ],
+      "rotation_deg": [
+       0,
+       0,
+       0
+      ],
+      "matiere": "couleur_2"
+     },
+     {
+      "forme": "cube",
+      "position": [
+       0.0,
+       2.35,
+       0
+      ],
+      "taille": [
+       0.3,
+       0.3,
+       0.3
+      ],
+      "rotation_deg": [
+       0,
+       0,
+       0
+      ],
+      "matiere": "couleur_2"
+     },
+     {
+      "forme": "cube",
+      "position": [
+       0.6,
+       2.35,
+       0
+      ],
+      "taille": [
+       0.3,
+       0.3,
+       0.3
+      ],
+      "rotation_deg": [
+       0,
+       0,
+       0
+      ],
+      "matiere": "couleur_2"
+     },
+     {
+      "forme": "cylindre",
+      "position": [
+       0,
+       3.0,
+       0
+      ],
+      "taille": [
+       0.05,
+       1.0,
+       0.05
+      ],
+      "rotation_deg": [
+       0,
+       0,
+       0
+      ],
+      "matiere": "sombre"
+     },
+     {
+      "forme": "cube",
+      "position": [
+       0.0,
+       3.35,
+       0.25
+      ],
+      "taille": [
+       0.03,
+       0.3,
+       0.5
+      ],
+      "rotation_deg": [
+       0,
+       0,
+       0
+      ],
+      "matiere": "couleur_3",
+      "nom": "fanion"
+     }
+    ],
+    "parties_mobiles": [
+     {
+      "piece": "fanion",
+      "animation": "balance",
+      "axe": "y"
+     }
+    ]
+   },
+   {
+    "id": "moulin",
+    "nom": {
+     "fr": "Moulin à Vent",
+     "en": "Windmill",
+     "de": "Windmühle",
+     "es": "Molino de Viento",
+     "it": "Mulino a Vento"
+    },
+    "couleur_2": "#e8dcc0",
+    "couleur_3": "#8a5a2b",
+    "pieces": [
+     {
+      "forme": "cube",
+      "position": [
+       0,
+       0.9,
+       0
+      ],
+      "taille": [
+       1.0,
+       1.8,
+       1.0
+      ],
+      "rotation_deg": [
+       0,
+       0,
+       0
+      ],
+      "matiere": "couleur_2"
+     },
+     {
+      "forme": "cone",
+      "position": [
+       0,
+       2.2,
+       0
+      ],
+      "taille": [
+       1.3,
+       1.0,
+       1.3
+      ],
+      "rotation_deg": [
+       0,
+       0,
+       0
+      ],
+      "matiere": "couleur_3"
+     },
+     {
+      "forme": "cube",
+      "position": [
+       0,
+       0.4,
+       0.51
+      ],
+      "taille": [
+       0.4,
+       0.8,
+       0.03
+      ],
+      "rotation_deg": [
+       0,
+       0,
+       0
+      ],
+      "matiere": "sombre"
+     },
+     {
+      "forme": "cylindre",
+      "position": [
+       0.6,
+       1.8,
+       0
+      ],
+      "taille": [
+       0.12,
+       0.3,
+       0.12
+      ],
+      "rotation_deg": [
+       0,
+       0,
+       90
+      ],
+      "matiere": "sombre"
+     },
+     {
+      "forme": "cube",
+      "position": [
+       0.7,
+       1.8,
+       0
+      ],
+      "taille": [
+       0.06,
+       1.7,
+       0.3
+      ],
+      "rotation_deg": [
+       0,
+       0,
+       0
+      ],
+      "matiere": "couleur_3",
+      "nom": "ailes"
+     },
+     {
+      "forme": "cube",
+      "position": [
+       0.7,
+       1.8,
+       0
+      ],
+      "taille": [
+       0.06,
+       1.7,
+       0.3
+      ],
+      "rotation_deg": [
+       0,
+       0,
+       90
+      ],
+      "matiere": "couleur_3",
+      "nom": "ailes"
+     },
+     {
+      "forme": "cube",
+      "position": [
+       0.7,
+       1.8,
+       0
+      ],
+      "taille": [
+       0.06,
+       1.7,
+       0.3
+      ],
+      "rotation_deg": [
+       0,
+       0,
+       180
+      ],
+      "matiere": "couleur_3",
+      "nom": "ailes"
+     },
+     {
+      "forme": "cube",
+      "position": [
+       0.7,
+       1.8,
+       0
+      ],
+      "taille": [
+       0.06,
+       1.7,
+       0.3
+      ],
+      "rotation_deg": [
+       0,
+       0,
+       270
+      ],
+      "matiere": "couleur_3",
+      "nom": "ailes"
+     }
+    ],
+    "parties_mobiles": [
+     {
+      "piece": "ailes",
+      "animation": "rotation_groupe"
+     }
+    ]
+   },
+   {
+    "id": "tour_de_guet",
+    "nom": {
+     "fr": "Tour de Guet",
+     "en": "Watchtower",
+     "de": "Wachturm",
+     "es": "Torre de Vigilancia",
+     "it": "Torre di Guardia"
+    },
+    "couleur_2": "#a8a49a",
+    "couleur_3": "#7a4d24",
+    "pieces": [
+     {
+      "forme": "cylindre",
+      "position": [
+       0,
+       1.4,
+       0
+      ],
+      "taille": [
+       1.0,
+       2.8,
+       1.0
+      ],
+      "rotation_deg": [
+       0,
+       0,
+       0
+      ],
+      "matiere": "couleur_2",
+      "nom": "t"
+     },
+     {
+      "forme": "cylindre",
+      "position": [
+       0,
+       2.88,
+       0
+      ],
+      "taille": [
+       1.15,
+       0.16,
+       1.15
+      ],
+      "rotation_deg": [
+       0,
+       0,
+       0
+      ],
+      "matiere": "couleur_3",
+      "nom": "t"
+     },
+     {
+      "forme": "cone",
+      "position": [
+       0,
+       3.35,
+       0
+      ],
+      "taille": [
+       1.2,
+       0.9,
+       1.2
+      ],
+      "rotation_deg": [
+       0,
+       0,
+       0
+      ],
+      "matiere": "couleur_3",
+      "nom": "t"
+     },
+     {
+      "forme": "cube",
+      "position": [
+       0,
+       1.68,
+       0.5
+      ],
+      "taille": [
+       0.18,
+       0.35,
+       0.03
+      ],
+      "rotation_deg": [
+       0,
+       0,
+       0
+      ],
+      "matiere": "sombre",
+      "nom": "t"
+     },
+     {
+      "forme": "cube",
+      "position": [
+       0,
+       3.0,
+       0
+      ],
+      "taille": [
+       1.3,
+       0.2,
+       1.3
+      ],
+      "rotation_deg": [
+       0,
+       0,
+       0
+      ],
+      "matiere": "couleur_3"
+     },
+     {
+      "forme": "cube",
+      "position": [
+       0,
+       0.05,
+       0
+      ],
+      "taille": [
+       1.3,
+       0.1,
+       1.3
+      ],
+      "rotation_deg": [
+       0,
+       0,
+       0
+      ],
+      "matiere": "sombre"
+     }
+    ],
+    "parties_mobiles": []
+   }
+  ],
+  "deco": [
+   {
+    "id": "marguerites",
+    "nom": {
+     "fr": "Marguerites",
+     "en": "Daisies",
+     "de": "Gänseblümchen",
+     "es": "Margaritas",
+     "it": "Margherite"
+    },
+    "couleur_2": "#f4f4f0",
+    "couleur_3": "#ffd23f",
+    "pieces": [
+     {
+      "forme": "cylindre",
+      "position": [
+       0,
+       0.05,
+       0
+      ],
+      "taille": [
+       0.02,
+       0.1,
+       0.02
+      ],
+      "rotation_deg": [
+       0,
+       0,
+       0
+      ],
+      "matiere": "sombre"
+     },
+     {
+      "forme": "sphere",
+      "position": [
+       0,
+       0.11,
+       0
+      ],
+      "taille": [
+       0.1,
+       0.03,
+       0.1
+      ],
+      "rotation_deg": [
+       0,
+       0,
+       0
+      ],
+      "matiere": "couleur_2"
+     },
+     {
+      "forme": "sphere",
+      "position": [
+       0,
+       0.12,
+       0
+      ],
+      "taille": [
+       0.04,
+       0.03,
+       0.04
+      ],
+      "rotation_deg": [
+       0,
+       0,
+       0
+      ],
+      "matiere": "couleur_3"
+     }
+    ],
+    "parties_mobiles": []
+   },
+   {
+    "id": "fleche",
+    "nom": {
+     "fr": "Flèche Plantée",
+     "en": "Stray Arrow",
+     "de": "Verirrter Pfeil",
+     "es": "Flecha Clavada",
+     "it": "Freccia Piantata"
+    },
+    "couleur_2": "#c9a063",
+    "couleur_3": "#e8e8f0",
+    "pieces": [
+     {
+      "forme": "cylindre",
+      "position": [
+       0,
+       0.2,
+       0
+      ],
+      "taille": [
+       0.025,
+       0.4,
+       0.025
+      ],
+      "rotation_deg": [
+       0,
+       0,
+       15
+      ],
+      "matiere": "couleur_2"
+     },
+     {
+      "forme": "cone",
+      "position": [
+       0.05,
+       0.38,
+       0
+      ],
+      "taille": [
+       0.06,
+       0.1,
+       0.06
+      ],
+      "rotation_deg": [
+       0,
+       0,
+       15
+      ],
+      "matiere": "couleur_3"
+     }
+    ],
+    "parties_mobiles": []
+   },
+   {
+    "id": "piece_or",
+    "nom": {
+     "fr": "Pièce d'Or",
+     "en": "Gold Coin",
+     "de": "Goldmünze",
+     "es": "Moneda de Oro",
+     "it": "Moneta d'Oro"
+    },
+    "couleur_2": "#ffd23f",
+    "couleur_3": "#e0a800",
+    "pieces": [
+     {
+      "forme": "cylindre",
+      "position": [
+       0,
+       0.015,
+       0
+      ],
+      "taille": [
+       0.14,
+       0.03,
+       0.14
+      ],
+      "rotation_deg": [
+       0,
+       0,
+       0
+      ],
+      "matiere": "couleur_2"
+     },
+     {
+      "forme": "cylindre",
+      "position": [
+       0,
+       0.03,
+       0
+      ],
+      "taille": [
+       0.09,
+       0.015,
+       0.09
+      ],
+      "rotation_deg": [
+       0,
+       0,
+       0
+      ],
+      "matiere": "couleur_3"
+     }
+    ],
+    "parties_mobiles": []
+   },
+   {
+    "id": "bouclier",
+    "nom": {
+     "fr": "Bouclier Oublié",
+     "en": "Forgotten Shield",
+     "de": "Vergessener Schild",
+     "es": "Escudo Olvidado",
+     "it": "Scudo Dimenticato"
+    },
+    "couleur_2": "#c0392b",
+    "couleur_3": "#e8e8f0",
+    "pieces": [
+     {
+      "forme": "cylindre",
+      "position": [
+       0,
+       0.02,
+       0
+      ],
+      "taille": [
+       0.3,
+       0.03,
+       0.3
+      ],
+      "rotation_deg": [
+       0,
+       0,
+       0
+      ],
+      "matiere": "couleur_2"
+     },
+     {
+      "forme": "cube",
+      "position": [
+       0,
+       0.045,
+       0
+      ],
+      "taille": [
+       0.28,
+       0.02,
+       0.05
+      ],
+      "rotation_deg": [
+       0,
+       0,
+       0
+      ],
+      "matiere": "couleur_3"
+     },
+     {
+      "forme": "cube",
+      "position": [
+       0,
+       0.045,
+       0
+      ],
+      "taille": [
+       0.05,
+       0.02,
+       0.28
+      ],
+      "rotation_deg": [
+       0,
+       0,
+       0
+      ],
+      "matiere": "couleur_3"
+     }
+    ],
+    "parties_mobiles": []
+   }
+  ],
+  "voie_speciale": {
+   "remplace": "rail",
+   "description": "Convoi royal : attelage et chariots.",
+   "pieces": []
+  },
+  "vehicules_du_monde": [],
+  "animaux_du_monde": [
+   "poule",
+   "cochon",
+   "gobelin",
+   "chevalier_pied",
+   "sanglier",
+   "cavalier",
+   "charrette",
+   "ogre",
+   "catapulte",
+   "dragon"
+  ],
+  "train": [
+   {
+    "id": "attelage_roi",
+    "longueur": 3.6,
+    "couleur_2": "#8b5a2b",
+    "couleur_3": "#7a4d24",
+    "pieces": [
+     {
+      "forme": "cube",
+      "position": [
+       -0.9,
+       0.55,
+       0
+      ],
+      "taille": [
+       1.2,
+       0.1,
+       0.7
+      ],
+      "rotation_deg": [
+       0,
+       0,
+       0
+      ],
+      "matiere": "couleur_3"
+     },
+     {
+      "forme": "cube",
+      "position": [
+       -1.3,
+       0.85,
+       0
+      ],
+      "taille": [
+       0.5,
+       0.5,
+       0.6
+      ],
+      "rotation_deg": [
+       0,
+       0,
+       0
+      ],
+      "matiere": "couleur_3"
+     },
+     {
+      "forme": "cube",
+      "position": [
+       -0.9,
+       0.3,
+       0
+      ],
+      "taille": [
+       0.1,
+       0.1,
+       0.1
+      ],
+      "rotation_deg": [
+       0,
+       0,
+       0
+      ],
+      "matiere": "sombre"
+     },
+     {
+      "forme": "cube",
+      "position": [
+       -0.6,
+       0.62,
+       0.0
+      ],
+      "taille": [
+       1.0,
+       0.04,
+       0.1
+      ],
+      "rotation_deg": [
+       0,
+       0,
+       0
+      ],
+      "matiere": "sombre"
+     },
+     {
+      "forme": "sphere",
+      "position": [
+       -1.0,
+       1.25,
+       0
+      ],
+      "taille": [
+       0.22,
+       0.24,
+       0.22
+      ],
+      "rotation_deg": [
+       0,
+       0,
+       0
+      ],
+      "matiere": "couleur_2"
+     },
+     {
+      "forme": "cube",
+      "position": [
+       -1.0,
+       1.0,
+       0
+      ],
+      "taille": [
+       0.3,
+       0.4,
+       0.3
+      ],
+      "rotation_deg": [
+       0,
+       0,
+       0
+      ],
+      "matiere": "couleur_2"
+     },
+     {
+      "forme": "cube",
+      "position": [
+       -1.0,
+       1.42,
+       0
+      ],
+      "taille": [
+       0.46,
+       0.04,
+       0.46
+      ],
+      "rotation_deg": [
+       0,
+       0,
+       0
+      ],
+      "matiere": "sombre"
+     },
+     {
+      "forme": "cylindre",
+      "position": [
+       -1.0,
+       1.5,
+       0
+      ],
+      "taille": [
+       0.24,
+       0.14,
+       0.24
+      ],
+      "rotation_deg": [
+       0,
+       0,
+       0
+      ],
+      "matiere": "sombre"
+     },
+     {
+      "forme": "cylindre",
+      "position": [
+       -1.2,
+       0.28,
+       0.42
+      ],
+      "taille": [
+       0.56,
+       0.08,
+       0.56
+      ],
+      "rotation_deg": [
+       90,
+       0,
+       0
+      ],
+      "matiere": "sombre"
+     },
+     {
+      "forme": "cylindre",
+      "position": [
+       -1.2,
+       0.28,
+       0.465
+      ],
+      "taille": [
+       0.28,
+       0.05,
+       0.28
+      ],
+      "rotation_deg": [
+       90,
+       0,
+       0
+      ],
+      "matiere": "couleur_3"
+     },
+     {
+      "forme": "cylindre",
+      "position": [
+       -1.2,
+       0.28,
+       -0.42
+      ],
+      "taille": [
+       0.56,
+       0.08,
+       0.56
+      ],
+      "rotation_deg": [
+       90,
+       0,
+       0
+      ],
+      "matiere": "sombre"
+     },
+     {
+      "forme": "cylindre",
+      "position": [
+       -1.2,
+       0.28,
+       -0.465
+      ],
+      "taille": [
+       0.28,
+       0.05,
+       0.28
+      ],
+      "rotation_deg": [
+       90,
+       0,
+       0
+      ],
+      "matiere": "couleur_3"
+     },
+     {
+      "forme": "cylindre",
+      "position": [
+       -0.5,
+       0.28,
+       0.42
+      ],
+      "taille": [
+       0.56,
+       0.08,
+       0.56
+      ],
+      "rotation_deg": [
+       90,
+       0,
+       0
+      ],
+      "matiere": "sombre"
+     },
+     {
+      "forme": "cylindre",
+      "position": [
+       -0.5,
+       0.28,
+       0.465
+      ],
+      "taille": [
+       0.28,
+       0.05,
+       0.28
+      ],
+      "rotation_deg": [
+       90,
+       0,
+       0
+      ],
+      "matiere": "couleur_3"
+     },
+     {
+      "forme": "cylindre",
+      "position": [
+       -0.5,
+       0.28,
+       -0.42
+      ],
+      "taille": [
+       0.56,
+       0.08,
+       0.56
+      ],
+      "rotation_deg": [
+       90,
+       0,
+       0
+      ],
+      "matiere": "sombre"
+     },
+     {
+      "forme": "cylindre",
+      "position": [
+       -0.5,
+       0.28,
+       -0.465
+      ],
+      "taille": [
+       0.28,
+       0.05,
+       0.28
+      ],
+      "rotation_deg": [
+       90,
+       0,
+       0
+      ],
+      "matiere": "couleur_3"
+     },
+     {
+      "forme": "sphere",
+      "position": [
+       0.5,
+       0.78,
+       0.24
+      ],
+      "taille": [
+       1.05,
+       0.52,
+       0.46
+      ],
+      "rotation_deg": [
+       0,
+       0,
+       0
+      ],
+      "matiere": "couleur_2",
+      "nom": "acorps"
+     },
+     {
+      "forme": "sphere",
+      "position": [
+       0.8,
+       0.84,
+       0.24
+      ],
+      "taille": [
+       0.55,
+       0.58,
+       0.44
+      ],
+      "rotation_deg": [
+       0,
+       0,
+       0
+      ],
+      "matiere": "couleur_2",
+      "nom": "acorps"
+     },
+     {
+      "forme": "sphere",
+      "position": [
+       0.18,
+       0.8,
+       0.24
+      ],
+      "taille": [
+       0.55,
+       0.55,
+       0.46
+      ],
+      "rotation_deg": [
+       0,
+       0,
+       0
+      ],
+      "matiere": "couleur_2",
+      "nom": "acorps"
+     },
+     {
+      "forme": "sphere",
+      "position": [
+       1.08,
+       1.05,
+       0.24
+      ],
+      "taille": [
+       0.3,
+       0.6,
+       0.26
+      ],
+      "rotation_deg": [
+       0,
+       0,
+       -32
+      ],
+      "matiere": "couleur_2",
+      "nom": "acorps"
+     },
+     {
+      "forme": "sphere",
+      "position": [
+       1.34,
+       1.22,
+       0.24
+      ],
+      "taille": [
+       0.42,
+       0.26,
+       0.22
+      ],
+      "rotation_deg": [
+       0,
+       0,
+       0
+      ],
+      "matiere": "couleur_2",
+      "nom": "acorps"
+     },
+     {
+      "forme": "sphere",
+      "position": [
+       1.52,
+       1.15,
+       0.24
+      ],
+      "taille": [
+       0.24,
+       0.2,
+       0.18
+      ],
+      "rotation_deg": [
+       0,
+       0,
+       0
+      ],
+      "matiere": "couleur_3",
+      "nom": "acorps"
+     },
+     {
+      "forme": "cone",
+      "position": [
+       1.28,
+       1.42,
+       0.31
+      ],
+      "taille": [
+       0.07,
+       0.14,
+       0.05
+      ],
+      "rotation_deg": [
+       0,
+       0,
+       0
+      ],
+      "matiere": "couleur_2",
+      "nom": "acorps"
+     },
+     {
+      "forme": "cone",
+      "position": [
+       1.28,
+       1.42,
+       0.17
+      ],
+      "taille": [
+       0.07,
+       0.14,
+       0.05
+      ],
+      "rotation_deg": [
+       0,
+       0,
+       0
+      ],
+      "matiere": "couleur_2",
+      "nom": "acorps"
+     },
+     {
+      "forme": "sphere",
+      "position": [
+       1.42,
+       1.27,
+       0.34
+      ],
+      "taille": [
+       0.05,
+       0.05,
+       0.05
+      ],
+      "rotation_deg": [
+       0,
+       0,
+       0
+      ],
+      "matiere": "noir",
+      "nom": "acorps"
+     },
+     {
+      "forme": "sphere",
+      "position": [
+       1.42,
+       1.27,
+       0.14
+      ],
+      "taille": [
+       0.05,
+       0.05,
+       0.05
+      ],
+      "rotation_deg": [
+       0,
+       0,
+       0
+      ],
+      "matiere": "noir",
+      "nom": "acorps"
+     },
+     {
+      "forme": "cone",
+      "position": [
+       -0.12,
+       0.78,
+       0.24
+      ],
+      "taille": [
+       0.12,
+       0.55,
+       0.12
+      ],
+      "rotation_deg": [
+       0,
+       0,
+       110
+      ],
+      "matiere": "couleur_3",
+      "nom": "aqueue"
+     },
+     {
+      "forme": "cube",
+      "position": [
+       0.5,
+       0.98,
+       0.24
+      ],
+      "taille": [
+       0.5,
+       0.06,
+       0.5
+      ],
+      "rotation_deg": [
+       0,
+       0,
+       0
+      ],
+      "matiere": "sombre",
+      "nom": "acorps"
+     },
+     {
+      "forme": "cylindre",
+      "position": [
+       0.9,
+       0.34,
+       0.38
+      ],
+      "taille": [
+       0.12,
+       0.7,
+       0.12
+      ],
+      "rotation_deg": [
+       0,
+       0,
+       0
+      ],
+      "matiere": "couleur_2",
+      "nom": "apatte0"
+     },
+     {
+      "forme": "cube",
+      "position": [
+       0.93,
+       0.03,
+       0.38
+      ],
+      "taille": [
+       0.18,
+       0.06,
+       0.14
+      ],
+      "rotation_deg": [
+       0,
+       0,
+       0
+      ],
+      "matiere": "noir",
+      "nom": "apatte0"
+     },
+     {
+      "forme": "cylindre",
+      "position": [
+       0.9,
+       0.34,
+       0.1
+      ],
+      "taille": [
+       0.12,
+       0.7,
+       0.12
+      ],
+      "rotation_deg": [
+       0,
+       0,
+       0
+      ],
+      "matiere": "couleur_2",
+      "nom": "apatte1"
+     },
+     {
+      "forme": "cube",
+      "position": [
+       0.93,
+       0.03,
+       0.1
+      ],
+      "taille": [
+       0.18,
+       0.06,
+       0.14
+      ],
+      "rotation_deg": [
+       0,
+       0,
+       0
+      ],
+      "matiere": "noir",
+      "nom": "apatte1"
+     },
+     {
+      "forme": "cylindre",
+      "position": [
+       0.1,
+       0.34,
+       0.38
+      ],
+      "taille": [
+       0.12,
+       0.7,
+       0.12
+      ],
+      "rotation_deg": [
+       0,
+       0,
+       0
+      ],
+      "matiere": "couleur_2",
+      "nom": "apatte2"
+     },
+     {
+      "forme": "cube",
+      "position": [
+       0.13,
+       0.03,
+       0.38
+      ],
+      "taille": [
+       0.18,
+       0.06,
+       0.14
+      ],
+      "rotation_deg": [
+       0,
+       0,
+       0
+      ],
+      "matiere": "noir",
+      "nom": "apatte2"
+     },
+     {
+      "forme": "cylindre",
+      "position": [
+       0.1,
+       0.34,
+       0.1
+      ],
+      "taille": [
+       0.12,
+       0.7,
+       0.12
+      ],
+      "rotation_deg": [
+       0,
+       0,
+       0
+      ],
+      "matiere": "couleur_2",
+      "nom": "apatte3"
+     },
+     {
+      "forme": "cube",
+      "position": [
+       0.13,
+       0.03,
+       0.1
+      ],
+      "taille": [
+       0.18,
+       0.06,
+       0.14
+      ],
+      "rotation_deg": [
+       0,
+       0,
+       0
+      ],
+      "matiere": "noir",
+      "nom": "apatte3"
+     },
+     {
+      "forme": "sphere",
+      "position": [
+       0.5,
+       0.78,
+       -0.24
+      ],
+      "taille": [
+       1.05,
+       0.52,
+       0.46
+      ],
+      "rotation_deg": [
+       0,
+       0,
+       0
+      ],
+      "matiere": "couleur_2",
+      "nom": "bcorps"
+     },
+     {
+      "forme": "sphere",
+      "position": [
+       0.8,
+       0.84,
+       -0.24
+      ],
+      "taille": [
+       0.55,
+       0.58,
+       0.44
+      ],
+      "rotation_deg": [
+       0,
+       0,
+       0
+      ],
+      "matiere": "couleur_2",
+      "nom": "bcorps"
+     },
+     {
+      "forme": "sphere",
+      "position": [
+       0.18,
+       0.8,
+       -0.24
+      ],
+      "taille": [
+       0.55,
+       0.55,
+       0.46
+      ],
+      "rotation_deg": [
+       0,
+       0,
+       0
+      ],
+      "matiere": "couleur_2",
+      "nom": "bcorps"
+     },
+     {
+      "forme": "sphere",
+      "position": [
+       1.08,
+       1.05,
+       -0.24
+      ],
+      "taille": [
+       0.3,
+       0.6,
+       0.26
+      ],
+      "rotation_deg": [
+       0,
+       0,
+       -32
+      ],
+      "matiere": "couleur_2",
+      "nom": "bcorps"
+     },
+     {
+      "forme": "sphere",
+      "position": [
+       1.34,
+       1.22,
+       -0.24
+      ],
+      "taille": [
+       0.42,
+       0.26,
+       0.22
+      ],
+      "rotation_deg": [
+       0,
+       0,
+       0
+      ],
+      "matiere": "couleur_2",
+      "nom": "bcorps"
+     },
+     {
+      "forme": "sphere",
+      "position": [
+       1.52,
+       1.15,
+       -0.24
+      ],
+      "taille": [
+       0.24,
+       0.2,
+       0.18
+      ],
+      "rotation_deg": [
+       0,
+       0,
+       0
+      ],
+      "matiere": "couleur_3",
+      "nom": "bcorps"
+     },
+     {
+      "forme": "cone",
+      "position": [
+       1.28,
+       1.42,
+       -0.17
+      ],
+      "taille": [
+       0.07,
+       0.14,
+       0.05
+      ],
+      "rotation_deg": [
+       0,
+       0,
+       0
+      ],
+      "matiere": "couleur_2",
+      "nom": "bcorps"
+     },
+     {
+      "forme": "cone",
+      "position": [
+       1.28,
+       1.42,
+       -0.31
+      ],
+      "taille": [
+       0.07,
+       0.14,
+       0.05
+      ],
+      "rotation_deg": [
+       0,
+       0,
+       0
+      ],
+      "matiere": "couleur_2",
+      "nom": "bcorps"
+     },
+     {
+      "forme": "sphere",
+      "position": [
+       1.42,
+       1.27,
+       -0.14
+      ],
+      "taille": [
+       0.05,
+       0.05,
+       0.05
+      ],
+      "rotation_deg": [
+       0,
+       0,
+       0
+      ],
+      "matiere": "noir",
+      "nom": "bcorps"
+     },
+     {
+      "forme": "sphere",
+      "position": [
+       1.42,
+       1.27,
+       -0.34
+      ],
+      "taille": [
+       0.05,
+       0.05,
+       0.05
+      ],
+      "rotation_deg": [
+       0,
+       0,
+       0
+      ],
+      "matiere": "noir",
+      "nom": "bcorps"
+     },
+     {
+      "forme": "cone",
+      "position": [
+       -0.12,
+       0.78,
+       -0.24
+      ],
+      "taille": [
+       0.12,
+       0.55,
+       0.12
+      ],
+      "rotation_deg": [
+       0,
+       0,
+       110
+      ],
+      "matiere": "couleur_3",
+      "nom": "bqueue"
+     },
+     {
+      "forme": "cube",
+      "position": [
+       0.5,
+       0.98,
+       -0.24
+      ],
+      "taille": [
+       0.5,
+       0.06,
+       0.5
+      ],
+      "rotation_deg": [
+       0,
+       0,
+       0
+      ],
+      "matiere": "sombre",
+      "nom": "bcorps"
+     },
+     {
+      "forme": "cylindre",
+      "position": [
+       0.9,
+       0.34,
+       -0.1
+      ],
+      "taille": [
+       0.12,
+       0.7,
+       0.12
+      ],
+      "rotation_deg": [
+       0,
+       0,
+       0
+      ],
+      "matiere": "couleur_2",
+      "nom": "bpatte0"
+     },
+     {
+      "forme": "cube",
+      "position": [
+       0.93,
+       0.03,
+       -0.1
+      ],
+      "taille": [
+       0.18,
+       0.06,
+       0.14
+      ],
+      "rotation_deg": [
+       0,
+       0,
+       0
+      ],
+      "matiere": "noir",
+      "nom": "bpatte0"
+     },
+     {
+      "forme": "cylindre",
+      "position": [
+       0.9,
+       0.34,
+       -0.38
+      ],
+      "taille": [
+       0.12,
+       0.7,
+       0.12
+      ],
+      "rotation_deg": [
+       0,
+       0,
+       0
+      ],
+      "matiere": "couleur_2",
+      "nom": "bpatte1"
+     },
+     {
+      "forme": "cube",
+      "position": [
+       0.93,
+       0.03,
+       -0.38
+      ],
+      "taille": [
+       0.18,
+       0.06,
+       0.14
+      ],
+      "rotation_deg": [
+       0,
+       0,
+       0
+      ],
+      "matiere": "noir",
+      "nom": "bpatte1"
+     },
+     {
+      "forme": "cylindre",
+      "position": [
+       0.1,
+       0.34,
+       -0.1
+      ],
+      "taille": [
+       0.12,
+       0.7,
+       0.12
+      ],
+      "rotation_deg": [
+       0,
+       0,
+       0
+      ],
+      "matiere": "couleur_2",
+      "nom": "bpatte2"
+     },
+     {
+      "forme": "cube",
+      "position": [
+       0.13,
+       0.03,
+       -0.1
+      ],
+      "taille": [
+       0.18,
+       0.06,
+       0.14
+      ],
+      "rotation_deg": [
+       0,
+       0,
+       0
+      ],
+      "matiere": "noir",
+      "nom": "bpatte2"
+     },
+     {
+      "forme": "cylindre",
+      "position": [
+       0.1,
+       0.34,
+       -0.38
+      ],
+      "taille": [
+       0.12,
+       0.7,
+       0.12
+      ],
+      "rotation_deg": [
+       0,
+       0,
+       0
+      ],
+      "matiere": "couleur_2",
+      "nom": "bpatte3"
+     },
+     {
+      "forme": "cube",
+      "position": [
+       0.13,
+       0.03,
+       -0.38
+      ],
+      "taille": [
+       0.18,
+       0.06,
+       0.14
+      ],
+      "rotation_deg": [
+       0,
+       0,
+       0
+      ],
+      "matiere": "noir",
+      "nom": "bpatte3"
+     }
+    ],
+    "parties_mobiles": [
+     {
+      "piece": "acorps",
+      "animation": "rebond",
+      "amplitude": 0.05
+     },
+     {
+      "piece": "aqueue",
+      "animation": "balance",
+      "axe": "y"
+     },
+     {
+      "piece": "apatte0",
+      "animation": "pendule",
+      "phase": 0.0,
+      "axe": "z",
+      "pivot": "haut"
+     },
+     {
+      "piece": "apatte1",
+      "animation": "pendule",
+      "phase": 0.5,
+      "axe": "z",
+      "pivot": "haut"
+     },
+     {
+      "piece": "apatte2",
+      "animation": "pendule",
+      "phase": 0.5,
+      "axe": "z",
+      "pivot": "haut"
+     },
+     {
+      "piece": "apatte3",
+      "animation": "pendule",
+      "phase": 0.0,
+      "axe": "z",
+      "pivot": "haut"
+     },
+     {
+      "piece": "bcorps",
+      "animation": "rebond",
+      "amplitude": 0.05
+     },
+     {
+      "piece": "bqueue",
+      "animation": "balance",
+      "axe": "y"
+     },
+     {
+      "piece": "bpatte0",
+      "animation": "pendule",
+      "phase": 0.0,
+      "axe": "z",
+      "pivot": "haut"
+     },
+     {
+      "piece": "bpatte1",
+      "animation": "pendule",
+      "phase": 0.5,
+      "axe": "z",
+      "pivot": "haut"
+     },
+     {
+      "piece": "bpatte2",
+      "animation": "pendule",
+      "phase": 0.5,
+      "axe": "z",
+      "pivot": "haut"
+     },
+     {
+      "piece": "bpatte3",
+      "animation": "pendule",
+      "phase": 0.0,
+      "axe": "z",
+      "pivot": "haut"
+     }
+    ]
+   },
+   {
+    "id": "chariot_tonneaux",
+    "longueur": 2.1,
+    "couleur_2": "#c0392b",
+    "couleur_3": "#7a4d24",
+    "pieces": [
+     {
+      "forme": "cube",
+      "position": [
+       0,
+       0.55,
+       0
+      ],
+      "taille": [
+       1.9,
+       0.12,
+       0.85
+      ],
+      "rotation_deg": [
+       0,
+       0,
+       0
+      ],
+      "matiere": "couleur_3"
+     },
+     {
+      "forme": "cube",
+      "position": [
+       0,
+       0.75,
+       0.42
+      ],
+      "taille": [
+       1.9,
+       0.3,
+       0.04
+      ],
+      "rotation_deg": [
+       0,
+       0,
+       0
+      ],
+      "matiere": "couleur_3"
+     },
+     {
+      "forme": "cube",
+      "position": [
+       0,
+       0.75,
+       -0.42
+      ],
+      "taille": [
+       1.9,
+       0.3,
+       0.04
+      ],
+      "rotation_deg": [
+       0,
+       0,
+       0
+      ],
+      "matiere": "couleur_3"
+     },
+     {
+      "forme": "cube",
+      "position": [
+       0.94,
+       0.75,
+       0
+      ],
+      "taille": [
+       0.04,
+       0.3,
+       0.85
+      ],
+      "rotation_deg": [
+       0,
+       0,
+       0
+      ],
+      "matiere": "couleur_3"
+     },
+     {
+      "forme": "cube",
+      "position": [
+       -0.94,
+       0.75,
+       0
+      ],
+      "taille": [
+       0.04,
+       0.3,
+       0.85
+      ],
+      "rotation_deg": [
+       0,
+       0,
+       0
+      ],
+      "matiere": "couleur_3"
+     },
+     {
+      "forme": "cylindre",
+      "position": [
+       -0.4,
+       1.0,
+       0.0
+      ],
+      "taille": [
+       0.5,
+       0.55,
+       0.5
+      ],
+      "rotation_deg": [
+       0,
+       0,
+       0
+      ],
+      "matiere": "couleur_3"
+     },
+     {
+      "forme": "cylindre",
+      "position": [
+       0.35,
+       1.0,
+       0.1
+      ],
+      "taille": [
+       0.5,
+       0.55,
+       0.5
+      ],
+      "rotation_deg": [
+       0,
+       0,
+       0
+      ],
+      "matiere": "couleur_3"
+     },
+     {
+      "forme": "cylindre",
+      "position": [
+       -0.4,
+       1.12,
+       0
+      ],
+      "taille": [
+       0.52,
+       0.04,
+       0.52
+      ],
+      "rotation_deg": [
+       0,
+       0,
+       0
+      ],
+      "matiere": "sombre"
+     },
+     {
+      "forme": "cylindre",
+      "position": [
+       0.35,
+       1.12,
+       0.1
+      ],
+      "taille": [
+       0.52,
+       0.04,
+       0.52
+      ],
+      "rotation_deg": [
+       0,
+       0,
+       0
+      ],
+      "matiere": "sombre"
+     },
+     {
+      "forme": "cylindre",
+      "position": [
+       -0.55,
+       0.28,
+       0.46
+      ],
+      "taille": [
+       0.56,
+       0.08,
+       0.56
+      ],
+      "rotation_deg": [
+       90,
+       0,
+       0
+      ],
+      "matiere": "sombre"
+     },
+     {
+      "forme": "cylindre",
+      "position": [
+       -0.55,
+       0.28,
+       0.505
+      ],
+      "taille": [
+       0.28,
+       0.05,
+       0.28
+      ],
+      "rotation_deg": [
+       90,
+       0,
+       0
+      ],
+      "matiere": "couleur_3"
+     },
+     {
+      "forme": "cylindre",
+      "position": [
+       -0.55,
+       0.28,
+       -0.46
+      ],
+      "taille": [
+       0.56,
+       0.08,
+       0.56
+      ],
+      "rotation_deg": [
+       90,
+       0,
+       0
+      ],
+      "matiere": "sombre"
+     },
+     {
+      "forme": "cylindre",
+      "position": [
+       -0.55,
+       0.28,
+       -0.505
+      ],
+      "taille": [
+       0.28,
+       0.05,
+       0.28
+      ],
+      "rotation_deg": [
+       90,
+       0,
+       0
+      ],
+      "matiere": "couleur_3"
+     },
+     {
+      "forme": "cylindre",
+      "position": [
+       0.55,
+       0.28,
+       0.46
+      ],
+      "taille": [
+       0.56,
+       0.08,
+       0.56
+      ],
+      "rotation_deg": [
+       90,
+       0,
+       0
+      ],
+      "matiere": "sombre"
+     },
+     {
+      "forme": "cylindre",
+      "position": [
+       0.55,
+       0.28,
+       0.505
+      ],
+      "taille": [
+       0.28,
+       0.05,
+       0.28
+      ],
+      "rotation_deg": [
+       90,
+       0,
+       0
+      ],
+      "matiere": "couleur_3"
+     },
+     {
+      "forme": "cylindre",
+      "position": [
+       0.55,
+       0.28,
+       -0.46
+      ],
+      "taille": [
+       0.56,
+       0.08,
+       0.56
+      ],
+      "rotation_deg": [
+       90,
+       0,
+       0
+      ],
+      "matiere": "sombre"
+     },
+     {
+      "forme": "cylindre",
+      "position": [
+       0.55,
+       0.28,
+       -0.505
+      ],
+      "taille": [
+       0.28,
+       0.05,
+       0.28
+      ],
+      "rotation_deg": [
+       90,
+       0,
+       0
+      ],
+      "matiere": "couleur_3"
+     }
+    ],
+    "parties_mobiles": []
+   },
+   {
+    "id": "chariot_foin",
+    "longueur": 2.1,
+    "couleur_2": "#e6c566",
+    "couleur_3": "#7a4d24",
+    "pieces": [
+     {
+      "forme": "cube",
+      "position": [
+       0,
+       0.55,
+       0
+      ],
+      "taille": [
+       1.9,
+       0.12,
+       0.85
+      ],
+      "rotation_deg": [
+       0,
+       0,
+       0
+      ],
+      "matiere": "couleur_3"
+     },
+     {
+      "forme": "cube",
+      "position": [
+       0,
+       0.75,
+       0.42
+      ],
+      "taille": [
+       1.9,
+       0.3,
+       0.04
+      ],
+      "rotation_deg": [
+       0,
+       0,
+       0
+      ],
+      "matiere": "couleur_3"
+     },
+     {
+      "forme": "cube",
+      "position": [
+       0,
+       0.75,
+       -0.42
+      ],
+      "taille": [
+       1.9,
+       0.3,
+       0.04
+      ],
+      "rotation_deg": [
+       0,
+       0,
+       0
+      ],
+      "matiere": "couleur_3"
+     },
+     {
+      "forme": "cube",
+      "position": [
+       0.94,
+       0.75,
+       0
+      ],
+      "taille": [
+       0.04,
+       0.3,
+       0.85
+      ],
+      "rotation_deg": [
+       0,
+       0,
+       0
+      ],
+      "matiere": "couleur_3"
+     },
+     {
+      "forme": "cube",
+      "position": [
+       -0.94,
+       0.75,
+       0
+      ],
+      "taille": [
+       0.04,
+       0.3,
+       0.85
+      ],
+      "rotation_deg": [
+       0,
+       0,
+       0
+      ],
+      "matiere": "couleur_3"
+     },
+     {
+      "forme": "cube",
+      "position": [
+       0,
+       1.0,
+       0
+      ],
+      "taille": [
+       1.7,
+       0.5,
+       0.7
+      ],
+      "rotation_deg": [
+       0,
+       0,
+       0
+      ],
+      "matiere": "couleur_2"
+     },
+     {
+      "forme": "cube",
+      "position": [
+       0,
+       1.28,
+       0
+      ],
+      "taille": [
+       1.5,
+       0.1,
+       0.55
+      ],
+      "rotation_deg": [
+       0,
+       0,
+       0
+      ],
+      "matiere": "couleur_2"
+     },
+     {
+      "forme": "cylindre",
+      "position": [
+       -0.55,
+       0.28,
+       0.46
+      ],
+      "taille": [
+       0.56,
+       0.08,
+       0.56
+      ],
+      "rotation_deg": [
+       90,
+       0,
+       0
+      ],
+      "matiere": "sombre"
+     },
+     {
+      "forme": "cylindre",
+      "position": [
+       -0.55,
+       0.28,
+       0.505
+      ],
+      "taille": [
+       0.28,
+       0.05,
+       0.28
+      ],
+      "rotation_deg": [
+       90,
+       0,
+       0
+      ],
+      "matiere": "couleur_3"
+     },
+     {
+      "forme": "cylindre",
+      "position": [
+       -0.55,
+       0.28,
+       -0.46
+      ],
+      "taille": [
+       0.56,
+       0.08,
+       0.56
+      ],
+      "rotation_deg": [
+       90,
+       0,
+       0
+      ],
+      "matiere": "sombre"
+     },
+     {
+      "forme": "cylindre",
+      "position": [
+       -0.55,
+       0.28,
+       -0.505
+      ],
+      "taille": [
+       0.28,
+       0.05,
+       0.28
+      ],
+      "rotation_deg": [
+       90,
+       0,
+       0
+      ],
+      "matiere": "couleur_3"
+     },
+     {
+      "forme": "cylindre",
+      "position": [
+       0.55,
+       0.28,
+       0.46
+      ],
+      "taille": [
+       0.56,
+       0.08,
+       0.56
+      ],
+      "rotation_deg": [
+       90,
+       0,
+       0
+      ],
+      "matiere": "sombre"
+     },
+     {
+      "forme": "cylindre",
+      "position": [
+       0.55,
+       0.28,
+       0.505
+      ],
+      "taille": [
+       0.28,
+       0.05,
+       0.28
+      ],
+      "rotation_deg": [
+       90,
+       0,
+       0
+      ],
+      "matiere": "couleur_3"
+     },
+     {
+      "forme": "cylindre",
+      "position": [
+       0.55,
+       0.28,
+       -0.46
+      ],
+      "taille": [
+       0.56,
+       0.08,
+       0.56
+      ],
+      "rotation_deg": [
+       90,
+       0,
+       0
+      ],
+      "matiere": "sombre"
+     },
+     {
+      "forme": "cylindre",
+      "position": [
+       0.55,
+       0.28,
+       -0.505
+      ],
+      "taille": [
+       0.28,
+       0.05,
+       0.28
+      ],
+      "rotation_deg": [
+       90,
+       0,
+       0
+      ],
+      "matiere": "couleur_3"
+     }
+    ],
+    "parties_mobiles": []
+   },
+   {
+    "id": "chariot_cage",
+    "longueur": 2.1,
+    "couleur_2": "#c0392b",
+    "couleur_3": "#7a4d24",
+    "pieces": [
+     {
+      "forme": "cube",
+      "position": [
+       0,
+       0.55,
+       0
+      ],
+      "taille": [
+       1.9,
+       0.12,
+       0.85
+      ],
+      "rotation_deg": [
+       0,
+       0,
+       0
+      ],
+      "matiere": "couleur_3"
+     },
+     {
+      "forme": "cube",
+      "position": [
+       0,
+       0.75,
+       0.42
+      ],
+      "taille": [
+       1.9,
+       0.3,
+       0.04
+      ],
+      "rotation_deg": [
+       0,
+       0,
+       0
+      ],
+      "matiere": "couleur_3"
+     },
+     {
+      "forme": "cube",
+      "position": [
+       0,
+       0.75,
+       -0.42
+      ],
+      "taille": [
+       1.9,
+       0.3,
+       0.04
+      ],
+      "rotation_deg": [
+       0,
+       0,
+       0
+      ],
+      "matiere": "couleur_3"
+     },
+     {
+      "forme": "cube",
+      "position": [
+       0.94,
+       0.75,
+       0
+      ],
+      "taille": [
+       0.04,
+       0.3,
+       0.85
+      ],
+      "rotation_deg": [
+       0,
+       0,
+       0
+      ],
+      "matiere": "couleur_3"
+     },
+     {
+      "forme": "cube",
+      "position": [
+       -0.94,
+       0.75,
+       0
+      ],
+      "taille": [
+       0.04,
+       0.3,
+       0.85
+      ],
+      "rotation_deg": [
+       0,
+       0,
+       0
+      ],
+      "matiere": "couleur_3"
+     },
+     {
+      "forme": "cube",
+      "position": [
+       0,
+       1.05,
+       -0.3
+      ],
+      "taille": [
+       1.7,
+       0.7,
+       0.04
+      ],
+      "rotation_deg": [
+       0,
+       0,
+       0
+      ],
+      "matiere": "sombre"
+     },
+     {
+      "forme": "cube",
+      "position": [
+       0,
+       1.05,
+       -0.1
+      ],
+      "taille": [
+       1.7,
+       0.7,
+       0.04
+      ],
+      "rotation_deg": [
+       0,
+       0,
+       0
+      ],
+      "matiere": "sombre"
+     },
+     {
+      "forme": "cube",
+      "position": [
+       0,
+       1.05,
+       0.1
+      ],
+      "taille": [
+       1.7,
+       0.7,
+       0.04
+      ],
+      "rotation_deg": [
+       0,
+       0,
+       0
+      ],
+      "matiere": "sombre"
+     },
+     {
+      "forme": "cube",
+      "position": [
+       0,
+       1.05,
+       0.3
+      ],
+      "taille": [
+       1.7,
+       0.7,
+       0.04
+      ],
+      "rotation_deg": [
+       0,
+       0,
+       0
+      ],
+      "matiere": "sombre"
+     },
+     {
+      "forme": "cube",
+      "position": [
+       0,
+       1.4,
+       0
+      ],
+      "taille": [
+       1.8,
+       0.05,
+       0.8
+      ],
+      "rotation_deg": [
+       0,
+       0,
+       0
+      ],
+      "matiere": "sombre"
+     },
+     {
+      "forme": "cylindre",
+      "position": [
+       -0.55,
+       0.28,
+       0.46
+      ],
+      "taille": [
+       0.56,
+       0.08,
+       0.56
+      ],
+      "rotation_deg": [
+       90,
+       0,
+       0
+      ],
+      "matiere": "sombre"
+     },
+     {
+      "forme": "cylindre",
+      "position": [
+       -0.55,
+       0.28,
+       0.505
+      ],
+      "taille": [
+       0.28,
+       0.05,
+       0.28
+      ],
+      "rotation_deg": [
+       90,
+       0,
+       0
+      ],
+      "matiere": "couleur_3"
+     },
+     {
+      "forme": "cylindre",
+      "position": [
+       -0.55,
+       0.28,
+       -0.46
+      ],
+      "taille": [
+       0.56,
+       0.08,
+       0.56
+      ],
+      "rotation_deg": [
+       90,
+       0,
+       0
+      ],
+      "matiere": "sombre"
+     },
+     {
+      "forme": "cylindre",
+      "position": [
+       -0.55,
+       0.28,
+       -0.505
+      ],
+      "taille": [
+       0.28,
+       0.05,
+       0.28
+      ],
+      "rotation_deg": [
+       90,
+       0,
+       0
+      ],
+      "matiere": "couleur_3"
+     },
+     {
+      "forme": "cylindre",
+      "position": [
+       0.55,
+       0.28,
+       0.46
+      ],
+      "taille": [
+       0.56,
+       0.08,
+       0.56
+      ],
+      "rotation_deg": [
+       90,
+       0,
+       0
+      ],
+      "matiere": "sombre"
+     },
+     {
+      "forme": "cylindre",
+      "position": [
+       0.55,
+       0.28,
+       0.505
+      ],
+      "taille": [
+       0.28,
+       0.05,
+       0.28
+      ],
+      "rotation_deg": [
+       90,
+       0,
+       0
+      ],
+      "matiere": "couleur_3"
+     },
+     {
+      "forme": "cylindre",
+      "position": [
+       0.55,
+       0.28,
+       -0.46
+      ],
+      "taille": [
+       0.56,
+       0.08,
+       0.56
+      ],
+      "rotation_deg": [
+       90,
+       0,
+       0
+      ],
+      "matiere": "sombre"
+     },
+     {
+      "forme": "cylindre",
+      "position": [
+       0.55,
+       0.28,
+       -0.505
+      ],
+      "taille": [
+       0.28,
+       0.05,
+       0.28
+      ],
+      "rotation_deg": [
+       90,
+       0,
+       0
+      ],
+      "matiere": "couleur_3"
+     }
+    ],
+    "parties_mobiles": []
+   }
+  ],
+  "musique": {
+   "tempo_bpm": 104,
+   "gamme": "dorienne",
+   "instruments": [
+    "luth",
+    "flûte",
+    "tambourin",
+    "vièle"
+   ],
+   "ambiance": "Ménestrel dans la plaine, un dragon plane au loin."
+  },
+  "bannière": {
+   "fr": "Bienvenue au Royaume de Croâ ! Le dragon est déjà au courant.",
+   "en": "Welcome to the Kingdom of Croak! The dragon already knows.",
+   "de": "Willkommen im Quak-Königreich! Der Drache weiß es schon.",
+   "es": "¡Bienvenido al Reino de Croa! El dragón ya lo sabe.",
+   "it": "Benvenuto nel Regno di Gra! Il drago lo sa già."
+  }
+ },
+ "animaux": [
+  {
+   "id": "poule",
+   "univers": "moyen_age",
+   "classe": "petit",
+   "noms": {
+    "fr": "Poule Pressée",
+    "en": "Hurried Hen",
+    "de": "Eilige Henne",
+    "es": "Gallina con Prisa",
+    "it": "Gallina Frettolosa"
+   },
+   "longueur": 0.6,
+   "largeur": 0.4,
+   "comportement": "traverse",
+   "vitesse": 2.0,
+   "dangereux": false,
+   "points_deblocage": 300,
+   "couleur_2": "#f4f0e0",
+   "couleur_3": "#e8a02a",
+   "pieces": [
+    {
+     "forme": "sphere",
+     "position": [
+      0,
+      0.32,
+      0
+     ],
+     "taille": [
+      0.45,
+      0.4,
+      0.34
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      0
+     ],
+     "matiere": "blanc",
+     "nom": "corps"
+    },
+    {
+     "forme": "sphere",
+     "position": [
+      0.22,
+      0.5,
+      0
+     ],
+     "taille": [
+      0.22,
+      0.24,
+      0.2
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      0
+     ],
+     "matiere": "blanc",
+     "nom": "corps"
+    },
+    {
+     "forme": "cone",
+     "position": [
+      0.36,
+      0.5,
+      0
+     ],
+     "taille": [
+      0.1,
+      0.12,
+      0.08
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      -90
+     ],
+     "matiere": "couleur_3",
+     "nom": "corps"
+    },
+    {
+     "forme": "sphere",
+     "position": [
+      0.24,
+      0.64,
+      0
+     ],
+     "taille": [
+      0.1,
+      0.1,
+      0.06
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      0
+     ],
+     "matiere": "couleur_2",
+     "nom": "corps"
+    },
+    {
+     "forme": "sphere",
+     "position": [
+      0.3,
+      0.54,
+      0.07
+     ],
+     "taille": [
+      0.04,
+      0.04,
+      0.04
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      0
+     ],
+     "matiere": "noir",
+     "nom": "corps"
+    },
+    {
+     "forme": "sphere",
+     "position": [
+      0.3,
+      0.54,
+      -0.07
+     ],
+     "taille": [
+      0.04,
+      0.04,
+      0.04
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      0
+     ],
+     "matiere": "noir",
+     "nom": "corps"
+    },
+    {
+     "forme": "cube",
+     "position": [
+      -0.28,
+      0.45,
+      0
+     ],
+     "taille": [
+      0.2,
+      0.2,
+      0.1
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      30
+     ],
+     "matiere": "blanc",
+     "nom": "corps"
+    },
+    {
+     "forme": "cylindre",
+     "position": [
+      0.0,
+      0.12,
+      0.07
+     ],
+     "taille": [
+      0.04,
+      0.24,
+      0.04
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      0
+     ],
+     "matiere": "couleur_3",
+     "nom": "patte0"
+    },
+    {
+     "forme": "cylindre",
+     "position": [
+      0.0,
+      0.12,
+      -0.07
+     ],
+     "taille": [
+      0.04,
+      0.24,
+      0.04
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      0
+     ],
+     "matiere": "couleur_3",
+     "nom": "patte1"
+    }
+   ],
+   "parties_mobiles": [
+    {
+     "piece": "corps",
+     "animation": "rebond",
+     "amplitude": 0.04
+    },
+    {
+     "piece": "patte0",
+     "animation": "pendule",
+     "phase": 0.0,
+     "axe": "z",
+     "pivot": "haut"
+    },
+    {
+     "piece": "patte1",
+     "animation": "pendule",
+     "phase": 0.5,
+     "axe": "z",
+     "pivot": "haut"
+    }
+   ]
+  },
+  {
+   "id": "cochon",
+   "univers": "moyen_age",
+   "classe": "petit",
+   "noms": {
+    "fr": "Cochon Gourmand",
+    "en": "Greedy Pig",
+    "de": "Gieriges Schwein",
+    "es": "Cerdo Glotón",
+    "it": "Maiale Goloso"
+   },
+   "longueur": 0.9,
+   "largeur": 0.5,
+   "comportement": "traverse",
+   "vitesse": 1.6,
+   "dangereux": false,
+   "points_deblocage": 450,
+   "couleur_2": "#f2b2b8",
+   "couleur_3": "#d88a94",
+   "pieces": [
+    {
+     "forme": "sphere",
+     "position": [
+      0,
+      0.4,
+      0
+     ],
+     "taille": [
+      0.7,
+      0.42,
+      0.42
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      0
+     ],
+     "matiere": "couleur_2",
+     "nom": "corps"
+    },
+    {
+     "forme": "sphere",
+     "position": [
+      0.38,
+      0.45,
+      0
+     ],
+     "taille": [
+      0.3,
+      0.3,
+      0.3
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      0
+     ],
+     "matiere": "couleur_2",
+     "nom": "corps"
+    },
+    {
+     "forme": "cube",
+     "position": [
+      0.55,
+      0.42,
+      0
+     ],
+     "taille": [
+      0.1,
+      0.12,
+      0.16
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      0
+     ],
+     "matiere": "couleur_3",
+     "nom": "corps"
+    },
+    {
+     "forme": "cone",
+     "position": [
+      0.35,
+      0.65,
+      0.1
+     ],
+     "taille": [
+      0.08,
+      0.12,
+      0.06
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      0
+     ],
+     "matiere": "couleur_2",
+     "nom": "corps"
+    },
+    {
+     "forme": "cone",
+     "position": [
+      0.35,
+      0.65,
+      -0.1
+     ],
+     "taille": [
+      0.08,
+      0.12,
+      0.06
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      0
+     ],
+     "matiere": "couleur_2",
+     "nom": "corps"
+    },
+    {
+     "forme": "sphere",
+     "position": [
+      0.5,
+      0.52,
+      0.08
+     ],
+     "taille": [
+      0.05,
+      0.05,
+      0.05
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      0
+     ],
+     "matiere": "noir",
+     "nom": "corps"
+    },
+    {
+     "forme": "sphere",
+     "position": [
+      0.5,
+      0.52,
+      -0.08
+     ],
+     "taille": [
+      0.05,
+      0.05,
+      0.05
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      0
+     ],
+     "matiere": "noir",
+     "nom": "corps"
+    },
+    {
+     "forme": "cylindre",
+     "position": [
+      -0.42,
+      0.5,
+      0
+     ],
+     "taille": [
+      0.04,
+      0.2,
+      0.04
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      60
+     ],
+     "matiere": "couleur_3",
+     "nom": "queue"
+    },
+    {
+     "forme": "cylindre",
+     "position": [
+      0.22,
+      0.14,
+      0.12
+     ],
+     "taille": [
+      0.1,
+      0.28,
+      0.1
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      0
+     ],
+     "matiere": "couleur_3",
+     "nom": "patte0"
+    },
+    {
+     "forme": "cylindre",
+     "position": [
+      0.22,
+      0.14,
+      -0.12
+     ],
+     "taille": [
+      0.1,
+      0.28,
+      0.1
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      0
+     ],
+     "matiere": "couleur_3",
+     "nom": "patte1"
+    },
+    {
+     "forme": "cylindre",
+     "position": [
+      -0.22,
+      0.14,
+      0.12
+     ],
+     "taille": [
+      0.1,
+      0.28,
+      0.1
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      0
+     ],
+     "matiere": "couleur_3",
+     "nom": "patte2"
+    },
+    {
+     "forme": "cylindre",
+     "position": [
+      -0.22,
+      0.14,
+      -0.12
+     ],
+     "taille": [
+      0.1,
+      0.28,
+      0.1
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      0
+     ],
+     "matiere": "couleur_3",
+     "nom": "patte3"
+    }
+   ],
+   "parties_mobiles": [
+    {
+     "piece": "corps",
+     "animation": "rebond",
+     "amplitude": 0.03
+    },
+    {
+     "piece": "queue",
+     "animation": "balance",
+     "axe": "y"
+    },
+    {
+     "piece": "patte0",
+     "animation": "pendule",
+     "phase": 0.0,
+     "axe": "z",
+     "pivot": "haut"
+    },
+    {
+     "piece": "patte1",
+     "animation": "pendule",
+     "phase": 0.5,
+     "axe": "z",
+     "pivot": "haut"
+    },
+    {
+     "piece": "patte2",
+     "animation": "pendule",
+     "phase": 0.5,
+     "axe": "z",
+     "pivot": "haut"
+    },
+    {
+     "piece": "patte3",
+     "animation": "pendule",
+     "phase": 0.0,
+     "axe": "z",
+     "pivot": "haut"
+    }
+   ]
+  },
+  {
+   "id": "gobelin",
+   "univers": "moyen_age",
+   "classe": "petit",
+   "noms": {
+    "fr": "Gobelin Voleur",
+    "en": "Thieving Goblin",
+    "de": "Diebischer Kobold",
+    "es": "Duende Ladrón",
+    "it": "Goblin Ladro"
+   },
+   "longueur": 0.6,
+   "largeur": 0.5,
+   "comportement": "traverse",
+   "vitesse": 3.4,
+   "dangereux": true,
+   "points_deblocage": 700,
+   "couleur_2": "#6fb04a",
+   "couleur_3": "#5a3f2a",
+   "pieces": [
+    {
+     "forme": "cube",
+     "position": [
+      0,
+      0.5,
+      0
+     ],
+     "taille": [
+      0.28,
+      0.4,
+      0.3
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      0
+     ],
+     "matiere": "couleur_3",
+     "nom": "corps"
+    },
+    {
+     "forme": "sphere",
+     "position": [
+      0.04,
+      0.82,
+      0
+     ],
+     "taille": [
+      0.3,
+      0.28,
+      0.28
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      0
+     ],
+     "matiere": "couleur_2",
+     "nom": "corps"
+    },
+    {
+     "forme": "sphere",
+     "position": [
+      0.18,
+      0.86,
+      0.08
+     ],
+     "taille": [
+      0.07,
+      0.07,
+      0.07
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      0
+     ],
+     "matiere": "lumiere_rouge"
+    },
+    {
+     "forme": "sphere",
+     "position": [
+      0.18,
+      0.86,
+      -0.08
+     ],
+     "taille": [
+      0.07,
+      0.07,
+      0.07
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      0
+     ],
+     "matiere": "lumiere_rouge"
+    },
+    {
+     "forme": "cone",
+     "position": [
+      0.0,
+      0.88,
+      0.2
+     ],
+     "taille": [
+      0.1,
+      0.24,
+      0.05
+     ],
+     "rotation_deg": [
+      60,
+      0,
+      0
+     ],
+     "matiere": "couleur_2",
+     "nom": "corps"
+    },
+    {
+     "forme": "cone",
+     "position": [
+      0.0,
+      0.88,
+      -0.2
+     ],
+     "taille": [
+      0.1,
+      0.24,
+      0.05
+     ],
+     "rotation_deg": [
+      -60,
+      0,
+      0
+     ],
+     "matiere": "couleur_2",
+     "nom": "corps"
+    },
+    {
+     "forme": "cone",
+     "position": [
+      0.2,
+      0.78,
+      0
+     ],
+     "taille": [
+      0.06,
+      0.1,
+      0.06
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      -90
+     ],
+     "matiere": "couleur_2",
+     "nom": "corps"
+    },
+    {
+     "forme": "cube",
+     "position": [
+      0.25,
+      0.5,
+      0.2
+     ],
+     "taille": [
+      0.04,
+      0.3,
+      0.04
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      -70
+     ],
+     "matiere": "blanc",
+     "nom": "corps"
+    },
+    {
+     "forme": "cylindre",
+     "position": [
+      0,
+      0.15,
+      0.08
+     ],
+     "taille": [
+      0.08,
+      0.3,
+      0.08
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      0
+     ],
+     "matiere": "couleur_2",
+     "nom": "patte_g"
+    },
+    {
+     "forme": "cylindre",
+     "position": [
+      0,
+      0.15,
+      -0.08
+     ],
+     "taille": [
+      0.08,
+      0.3,
+      0.08
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      0
+     ],
+     "matiere": "couleur_2",
+     "nom": "patte_d"
+    }
+   ],
+   "parties_mobiles": [
+    {
+     "piece": "corps",
+     "animation": "rebond",
+     "amplitude": 0.04
+    },
+    {
+     "piece": "patte_g",
+     "animation": "pendule",
+     "phase": 0.0,
+     "axe": "z",
+     "pivot": "haut"
+    },
+    {
+     "piece": "patte_d",
+     "animation": "pendule",
+     "phase": 0.5,
+     "axe": "z",
+     "pivot": "haut"
+    }
+   ]
+  },
+  {
+   "id": "chevalier_pied",
+   "univers": "moyen_age",
+   "classe": "moyen",
+   "noms": {
+    "fr": "Chevalier Bruyant",
+    "en": "Clanking Knight",
+    "de": "Scheppernder Ritter",
+    "es": "Caballero Ruidoso",
+    "it": "Cavaliere Rumoroso"
+   },
+   "longueur": 0.9,
+   "largeur": 0.9,
+   "comportement": "traverse",
+   "vitesse": 3.0,
+   "dangereux": true,
+   "points_deblocage": 1000,
+   "couleur_2": "#d8dce8",
+   "couleur_3": "#c0392b",
+   "pieces": [
+    {
+     "forme": "cube",
+     "position": [
+      0,
+      0.95,
+      0
+     ],
+     "taille": [
+      0.46,
+      0.7,
+      0.6
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      0
+     ],
+     "matiere": "blanc",
+     "nom": "corps"
+    },
+    {
+     "forme": "sphere",
+     "position": [
+      0.04,
+      1.45,
+      0
+     ],
+     "taille": [
+      0.4,
+      0.4,
+      0.4
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      0
+     ],
+     "matiere": "blanc",
+     "nom": "corps"
+    },
+    {
+     "forme": "cube",
+     "position": [
+      0.22,
+      1.45,
+      0
+     ],
+     "taille": [
+      0.04,
+      0.06,
+      0.26
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      0
+     ],
+     "matiere": "noir",
+     "nom": "corps"
+    },
+    {
+     "forme": "cone",
+     "position": [
+      0.0,
+      1.8,
+      0
+     ],
+     "taille": [
+      0.12,
+      0.34,
+      0.12
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      0
+     ],
+     "matiere": "lumiere_rouge",
+     "nom": "corps"
+    },
+    {
+     "forme": "cube",
+     "position": [
+      0.28,
+      0.95,
+      0.38
+     ],
+     "taille": [
+      0.06,
+      0.7,
+      0.5
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      0
+     ],
+     "matiere": "couleur_3",
+     "nom": "bouclier"
+    },
+    {
+     "forme": "cube",
+     "position": [
+      0.31,
+      0.95,
+      0.38
+     ],
+     "taille": [
+      0.02,
+      0.16,
+      0.36
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      0
+     ],
+     "matiere": "blanc",
+     "nom": "bouclier"
+    },
+    {
+     "forme": "cube",
+     "position": [
+      0.0,
+      0.5,
+      0
+     ],
+     "taille": [
+      0.44,
+      0.2,
+      0.58
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      0
+     ],
+     "matiere": "sombre",
+     "nom": "corps"
+    },
+    {
+     "forme": "cylindre",
+     "position": [
+      0.4,
+      1.2,
+      -0.38
+     ],
+     "taille": [
+      0.05,
+      1.0,
+      0.05
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      -35
+     ],
+     "matiere": "blanc",
+     "nom": "epee"
+    },
+    {
+     "forme": "cube",
+     "position": [
+      0.25,
+      0.85,
+      -0.38
+     ],
+     "taille": [
+      0.04,
+      0.04,
+      0.2
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      0
+     ],
+     "matiere": "couleur_3",
+     "nom": "epee"
+    },
+    {
+     "forme": "cylindre",
+     "position": [
+      0,
+      0.3,
+      0.14
+     ],
+     "taille": [
+      0.16,
+      0.6,
+      0.16
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      0
+     ],
+     "matiere": "blanc",
+     "nom": "patte_g"
+    },
+    {
+     "forme": "cube",
+     "position": [
+      0.09,
+      0.04,
+      0.14
+     ],
+     "taille": [
+      0.3,
+      0.08,
+      0.18
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      0
+     ],
+     "matiere": "sombre",
+     "nom": "patte_g"
+    },
+    {
+     "forme": "cylindre",
+     "position": [
+      0,
+      0.3,
+      -0.14
+     ],
+     "taille": [
+      0.16,
+      0.6,
+      0.16
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      0
+     ],
+     "matiere": "blanc",
+     "nom": "patte_d"
+    },
+    {
+     "forme": "cube",
+     "position": [
+      0.09,
+      0.04,
+      -0.14
+     ],
+     "taille": [
+      0.3,
+      0.08,
+      0.18
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      0
+     ],
+     "matiere": "sombre",
+     "nom": "patte_d"
+    }
+   ],
+   "parties_mobiles": [
+    {
+     "piece": "corps",
+     "animation": "rebond",
+     "amplitude": 0.03
+    },
+    {
+     "piece": "bouclier",
+     "animation": "balance",
+     "axe": "y"
+    },
+    {
+     "piece": "epee",
+     "animation": "balance",
+     "axe": "z"
+    },
+    {
+     "piece": "patte_g",
+     "animation": "pendule",
+     "phase": 0.0,
+     "axe": "z",
+     "pivot": "haut"
+    },
+    {
+     "piece": "patte_d",
+     "animation": "pendule",
+     "phase": 0.5,
+     "axe": "z",
+     "pivot": "haut"
+    }
+   ]
+  },
+  {
+   "id": "sanglier",
+   "univers": "moyen_age",
+   "classe": "moyen",
+   "noms": {
+    "fr": "Sanglier Furieux",
+    "en": "Furious Boar",
+    "de": "Wütender Eber",
+    "es": "Jabalí Furioso",
+    "it": "Cinghiale Furioso"
+   },
+   "longueur": 1.3,
+   "largeur": 0.6,
+   "comportement": "charge",
+   "vitesse": 4.0,
+   "dangereux": true,
+   "points_deblocage": 1300,
+   "couleur_2": "#6b4a30",
+   "couleur_3": "#3a2a1a",
+   "pieces": [
+    {
+     "forme": "sphere",
+     "position": [
+      0,
+      0.5,
+      0
+     ],
+     "taille": [
+      0.95,
+      0.6,
+      0.5
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      0
+     ],
+     "matiere": "couleur_2",
+     "nom": "corps"
+    },
+    {
+     "forme": "sphere",
+     "position": [
+      0.5,
+      0.52,
+      0
+     ],
+     "taille": [
+      0.45,
+      0.48,
+      0.44
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      0
+     ],
+     "matiere": "couleur_2",
+     "nom": "corps"
+    },
+    {
+     "forme": "cube",
+     "position": [
+      0.76,
+      0.46,
+      0
+     ],
+     "taille": [
+      0.18,
+      0.2,
+      0.22
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      0
+     ],
+     "matiere": "couleur_3",
+     "nom": "corps"
+    },
+    {
+     "forme": "cone",
+     "position": [
+      0.78,
+      0.52,
+      0.14
+     ],
+     "taille": [
+      0.05,
+      0.2,
+      0.05
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      -75
+     ],
+     "matiere": "blanc",
+     "nom": "corps"
+    },
+    {
+     "forme": "cone",
+     "position": [
+      0.78,
+      0.52,
+      -0.14
+     ],
+     "taille": [
+      0.05,
+      0.2,
+      0.05
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      -75
+     ],
+     "matiere": "blanc",
+     "nom": "corps"
+    },
+    {
+     "forme": "sphere",
+     "position": [
+      0.62,
+      0.64,
+      0.14
+     ],
+     "taille": [
+      0.05,
+      0.05,
+      0.05
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      0
+     ],
+     "matiere": "noir",
+     "nom": "corps"
+    },
+    {
+     "forme": "sphere",
+     "position": [
+      0.62,
+      0.64,
+      -0.14
+     ],
+     "taille": [
+      0.05,
+      0.05,
+      0.05
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      0
+     ],
+     "matiere": "noir",
+     "nom": "corps"
+    },
+    {
+     "forme": "cone",
+     "position": [
+      0.42,
+      0.8,
+      0.12
+     ],
+     "taille": [
+      0.08,
+      0.14,
+      0.05
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      0
+     ],
+     "matiere": "couleur_2",
+     "nom": "corps"
+    },
+    {
+     "forme": "cone",
+     "position": [
+      0.42,
+      0.8,
+      -0.12
+     ],
+     "taille": [
+      0.08,
+      0.14,
+      0.05
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      0
+     ],
+     "matiere": "couleur_2",
+     "nom": "corps"
+    },
+    {
+     "forme": "cone",
+     "position": [
+      0.0,
+      0.85,
+      0
+     ],
+     "taille": [
+      0.8,
+      0.2,
+      0.1
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      -90
+     ],
+     "matiere": "couleur_3",
+     "nom": "corps"
+    },
+    {
+     "forme": "cylindre",
+     "position": [
+      -0.52,
+      0.55,
+      0
+     ],
+     "taille": [
+      0.04,
+      0.2,
+      0.04
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      60
+     ],
+     "matiere": "couleur_3",
+     "nom": "queue"
+    },
+    {
+     "forme": "cylindre",
+     "position": [
+      0.3,
+      0.2,
+      0.16
+     ],
+     "taille": [
+      0.1,
+      0.4,
+      0.1
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      0
+     ],
+     "matiere": "couleur_3",
+     "nom": "patte0"
+    },
+    {
+     "forme": "cylindre",
+     "position": [
+      0.3,
+      0.2,
+      -0.16
+     ],
+     "taille": [
+      0.1,
+      0.4,
+      0.1
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      0
+     ],
+     "matiere": "couleur_3",
+     "nom": "patte1"
+    },
+    {
+     "forme": "cylindre",
+     "position": [
+      -0.3,
+      0.2,
+      0.16
+     ],
+     "taille": [
+      0.1,
+      0.4,
+      0.1
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      0
+     ],
+     "matiere": "couleur_3",
+     "nom": "patte2"
+    },
+    {
+     "forme": "cylindre",
+     "position": [
+      -0.3,
+      0.2,
+      -0.16
+     ],
+     "taille": [
+      0.1,
+      0.4,
+      0.1
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      0
+     ],
+     "matiere": "couleur_3",
+     "nom": "patte3"
+    }
+   ],
+   "parties_mobiles": [
+    {
+     "piece": "corps",
+     "animation": "rebond",
+     "amplitude": 0.04
+    },
+    {
+     "piece": "queue",
+     "animation": "balance",
+     "axe": "y"
+    },
+    {
+     "piece": "patte0",
+     "animation": "pendule",
+     "phase": 0.0,
+     "axe": "z",
+     "pivot": "haut"
+    },
+    {
+     "piece": "patte1",
+     "animation": "pendule",
+     "phase": 0.5,
+     "axe": "z",
+     "pivot": "haut"
+    },
+    {
+     "piece": "patte2",
+     "animation": "pendule",
+     "phase": 0.5,
+     "axe": "z",
+     "pivot": "haut"
+    },
+    {
+     "piece": "patte3",
+     "animation": "pendule",
+     "phase": 0.0,
+     "axe": "z",
+     "pivot": "haut"
+    }
+   ]
+  },
+  {
+   "id": "cavalier",
+   "univers": "moyen_age",
+   "classe": "moyen",
+   "noms": {
+    "fr": "Chevalier au Galop",
+    "en": "Galloping Knight",
+    "de": "Galoppierender Ritter",
+    "es": "Caballero al Galope",
+    "it": "Cavaliere al Galoppo"
+   },
+   "longueur": 1.9,
+   "largeur": 0.6,
+   "comportement": "traverse",
+   "vitesse": 4.2,
+   "dangereux": true,
+   "points_deblocage": 1700,
+   "couleur_2": "#8b5a2b",
+   "couleur_3": "#c0392b",
+   "pieces": [
+    {
+     "forme": "sphere",
+     "position": [
+      0.0,
+      0.78,
+      0.0
+     ],
+     "taille": [
+      1.05,
+      0.52,
+      0.46
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      0
+     ],
+     "matiere": "couleur_2",
+     "nom": "corps"
+    },
+    {
+     "forme": "sphere",
+     "position": [
+      0.3,
+      0.84,
+      0.0
+     ],
+     "taille": [
+      0.55,
+      0.58,
+      0.44
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      0
+     ],
+     "matiere": "couleur_2",
+     "nom": "corps"
+    },
+    {
+     "forme": "sphere",
+     "position": [
+      -0.32,
+      0.8,
+      0.0
+     ],
+     "taille": [
+      0.55,
+      0.55,
+      0.46
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      0
+     ],
+     "matiere": "couleur_2",
+     "nom": "corps"
+    },
+    {
+     "forme": "sphere",
+     "position": [
+      0.58,
+      1.05,
+      0.0
+     ],
+     "taille": [
+      0.3,
+      0.6,
+      0.26
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      -32
+     ],
+     "matiere": "couleur_2",
+     "nom": "corps"
+    },
+    {
+     "forme": "sphere",
+     "position": [
+      0.84,
+      1.22,
+      0.0
+     ],
+     "taille": [
+      0.42,
+      0.26,
+      0.22
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      0
+     ],
+     "matiere": "couleur_2",
+     "nom": "corps"
+    },
+    {
+     "forme": "sphere",
+     "position": [
+      1.02,
+      1.15,
+      0.0
+     ],
+     "taille": [
+      0.24,
+      0.2,
+      0.18
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      0
+     ],
+     "matiere": "couleur_3",
+     "nom": "corps"
+    },
+    {
+     "forme": "cone",
+     "position": [
+      0.78,
+      1.42,
+      0.07
+     ],
+     "taille": [
+      0.07,
+      0.14,
+      0.05
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      0
+     ],
+     "matiere": "couleur_2",
+     "nom": "corps"
+    },
+    {
+     "forme": "cone",
+     "position": [
+      0.78,
+      1.42,
+      -0.07
+     ],
+     "taille": [
+      0.07,
+      0.14,
+      0.05
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      0
+     ],
+     "matiere": "couleur_2",
+     "nom": "corps"
+    },
+    {
+     "forme": "sphere",
+     "position": [
+      0.92,
+      1.27,
+      0.1
+     ],
+     "taille": [
+      0.05,
+      0.05,
+      0.05
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      0
+     ],
+     "matiere": "noir",
+     "nom": "corps"
+    },
+    {
+     "forme": "sphere",
+     "position": [
+      0.92,
+      1.27,
+      -0.1
+     ],
+     "taille": [
+      0.05,
+      0.05,
+      0.05
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      0
+     ],
+     "matiere": "noir",
+     "nom": "corps"
+    },
+    {
+     "forme": "cone",
+     "position": [
+      -0.62,
+      0.78,
+      0.0
+     ],
+     "taille": [
+      0.12,
+      0.55,
+      0.12
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      110
+     ],
+     "matiere": "couleur_3",
+     "nom": "queue"
+    },
+    {
+     "forme": "cube",
+     "position": [
+      0.0,
+      0.98,
+      0.0
+     ],
+     "taille": [
+      0.5,
+      0.06,
+      0.5
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      0
+     ],
+     "matiere": "sombre",
+     "nom": "corps"
+    },
+    {
+     "forme": "cylindre",
+     "position": [
+      0.4,
+      0.34,
+      0.14
+     ],
+     "taille": [
+      0.12,
+      0.7,
+      0.12
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      0
+     ],
+     "matiere": "couleur_2",
+     "nom": "patte0"
+    },
+    {
+     "forme": "cube",
+     "position": [
+      0.43,
+      0.03,
+      0.14
+     ],
+     "taille": [
+      0.18,
+      0.06,
+      0.14
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      0
+     ],
+     "matiere": "noir",
+     "nom": "patte0"
+    },
+    {
+     "forme": "cylindre",
+     "position": [
+      0.4,
+      0.34,
+      -0.14
+     ],
+     "taille": [
+      0.12,
+      0.7,
+      0.12
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      0
+     ],
+     "matiere": "couleur_2",
+     "nom": "patte1"
+    },
+    {
+     "forme": "cube",
+     "position": [
+      0.43,
+      0.03,
+      -0.14
+     ],
+     "taille": [
+      0.18,
+      0.06,
+      0.14
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      0
+     ],
+     "matiere": "noir",
+     "nom": "patte1"
+    },
+    {
+     "forme": "cylindre",
+     "position": [
+      -0.4,
+      0.34,
+      0.14
+     ],
+     "taille": [
+      0.12,
+      0.7,
+      0.12
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      0
+     ],
+     "matiere": "couleur_2",
+     "nom": "patte2"
+    },
+    {
+     "forme": "cube",
+     "position": [
+      -0.37,
+      0.03,
+      0.14
+     ],
+     "taille": [
+      0.18,
+      0.06,
+      0.14
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      0
+     ],
+     "matiere": "noir",
+     "nom": "patte2"
+    },
+    {
+     "forme": "cylindre",
+     "position": [
+      -0.4,
+      0.34,
+      -0.14
+     ],
+     "taille": [
+      0.12,
+      0.7,
+      0.12
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      0
+     ],
+     "matiere": "couleur_2",
+     "nom": "patte3"
+    },
+    {
+     "forme": "cube",
+     "position": [
+      -0.37,
+      0.03,
+      -0.14
+     ],
+     "taille": [
+      0.18,
+      0.06,
+      0.14
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      0
+     ],
+     "matiere": "noir",
+     "nom": "patte3"
+    },
+    {
+     "forme": "cube",
+     "position": [
+      -0.02,
+      1.32,
+      0.0
+     ],
+     "taille": [
+      0.32,
+      0.46,
+      0.32
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      0
+     ],
+     "matiere": "blanc",
+     "nom": "corps"
+    },
+    {
+     "forme": "sphere",
+     "position": [
+      0.02,
+      1.7,
+      0.0
+     ],
+     "taille": [
+      0.26,
+      0.28,
+      0.26
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      0
+     ],
+     "matiere": "blanc",
+     "nom": "corps"
+    },
+    {
+     "forme": "cube",
+     "position": [
+      0.15,
+      1.7,
+      0.0
+     ],
+     "taille": [
+      0.04,
+      0.05,
+      0.2
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      0
+     ],
+     "matiere": "noir",
+     "nom": "corps"
+    },
+    {
+     "forme": "cone",
+     "position": [
+      0.0,
+      1.98,
+      0.0
+     ],
+     "taille": [
+      0.1,
+      0.3,
+      0.1
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      0
+     ],
+     "matiere": "lumiere_rouge",
+     "nom": "corps"
+    },
+    {
+     "forme": "cylindre",
+     "position": [
+      0.5,
+      1.5,
+      0.28
+     ],
+     "taille": [
+      0.04,
+      1.6,
+      0.04
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      -75
+     ],
+     "matiere": "sombre",
+     "nom": "corps"
+    },
+    {
+     "forme": "cube",
+     "position": [
+      0.1,
+      1.15,
+      0.3
+     ],
+     "taille": [
+      0.06,
+      0.55,
+      0.36
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      0
+     ],
+     "matiere": "couleur_3",
+     "nom": "corps"
+    }
+   ],
+   "parties_mobiles": [
+    {
+     "piece": "corps",
+     "animation": "rebond",
+     "amplitude": 0.05
+    },
+    {
+     "piece": "queue",
+     "animation": "balance",
+     "axe": "y"
+    },
+    {
+     "piece": "patte0",
+     "animation": "pendule",
+     "phase": 0.0,
+     "axe": "z",
+     "pivot": "haut"
+    },
+    {
+     "piece": "patte1",
+     "animation": "pendule",
+     "phase": 0.5,
+     "axe": "z",
+     "pivot": "haut"
+    },
+    {
+     "piece": "patte2",
+     "animation": "pendule",
+     "phase": 0.5,
+     "axe": "z",
+     "pivot": "haut"
+    },
+    {
+     "piece": "patte3",
+     "animation": "pendule",
+     "phase": 0.0,
+     "axe": "z",
+     "pivot": "haut"
+    }
+   ]
+  },
+  {
+   "id": "charrette",
+   "univers": "moyen_age",
+   "classe": "grand",
+   "noms": {
+    "fr": "Charrette de Marchand",
+    "en": "Merchant Cart",
+    "de": "Händlerkarren",
+    "es": "Carreta de Mercader",
+    "it": "Carro del Mercante"
+   },
+   "longueur": 3.3,
+   "largeur": 1.0,
+   "comportement": "traverse",
+   "vitesse": 2.8,
+   "dangereux": true,
+   "points_deblocage": 2000,
+   "couleur_2": "#6b4a30",
+   "couleur_3": "#8a5a2b",
+   "pieces": [
+    {
+     "forme": "cube",
+     "position": [
+      -1.2,
+      0.55,
+      0
+     ],
+     "taille": [
+      1.4,
+      0.12,
+      0.8
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      0
+     ],
+     "matiere": "couleur_3"
+    },
+    {
+     "forme": "cube",
+     "position": [
+      -1.2,
+      0.75,
+      0.4
+     ],
+     "taille": [
+      1.4,
+      0.3,
+      0.04
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      0
+     ],
+     "matiere": "couleur_3"
+    },
+    {
+     "forme": "cube",
+     "position": [
+      -1.2,
+      0.75,
+      -0.4
+     ],
+     "taille": [
+      1.4,
+      0.3,
+      0.04
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      0
+     ],
+     "matiere": "couleur_3"
+    },
+    {
+     "forme": "cube",
+     "position": [
+      -1.9,
+      0.75,
+      0
+     ],
+     "taille": [
+      0.04,
+      0.3,
+      0.8
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      0
+     ],
+     "matiere": "couleur_3"
+    },
+    {
+     "forme": "cylindre",
+     "position": [
+      -1.0,
+      0.95,
+      0.1
+     ],
+     "taille": [
+      0.4,
+      0.5,
+      0.4
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      0
+     ],
+     "matiere": "couleur_3"
+    },
+    {
+     "forme": "cylindre",
+     "position": [
+      -1.5,
+      0.95,
+      -0.1
+     ],
+     "taille": [
+      0.4,
+      0.5,
+      0.4
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      0
+     ],
+     "matiere": "couleur_3"
+    },
+    {
+     "forme": "cylindre",
+     "position": [
+      -1.0,
+      1.05,
+      0.1
+     ],
+     "taille": [
+      0.42,
+      0.04,
+      0.42
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      0
+     ],
+     "matiere": "sombre"
+    },
+    {
+     "forme": "cube",
+     "position": [
+      -0.4,
+      0.55,
+      0
+     ],
+     "taille": [
+      0.7,
+      0.04,
+      0.08
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      0
+     ],
+     "matiere": "sombre"
+    },
+    {
+     "forme": "cube",
+     "position": [
+      -0.3,
+      1.0,
+      0
+     ],
+     "taille": [
+      0.1,
+      0.4,
+      0.5
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      0
+     ],
+     "matiere": "couleur_2"
+    },
+    {
+     "forme": "cylindre",
+     "position": [
+      -1.5,
+      0.3,
+      0.46
+     ],
+     "taille": [
+      0.6,
+      0.08,
+      0.6
+     ],
+     "rotation_deg": [
+      90,
+      0,
+      0
+     ],
+     "matiere": "sombre"
+    },
+    {
+     "forme": "cylindre",
+     "position": [
+      -1.5,
+      0.3,
+      0.505
+     ],
+     "taille": [
+      0.3,
+      0.05,
+      0.3
+     ],
+     "rotation_deg": [
+      90,
+      0,
+      0
+     ],
+     "matiere": "couleur_2"
+    },
+    {
+     "forme": "cylindre",
+     "position": [
+      -1.5,
+      0.3,
+      -0.46
+     ],
+     "taille": [
+      0.6,
+      0.08,
+      0.6
+     ],
+     "rotation_deg": [
+      90,
+      0,
+      0
+     ],
+     "matiere": "sombre"
+    },
+    {
+     "forme": "cylindre",
+     "position": [
+      -1.5,
+      0.3,
+      -0.505
+     ],
+     "taille": [
+      0.3,
+      0.05,
+      0.3
+     ],
+     "rotation_deg": [
+      90,
+      0,
+      0
+     ],
+     "matiere": "couleur_2"
+    },
+    {
+     "forme": "cylindre",
+     "position": [
+      -0.9,
+      0.3,
+      0.46
+     ],
+     "taille": [
+      0.6,
+      0.08,
+      0.6
+     ],
+     "rotation_deg": [
+      90,
+      0,
+      0
+     ],
+     "matiere": "sombre"
+    },
+    {
+     "forme": "cylindre",
+     "position": [
+      -0.9,
+      0.3,
+      0.505
+     ],
+     "taille": [
+      0.3,
+      0.05,
+      0.3
+     ],
+     "rotation_deg": [
+      90,
+      0,
+      0
+     ],
+     "matiere": "couleur_2"
+    },
+    {
+     "forme": "cylindre",
+     "position": [
+      -0.9,
+      0.3,
+      -0.46
+     ],
+     "taille": [
+      0.6,
+      0.08,
+      0.6
+     ],
+     "rotation_deg": [
+      90,
+      0,
+      0
+     ],
+     "matiere": "sombre"
+    },
+    {
+     "forme": "cylindre",
+     "position": [
+      -0.9,
+      0.3,
+      -0.505
+     ],
+     "taille": [
+      0.3,
+      0.05,
+      0.3
+     ],
+     "rotation_deg": [
+      90,
+      0,
+      0
+     ],
+     "matiere": "couleur_2"
+    },
+    {
+     "forme": "sphere",
+     "position": [
+      0.2,
+      0.78,
+      0.0
+     ],
+     "taille": [
+      1.05,
+      0.52,
+      0.46
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      0
+     ],
+     "matiere": "couleur_2",
+     "nom": "acorps"
+    },
+    {
+     "forme": "sphere",
+     "position": [
+      0.5,
+      0.84,
+      0.0
+     ],
+     "taille": [
+      0.55,
+      0.58,
+      0.44
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      0
+     ],
+     "matiere": "couleur_2",
+     "nom": "acorps"
+    },
+    {
+     "forme": "sphere",
+     "position": [
+      -0.12,
+      0.8,
+      0.0
+     ],
+     "taille": [
+      0.55,
+      0.55,
+      0.46
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      0
+     ],
+     "matiere": "couleur_2",
+     "nom": "acorps"
+    },
+    {
+     "forme": "sphere",
+     "position": [
+      0.78,
+      1.05,
+      0.0
+     ],
+     "taille": [
+      0.3,
+      0.6,
+      0.26
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      -32
+     ],
+     "matiere": "couleur_2",
+     "nom": "acorps"
+    },
+    {
+     "forme": "sphere",
+     "position": [
+      1.04,
+      1.22,
+      0.0
+     ],
+     "taille": [
+      0.42,
+      0.26,
+      0.22
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      0
+     ],
+     "matiere": "couleur_2",
+     "nom": "acorps"
+    },
+    {
+     "forme": "sphere",
+     "position": [
+      1.22,
+      1.15,
+      0.0
+     ],
+     "taille": [
+      0.24,
+      0.2,
+      0.18
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      0
+     ],
+     "matiere": "couleur_3",
+     "nom": "acorps"
+    },
+    {
+     "forme": "cone",
+     "position": [
+      0.98,
+      1.42,
+      0.07
+     ],
+     "taille": [
+      0.07,
+      0.14,
+      0.05
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      0
+     ],
+     "matiere": "couleur_2",
+     "nom": "acorps"
+    },
+    {
+     "forme": "cone",
+     "position": [
+      0.98,
+      1.42,
+      -0.07
+     ],
+     "taille": [
+      0.07,
+      0.14,
+      0.05
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      0
+     ],
+     "matiere": "couleur_2",
+     "nom": "acorps"
+    },
+    {
+     "forme": "sphere",
+     "position": [
+      1.12,
+      1.27,
+      0.1
+     ],
+     "taille": [
+      0.05,
+      0.05,
+      0.05
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      0
+     ],
+     "matiere": "noir",
+     "nom": "acorps"
+    },
+    {
+     "forme": "sphere",
+     "position": [
+      1.12,
+      1.27,
+      -0.1
+     ],
+     "taille": [
+      0.05,
+      0.05,
+      0.05
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      0
+     ],
+     "matiere": "noir",
+     "nom": "acorps"
+    },
+    {
+     "forme": "cone",
+     "position": [
+      -0.42,
+      0.78,
+      0.0
+     ],
+     "taille": [
+      0.12,
+      0.55,
+      0.12
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      110
+     ],
+     "matiere": "couleur_3",
+     "nom": "aqueue"
+    },
+    {
+     "forme": "cube",
+     "position": [
+      0.2,
+      0.98,
+      0.0
+     ],
+     "taille": [
+      0.5,
+      0.06,
+      0.5
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      0
+     ],
+     "matiere": "sombre",
+     "nom": "acorps"
+    },
+    {
+     "forme": "cylindre",
+     "position": [
+      0.6,
+      0.34,
+      0.14
+     ],
+     "taille": [
+      0.12,
+      0.7,
+      0.12
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      0
+     ],
+     "matiere": "couleur_2",
+     "nom": "apatte0"
+    },
+    {
+     "forme": "cube",
+     "position": [
+      0.63,
+      0.03,
+      0.14
+     ],
+     "taille": [
+      0.18,
+      0.06,
+      0.14
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      0
+     ],
+     "matiere": "noir",
+     "nom": "apatte0"
+    },
+    {
+     "forme": "cylindre",
+     "position": [
+      0.6,
+      0.34,
+      -0.14
+     ],
+     "taille": [
+      0.12,
+      0.7,
+      0.12
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      0
+     ],
+     "matiere": "couleur_2",
+     "nom": "apatte1"
+    },
+    {
+     "forme": "cube",
+     "position": [
+      0.63,
+      0.03,
+      -0.14
+     ],
+     "taille": [
+      0.18,
+      0.06,
+      0.14
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      0
+     ],
+     "matiere": "noir",
+     "nom": "apatte1"
+    },
+    {
+     "forme": "cylindre",
+     "position": [
+      -0.2,
+      0.34,
+      0.14
+     ],
+     "taille": [
+      0.12,
+      0.7,
+      0.12
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      0
+     ],
+     "matiere": "couleur_2",
+     "nom": "apatte2"
+    },
+    {
+     "forme": "cube",
+     "position": [
+      -0.17,
+      0.03,
+      0.14
+     ],
+     "taille": [
+      0.18,
+      0.06,
+      0.14
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      0
+     ],
+     "matiere": "noir",
+     "nom": "apatte2"
+    },
+    {
+     "forme": "cylindre",
+     "position": [
+      -0.2,
+      0.34,
+      -0.14
+     ],
+     "taille": [
+      0.12,
+      0.7,
+      0.12
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      0
+     ],
+     "matiere": "couleur_2",
+     "nom": "apatte3"
+    },
+    {
+     "forme": "cube",
+     "position": [
+      -0.17,
+      0.03,
+      -0.14
+     ],
+     "taille": [
+      0.18,
+      0.06,
+      0.14
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      0
+     ],
+     "matiere": "noir",
+     "nom": "apatte3"
+    }
+   ],
+   "parties_mobiles": [
+    {
+     "piece": "acorps",
+     "animation": "rebond",
+     "amplitude": 0.05
+    },
+    {
+     "piece": "aqueue",
+     "animation": "balance",
+     "axe": "y"
+    },
+    {
+     "piece": "apatte0",
+     "animation": "pendule",
+     "phase": 0.0,
+     "axe": "z",
+     "pivot": "haut"
+    },
+    {
+     "piece": "apatte1",
+     "animation": "pendule",
+     "phase": 0.5,
+     "axe": "z",
+     "pivot": "haut"
+    },
+    {
+     "piece": "apatte2",
+     "animation": "pendule",
+     "phase": 0.5,
+     "axe": "z",
+     "pivot": "haut"
+    },
+    {
+     "piece": "apatte3",
+     "animation": "pendule",
+     "phase": 0.0,
+     "axe": "z",
+     "pivot": "haut"
+    }
+   ]
+  },
+  {
+   "id": "ogre",
+   "univers": "moyen_age",
+   "classe": "grand",
+   "noms": {
+    "fr": "Ogre Pas Content",
+    "en": "Cranky Ogre",
+    "de": "Mürrischer Oger",
+    "es": "Ogro Gruñón",
+    "it": "Orco Scontroso"
+   },
+   "longueur": 1.3,
+   "largeur": 1.9,
+   "comportement": "traverse",
+   "vitesse": 1.8,
+   "dangereux": true,
+   "points_deblocage": 2500,
+   "couleur_2": "#7aa05a",
+   "couleur_3": "#7a4d24",
+   "pieces": [
+    {
+     "forme": "sphere",
+     "position": [
+      0,
+      1.15,
+      0
+     ],
+     "taille": [
+      1.0,
+      1.3,
+      0.9
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      0
+     ],
+     "matiere": "couleur_2",
+     "nom": "corps"
+    },
+    {
+     "forme": "sphere",
+     "position": [
+      0.1,
+      2.0,
+      0
+     ],
+     "taille": [
+      0.62,
+      0.62,
+      0.6
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      0
+     ],
+     "matiere": "couleur_2",
+     "nom": "corps"
+    },
+    {
+     "forme": "sphere",
+     "position": [
+      0.38,
+      2.05,
+      0.15
+     ],
+     "taille": [
+      0.1,
+      0.1,
+      0.1
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      0
+     ],
+     "matiere": "blanc"
+    },
+    {
+     "forme": "sphere",
+     "position": [
+      0.38,
+      2.05,
+      -0.15
+     ],
+     "taille": [
+      0.1,
+      0.1,
+      0.1
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      0
+     ],
+     "matiere": "blanc"
+    },
+    {
+     "forme": "sphere",
+     "position": [
+      0.42,
+      2.05,
+      0.15
+     ],
+     "taille": [
+      0.05,
+      0.05,
+      0.05
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      0
+     ],
+     "matiere": "noir",
+     "nom": "corps"
+    },
+    {
+     "forme": "sphere",
+     "position": [
+      0.42,
+      2.05,
+      -0.15
+     ],
+     "taille": [
+      0.05,
+      0.05,
+      0.05
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      0
+     ],
+     "matiere": "noir",
+     "nom": "corps"
+    },
+    {
+     "forme": "cube",
+     "position": [
+      0.4,
+      1.85,
+      0
+     ],
+     "taille": [
+      0.06,
+      0.08,
+      0.36
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      0
+     ],
+     "matiere": "noir",
+     "nom": "corps"
+    },
+    {
+     "forme": "cone",
+     "position": [
+      0.35,
+      1.9,
+      0.12
+     ],
+     "taille": [
+      0.06,
+      0.12,
+      0.05
+     ],
+     "rotation_deg": [
+      180,
+      0,
+      0
+     ],
+     "matiere": "blanc",
+     "nom": "corps"
+    },
+    {
+     "forme": "cone",
+     "position": [
+      0.35,
+      1.9,
+      -0.12
+     ],
+     "taille": [
+      0.06,
+      0.12,
+      0.05
+     ],
+     "rotation_deg": [
+      180,
+      0,
+      0
+     ],
+     "matiere": "blanc",
+     "nom": "corps"
+    },
+    {
+     "forme": "cube",
+     "position": [
+      0.0,
+      0.85,
+      0
+     ],
+     "taille": [
+      0.95,
+      0.3,
+      0.9
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      0
+     ],
+     "matiere": "couleur_3",
+     "nom": "corps"
+    },
+    {
+     "forme": "cylindre",
+     "position": [
+      0.55,
+      1.75,
+      -0.85
+     ],
+     "taille": [
+      0.14,
+      1.8,
+      0.14
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      -20
+     ],
+     "matiere": "couleur_3",
+     "nom": "massue"
+    },
+    {
+     "forme": "sphere",
+     "position": [
+      0.8,
+      2.6,
+      -0.85
+     ],
+     "taille": [
+      0.4,
+      0.5,
+      0.4
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      0
+     ],
+     "matiere": "couleur_3",
+     "nom": "massue"
+    },
+    {
+     "forme": "cylindre",
+     "position": [
+      0,
+      1.3,
+      0.62
+     ],
+     "taille": [
+      0.3,
+      1.1,
+      0.3
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      0
+     ],
+     "matiere": "couleur_2",
+     "nom": "bras_g"
+    },
+    {
+     "forme": "cylindre",
+     "position": [
+      0,
+      0.4,
+      0.28
+     ],
+     "taille": [
+      0.34,
+      0.8,
+      0.34
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      0
+     ],
+     "matiere": "couleur_2",
+     "nom": "patte_g"
+    },
+    {
+     "forme": "cube",
+     "position": [
+      0.15,
+      0.06,
+      0.28
+     ],
+     "taille": [
+      0.56,
+      0.12,
+      0.4
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      0
+     ],
+     "matiere": "couleur_3",
+     "nom": "patte_g"
+    },
+    {
+     "forme": "cylindre",
+     "position": [
+      0,
+      0.4,
+      -0.28
+     ],
+     "taille": [
+      0.34,
+      0.8,
+      0.34
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      0
+     ],
+     "matiere": "couleur_2",
+     "nom": "patte_d"
+    },
+    {
+     "forme": "cube",
+     "position": [
+      0.15,
+      0.06,
+      -0.28
+     ],
+     "taille": [
+      0.56,
+      0.12,
+      0.4
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      0
+     ],
+     "matiere": "couleur_3",
+     "nom": "patte_d"
+    }
+   ],
+   "parties_mobiles": [
+    {
+     "piece": "corps",
+     "animation": "rebond",
+     "amplitude": 0.03
+    },
+    {
+     "piece": "massue",
+     "animation": "balance",
+     "axe": "z"
+    },
+    {
+     "piece": "bras_g",
+     "animation": "pendule",
+     "phase": 0.5,
+     "axe": "z",
+     "pivot": "haut"
+    },
+    {
+     "piece": "patte_g",
+     "animation": "pendule",
+     "phase": 0.0,
+     "axe": "z",
+     "pivot": "haut"
+    },
+    {
+     "piece": "patte_d",
+     "animation": "pendule",
+     "phase": 0.5,
+     "axe": "z",
+     "pivot": "haut"
+    }
+   ]
+  },
+  {
+   "id": "catapulte",
+   "univers": "moyen_age",
+   "classe": "grand",
+   "noms": {
+    "fr": "Catapulte Roulante",
+    "en": "Rolling Catapult",
+    "de": "Rollende Katapult",
+    "es": "Catapulta Rodante",
+    "it": "Catapulta Rotolante"
+   },
+   "longueur": 2.0,
+   "largeur": 1.0,
+   "comportement": "traverse",
+   "vitesse": 2.0,
+   "dangereux": true,
+   "points_deblocage": 2900,
+   "couleur_2": "#c9a063",
+   "couleur_3": "#6b4a30",
+   "pieces": [
+    {
+     "forme": "cube",
+     "position": [
+      0,
+      0.5,
+      0
+     ],
+     "taille": [
+      1.9,
+      0.18,
+      0.9
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      0
+     ],
+     "matiere": "couleur_3"
+    },
+    {
+     "forme": "cube",
+     "position": [
+      -0.2,
+      1.0,
+      0.3
+     ],
+     "taille": [
+      0.14,
+      1.0,
+      0.14
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      0
+     ],
+     "matiere": "couleur_3"
+    },
+    {
+     "forme": "cube",
+     "position": [
+      -0.2,
+      1.0,
+      -0.3
+     ],
+     "taille": [
+      0.14,
+      1.0,
+      0.14
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      0
+     ],
+     "matiere": "couleur_3"
+    },
+    {
+     "forme": "cube",
+     "position": [
+      0.8,
+      0.75,
+      0.3
+     ],
+     "taille": [
+      0.1,
+      0.5,
+      0.1
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      0
+     ],
+     "matiere": "couleur_3"
+    },
+    {
+     "forme": "cube",
+     "position": [
+      0.8,
+      0.75,
+      -0.3
+     ],
+     "taille": [
+      0.1,
+      0.5,
+      0.1
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      0
+     ],
+     "matiere": "couleur_3"
+    },
+    {
+     "forme": "cylindre",
+     "position": [
+      -0.2,
+      1.5,
+      0
+     ],
+     "taille": [
+      0.12,
+      0.8,
+      0.12
+     ],
+     "rotation_deg": [
+      90,
+      0,
+      0
+     ],
+     "matiere": "sombre"
+    },
+    {
+     "forme": "cube",
+     "position": [
+      0.4,
+      1.4,
+      0
+     ],
+     "taille": [
+      1.5,
+      0.1,
+      0.1
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      20
+     ],
+     "matiere": "couleur_2",
+     "nom": "bras"
+    },
+    {
+     "forme": "sphere",
+     "position": [
+      1.1,
+      1.65,
+      0
+     ],
+     "taille": [
+      0.4,
+      0.3,
+      0.4
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      0
+     ],
+     "matiere": "sombre",
+     "nom": "bras"
+    },
+    {
+     "forme": "cube",
+     "position": [
+      -0.4,
+      1.2,
+      0
+     ],
+     "taille": [
+      0.3,
+      0.3,
+      0.3
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      0
+     ],
+     "matiere": "couleur_3",
+     "nom": "bras"
+    },
+    {
+     "forme": "cylindre",
+     "position": [
+      -0.6,
+      0.34,
+      0.5
+     ],
+     "taille": [
+      0.68,
+      0.1,
+      0.68
+     ],
+     "rotation_deg": [
+      90,
+      0,
+      0
+     ],
+     "matiere": "sombre"
+    },
+    {
+     "forme": "cylindre",
+     "position": [
+      -0.6,
+      0.34,
+      0.555
+     ],
+     "taille": [
+      0.3,
+      0.06,
+      0.3
+     ],
+     "rotation_deg": [
+      90,
+      0,
+      0
+     ],
+     "matiere": "couleur_2"
+    },
+    {
+     "forme": "cylindre",
+     "position": [
+      -0.6,
+      0.34,
+      -0.5
+     ],
+     "taille": [
+      0.68,
+      0.1,
+      0.68
+     ],
+     "rotation_deg": [
+      90,
+      0,
+      0
+     ],
+     "matiere": "sombre"
+    },
+    {
+     "forme": "cylindre",
+     "position": [
+      -0.6,
+      0.34,
+      -0.555
+     ],
+     "taille": [
+      0.3,
+      0.06,
+      0.3
+     ],
+     "rotation_deg": [
+      90,
+      0,
+      0
+     ],
+     "matiere": "couleur_2"
+    },
+    {
+     "forme": "cylindre",
+     "position": [
+      0.6,
+      0.34,
+      0.5
+     ],
+     "taille": [
+      0.68,
+      0.1,
+      0.68
+     ],
+     "rotation_deg": [
+      90,
+      0,
+      0
+     ],
+     "matiere": "sombre"
+    },
+    {
+     "forme": "cylindre",
+     "position": [
+      0.6,
+      0.34,
+      0.555
+     ],
+     "taille": [
+      0.3,
+      0.06,
+      0.3
+     ],
+     "rotation_deg": [
+      90,
+      0,
+      0
+     ],
+     "matiere": "couleur_2"
+    },
+    {
+     "forme": "cylindre",
+     "position": [
+      0.6,
+      0.34,
+      -0.5
+     ],
+     "taille": [
+      0.68,
+      0.1,
+      0.68
+     ],
+     "rotation_deg": [
+      90,
+      0,
+      0
+     ],
+     "matiere": "sombre"
+    },
+    {
+     "forme": "cylindre",
+     "position": [
+      0.6,
+      0.34,
+      -0.555
+     ],
+     "taille": [
+      0.3,
+      0.06,
+      0.3
+     ],
+     "rotation_deg": [
+      90,
+      0,
+      0
+     ],
+     "matiere": "couleur_2"
+    }
+   ],
+   "parties_mobiles": [
+    {
+     "piece": "bras",
+     "animation": "balance",
+     "axe": "z"
+    }
+   ]
+  },
+  {
+   "id": "dragon",
+   "univers": "moyen_age",
+   "classe": "volant",
+   "noms": {
+    "fr": "Dragon Cracheur",
+    "en": "Fire-Breathing Dragon",
+    "de": "Feuerspeiender Drache",
+    "es": "Dragón Escupefuego",
+    "it": "Drago Sputafuoco"
+   },
+   "longueur": 2.2,
+   "largeur": 3.4,
+   "comportement": "vole_en_ligne",
+   "vitesse": 3.6,
+   "dangereux": true,
+   "points_deblocage": 3200,
+   "couleur_2": "#4f9a3a",
+   "couleur_3": "#c0392b",
+   "pieces": [
+    {
+     "forme": "sphere",
+     "position": [
+      0,
+      1.0,
+      0
+     ],
+     "taille": [
+      1.1,
+      0.5,
+      0.5
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      0
+     ],
+     "matiere": "couleur_2",
+     "nom": "corps"
+    },
+    {
+     "forme": "sphere",
+     "position": [
+      0.55,
+      1.1,
+      0
+     ],
+     "taille": [
+      0.45,
+      0.42,
+      0.4
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      0
+     ],
+     "matiere": "couleur_2",
+     "nom": "corps"
+    },
+    {
+     "forme": "cone",
+     "position": [
+      0.82,
+      1.1,
+      0
+     ],
+     "taille": [
+      0.28,
+      0.4,
+      0.28
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      -90
+     ],
+     "matiere": "couleur_2",
+     "nom": "corps"
+    },
+    {
+     "forme": "cone",
+     "position": [
+      0.4,
+      1.38,
+      0.1
+     ],
+     "taille": [
+      0.06,
+      0.3,
+      0.06
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      10
+     ],
+     "matiere": "couleur_3",
+     "nom": "corps"
+    },
+    {
+     "forme": "cone",
+     "position": [
+      0.4,
+      1.38,
+      -0.1
+     ],
+     "taille": [
+      0.06,
+      0.3,
+      0.06
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      10
+     ],
+     "matiere": "couleur_3",
+     "nom": "corps"
+    },
+    {
+     "forme": "sphere",
+     "position": [
+      0.62,
+      1.2,
+      0.12
+     ],
+     "taille": [
+      0.07,
+      0.07,
+      0.05
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      0
+     ],
+     "matiere": "lumiere_rouge",
+     "nom": "corps"
+    },
+    {
+     "forme": "sphere",
+     "position": [
+      0.62,
+      1.2,
+      -0.12
+     ],
+     "taille": [
+      0.07,
+      0.07,
+      0.05
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      0
+     ],
+     "matiere": "lumiere_rouge",
+     "nom": "corps"
+    },
+    {
+     "forme": "cone",
+     "position": [
+      1.0,
+      1.1,
+      0
+     ],
+     "taille": [
+      0.18,
+      0.3,
+      0.18
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      -90
+     ],
+     "matiere": "lumiere_rouge",
+     "nom": "flamme"
+    },
+    {
+     "forme": "cone",
+     "position": [
+      -0.7,
+      0.95,
+      0
+     ],
+     "taille": [
+      0.3,
+      1.0,
+      0.3
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      105
+     ],
+     "matiere": "couleur_2",
+     "nom": "corps"
+    },
+    {
+     "forme": "cone",
+     "position": [
+      -1.2,
+      0.9,
+      0
+     ],
+     "taille": [
+      0.12,
+      0.3,
+      0.12
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      105
+     ],
+     "matiere": "couleur_3",
+     "nom": "corps"
+    },
+    {
+     "forme": "cone",
+     "position": [
+      0.3,
+      1.32,
+      0
+     ],
+     "taille": [
+      0.1,
+      0.22,
+      0.08
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      0
+     ],
+     "matiere": "couleur_3",
+     "nom": "corps"
+    },
+    {
+     "forme": "cone",
+     "position": [
+      0.0,
+      1.32,
+      0
+     ],
+     "taille": [
+      0.1,
+      0.22,
+      0.08
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      0
+     ],
+     "matiere": "couleur_3",
+     "nom": "corps"
+    },
+    {
+     "forme": "cone",
+     "position": [
+      -0.3,
+      1.32,
+      0
+     ],
+     "taille": [
+      0.1,
+      0.22,
+      0.08
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      0
+     ],
+     "matiere": "couleur_3",
+     "nom": "corps"
+    },
+    {
+     "forme": "cone",
+     "position": [
+      -0.6,
+      1.32,
+      0
+     ],
+     "taille": [
+      0.1,
+      0.22,
+      0.08
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      0
+     ],
+     "matiere": "couleur_3",
+     "nom": "corps"
+    },
+    {
+     "forme": "cube",
+     "position": [
+      0.0,
+      1.1,
+      0.7
+     ],
+     "taille": [
+      0.7,
+      0.04,
+      1.0
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      0
+     ],
+     "matiere": "couleur_3",
+     "nom": "aile_g"
+    },
+    {
+     "forme": "cube",
+     "position": [
+      -0.2,
+      1.1,
+      1.3
+     ],
+     "taille": [
+      0.6,
+      0.04,
+      0.6
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      0
+     ],
+     "matiere": "couleur_3",
+     "nom": "aile_g"
+    },
+    {
+     "forme": "cube",
+     "position": [
+      0.1,
+      1.11,
+      1.6
+     ],
+     "taille": [
+      0.08,
+      0.05,
+      1.0
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      0
+     ],
+     "matiere": "couleur_2",
+     "nom": "aile_g"
+    },
+    {
+     "forme": "cube",
+     "position": [
+      -0.25,
+      1.11,
+      1.5
+     ],
+     "taille": [
+      0.08,
+      0.05,
+      0.8
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      0
+     ],
+     "matiere": "couleur_2",
+     "nom": "aile_g"
+    },
+    {
+     "forme": "cube",
+     "position": [
+      0.0,
+      1.1,
+      -0.7
+     ],
+     "taille": [
+      0.7,
+      0.04,
+      1.0
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      0
+     ],
+     "matiere": "couleur_3",
+     "nom": "aile_d"
+    },
+    {
+     "forme": "cube",
+     "position": [
+      -0.2,
+      1.1,
+      -1.3
+     ],
+     "taille": [
+      0.6,
+      0.04,
+      0.6
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      0
+     ],
+     "matiere": "couleur_3",
+     "nom": "aile_d"
+    },
+    {
+     "forme": "cube",
+     "position": [
+      0.1,
+      1.11,
+      -1.6
+     ],
+     "taille": [
+      0.08,
+      0.05,
+      1.0
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      0
+     ],
+     "matiere": "couleur_2",
+     "nom": "aile_d"
+    },
+    {
+     "forme": "cube",
+     "position": [
+      -0.25,
+      1.11,
+      -1.5
+     ],
+     "taille": [
+      0.08,
+      0.05,
+      0.8
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      0
+     ],
+     "matiere": "couleur_2",
+     "nom": "aile_d"
+    }
+   ],
+   "parties_mobiles": [
+    {
+     "piece": "corps",
+     "animation": "rebond",
+     "amplitude": 0.04
+    },
+    {
+     "piece": "flamme",
+     "animation": "pulse"
+    },
+    {
+     "piece": "aile_g",
+     "animation": "pendule",
+     "phase": 0.0,
+     "axe": "x",
+     "pivot": "base"
+    },
+    {
+     "piece": "aile_d",
+     "animation": "pendule",
+     "phase": 0.0,
+     "axe": "x",
+     "pivot": "base"
+    }
+   ]
+  }
+ ],
+ "heros": {
+  "id": "grenouille_chevalier",
+  "univers": "moyen_age",
+  "noms": {
+   "fr": "Grenouille Chevalier",
+   "en": "Knight Frog",
+   "de": "Ritter-Frosch",
+   "es": "Rana Caballero",
+   "it": "Rana Cavaliere"
+  },
+  "longueur": 0.7,
+  "largeur": 0.6,
+  "couleur_2": "#c0392b",
+  "couleur_3": "#c8ccd8",
+  "pieces": [
+   {
+    "forme": "sphere",
+    "position": [
+     -0.05,
+     0.26,
+     0
+    ],
+    "taille": [
+     0.5,
+     0.34,
+     0.46
+    ],
+    "rotation_deg": [
+     0,
+     0,
+     0
+    ],
+    "matiere": "peinture",
+    "nom": "corps"
+   },
+   {
+    "forme": "sphere",
+    "position": [
+     0.0,
+     0.17,
+     0
+    ],
+    "taille": [
+     0.38,
+     0.2,
+     0.4
+    ],
+    "rotation_deg": [
+     0,
+     0,
+     0
+    ],
+    "matiere": "couleur_2"
+   },
+   {
+    "forme": "sphere",
+    "position": [
+     0.2,
+     0.36,
+     0
+    ],
+    "taille": [
+     0.36,
+     0.26,
+     0.4
+    ],
+    "rotation_deg": [
+     0,
+     0,
+     0
+    ],
+    "matiere": "peinture"
+   },
+   {
+    "forme": "cube",
+    "position": [
+     0.37,
+     0.31,
+     0
+    ],
+    "taille": [
+     0.02,
+     0.02,
+     0.3
+    ],
+    "rotation_deg": [
+     0,
+     0,
+     0
+    ],
+    "matiere": "noir"
+   },
+   {
+    "forme": "sphere",
+    "position": [
+     0.2,
+     0.54,
+     0.14
+    ],
+    "taille": [
+     0.15,
+     0.15,
+     0.15
+    ],
+    "rotation_deg": [
+     0,
+     0,
+     0
+    ],
+    "matiere": "peinture"
+   },
+   {
+    "forme": "sphere",
+    "position": [
+     0.25,
+     0.56,
+     0.14
+    ],
+    "taille": [
+     0.11,
+     0.11,
+     0.11
+    ],
+    "rotation_deg": [
+     0,
+     0,
+     0
+    ],
+    "matiere": "blanc"
+   },
+   {
+    "forme": "sphere",
+    "position": [
+     0.3,
+     0.57,
+     0.14
+    ],
+    "taille": [
+     0.06,
+     0.06,
+     0.06
+    ],
+    "rotation_deg": [
+     0,
+     0,
+     0
+    ],
+    "matiere": "noir"
+   },
+   {
+    "forme": "sphere",
+    "position": [
+     -0.2,
+     0.2,
+     0.26
+    ],
+    "taille": [
+     0.22,
+     0.2,
+     0.14
+    ],
+    "rotation_deg": [
+     0,
+     0,
+     0
+    ],
+    "matiere": "peinture"
+   },
+   {
+    "forme": "cube",
+    "position": [
+     -0.1,
+     0.07,
+     0.27
+    ],
+    "taille": [
+     0.14,
+     0.1,
+     0.1
+    ],
+    "rotation_deg": [
+     0,
+     0,
+     0
+    ],
+    "matiere": "peinture"
+   },
+   {
+    "forme": "cube",
+    "position": [
+     -0.04,
+     0.025,
+     0.27
+    ],
+    "taille": [
+     0.26,
+     0.05,
+     0.12
+    ],
+    "rotation_deg": [
+     0,
+     0,
+     0
+    ],
+    "matiere": "couleur_2"
+   },
+   {
+    "forme": "cylindre",
+    "position": [
+     0.18,
+     0.1,
+     0.2
+    ],
+    "taille": [
+     0.07,
+     0.2,
+     0.07
+    ],
+    "rotation_deg": [
+     0,
+     0,
+     0
+    ],
+    "matiere": "peinture"
+   },
+   {
+    "forme": "cube",
+    "position": [
+     0.22,
+     0.015,
+     0.2
+    ],
+    "taille": [
+     0.1,
+     0.03,
+     0.08
+    ],
+    "rotation_deg": [
+     0,
+     0,
+     0
+    ],
+    "matiere": "couleur_2"
+   },
+   {
+    "forme": "sphere",
+    "position": [
+     0.2,
+     0.54,
+     -0.14
+    ],
+    "taille": [
+     0.15,
+     0.15,
+     0.15
+    ],
+    "rotation_deg": [
+     0,
+     0,
+     0
+    ],
+    "matiere": "peinture"
+   },
+   {
+    "forme": "sphere",
+    "position": [
+     0.25,
+     0.56,
+     -0.14
+    ],
+    "taille": [
+     0.11,
+     0.11,
+     0.11
+    ],
+    "rotation_deg": [
+     0,
+     0,
+     0
+    ],
+    "matiere": "blanc"
+   },
+   {
+    "forme": "sphere",
+    "position": [
+     0.3,
+     0.57,
+     -0.14
+    ],
+    "taille": [
+     0.06,
+     0.06,
+     0.06
+    ],
+    "rotation_deg": [
+     0,
+     0,
+     0
+    ],
+    "matiere": "noir"
+   },
+   {
+    "forme": "sphere",
+    "position": [
+     -0.2,
+     0.2,
+     -0.26
+    ],
+    "taille": [
+     0.22,
+     0.2,
+     0.14
+    ],
+    "rotation_deg": [
+     0,
+     0,
+     0
+    ],
+    "matiere": "peinture"
+   },
+   {
+    "forme": "cube",
+    "position": [
+     -0.1,
+     0.07,
+     -0.27
+    ],
+    "taille": [
+     0.14,
+     0.1,
+     0.1
+    ],
+    "rotation_deg": [
+     0,
+     0,
+     0
+    ],
+    "matiere": "peinture"
+   },
+   {
+    "forme": "cube",
+    "position": [
+     -0.04,
+     0.025,
+     -0.27
+    ],
+    "taille": [
+     0.26,
+     0.05,
+     0.12
+    ],
+    "rotation_deg": [
+     0,
+     0,
+     0
+    ],
+    "matiere": "couleur_2"
+   },
+   {
+    "forme": "cylindre",
+    "position": [
+     0.18,
+     0.1,
+     -0.2
+    ],
+    "taille": [
+     0.07,
+     0.2,
+     0.07
+    ],
+    "rotation_deg": [
+     0,
+     0,
+     0
+    ],
+    "matiere": "peinture"
+   },
+   {
+    "forme": "cube",
+    "position": [
+     0.22,
+     0.015,
+     -0.2
+    ],
+    "taille": [
+     0.1,
+     0.03,
+     0.08
+    ],
+    "rotation_deg": [
+     0,
+     0,
+     0
+    ],
+    "matiere": "couleur_2"
+   },
+   {
+    "forme": "sphere",
+    "position": [
+     -0.12,
+     0.42,
+     0.1
+    ],
+    "taille": [
+     0.08,
+     0.05,
+     0.08
+    ],
+    "rotation_deg": [
+     0,
+     0,
+     0
+    ],
+    "matiere": "couleur_3"
+   },
+   {
+    "forme": "sphere",
+    "position": [
+     -0.18,
+     0.4,
+     -0.08
+    ],
+    "taille": [
+     0.06,
+     0.04,
+     0.06
+    ],
+    "rotation_deg": [
+     0,
+     0,
+     0
+    ],
+    "matiere": "couleur_3"
+   }
+  ],
+  "parties_mobiles": [
+   {
+    "piece": "corps",
+    "animation": "rebond",
+    "amplitude": 0.02
+   }
+  ],
+  "accessoire": {
+   "nom": {
+    "fr": "Casque de chevalier",
+    "en": "Knight helmet",
+    "de": "Ritterhelm",
+    "es": "Casco de caballero",
+    "it": "Elmo da cavaliere"
+   },
+   "pieces": [
+    {
+     "forme": "sphere",
+     "position": [
+      0.12,
+      0.78,
+      0
+     ],
+     "taille": [
+      0.5,
+      0.34,
+      0.5
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      0
+     ],
+     "matiere": "couleur_3"
+    },
+    {
+     "forme": "cylindre",
+     "position": [
+      0.12,
+      0.67,
+      0
+     ],
+     "taille": [
+      0.56,
+      0.05,
+      0.56
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      0
+     ],
+     "matiere": "couleur_3"
+    },
+    {
+     "forme": "cube",
+     "position": [
+      0.34,
+      0.74,
+      0
+     ],
+     "taille": [
+      0.05,
+      0.05,
+      0.3
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      0
+     ],
+     "matiere": "noir"
+    },
+    {
+     "forme": "cone",
+     "position": [
+      0.1,
+      1.08,
+      0
+     ],
+     "taille": [
+      0.12,
+      0.34,
+      0.12
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      0
+     ],
+     "matiere": "couleur_2"
+    },
+    {
+     "forme": "sphere",
+     "position": [
+      0.1,
+      1.28,
+      0
+     ],
+     "taille": [
+      0.1,
+      0.1,
+      0.1
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      0
+     ],
+     "matiere": "couleur_2"
+    }
+   ]
+  }
+ }
+}

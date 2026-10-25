@@ -90,8 +90,8 @@ fn vehicle_slot(i: usize) -> Vec3 {
 
 /// Les mondes : deux rangées de quatre, plus espacées que les personnages (la ligne « départ ici » ne touche pas la rangée du dessous).
 fn world_slot(i: usize) -> Vec3 {
-    let (col, row) = ((i % 5) as f32, (i / 5) as f32);
-    ORIGIN + Vec3::new((col - 2.0) * 5.0, 0.0, (row - 0.5) * 6.0 - 1.9)
+    let (col, row) = ((i % 6) as f32, (i / 6) as f32);
+    ORIGIN + Vec3::new((col - 2.5) * 4.4, 0.0, (row - 0.5) * 6.0 - 1.9)
 }
 
 fn character_slot(i: usize) -> Vec3 {
@@ -213,8 +213,8 @@ fn build(
                 let center = world_slot(i);
                 let at = center - ORIGIN;
                 let (top, _) = extra.ground(&kit, *b, 0);
-                part(&mut commands, root, &kit.cyl, top, at + Vec3::Y * -0.15, Vec3::new(4.0, 0.2, 3.3));
-                let slot = slot_entity(&mut commands, root, at, 1.6, i);
+                part(&mut commands, root, &kit.cyl, top, at + Vec3::Y * -0.15, Vec3::new(3.6, 0.2, 3.0));
+                let slot = slot_entity(&mut commands, root, at, 1.4, i);
                 world_sample(&mut commands, &kit, &extra, slot, *b);
                 let open = progress.has(Item::World(*b));
                 if !open {
@@ -277,7 +277,7 @@ fn world_sample(c: &mut Commands, kit: &Kit, x: &Extra, slot: Entity, biome: Bio
         }
         Biome::Desert => spawn_scenery(c, kit, x, slot, biome, Scenery::Block, Vec3::new(-0.2, 0.0, 0.0), 0, 0),
         Biome::Snow => spawn_scenery(c, kit, x, slot, biome, Scenery::Block, Vec3::new(-0.2, 0.0, 0.0), 4, 0),
-        Biome::Jurassic | Biome::Nippon | Biome::Space | Biome::FarWest | Biome::Halloween | Biome::Cyber => {
+        Biome::Jurassic | Biome::Nippon | Biome::Space | Biome::FarWest | Biome::Halloween | Biome::Cyber | Biome::Medieval => {
             spawn_scenery(c, kit, x, slot, biome, Scenery::Block, Vec3::new(-0.3, 0.0, 0.0), 0, 0);
             spawn_scenery(c, kit, x, slot, biome, Scenery::Block, Vec3::new(0.7, 0.0, 0.5), 3, 0);
         }

@@ -223,6 +223,7 @@ fn music_world(
         Some(crate::extra::Biome::FarWest) => sounds.worlds[1].clone(),
         Some(crate::extra::Biome::Halloween) => sounds.worlds[3].clone(),
         Some(crate::extra::Biome::Cyber) => sounds.worlds[2].clone(),
+        Some(crate::extra::Biome::Medieval) => sounds.worlds[0].clone(),
     };
     commands.spawn((AudioPlayer::new(track), PlaybackSettings::LOOP.with_volume(Volume::Linear(0.35)), Musique, Mutable));
 }
