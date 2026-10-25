@@ -29,6 +29,16 @@ pub struct CapturePlugin;
 
 impl Plugin for CapturePlugin {
     fn build(&self, app: &mut App) {
+        if std::env::var("TRAVERSEE_PERF").is_ok() {
+            // Mesure : fps et nombre d'entités dans la console, en jouant tout seul.
+            use bevy::diagnostic::{EntityCountDiagnosticsPlugin, FrameTimeDiagnosticsPlugin, LogDiagnosticsPlugin};
+            app.add_plugins((
+                FrameTimeDiagnosticsPlugin::default(),
+                EntityCountDiagnosticsPlugin::default(),
+                LogDiagnosticsPlugin::default(),
+            ))
+            .add_systems(Update, run_perf);
+        }
         if let Ok(dir) = std::env::var("TRAVERSEE_CAPTURE") {
             app.insert_resource(Capture { dir, index: 0, since: 0.0, started: false, shot: false, last_hop: 0.0 })
                 .add_systems(Update, run_capture);
@@ -72,5 +82,29 @@ fn run_capture(
     if autopilot && !cap.shot && *state.get() == GameState::Playing && now - cap.last_hop > 0.45 {
         cap.last_hop = now;
         frog.queued = Some(IVec2::Y);
+    }
+}
+
+/// Pilote automatique pour `TRAVERSEE_PERF` : lance la partie, saute tout droit,
+/// rejoue après chaque mort, et quitte au bout de 25 secondes.
+fn run_perf(
+    time: Res<Time>,
+    mut frog: ResMut<Frog>,
+    state: Res<State<GameState>>,
+    mut next: ResMut<NextState<GameState>>,
+    mut exit: MessageWriter<AppExit>,
+    mut last: Local<f32>,
+) {
+    let now = time.elapsed_secs();
+    if now > 25.0 {
+        exit.write(AppExit::Success);
+    }
+    match state.get() {
+        GameState::Menu | GameState::GameOver if now > 2.0 => next.set(GameState::Playing),
+        GameState::Playing if now - *last > 0.3 => {
+            *last = now;
+            frog.queued = Some(IVec2::Y);
+        }
+        _ => {}
     }
 }

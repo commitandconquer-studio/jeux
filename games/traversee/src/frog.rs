@@ -6,12 +6,15 @@ use game_common::{Score, tx};
 
 use crate::GameState;
 use crate::audio::Sfx;
+use crate::fx::Fx;
 use crate::lanes::{COLS, Lane, LaneKind, Mover, MoverKind};
 
 const HOP_TIME: f32 = 0.14;
 const HOP_HEIGHT: f32 = 0.45;
 /// Demi-largeur du crapaud pour les collisions.
-const FROG_HALF: f32 = 0.28;
+const FROG_HALF: f32 = 0.26;
+/// Taille du modèle : assez gros pour rester lisible entre les camions.
+const FROG_SCALE: f32 = 1.4;
 
 #[derive(Resource, Default)]
 pub struct Frog {
@@ -25,7 +28,11 @@ pub struct Frog {
     /// Vrai dès le premier saut (la caméra commence alors à avancer).
     pub started: bool,
     hops: u32,
+    /// Temps restant de l'écrasement à l'atterrissage.
+    land: f32,
 }
+
+const LAND_TIME: f32 = 0.14;
 
 struct Hop {
     from: Vec3,
@@ -36,6 +43,29 @@ struct Hop {
 
 #[derive(Component)]
 pub struct FrogModel;
+
+/// Ombre ou halo posé sous le crapaud (pour le repérer entre les véhicules).
+#[derive(Component)]
+pub struct FrogShadow {
+    halo: bool,
+}
+
+pub fn spawn_shadow(commands: &mut Commands, kit: &crate::models::Kit, mats: &mut Assets<StandardMaterial>) {
+    let blend = |mats: &mut Assets<StandardMaterial>, c: Color| {
+        mats.add(StandardMaterial { unlit: true, alpha_mode: AlphaMode::Blend, ..game_common::flat_material(c) })
+    };
+    let halo = blend(mats, Color::srgba(1.0, 1.0, 0.8, 0.85));
+    let dark = blend(mats, Color::srgba(0.05, 0.1, 0.05, 0.45));
+    for (mat, halo) in [(halo, true), (dark, false)] {
+        commands.spawn((
+            Mesh3d(kit.cyl.clone()),
+            MeshMaterial3d(mat),
+            Transform::from_scale(Vec3::ZERO),
+            FrogShadow { halo },
+            bevy::light::NotShadowCaster,
+        ));
+    }
+}
 
 #[derive(Clone, Copy, PartialEq, Eq, Debug)]
 pub enum Cause {
@@ -146,8 +176,10 @@ pub fn update_frog(
     mut death: ResMut<Death>,
     mut next: ResMut<NextState<GameState>>,
     mut sfx: MessageWriter<Sfx>,
+    mut fx: MessageWriter<Fx>,
 ) {
     let dt = time.delta_secs();
+    frog.land = (frog.land - dt).max(0.0);
 
     // Saut en cours
     if let Some(hop) = frog.hop.as_mut() {
@@ -159,6 +191,7 @@ pub fn update_frog(
         frog.hop = None;
         frog.pos = to;
         frog.row = to_row;
+        frog.land = LAND_TIME;
         if to_row > score.current as i32 {
             score.current = to_row as u32;
             score.best = score.best.max(score.current);
@@ -175,6 +208,7 @@ pub fn update_frog(
             });
             match support {
                 Some((e, m, tf)) => {
+                    fx.write(Fx::Ripple(Vec3::new(to.x, 0.2, to.z)));
                     let offset = if m.kind == MoverKind::Pad { 0.0 } else { to.x - tf.translation.x };
                     frog.attached = Some((e, offset));
                     frog.pos.y = if m.kind == MoverKind::Pad { -0.1 } else { 0.25 };
@@ -186,6 +220,8 @@ pub fn update_frog(
                     return;
                 }
             }
+        } else {
+            fx.write(Fx::Dust(to));
         }
     }
 
@@ -226,6 +262,7 @@ pub fn update_frog(
     frog.hop = Some(Hop { from, to, to_row: target.y, t: 0.0 });
     frog.attached = None;
     frog.started = true;
+    fx.write(Fx::Dust(from));
     // Un coassement de temps en temps, sinon le « bloup » du saut.
     frog.hops += 1;
     sfx.write(if frog.hops % 9 == 0 { Sfx::Croak } else { Sfx::Hop });
@@ -262,32 +299,57 @@ pub fn dying(time: Res<Time>, mut death: ResMut<Death>, mut next: ResMut<NextSta
     }
 }
 
-/// Place le modèle 3D : arc de saut, étirement, animations de mort.
-pub fn sync_model(time: Res<Time>, frog: Res<Frog>, death: Res<Death>, mut q: Query<&mut Transform, With<FrogModel>>) {
+/// Place le modèle 3D : arc de saut, étirement, écrasement à l'atterrissage,
+/// animations de mort, et l'ombre posée au sol.
+pub fn sync_model(
+    time: Res<Time>,
+    frog: Res<Frog>,
+    death: Res<Death>,
+    mut q: Query<&mut Transform, With<FrogModel>>,
+    mut shadows: Query<(&mut Transform, &FrogShadow), Without<FrogModel>>,
+) {
     let mut pos = frog.pos;
+    let mut ground = frog.pos;
     let mut scale = Vec3::ONE;
     let mut yaw = frog.yaw;
+    let mut lift = 0.0;
     if let Some(h) = &frog.hop {
         let t = h.t.min(1.0);
         let s = (t * PI).sin();
-        pos = h.from.lerp(h.to, t) + Vec3::Y * s * HOP_HEIGHT;
+        ground = h.from.lerp(h.to, t);
+        lift = s;
+        pos = ground + Vec3::Y * s * HOP_HEIGHT;
         scale = Vec3::new(1.0 - 0.12 * s, 1.0 + 0.3 * s, 1.0 - 0.12 * s);
+    } else if frog.land > 0.0 {
+        // Petit écrasement à l'arrivée : le crapaud « pèse ».
+        let k = (frog.land / LAND_TIME * PI).sin();
+        scale = Vec3::new(1.0 + 0.16 * k, 1.0 - 0.22 * k, 1.0 + 0.16 * k);
     } else {
         // Respiration
         scale.y = 1.0 + (time.elapsed_secs() * 3.0).sin() * 0.03;
     }
+    let mut shadow_on = true;
     match death.cause {
         Some(Cause::Squashed) => scale = Vec3::new(1.45, 0.12, 1.45),
-        Some(Cause::Drowned | Cause::CarriedAway) => pos.y -= death.timer.min(1.0) * 0.8,
+        Some(Cause::Drowned | Cause::CarriedAway) => {
+            pos.y -= death.timer.min(1.0) * 0.8;
+            shadow_on = false;
+        }
         Some(Cause::TooSlow) => {
             yaw += death.timer * 12.0;
             scale = Vec3::splat((1.0 - death.timer).max(0.0));
+            shadow_on = false;
         }
         None => {}
     }
     for mut tf in &mut q {
         tf.translation = pos;
         tf.rotation = Quat::from_rotation_y(yaw);
-        tf.scale = scale * 1.2;
+        tf.scale = scale * FROG_SCALE;
+    }
+    for (mut tf, shadow) in &mut shadows {
+        let size = if shadow_on { (if shadow.halo { 1.6 } else { 1.0 }) * (1.0 - 0.35 * lift) } else { 0.0 };
+        tf.translation = Vec3::new(ground.x, ground.y + if shadow.halo { 0.02 } else { 0.03 }, ground.z);
+        tf.scale = Vec3::new(size, 0.01, size);
     }
 }
