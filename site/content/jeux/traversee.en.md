@@ -10,10 +10,10 @@ code = "games/traversee"
 dossier = "traversee"
 commandes = ["Arrow keys or WASD, Space or click: hop", "Touch: swipe", "M: sound · Esc: menu"]
 chiffres = [
-  { n = "58", t = "vehicles to unlock" },
+  { n = "61", t = "vehicles to unlock" },
   { n = "8", t = "characters" },
   { n = "7", t = "accessories" },
-  { n = "7", t = "worlds" },
+  { n = "9", t = "worlds" },
   { n = "5", t = "ways to lose" },
 ]
 captures = [
@@ -22,13 +22,15 @@ captures = [
   { img = "ecrase", t = "Every death has its own effect, with zoom and slow-mo" },
   { img = "noye", t = "Splash!" },
   { img = "mouche", t = "Catch a fly for bonus points" },
-  { img = "garage", t = "The garage: 58 vehicles to unlock" },
+  { img = "garage", t = "The garage: 61 vehicles to unlock" },
   { img = "personnages", t = "8 characters" },
   { img = "accessoires", t = "7 accessories" },
-  { img = "mondes", t = "7 worlds" },
+  { img = "mondes", t = "9 worlds" },
   { img = "parc", t = "Jura-Croak Park: dinosaurs cross the road" },
   { img = "japon", t = "Nippon Kaboom: cherry trees, petals and a blue-crested T-rex" },
   { img = "espace", t = "Croak Cosmos: the void, asteroids and spaceships" },
+  { img = "farwest", t = "Wild West Croak: horses, stagecoaches and bison" },
+  { img = "halloween", t = "Croak-o-ween: graveyard, pumpkins and creatures" },
   { img = "costume", t = "Looking sharp in a costume" },
 ]
 +++
@@ -38,10 +40,10 @@ captures = [
 ## A world you uncover
 At first the road is quiet: a few cars, some grass. As your **points add up from game to game**, the game grows: trucks, taxis, motorbikes, buses, trains, golden flies, then an **eagle** sweeping a whole column. Everything unlocks: vehicles, worlds, characters, accessories.
 
-## Seven worlds
-**Meadow**, **desert**, **snow** (ice floes and blocks), **autumn**, **Jura-Croak Park**, **Nippon Kaboom** and the **Croak Cosmos**. Each has its own scenery and obstacles; the first four have their **own music**, which speeds up with the difficulty and winds down like a stopping record when you die.
+## Nine worlds
+**Meadow**, **desert**, **snow** (ice floes and blocks), **autumn**, **Jura-Croak Park**, **Nippon Kaboom**, the **Croak Cosmos**, the **Wild West Croak** and **Croak-o-ween**. Each has its own scenery and obstacles; the first four have their **own music**, which speeds up with the difficulty and winds down like a stopping record when you die.
 
-## A garage of 58 vehicles
+## A garage of 61 vehicles
 From monster trucks to mopeds, with nods to your favourite films: a car that heads back to the future, a talking patrol car, a bat on wheels, a pair of Blues brothers… Each has its **own name** and shows as a silhouette until you earn it. Beware the **Speed-Bus 2552**: it races along and blows up as it leaves the screen!
 
 ## Jura-Croak Park
@@ -52,6 +54,12 @@ A festive, simple and colourful Japan: cherry trees, bamboo, stone lanterns, tor
 
 ## Croak Cosmos
 Off to space: a grey metal path in the middle of the **void**, stars as far as the eye can see, rolling **asteroids** and **spaceships** of every kind. Octagonal platforms replace lily pads, **freighters** replace logs, trains race through intergalactic **tubes**, and if you fall, you really fall… into the void. Your frog becomes the **Astronaut Frog**, globe and all.
+
+## Wild West Croak
+Dirt tracks, cacti and red mesas: no cars here, but **galloping horses**, **stagecoaches**, covered wagons and **bison herds**. Trains are **old steam trains** with a proper locomotive, and a **vulture** comes to snatch you. Your frog becomes the **Cowboy Frog**, hat firmly on.
+
+## Croak-o-ween
+A graveyard path, grinning pumpkins, a swamp where **coffins** and **pumpkins** float, a **ghost train**… Skeletons, witches on brooms, zombies, black cats and giant spiders cross the road, and a **colossal bat** replaces the eagle. Your frog becomes the **Witch Frog**.
 
 ## Characters and accessories
 Toad, rabbit, badger, raccoon, hedgehog, fox, panda, duck: **8 characters** to unlock, then **7 accessories** (cap, shades, top hat, pirate hat, crown, party hat, wizard hat) to dress them up.
