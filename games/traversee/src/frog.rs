@@ -41,6 +41,16 @@ struct Hop {
     t: f32,
 }
 
+impl Frog {
+    /// Où se trouve le crapaud à l'écran (au sol, en plein saut compris).
+    pub fn visual_pos(&self) -> Vec3 {
+        match &self.hop {
+            Some(h) => h.from.lerp(h.to, h.t.min(1.0)),
+            None => self.pos,
+        }
+    }
+}
+
 #[derive(Component)]
 pub struct FrogModel;
 
@@ -291,10 +301,25 @@ pub fn collide(
     }
 }
 
-/// Après la mort : petite animation, puis écran de fin.
-pub fn dying(time: Res<Time>, mut death: ResMut<Death>, mut next: ResMut<NextState<GameState>>) {
+/// Après la mort : petite animation, puis écran de fin. Un appui saute l'attente.
+/// Le temps réel compte (le ralenti de l'impact ne rallonge pas la pause).
+pub fn dying(
+    time: Res<Time<Real>>,
+    keys: Res<ButtonInput<KeyCode>>,
+    mouse: Res<ButtonInput<MouseButton>>,
+    touches: Res<Touches>,
+    mut death: ResMut<Death>,
+    mut virt: ResMut<Time<Virtual>>,
+    mut next: ResMut<NextState<GameState>>,
+) {
     death.timer += time.delta_secs();
-    if death.timer > 1.0 {
+    if death.timer > 0.3 {
+        virt.set_relative_speed(1.0);
+    }
+    let pressed = keys.get_just_pressed().next().is_some()
+        || mouse.just_pressed(MouseButton::Left)
+        || touches.iter_just_pressed().next().is_some();
+    if death.timer > 1.0 || (death.timer > 0.5 && pressed) {
         next.set(GameState::GameOver);
     }
 }

@@ -5,14 +5,17 @@ use bevy::prelude::*;
 use bevy::render::view::screenshot::{Screenshot, save_to_disk};
 
 use crate::GameState;
-use crate::frog::Frog;
+use crate::frog::{Cause, Death, Frog, die};
 
 /// (nom, état, secondes avant la capture, pilote automatique)
-const SHOTS: [(&str, GameState, f32, bool); 4] = [
+const SHOTS: [(&str, GameState, f32, bool); 6] = [
     ("1-menu", GameState::Menu, 4.0, false),
     ("2-depart", GameState::Playing, 1.0, false),
     ("3-en-route", GameState::Playing, 2.5, true),
     ("4-plus-loin", GameState::Playing, 2.5, true),
+    // Dying : on joue tout droit jusqu'à la mort, puis on photographie l'effet.
+    ("5-ecrase", GameState::Dying, 0.2, true),
+    ("6-noye", GameState::Dying, 0.2, true),
 ];
 
 #[derive(Resource)]
@@ -47,10 +50,11 @@ impl Plugin for CapturePlugin {
 }
 
 fn run_capture(
-    time: Res<Time>,
+    time: Res<Time<Real>>,
     mut commands: Commands,
     mut cap: ResMut<Capture>,
     mut frog: ResMut<Frog>,
+    mut death: ResMut<Death>,
     state: Res<State<GameState>>,
     mut next: ResMut<NextState<GameState>>,
     mut exit: MessageWriter<AppExit>,
@@ -62,11 +66,37 @@ fn run_capture(
         }
         return;
     };
+    if *state.get() == GameState::Dying && wanted != GameState::Dying {
+        cap.since = now;
+        return; // on laisse la mort se terminer
+    }
+    if wanted == GameState::Dying && *state.get() != GameState::Dying && !cap.shot {
+        // En attendant la mort : on (re)lance la partie et on saute.
+        cap.since = now;
+        if matches!(state.get(), GameState::Menu | GameState::GameOver) {
+            next.set(GameState::Playing);
+        }
+        if *state.get() == GameState::Playing && now - cap.last_hop > 0.3 {
+            cap.last_hop = now;
+            frog.queued = Some(IVec2::Y);
+        }
+        // Mort forcée, pour photographier chaque effet : écrasé, puis noyé.
+        if *state.get() == GameState::Playing && frog.row >= 2 {
+            let cause = if cap.index == 4 { Cause::Squashed } else { Cause::Drowned };
+            die(cause, &mut death, &mut next);
+        }
+        cap.started = true; // on a vu la partie vivante : la prochaine mort est la bonne
+        return;
+    }
+    if wanted == GameState::Dying && !cap.started && !cap.shot {
+        cap.since = now;
+        return; // encore la mort précédente
+    }
     let elapsed = now - cap.since;
     if !cap.started {
         cap.started = true;
         // Ne relance pas la partie si on y est déjà (pour continuer à avancer).
-        if *state.get() != wanted {
+        if *state.get() != wanted && wanted != GameState::Dying {
             next.set(wanted);
         }
     } else if !cap.shot && elapsed >= delay {
