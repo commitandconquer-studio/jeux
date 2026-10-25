@@ -24,6 +24,8 @@ pub enum Fx {
     World(crate::extra::Biome),
     /// Plumes qui volent (l'aigle).
     Feathers(Vec3),
+    /// Un déblocage vient d'être gagné.
+    Unlock(crate::progress::Item),
 }
 
 /// Éclair blanc plein écran qui s'éteint tout seul.
@@ -87,7 +89,7 @@ impl Plugin for FxPlugin {
             .add_systems(Startup, setup)
             .add_systems(OnEnter(GameState::Dying), death_fx)
             .add_systems(OnExit(GameState::Dying), |mut t: ResMut<Time<Virtual>>| t.set_relative_speed(1.0))
-            .add_systems(Update, (spawn_fx, update_particles, update_rings, update_flash, update_pop, update_rise).chain());
+            .add_systems(Update, (spawn_fx, update_particles, update_rings, update_flash, update_pop, update_rise, update_toasts).chain());
     }
 }
 
@@ -144,7 +146,16 @@ fn puff(c: &mut Commands, kit: &Kit, mat: &Handle<StandardMaterial>, pos: Vec3, 
     ));
 }
 
-fn spawn_fx(mut commands: Commands, mut reader: MessageReader<Fx>, kit: Res<Kit>, mats: Res<FxMats>, mut rng: ResMut<Rng>) {
+fn spawn_fx(
+    mut commands: Commands,
+    mut reader: MessageReader<Fx>,
+    kit: Res<Kit>,
+    mats: Res<FxMats>,
+    mut rng: ResMut<Rng>,
+    toasts: Query<&Toast>,
+    mut sfx: MessageWriter<crate::audio::Sfx>,
+) {
+    let mut queued = toasts.iter().count();
     for fx in reader.read() {
         match *fx {
             Fx::Dust(p) => {
@@ -188,6 +199,11 @@ fn spawn_fx(mut commands: Commands, mut reader: MessageReader<Fx>, kit: Res<Kit>
                 }
                 ring(&mut commands, &kit_ring(&mats), &mats.star, Vec3::new(p.x, p.y - 0.3, p.z), 1.6, 0.35);
                 points_text(&mut commands, points);
+            }
+            Fx::Unlock(item) => {
+                spawn_toast(&mut commands, item, queued as f32 * 1.1);
+                queued += 1;
+                sfx.write(crate::audio::Sfx::Win);
             }
             Fx::Feathers(p) => {
                 for _ in 0..22 {
@@ -361,5 +377,83 @@ fn update_rise(mut commands: Commands, time: Res<Time<Real>>, mut q: Query<(Enti
         }
         node.top = percent(12.0 - 6.0 * r.age);
         color.0 = color.0.with_alpha((1.0 - (r.age - 0.5).max(0.0) * 2.0).clamp(0.0, 1.0));
+    }
+}
+
+/// L'annonce d'un déblocage : une carte qui glisse du haut de l'écran.
+#[derive(Component)]
+struct Toast {
+    age: f32,
+}
+
+const TOAST_LEN: f32 = 3.4;
+
+fn spawn_toast(commands: &mut Commands, item: crate::progress::Item, delay: f32) {
+    let color = item.color();
+    commands
+        .spawn((
+            Node {
+                position_type: PositionType::Absolute,
+                left: percent(50),
+                margin: UiRect::left(px(-250)),
+                top: px(-120),
+                width: px(500),
+                height: px(84),
+                border: UiRect::all(px(4)),
+                border_radius: BorderRadius::all(px(18)),
+                overflow: Overflow::clip(),
+                ..default()
+            },
+            BackgroundColor(Color::srgb(0.99, 0.97, 0.9)),
+            BorderColor::all(color),
+            GlobalZIndex(60),
+            Pickable::IGNORE,
+            Toast { age: -delay },
+            Visibility::Hidden,
+        ))
+        .with_children(|p| {
+            p.spawn((
+                Node { width: px(150), justify_content: JustifyContent::Center, align_items: AlignItems::Center, ..default() },
+                BackgroundColor(color),
+                Pickable::IGNORE,
+            ))
+            .with_children(|b| {
+                b.spawn((Text::new(item.kind()), TextFont::from_font_size(20.0), TextColor(Color::WHITE), Pickable::IGNORE, ThemedText));
+            });
+            p.spawn((
+                Node { flex_grow: 1.0, flex_direction: FlexDirection::Column, justify_content: JustifyContent::Center, padding: UiRect::horizontal(px(14)), ..default() },
+                Pickable::IGNORE,
+            ))
+            .with_children(|t| {
+                t.spawn((
+                    Text::new(tx!("Débloqué !", "Unlocked!", "Freigeschaltet!", "Sbloccato!", "¡Desbloqueado!").t()),
+                    TextFont::from_font_size(16.0),
+                    TextColor(Color::srgb(0.4, 0.4, 0.45)),
+                    Pickable::IGNORE,
+                    ThemedText,
+                ));
+                t.spawn((Text::new(item.name()), TextFont::from_font_size(26.0), TextColor(Color::srgb(0.12, 0.14, 0.2)), Pickable::IGNORE, ThemedText));
+            });
+        });
+}
+
+fn update_toasts(mut commands: Commands, time: Res<Time<Real>>, mut q: Query<(Entity, &mut Toast, &mut Node, &mut Visibility)>) {
+    for (e, mut t, mut node, mut vis) in &mut q {
+        t.age += time.delta_secs();
+        if t.age < 0.0 {
+            continue;
+        }
+        *vis = Visibility::Inherited;
+        if t.age > TOAST_LEN {
+            commands.entity(e).despawn();
+            continue;
+        }
+        // Descend vite, rebondit un peu, reste, puis remonte.
+        let slide_in = (t.age / 0.4).min(1.0);
+        let ease = 1.0 - (1.0 - slide_in).powi(3);
+        let bounce = if t.age < 0.7 { (1.0 - (t.age - 0.4).max(0.0) / 0.3) * (t.age * 30.0).sin() * 6.0 } else { 0.0 };
+        let out = ((t.age - (TOAST_LEN - 0.4)) / 0.4).clamp(0.0, 1.0);
+        let top = -120.0 + (120.0 + 96.0) * ease + bounce - out * out * 240.0;
+        node.top = px(top);
     }
 }

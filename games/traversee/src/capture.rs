@@ -74,6 +74,7 @@ fn run_capture(
     mut death: ResMut<Death>,
     lanes: Query<(Entity, &Lane)>,
     mut view: ResMut<crate::garage::View>,
+    mut fx: MessageWriter<crate::fx::Fx>,
     mut selection: ResMut<crate::characters::Selection>,
     kit: Res<Kit>,
     extra: Res<Extra>,
@@ -125,6 +126,10 @@ fn run_capture(
     let elapsed = now - cap.since;
     if !cap.started {
         cap.started = true;
+        if cap.index == 1 {
+            // Pour photographier l'annonce d'un déblocage en jeu.
+            fx.write(crate::fx::Fx::Unlock(crate::progress::Item::Character(crate::characters::Character::Rabbit)));
+        }
         if cap.index == 9 {
             view.tab = crate::garage::Tab::Characters;
             view.dirty = true;

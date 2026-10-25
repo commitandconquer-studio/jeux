@@ -93,11 +93,15 @@ pub struct LaneGen {
     queue: Vec<LaneKind>,
     prev: LaneKind,
     reset: bool,
+    /// Colonne que chaque voie garde ouverte : de quoi toujours pouvoir avancer.
+    corridor: i32,
+    /// La rivière précédente avait des rondins (le crapaud arrive n'importe où).
+    prev_logs: bool,
 }
 
 impl LaneGen {
     pub fn new(seed: u64) -> Self {
-        Self { next_row: -8, rng: Rng::new(seed), queue: Vec::new(), prev: LaneKind::Grass, reset: true }
+        Self { next_row: -8, rng: Rng::new(seed), queue: Vec::new(), prev: LaneKind::Grass, reset: true, corridor: 0, prev_logs: false }
     }
 
     /// Repart de zéro (appliqué au prochain passage de `ensure_lanes`).
@@ -174,6 +178,8 @@ fn spawn_lane(c: &mut Commands, kit: &Kit, x: &Extra, g: &mut LaneGen, points: u
     let kind = g.next_kind(row, points);
     let biome = Biome::of(row, points);
     let after_road = g.prev == LaneKind::Road;
+    let after_river = g.prev == LaneKind::River;
+    let prev_logs = std::mem::take(&mut g.prev_logs);
     g.prev = kind;
 
     let root = c.spawn((Transform::from_xyz(0.0, 0.0, -row as f32), Visibility::default())).id();
@@ -206,6 +212,20 @@ fn spawn_lane(c: &mut Commands, kit: &Kit, x: &Extra, g: &mut LaneGen, points: u
                         blocked.push(col);
                     }
                 }
+            }
+            if row >= 0 {
+                // Après une rivière, peu d'obstacles : le crapaud arrive où le courant l'a mené.
+                if after_river {
+                    blocked.truncate(1);
+                }
+                // Le couloir reste ouvert, et peut glisser d'une colonne sur l'herbe.
+                let c0 = g.corridor;
+                let mut c1 = c0;
+                if g.rand() < 0.35 {
+                    c1 = (c0 + if g.rng.below(2) == 0 { -1 } else { 1 }).clamp(-COLS, COLS);
+                }
+                blocked.retain(|b| *b != c0 && *b != c1);
+                g.corridor = c1;
             }
             for &col in &blocked {
                 let variant = g.rng.below(6) as usize;
@@ -324,10 +344,12 @@ fn spawn_lane(c: &mut Commands, kit: &Kit, x: &Extra, g: &mut LaneGen, points: u
             ground(c, -0.15, water, water_side);
             let frozen = biome == Biome::Snow;
             if g.rng.below(4) == 0 {
-                // Nénuphars immobiles
+                // Nénuphars immobiles : toujours un sur le couloir, et beaucoup
+                // après une rivière à rondins (le crapaud n'est pas sur le couloir).
+                let dense = if prev_logs { 8 } else { 4 };
                 let mut count = 0;
                 for col in -COLS..=COLS {
-                    if g.rng.below(10) < 4 {
+                    if col == g.corridor || g.rng.below(10) < dense {
                         let mover = spawn_mover(c, root, row, col as f32, 0.0, 0.8, MoverKind::Pad, 1.0);
                         if frozen {
                             spawn_ice_pad(c, kit, x, mover);
@@ -346,6 +368,7 @@ fn spawn_lane(c: &mut Commands, kit: &Kit, x: &Extra, g: &mut LaneGen, points: u
                     }
                 }
             } else {
+                g.prev_logs = true;
                 let d = difficulty(row);
                 let dir = if g.rng.below(2) == 0 { 1.0 } else { -1.0 };
                 let speed = (1.0 + g.rand() * 1.2 + d * 1.5) * dir;

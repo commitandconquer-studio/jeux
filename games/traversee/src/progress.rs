@@ -154,6 +154,7 @@ impl Plugin for ProgressPlugin {
     fn build(&self, app: &mut App) {
         app.init_resource::<Progress>()
             .add_systems(Startup, load_best)
+            .add_systems(Update, announce.run_if(in_state(GameState::Playing)))
             // Avant l'écran de fin, qui affiche ce qui vient d'être débloqué.
             .add_systems(OnEnter(GameState::GameOver), commit.before(crate::ui::spawn_game_over));
     }
@@ -177,4 +178,47 @@ fn commit(mut progress: ResMut<Progress>, score: Res<Score>) {
     }
     game_common::save::store(SAVE, "total", &after.to_string());
     game_common::save::store(SAVE, "best", &score.best.to_string());
+}
+
+/// Pendant la partie : dès qu'un seuil est franchi, on l'annonce à l'écran.
+fn announce(
+    progress: Res<Progress>,
+    score: Res<Score>,
+    mut last: Local<Option<u32>>,
+    mut fx: MessageWriter<crate::fx::Fx>,
+) {
+    let now = progress.total + score.current;
+    let before = last.unwrap_or(now).min(now);
+    if before < now {
+        for (t, item) in UNLOCKS.iter() {
+            if before < *t && *t <= now {
+                fx.write(crate::fx::Fx::Unlock(*item));
+            }
+        }
+    }
+    *last = Some(now);
+}
+
+impl Item {
+    /// Le genre de nouveauté, pour l'étiquette de l'annonce.
+    pub fn kind(self) -> &'static str {
+        match self {
+            Item::Vehicle(_) | Item::Trains => tx!("VÉHICULE", "VEHICLE", "FAHRZEUG", "VEICOLO", "VEHÍCULO"),
+            Item::World(_) => tx!("MONDE", "WORLD", "WELT", "MONDO", "MUNDO"),
+            Item::Character(_) => tx!("PERSONNAGE", "CHARACTER", "FIGUR", "PERSONAGGIO", "PERSONAJE"),
+            Item::Costume(_) => tx!("ACCESSOIRE", "ACCESSORY", "ZUBEHÖR", "ACCESSORIO", "ACCESORIO"),
+            Item::Flies | Item::GoldFlies | Item::Eagle => tx!("NOUVEAUTÉ", "NEW", "NEU", "NOVITÀ", "NOVEDAD"),
+        }
+        .t()
+    }
+
+    pub fn color(self) -> Color {
+        match self {
+            Item::Vehicle(_) | Item::Trains => Color::srgb(0.25, 0.5, 0.9),
+            Item::World(_) => Color::srgb(0.3, 0.7, 0.35),
+            Item::Character(_) => Color::srgb(0.95, 0.55, 0.15),
+            Item::Costume(_) => Color::srgb(0.6, 0.4, 0.85),
+            Item::Flies | Item::GoldFlies | Item::Eagle => Color::srgb(0.2, 0.7, 0.7),
+        }
+    }
 }
