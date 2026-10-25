@@ -11,7 +11,7 @@ use crate::models::Kit;
 use crate::frog::{Cause, Death, Frog, die};
 
 /// (nom, état, secondes avant la capture, pilote automatique)
-const SHOTS: [(&str, GameState, f32, bool); 9] = [
+const SHOTS: [(&str, GameState, f32, bool); 11] = [
     ("1-menu", GameState::Menu, 4.0, false),
     ("2-depart", GameState::Playing, 1.0, false),
     ("3-en-route", GameState::Playing, 2.5, true),
@@ -23,6 +23,8 @@ const SHOTS: [(&str, GameState, f32, bool); 9] = [
     // Une mouche posée sur la 3e case : le crapaud la gobe en avançant.
     ("8-mouche", GameState::Playing, 1.2, true),
     ("9-garage", GameState::Garage, 1.0, false),
+    ("10-personnages", GameState::Garage, 1.2, false),
+    ("11-en-costume", GameState::Playing, 1.0, true),
 ];
 
 #[derive(Resource)]
@@ -64,6 +66,8 @@ fn run_capture(
     mut frog: ResMut<Frog>,
     mut death: ResMut<Death>,
     lanes: Query<(Entity, &Lane)>,
+    mut view: ResMut<crate::garage::View>,
+    mut selection: ResMut<crate::characters::Selection>,
     kit: Res<Kit>,
     extra: Res<Extra>,
     state: Res<State<GameState>>,
@@ -114,6 +118,15 @@ fn run_capture(
     let elapsed = now - cap.since;
     if !cap.started {
         cap.started = true;
+        if cap.index == 9 {
+            view.tab = crate::garage::Tab::Characters;
+            view.dirty = true;
+            selection.costume = crate::characters::Costume::Pirate;
+        }
+        if cap.index == 10 {
+            selection.character = crate::characters::Character::Raccoon;
+            selection.costume = crate::characters::Costume::Crown;
+        }
         // Ne relance pas la partie si on y est déjà (pour continuer à avancer).
         if *state.get() != wanted && wanted != GameState::Dying {
             next.set(wanted);

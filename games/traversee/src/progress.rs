@@ -85,6 +85,11 @@ pub fn unlocked(points: u32, item: Item) -> bool {
 pub struct Progress {
     /// Points de toutes les parties terminées.
     pub total: u32,
+    /// Mouches gobées au total (elles débloquent les costumes).
+    pub flies: u32,
+    /// Personnages et costumes débloqués par la dernière partie.
+    pub fresh_characters: Vec<crate::characters::Character>,
+    pub fresh_costumes: Vec<crate::characters::Costume>,
     /// Objets débloqués par la dernière partie.
     pub fresh: Vec<Item>,
 }
@@ -94,7 +99,8 @@ impl Default for Progress {
         // TRAVERSEE_POINTS=9999 : essayer tous les véhicules sans toucher à la sauvegarde.
         let forced = std::env::var("TRAVERSEE_POINTS").ok().and_then(|s| s.parse().ok());
         let total = forced.or_else(|| game_common::save::load(SAVE, "total").and_then(|s| s.parse().ok())).unwrap_or(0);
-        Self { total, fresh: Vec::new() }
+        let flies = forced.map(|_| 9999).or_else(|| game_common::save::load(SAVE, "mouches").and_then(|s| s.parse().ok())).unwrap_or(0);
+        Self { total, flies, fresh_characters: Vec::new(), fresh_costumes: Vec::new(), fresh: Vec::new() }
     }
 }
 
@@ -127,15 +133,21 @@ fn load_best(mut score: ResMut<Score>) {
 }
 
 /// Fin de partie : les points s'ajoutent au total ; ce qui passe un seuil se débloque.
-fn commit(mut progress: ResMut<Progress>, score: Res<Score>) {
+fn commit(mut progress: ResMut<Progress>, score: Res<Score>, frog: Res<crate::frog::Frog>) {
     let before = progress.total;
+    let flies_before = progress.flies;
+    progress.flies += frog.eaten();
     progress.total += score.current;
     let after = progress.total;
+    let flies_after = progress.flies;
+    progress.fresh_characters = crate::characters::CHARACTERS.iter().filter(|(_, t)| before < *t && *t <= after).map(|(c, _)| *c).collect();
+    progress.fresh_costumes = crate::characters::COSTUMES.iter().filter(|(_, t)| flies_before < *t && *t <= flies_after).map(|(c, _)| *c).collect();
     progress.fresh = UNLOCKS.iter().filter(|(t, _)| before < *t && *t <= after).map(|(_, i)| *i).collect();
     // Les modes d'essai (captures, mesures, points forcés) ne touchent pas la sauvegarde.
     if ["TRAVERSEE_CAPTURE", "TRAVERSEE_PERF", "TRAVERSEE_POINTS"].iter().any(|k| std::env::var(k).is_ok()) {
         return;
     }
     game_common::save::store(SAVE, "total", &after.to_string());
+    game_common::save::store(SAVE, "mouches", &flies_after.to_string());
     game_common::save::store(SAVE, "best", &score.best.to_string());
 }

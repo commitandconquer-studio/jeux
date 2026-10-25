@@ -31,6 +31,7 @@ pub struct Frog {
     /// Rangée la plus lointaine atteinte, et points gagnés avec les mouches.
     max_row: i32,
     bonus: u32,
+    flies: u32,
     /// Temps restant de l'écrasement à l'atterrissage.
     land: f32,
 }
@@ -49,6 +50,11 @@ struct Hop {
 }
 
 impl Frog {
+    /// Mouches gobées pendant cette partie.
+    pub fn eaten(&self) -> u32 {
+        self.flies
+    }
+
     /// Où se trouve le crapaud à l'écran (au sol, en plein saut compris).
     pub fn visual_pos(&self) -> Vec3 {
         match &self.hop {
@@ -252,6 +258,7 @@ pub fn update_frog(
         if let Some((e, fly)) = flies.iter().find(|(_, f)| f.row == to_row && f.col == col) {
             commands.entity(e).despawn();
             frog.bonus += fly.points();
+            frog.flies += 1;
             sfx.write(Sfx::Eat);
             fx.write(Fx::Gulp(Vec3::new(to.x, to.y + 0.5, to.z), fly.points()));
         }

@@ -1,158 +1,264 @@
-//! Le garage : tous les véhicules en vitrine. Ceux qu'on a débloqués tournent
-//! lentement avec leur nom ; les autres restent des ombres, avec les points
-//! qu'il faut pour les débloquer.
-use bevy::camera::visibility::Visibility;
+//! Le garage : la vitrine des véhicules et celle des personnages. Ce qui est
+//! débloqué tourne avec son nom ; le reste reste une ombre, avec ce qu'il faut
+//! pour le débloquer (points pour les véhicules et les personnages, mouches
+//! gobées pour les costumes).
 use bevy::prelude::*;
-use game_common::ui::{spawn_button, spawn_text};
+use game_common::models::FrogKit;
+use game_common::ui::{spawn_button, spawn_button_sized, spawn_text};
 use game_common::{flat_material, tx};
 
 use crate::GameState;
+use crate::audio::Sfx;
+use crate::characters::{CHARACTERS, COSTUMES, Cast, Character, Costume, Selection, spawn_character, unlocked_character, unlocked_costume};
 use crate::extra::{Extra, Vehicle, spawn_vehicle};
 use crate::models::{Kit, part, spawn_car, spawn_train_car, spawn_truck};
 use crate::progress::{ALL, Item, Progress, threshold};
 
 /// Le garage est bâti loin de la route, hors de vue du jeu.
 pub const ORIGIN: Vec3 = Vec3::new(400.0, 0.0, 0.0);
-const COLS: usize = 5;
-const SPACING: Vec2 = Vec2::new(5.0, 4.6);
 
 pub struct GaragePlugin;
 
 impl Plugin for GaragePlugin {
     fn build(&self, app: &mut App) {
-        app.add_observer(on_back)
-            .add_systems(OnEnter(GameState::Garage), spawn_garage)
+        app.init_resource::<View>()
+            .add_observer(on_click)
+            .add_systems(OnEnter(GameState::Garage), |mut v: ResMut<View>| v.dirty = true)
             .add_systems(
                 Update,
-                (spin, shade_locked, place_labels, back_key).run_if(in_state(GameState::Garage)),
+                (build.run_if(|v: Res<View>| v.dirty), spin, shade_locked, place_labels, back_key).chain().run_if(in_state(GameState::Garage)),
             );
     }
 }
 
+#[derive(Clone, Copy, PartialEq, Eq, Default, Debug)]
+pub enum Tab {
+    #[default]
+    Vehicles,
+    Characters,
+}
+
+#[derive(Resource, Default)]
+pub struct View {
+    pub tab: Tab,
+    pub dirty: bool,
+}
+
+/// Tout ce que le garage fabrique : effacé et refait quand l'affichage change.
+#[derive(Component)]
+struct GarageItem;
+
 #[derive(Component)]
 struct Spin(f32);
 
-/// Un véhicule pas encore débloqué : on le peint en ombre.
+/// Pas encore débloqué : on le peint en ombre.
 #[derive(Component)]
 struct Locked;
 
 #[derive(Component)]
 struct Shaded;
 
-/// Texte accroché sous un véhicule (position dans le monde).
+/// Texte accroché sous un modèle (position dans le monde).
 #[derive(Component)]
 struct Label(Vec3);
 
-#[derive(Component)]
-struct BackButton;
-
-fn slot_pos(i: usize) -> Vec3 {
-    let (col, row) = ((i % COLS) as f32, (i / COLS) as f32);
-    // Les lignes du bas ont le dernier mot : on centre la vitrine.
-    ORIGIN + Vec3::new((col - 2.0) * SPACING.x, 0.0, (row - 1.15) * SPACING.y)
+/// Ce que fait un clic sur un bouton du garage.
+#[derive(Component, Clone, Copy)]
+enum Act {
+    Back,
+    Tab(Tab),
+    Char(Character),
+    Costume(Costume),
 }
 
-fn spawn_garage(
+fn scope() -> impl Bundle {
+    (GarageItem, DespawnOnExit(GameState::Garage))
+}
+
+fn vehicle_slot(i: usize) -> Vec3 {
+    const COLS: usize = 5;
+    let (col, row) = ((i % COLS) as f32, (i / COLS) as f32);
+    ORIGIN + Vec3::new((col - 2.0) * 5.0, 0.0, (row - 1.15) * 4.6)
+}
+
+fn character_slot(i: usize) -> Vec3 {
+    let (col, row) = ((i % 4) as f32, (i / 4) as f32);
+    ORIGIN + Vec3::new((col - 1.5) * 5.6, 0.0, (row - 0.5) * 5.1 - 1.9)
+}
+
+#[allow(clippy::too_many_arguments)]
+fn build(
     mut commands: Commands,
+    old: Query<Entity, With<GarageItem>>,
+    mut view: ResMut<View>,
     kit: Res<Kit>,
     extra: Res<Extra>,
+    frog_kit: Res<FrogKit>,
+    cast: Res<Cast>,
     progress: Res<Progress>,
+    selection: Res<Selection>,
     mut mats: ResMut<Assets<StandardMaterial>>,
 ) {
-    let total = progress.total;
+    view.dirty = false;
+    for e in &old {
+        commands.entity(e).despawn();
+    }
     let floor = mats.add(flat_material(Color::srgb(0.86, 0.88, 0.80)));
     let plate = mats.add(flat_material(Color::srgb(0.70, 0.74, 0.66)));
-    let scope = DespawnOnExit(GameState::Garage);
-    let root = commands.spawn((Transform::from_translation(ORIGIN), Visibility::default(), scope.clone())).id();
+    let root = commands.spawn((Transform::from_translation(ORIGIN), Visibility::default(), scope())).id();
     part(&mut commands, root, &kit.cube, &floor, Vec3::new(0.0, -0.3, 0.0), Vec3::new(46.0, 0.2, 34.0));
-    for (i, item) in ALL.iter().enumerate() {
-        let at = slot_pos(i) - ORIGIN;
-        part(&mut commands, root, &kit.cyl, &plate, at + Vec3::Y * -0.15, Vec3::new(3.6, 0.2, 3.0));
-        // Les longs véhicules sont réduits pour tenir sur leur plateau.
-        let len = match *item {
-            Item::Trains => 2.95,
-            Item::Vehicle(v) => v.len(),
-        };
-        let fit = (2.7 / len).min(1.15);
-        let slot = commands
-            .spawn((
-                Transform::from_translation(at + Vec3::Y * 0.05).with_rotation(Quat::from_rotation_y(0.5)).with_scale(Vec3::splat(fit)),
-                Visibility::default(),
-                Spin(0.5 + i as f32 * 0.3),
-                ChildOf(root),
-            ))
-            .id();
-        let color = i * 5 + 1;
-        match *item {
-            Item::Trains => spawn_train_car(&mut commands, &kit, slot, true),
-            Item::Vehicle(Vehicle::Car) => spawn_car(&mut commands, &kit, slot, color),
-            Item::Vehicle(Vehicle::Truck) => spawn_truck(&mut commands, &kit, slot, color),
-            Item::Vehicle(v) => spawn_vehicle(&mut commands, &kit, &extra, slot, v, color),
+
+    let heading;
+    match view.tab {
+        Tab::Vehicles => {
+            heading = tx!("Garage : {} / {} véhicules", "Garage: {} / {} vehicles", "Garage: {} / {} Fahrzeuge", "Garage: {} / {} veicoli", "Garaje: {} / {} vehículos")
+                .avec(&[&progress.count(), &ALL.len()]);
+            for (i, item) in ALL.iter().enumerate() {
+                let at = vehicle_slot(i) - ORIGIN;
+                part(&mut commands, root, &kit.cyl, &plate, at + Vec3::Y * -0.15, Vec3::new(3.6, 0.2, 3.0));
+                // Les longs véhicules sont réduits pour tenir sur leur plateau.
+                let len = match *item {
+                    Item::Trains => 2.95,
+                    Item::Vehicle(v) => v.len(),
+                };
+                let slot = slot_entity(&mut commands, root, at, (2.7 / len).min(1.15), i);
+                let color = i * 5 + 1;
+                match *item {
+                    Item::Trains => spawn_train_car(&mut commands, &kit, slot, true),
+                    Item::Vehicle(Vehicle::Car) => spawn_car(&mut commands, &kit, slot, color),
+                    Item::Vehicle(Vehicle::Truck) => spawn_truck(&mut commands, &kit, slot, color),
+                    Item::Vehicle(v) => spawn_vehicle(&mut commands, &kit, &extra, slot, v, color),
+                }
+                let open = progress.total >= threshold(*item);
+                if !open {
+                    commands.entity(slot).insert(Locked);
+                }
+                let sub = if open { String::new() } else { pts(threshold(*item)) };
+                label(&mut commands, vehicle_slot(i) + Vec3::new(0.0, 0.0, 1.9), if open { item.name() } else { "???" }, sub, open, false, None);
+            }
         }
-        let open = total >= threshold(*item);
-        if !open {
-            commands.entity(slot).insert(Locked);
+        Tab::Characters => {
+            let have = CHARACTERS.iter().filter(|(c, _)| unlocked_character(&progress, *c)).count();
+            heading = tx!("Personnages : {} / {}", "Characters: {} / {}", "Figuren: {} / {}", "Personaggi: {} / {}", "Personajes: {} / {}").avec(&[&have, &CHARACTERS.len()]);
+            for (i, (ch, need)) in CHARACTERS.iter().enumerate() {
+                let at = character_slot(i) - ORIGIN;
+                part(&mut commands, root, &kit.cyl, &plate, at + Vec3::Y * -0.15, Vec3::new(4.0, 0.2, 3.4));
+                let slot = slot_entity(&mut commands, root, at, 2.3, i);
+                // Tout le monde essaie le costume choisi.
+                spawn_character(&mut commands, *ch, selection.costume, &kit, &frog_kit, &cast, &mut mats, slot);
+                let open = unlocked_character(&progress, *ch);
+                if !open {
+                    commands.entity(slot).insert(Locked);
+                }
+                let chosen = open && selection.character == *ch;
+                let sub = if !open {
+                    pts(*need)
+                } else if chosen {
+                    tx!("— choisi —", "— chosen —", "— gewählt —", "— scelto —", "— elegido —").t().to_string()
+                } else {
+                    String::new()
+                };
+                label(&mut commands, character_slot(i) + Vec3::new(0.0, 0.0, 2.1), if open { ch.name() } else { "???" }, sub, open, chosen, open.then_some(Act::Char(*ch)));
+            }
+            // Barre des costumes
+            let bar = commands
+                .spawn((
+                    Node {
+                        position_type: PositionType::Absolute,
+                        bottom: px(18),
+                        width: percent(100),
+                        flex_wrap: FlexWrap::Wrap,
+                        justify_content: JustifyContent::Center,
+                        column_gap: px(8),
+                        row_gap: px(8),
+                        padding: UiRect::horizontal(px(300)),
+                        ..default()
+                    },
+                    scope(),
+                ))
+                .id();
+            for (co, need) in COSTUMES {
+                let open = unlocked_costume(&progress, co);
+                let text = if open {
+                    co.name().to_string()
+                } else {
+                    format!("??? · {}", tx!("{} mouches", "{} flies", "{} Fliegen", "{} mosche", "{} moscas").avec(&[&need]))
+                };
+                let (b, _) = spawn_button_sized(&mut commands, bar, text, 200.0, 40.0, 15.0);
+                commands.entity(b).insert(Act::Costume(co));
+                if open && selection.costume == co {
+                    commands.entity(b).insert(BackgroundColor(Color::srgb(1.0, 0.88, 0.45)));
+                } else if !open {
+                    commands.entity(b).insert(BackgroundColor(Color::srgb(0.82, 0.82, 0.8)));
+                }
+            }
         }
-        // Nom, ou mystère et points à atteindre
-        let (title, sub) = if open {
-            (item.name().to_string(), String::new())
-        } else {
-            (
-                "???".to_string(),
-                tx!("{} pts", "{} pts", "{} Pkt.", "{} pt", "{} pts").avec(&[&threshold(*item)]),
-            )
-        };
-        label(&mut commands, slot_pos(i) + Vec3::new(0.0, 0.0, 1.9), title, sub, open, scope.clone());
     }
 
-    // Titre en haut, bouton de retour dans le coin.
-    let heading = tx!(
-        "Garage : {} / {} véhicules",
-        "Garage: {} / {} vehicles",
-        "Garage: {} / {} Fahrzeuge",
-        "Garage: {} / {} veicoli",
-        "Garaje: {} / {} vehículos"
-    )
-    .avec(&[&progress.count(), &ALL.len()]);
+    // Titre, onglets et retour
     let top = commands
         .spawn((
-            Node { position_type: PositionType::Absolute, width: percent(100), top: px(16), justify_content: JustifyContent::Center, ..default() },
+            Node { position_type: PositionType::Absolute, width: percent(100), top: px(14), flex_direction: FlexDirection::Column, align_items: AlignItems::Center, row_gap: px(8), ..default() },
             Pickable::IGNORE,
-            DespawnOnExit(GameState::Garage),
+            scope(),
         ))
         .id();
-    spawn_text(&mut commands, top, heading, 34.0);
-    let corner = commands
-        .spawn((
-            Node { position_type: PositionType::Absolute, left: px(20), bottom: px(20), ..default() },
-            DespawnOnExit(GameState::Garage),
-        ))
-        .id();
+    spawn_text(&mut commands, top, heading, 32.0);
+    let tabs = commands.spawn((Node { column_gap: px(10), ..default() }, ChildOf(top))).id();
+    for (tab, name) in [
+        (Tab::Vehicles, tx!("Véhicules", "Vehicles", "Fahrzeuge", "Veicoli", "Vehículos").t()),
+        (Tab::Characters, tx!("Personnages", "Characters", "Figuren", "Personaggi", "Personajes").t()),
+    ] {
+        let (b, _) = spawn_button_sized(&mut commands, tabs, name, 200.0, 44.0, 20.0);
+        commands.entity(b).insert(Act::Tab(tab));
+        if view.tab == tab {
+            commands.entity(b).insert(BackgroundColor(Color::srgb(1.0, 0.88, 0.45)));
+        }
+    }
+    let corner = commands.spawn((Node { position_type: PositionType::Absolute, left: px(20), bottom: px(20), ..default() }, scope())).id();
     let (back, _) = spawn_button(&mut commands, corner, tx!("Retour", "Back", "Zurück", "Indietro", "Atrás").t());
-    commands.entity(back).insert(BackButton);
+    commands.entity(back).insert(Act::Back);
+    // En bas à gauche, le bouton gêne la barre des costumes : on la décale à droite.
 }
 
-fn label(commands: &mut Commands, at: Vec3, title: String, sub: String, open: bool, scope: impl Bundle) {
-    let color = if open { Color::srgb(0.12, 0.14, 0.2) } else { Color::srgb(0.38, 0.40, 0.46) };
+fn pts(n: u32) -> String {
+    tx!("{} pts", "{} pts", "{} Pkt.", "{} pt", "{} pts").avec(&[&n])
+}
+
+fn slot_entity(commands: &mut Commands, root: Entity, at: Vec3, scale: f32, i: usize) -> Entity {
     commands
         .spawn((
-            Node {
-                position_type: PositionType::Absolute,
-                width: px(190),
-                flex_direction: FlexDirection::Column,
-                align_items: AlignItems::Center,
-                ..default()
-            },
-            Label(at),
-            Pickable::IGNORE,
-            scope,
+            Transform::from_translation(at + Vec3::Y * 0.05).with_rotation(Quat::from_rotation_y(0.5)).with_scale(Vec3::splat(scale)),
+            Visibility::default(),
+            Spin(0.5 + i as f32 * 0.3),
+            ChildOf(root),
         ))
-        .with_children(|p| {
-            p.spawn((Text::new(title), TextFont::from_font_size(18.0), TextColor(color), TextLayout::justify(Justify::Center), Pickable::IGNORE, game_common::ui::ThemedText));
-            if !sub.is_empty() {
-                p.spawn((Text::new(sub), TextFont::from_font_size(15.0), TextColor(color), TextLayout::justify(Justify::Center), Pickable::IGNORE, game_common::ui::ThemedText));
-            }
-        });
+        .id()
+}
+
+fn label(commands: &mut Commands, at: Vec3, title: &str, sub: String, open: bool, chosen: bool, act: Option<Act>) {
+    let color = if chosen {
+        Color::srgb(0.75, 0.45, 0.0)
+    } else if open {
+        Color::srgb(0.12, 0.14, 0.2)
+    } else {
+        Color::srgb(0.38, 0.40, 0.46)
+    };
+    let mut e = commands.spawn((
+        Node { position_type: PositionType::Absolute, width: px(260), flex_direction: FlexDirection::Column, align_items: AlignItems::Center, ..default() },
+        Label(at),
+        scope(),
+    ));
+    match act {
+        Some(a) => e.insert(a),
+        None => e.insert(Pickable::IGNORE),
+    };
+    e.with_children(|p| {
+        p.spawn((Text::new(title), TextFont::from_font_size(18.0), TextColor(color), TextLayout::justify(Justify::Center), Pickable::IGNORE, game_common::ui::ThemedText));
+        if !sub.is_empty() {
+            p.spawn((Text::new(sub), TextFont::from_font_size(15.0), TextColor(color), TextLayout::justify(Justify::Center), Pickable::IGNORE, game_common::ui::ThemedText));
+        }
+    });
 }
 
 fn spin(time: Res<Time>, mut q: Query<(&Spin, &mut Transform), Without<Locked>>) {
@@ -161,7 +267,7 @@ fn spin(time: Res<Time>, mut q: Query<(&Spin, &mut Transform), Without<Locked>>)
     }
 }
 
-/// Peint les véhicules verrouillés en ombre (une seule fois).
+/// Peint ce qui est verrouillé en ombre (une seule fois).
 fn shade_locked(
     mut commands: Commands,
     mut mats: ResMut<Assets<StandardMaterial>>,
@@ -180,17 +286,14 @@ fn shade_locked(
     }
 }
 
-/// Les textes suivent les véhicules à l'écran.
-fn place_labels(
-    camera: Query<(&Camera, &GlobalTransform), With<Camera3d>>,
-    mut labels: Query<(&Label, &mut Node)>,
-) {
+/// Les textes suivent les modèles à l'écran.
+fn place_labels(camera: Query<(&Camera, &GlobalTransform), With<Camera3d>>, mut labels: Query<(&Label, &mut Node)>) {
     let Ok((cam, gt)) = camera.single() else {
         return;
     };
     for (l, mut node) in &mut labels {
         if let Ok(p) = cam.world_to_viewport(gt, l.0) {
-            node.left = px(p.x - 95.0);
+            node.left = px(p.x - 130.0);
             node.top = px(p.y);
         }
     }
@@ -202,13 +305,38 @@ fn back_key(keys: Res<ButtonInput<KeyCode>>, mut next: ResMut<NextState<GameStat
     }
 }
 
-/// Clic sur « Retour ».
-fn on_back(
+fn on_click(
     click: On<PointerClick>,
-    buttons: Query<(), With<BackButton>>,
+    acts: Query<&Act>,
+    mut view: ResMut<View>,
+    mut selection: ResMut<Selection>,
+    progress: Res<Progress>,
     mut next: ResMut<NextState<GameState>>,
+    mut sfx: MessageWriter<Sfx>,
 ) {
-    if buttons.get(click.entity).is_ok() {
-        next.set(GameState::Menu);
+    let Ok(act) = acts.get(click.entity) else {
+        return;
+    };
+    sfx.write(Sfx::Click);
+    match *act {
+        Act::Back => next.set(GameState::Menu),
+        Act::Tab(t) => {
+            view.tab = t;
+            view.dirty = true;
+        }
+        Act::Char(c) => {
+            if unlocked_character(&progress, c) {
+                selection.character = c;
+                selection.save();
+                view.dirty = true;
+            }
+        }
+        Act::Costume(c) => {
+            if unlocked_costume(&progress, c) {
+                selection.costume = c;
+                selection.save();
+                view.dirty = true;
+            }
+        }
     }
 }

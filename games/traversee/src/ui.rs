@@ -132,6 +132,14 @@ pub fn spawn_game_over(mut commands: Commands, score: Res<Score>, death: Res<Dea
         let line = tx!("Débloqué : {} !", "Unlocked: {}!", "Freigeschaltet: {}!", "Sbloccato: {}!", "¡Desbloqueado: {}!").avec(&[&item.name()]);
         spawn_text(&mut commands, panel, line, 26.0);
     }
+    for ch in &progress.fresh_characters {
+        let line = tx!("Nouveau personnage : {} !", "New character: {}!", "Neue Figur: {}!", "Nuovo personaggio: {}!", "¡Nuevo personaje: {}!").avec(&[&ch.name()]);
+        spawn_text(&mut commands, panel, line, 26.0);
+    }
+    for co in &progress.fresh_costumes {
+        let line = tx!("Nouveau costume : {} !", "New costume: {}!", "Neues Kostüm: {}!", "Nuovo costume: {}!", "¡Nuevo disfraz: {}!").avec(&[&co.name()]);
+        spawn_text(&mut commands, panel, line, 26.0);
+    }
     if let Some((at, item)) = progress.next() {
         let line = tx!(
             "Total {} pts — prochain : {} à {} pts",

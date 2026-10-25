@@ -3,6 +3,7 @@
 // Aidez le crapaud à traverser routes, rivières et voies ferrées.
 mod audio;
 mod capture;
+mod characters;
 mod extra;
 mod frog;
 mod garage;
@@ -14,7 +15,7 @@ mod progress;
 mod ui;
 
 use bevy::prelude::*;
-use game_common::models::{FrogKit, spawn_frog};
+use game_common::models::FrogKit;
 use game_common::universe::Universe;
 use game_common::{Rng, Score, StudioPlugin, iso_camera};
 
@@ -59,6 +60,8 @@ fn main() {
     .init_state::<GameState>()
     .add_plugins(StudioPlugin::new(Universe::Croa, game_common::ambiance::AmbiancePlugin::exterieur()))
     .add_plugins((ui::UiPlugin, audio::AudioPlugin, capture::CapturePlugin, fx::FxPlugin, progress::ProgressPlugin, garage::GaragePlugin))
+    .init_resource::<characters::Selection>()
+    .init_resource::<characters::Cast>()
     // Après le style commun : Traversée garde son ciel à elle.
     .insert_resource(ClearColor(Color::srgb(0.80, 0.90, 0.95)))
     // Carte d'ombres plus légère que le réglage commun (4096) : bien assez
@@ -86,6 +89,7 @@ fn main() {
                 lanes::ensure_lanes,
                 merge::merge_lanes,
                 lanes::move_movers,
+                characters::rebuild_player,
                 extra::animate_flies,
                 extra::animate_scanner,
                 lanes::run_rails,
@@ -101,12 +105,11 @@ fn main() {
         .run();
 }
 
-fn setup(mut commands: Commands, frog_kit: Res<FrogKit>, kit: Res<Kit>, mut mats: ResMut<Assets<StandardMaterial>>) {
+fn setup(mut commands: Commands, kit: Res<Kit>, mut mats: ResMut<Assets<StandardMaterial>>) {
     frog::spawn_shadow(&mut commands, &kit, &mut mats);
     commands.spawn(iso_camera(Vec3::new(0.0, 0.0, -LOOK_AHEAD), 15.0, 13.0));
-    let frog = spawn_frog(&mut commands, &frog_kit);
-    commands.entity(frog).insert(FrogModel);
-    frog::decorate(&mut commands, frog, &kit, &mut mats);
+    // Le personnage (crapaud, lapin…) est posé par `characters::rebuild_player`.
+    commands.spawn((Transform::default(), Visibility::default(), FrogModel));
 }
 
 #[allow(clippy::too_many_arguments)]
