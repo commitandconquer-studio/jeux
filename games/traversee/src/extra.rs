@@ -29,9 +29,6 @@ pub struct Extra {
     fly_gold: Handle<StandardMaterial>,
     fly_wing: Handle<StandardMaterial>,
     fly_eye: Handle<StandardMaterial>,
-    silver: Handle<StandardMaterial>,
-    glow_blue: Handle<StandardMaterial>,
-    glow_orange: Handle<StandardMaterial>,
     biome: BiomeMats,
     /// Index de la peinture blanche dans la palette des voitures.
     white_car: usize,
@@ -50,8 +47,6 @@ impl FromWorld for Extra {
         let mut glow = |c: Color, e: LinearRgba| mats.add(StandardMaterial { emissive: e, ..flat_material(c) });
         let fly_gold = glow(Color::srgb(1.0, 0.82, 0.2), LinearRgba::rgb(2.5, 1.7, 0.2));
         let red_light = glow(Color::srgb(1.0, 0.2, 0.2), LinearRgba::rgb(3.0, 0.2, 0.2));
-        let glow_blue = glow(Color::srgb(0.6, 0.9, 1.0), LinearRgba::rgb(0.8, 2.5, 4.0));
-        let glow_orange = glow(Color::srgb(1.0, 0.6, 0.2), LinearRgba::rgb(4.0, 1.6, 0.2));
         let blue_light = glow(Color::srgb(0.2, 0.4, 1.0), LinearRgba::rgb(0.2, 0.5, 3.0));
         let mut f = |r: f32, g: f32, b: f32| mats.add(flat_material(Color::srgb(r, g, b)));
         Extra {
@@ -75,9 +70,6 @@ impl FromWorld for Extra {
             fly_gold,
             fly_wing: f(0.85, 0.93, 1.0),
             fly_eye: f(0.9, 0.15, 0.15),
-            silver: f(0.78, 0.80, 0.84),
-            glow_blue,
-            glow_orange,
             white_car: 0,
             yellow_car: 0,
         }
@@ -115,9 +107,9 @@ pub enum Vehicle {
     Police,
     Taxi,
     Tractor,
-    Future,
     Sheriff,
-    Fantastic,
+    /// Un véhicule décrit en pièces (`gen_vehicles.rs`), par son numéro.
+    Gen(usize),
 }
 
 impl Vehicle {
@@ -125,8 +117,8 @@ impl Vehicle {
     pub fn len(self) -> f32 {
         match self {
             Vehicle::Car | Vehicle::Police | Vehicle::Taxi => 1.6,
-            Vehicle::Future => 1.8,
-            Vehicle::Sheriff | Vehicle::Fantastic => 1.7,
+            Vehicle::Sheriff => 1.7,
+            Vehicle::Gen(i) => crate::gen_vehicles::GEN[i].len,
             Vehicle::Truck => 2.9,
             Vehicle::Bus => 3.6,
             Vehicle::Sport => 1.7,
@@ -139,7 +131,13 @@ impl Vehicle {
 
 /// Un véhicule tiré au sort parmi ceux déjà débloqués (selon les points cumulés).
 pub fn pick_vehicle(roll: u32, points: u32) -> Vehicle {
-    const WEIGHTS: [(Vehicle, u32); 12] = [
+    use crate::progress::{Item, unlocked};
+    // TRAVERSEE_VEHICLE=8 : tous les véhicules de la route sont celui-là (essais).
+    static FORCED: std::sync::OnceLock<Option<usize>> = std::sync::OnceLock::new();
+    if let Some(i) = *FORCED.get_or_init(|| std::env::var("TRAVERSEE_VEHICLE").ok().and_then(|s| s.parse().ok())) {
+        return Vehicle::Gen(i.min(crate::gen_vehicles::GEN.len() - 1));
+    }
+    const BASE: [(Vehicle, u32); 9] = [
         (Vehicle::Car, 38),
         (Vehicle::Truck, 14),
         (Vehicle::Taxi, 6),
@@ -149,12 +147,17 @@ pub fn pick_vehicle(roll: u32, points: u32) -> Vehicle {
         (Vehicle::Sport, 10),
         (Vehicle::Police, 6),
         (Vehicle::Tractor, 4),
-        (Vehicle::Future, 3),
-        (Vehicle::Sheriff, 3),
-        (Vehicle::Fantastic, 3),
     ];
-    let open: Vec<(Vehicle, u32)> =
-        WEIGHTS.iter().copied().filter(|(v, _)| crate::progress::unlocked(points, crate::progress::Item::Vehicle(*v))).collect();
+    let mut open: Vec<(Vehicle, u32)> = BASE.iter().copied().filter(|(v, _)| unlocked(points, Item::Vehicle(*v))).collect();
+    if unlocked(points, Item::Vehicle(Vehicle::Sheriff)) {
+        open.push((Vehicle::Sheriff, 3));
+    }
+    // Les véhicules décrits en pièces, plus rares que les classiques
+    for (i, g) in crate::gen_vehicles::GEN.iter().enumerate() {
+        if unlocked(points, Item::Vehicle(Vehicle::Gen(i))) {
+            open.push((Vehicle::Gen(i), if g.class == "bus" { 3 } else { 4 }));
+        }
+    }
     let total: u32 = open.iter().map(|(_, w)| w).sum();
     let mut r = roll % total;
     for (v, w) in &open {
@@ -178,6 +181,7 @@ pub fn spawn_vehicle(c: &mut Commands, k: &Kit, x: &Extra, parent: Entity, v: Ve
     let m = &k.m;
     let paint = &m.car[color % m.car.len()];
     match v {
+        Vehicle::Gen(i) => spawn_gen(c, k, x, parent, i, color),
         Vehicle::Car | Vehicle::Truck => unreachable!("voitures et camions viennent de decor3d"),
         Vehicle::Bus => {
             let body = &x.bus[color % x.bus.len()];
@@ -257,24 +261,6 @@ pub fn spawn_vehicle(c: &mut Commands, k: &Kit, x: &Extra, parent: Entity, v: Ve
                 part(c, parent, &k.cube, &x.black_stripe, Vec3::new(0.2 - 0.32, 0.4, -dz), Vec3::new(0.16, 0.06, 0.8));
             }
         }
-        Vehicle::Future => {
-            // Bolide argenté, en coin, avec des lignes lumineuses à l'arrière.
-            part(c, parent, &k.cube, &m.dark, Vec3::new(0.0, 0.2, 0.0), Vec3::new(1.78, 0.1, 0.78));
-            part(c, parent, &k.cube, &x.silver, Vec3::new(-0.05, 0.36, 0.0), Vec3::new(1.8, 0.24, 0.84));
-            part_rot(c, parent, &k.cube, &x.silver, Vec3::new(0.62, 0.5, 0.0), Vec3::new(0.7, 0.04, 0.82), Quat::from_rotation_z(-0.12));
-            part(c, parent, &k.cube, &m.glass, Vec3::new(-0.2, 0.56, 0.0), Vec3::new(0.72, 0.2, 0.72));
-            part(c, parent, &k.cube, &x.silver, Vec3::new(-0.2, 0.67, 0.0), Vec3::new(0.66, 0.03, 0.68));
-            part(c, parent, &k.cube, &x.black_stripe, Vec3::new(-0.91, 0.45, 0.0), Vec3::new(0.04, 0.12, 0.72));
-            part(c, parent, &k.cube, &x.glow_blue, Vec3::new(-0.915, 0.38, 0.0), Vec3::new(0.02, 0.035, 0.72));
-            for s in [-1.0, 1.0] {
-                part(c, parent, &k.cube, &x.glow_orange, Vec3::new(-0.92, 0.5, 0.28 * s), Vec3::new(0.03, 0.05, 0.14));
-                part(c, parent, &k.cube, &x.glow_blue, Vec3::new(-0.2, 0.37, 0.426 * s), Vec3::new(1.1, 0.02, 0.01));
-                part(c, parent, &k.cube, &m.headlight, Vec3::new(0.9, 0.38, 0.28 * s), Vec3::new(0.03, 0.06, 0.16));
-                for wx in [-0.55, 0.58] {
-                    wheel(c, k, parent, Vec3::new(wx, 0.17, 0.4 * s), 0.17, 0.16);
-                }
-            }
-        }
         Vehicle::Sheriff => {
             spawn_car(c, k, parent, 4); // orange
             part(c, parent, &k.cube, &x.white, Vec3::new(-0.12, 0.915, 0.0), Vec3::new(0.84, 0.03, 0.72));
@@ -286,14 +272,6 @@ pub fn spawn_vehicle(c: &mut Commands, k: &Kit, x: &Extra, parent: Entity, v: Ve
             }
             part(c, parent, &k.cube, &x.white, Vec3::new(0.86, 0.3, 0.0), Vec3::new(0.04, 0.04, 0.5));
             part(c, parent, &k.cube, &x.red_light, Vec3::new(-0.12, 0.97, 0.0), Vec3::new(0.14, 0.08, 0.3));
-        }
-        Vehicle::Fantastic => {
-            spawn_car(c, k, parent, x.white_car + 3); // presque noir
-            part(c, parent, &k.cube, &x.black_stripe, Vec3::new(0.8, 0.46, 0.0), Vec3::new(0.03, 0.08, 0.62));
-            let eye = part(c, parent, &k.cube, &x.red_light, Vec3::new(0.83, 0.46, 0.0), Vec3::new(0.02, 0.04, 0.1));
-            c.entity(eye).insert(Scanner);
-            part(c, parent, &k.cube, &x.black_stripe, Vec3::new(-0.76, 0.6, 0.0), Vec3::new(0.06, 0.03, 0.74));
-            part(c, parent, &k.cube, &x.red_light, Vec3::new(-0.12, 0.915, 0.0), Vec3::new(0.84, 0.01, 0.01));
         }
         Vehicle::Tractor => {
             part(c, parent, &k.cube, &x.green, Vec3::new(0.62, 0.52, 0.0), Vec3::new(0.85, 0.46, 0.52));
@@ -442,19 +420,6 @@ pub fn animate_flies(time: Res<Time>, mut flies: Query<(&Fly, &mut Transform), W
     }
     for (wing, mut tf) in &mut wings {
         tf.rotation = Quat::from_rotation_z(wing.side * (t * 70.0).sin() * 0.6);
-    }
-}
-
-/// Le voyant rouge qui balaie le museau de la voiture fantastique.
-#[derive(Component)]
-pub struct Scanner;
-
-pub fn animate_scanner(time: Res<Time>, mut q: Query<&mut Transform, With<Scanner>>) {
-    let t = time.elapsed_secs() * 3.2;
-    // Va-et-vient régulier (triangle), de bord à bord du museau.
-    let tri = (t % 2.0 - 1.0).abs() * 2.0 - 1.0;
-    for mut tf in &mut q {
-        tf.translation.z = tri * 0.26;
     }
 }
 
@@ -690,6 +655,248 @@ pub fn spawn_scenery(c: &mut Commands, k: &Kit, x: &Extra, parent: Entity, biome
                 let col = &b.leaves[(i + variant) % 3];
                 part_rot(c, parent, &k.cube, col, pos + Vec3::new(a.cos() * 0.14, 0.02, a.sin() * 0.14), Vec3::new(0.12, 0.02, 0.09), Quat::from_rotation_y(a * 2.0));
             }
+        }
+    }
+}
+
+// ---- Véhicules décrits en pièces (gen_vehicles.rs) ---------------------------
+
+#[derive(Clone, Copy)]
+pub enum Shape {
+    Cube,
+    Cyl,
+    Cone,
+    Sphere,
+}
+
+#[derive(Clone, Copy)]
+pub enum Mat {
+    Peinture,
+    Vitre,
+    Sombre,
+    Pneu,
+    Enjoliveur,
+    Phare,
+    FeuArriere,
+    LumiereRouge,
+    LumiereBleue,
+    Blanc,
+    Noir,
+}
+
+pub struct Piece {
+    pub shape: Shape,
+    pub pos: [f32; 3],
+    pub size: [f32; 3],
+    /// Degrés ; appliquée d'abord autour de X, puis Y, puis Z.
+    pub rot: [f32; 3],
+    pub mat: Mat,
+    pub id: Option<&'static str>,
+}
+
+#[derive(Clone, Copy, PartialEq, Debug)]
+pub enum AnimKind {
+    Blink,
+    BlinkAlt,
+    Wink,
+    Pulse,
+    LengthPulse,
+    Vibrate,
+    Tremble,
+    Sway,
+    Bob,
+    Float,
+    PingPongZ,
+    DriftBack,
+    DriftUp,
+    Pendulum,
+    PingPongX,
+    SpinY,
+    Hop,
+    Weave,
+    Lean,
+    Snake,
+    BlinkSlow,
+    Flutter,
+    Flap,
+    Fall,
+    SpinLocal,
+}
+
+/// Une animation : quelle pièce (`*` = tout le véhicule, `préfixe_*`, `*contient`), laquelle, et son ampleur.
+pub struct Anim {
+    pub target: &'static str,
+    pub kind: AnimKind,
+    pub amp: f32,
+}
+
+pub struct Gen {
+    pub len: f32,
+    pub points: u32,
+    pub class: &'static str,
+    pub pieces: &'static [Piece],
+    pub anims: &'static [Anim],
+}
+
+fn matches_target(target: &str, id: Option<&str>) -> bool {
+    let Some(id) = id else {
+        return false;
+    };
+    if let Some(rest) = target.strip_prefix('*') {
+        id.contains(rest)
+    } else if let Some(prefix) = target.strip_suffix('*') {
+        id.starts_with(prefix)
+    } else {
+        target == id
+    }
+}
+
+/// Les animations d'une pièce (ou de tout le véhicule), avec la forme de départ.
+#[derive(Component)]
+pub struct GenAnim {
+    kinds: Vec<(AnimKind, f32)>,
+    base: Transform,
+    phase: f32,
+}
+
+pub fn spawn_gen(c: &mut Commands, k: &Kit, x: &Extra, parent: Entity, i: usize, color: usize) {
+    let g = &crate::gen_vehicles::GEN[i];
+    let body = c.spawn((Transform::default(), Visibility::default(), ChildOf(parent))).id();
+    if i == SPEED_BUS {
+        c.entity(parent).insert(SpeedBus::default());
+    }
+    let whole: Vec<(AnimKind, f32)> = g.anims.iter().filter(|a| a.target == "*").map(|a| (a.kind, a.amp)).collect();
+    if !whole.is_empty() {
+        c.entity(body).insert(GenAnim { kinds: whole, base: Transform::default(), phase: i as f32 * 1.7 });
+    }
+    for (n, p) in g.pieces.iter().enumerate() {
+        let mesh = match p.shape {
+            Shape::Cube => &k.cube,
+            Shape::Cyl => &k.cyl,
+            Shape::Cone => &k.cone,
+            Shape::Sphere => &k.ball,
+        };
+        let mat = match p.mat {
+            Mat::Peinture => &k.m.car[color % k.m.car.len()],
+            Mat::Vitre => &k.m.glass,
+            Mat::Sombre => &k.m.dark,
+            Mat::Pneu => &k.m.tire,
+            Mat::Enjoliveur => &k.m.hub,
+            Mat::Phare => &k.m.headlight,
+            Mat::FeuArriere => &k.m.taillight,
+            Mat::LumiereRouge => &x.red_light,
+            Mat::LumiereBleue => &x.blue_light,
+            Mat::Blanc => &x.white,
+            Mat::Noir => &x.black_stripe,
+        };
+        let rot = Quat::from_euler(EulerRot::ZYX, p.rot[2].to_radians(), p.rot[1].to_radians(), p.rot[0].to_radians());
+        let tf = Transform { translation: Vec3::from(p.pos), rotation: rot, scale: Vec3::from(p.size) };
+        let e = c.spawn((Mesh3d(mesh.clone()), MeshMaterial3d(mat.clone()), tf, ChildOf(body))).id();
+        let kinds: Vec<(AnimKind, f32)> = g.anims.iter().filter(|a| a.target != "*" && matches_target(a.target, p.id)).map(|a| (a.kind, a.amp)).collect();
+        if !kinds.is_empty() {
+            c.entity(e).insert(GenAnim { kinds, base: tf, phase: (i * 31 + n) as f32 * 0.37 });
+        }
+    }
+}
+
+/// Fait vivre les pièces animées : clignotements, balancements, scanner…
+pub fn animate_gen(time: Res<Time>, mut q: Query<(&GenAnim, &mut Transform, &mut Visibility)>) {
+    let t = time.elapsed_secs();
+    let tri = |x: f32| (x.rem_euclid(2.0) - 1.0).abs() * 2.0 - 1.0; // va-et-vient de -1 à 1
+    for (a, mut tf, mut vis) in &mut q {
+        let mut out = a.base;
+        let mut visible = true;
+        let tt = t + a.phase;
+        for (kind, amp) in &a.kinds {
+            match kind {
+                AnimKind::Blink => visible &= (tt * 3.0) as i32 % 2 == 0,
+                AnimKind::BlinkAlt => visible &= (tt * 3.0) as i32 % 2 != 0,
+                AnimKind::Wink => visible &= tt.rem_euclid(2.6) < 2.45,
+                AnimKind::Pulse => out.scale *= 1.0 + 0.2 * (tt * 5.0).sin(),
+                AnimKind::LengthPulse => out.scale.x *= 1.0 + 0.3 * (tt * 7.0).sin(),
+                AnimKind::Vibrate => out.translation += Vec3::new((tt * 61.0).sin(), (tt * 53.0).sin(), (tt * 47.0).sin()) * *amp,
+                AnimKind::Tremble => {
+                    out.rotation *= Quat::from_rotation_z((tt * 40.0).sin() * 0.08);
+                    out.translation.y += (tt * 33.0).sin() * 0.01;
+                }
+                AnimKind::Sway => out.rotation *= Quat::from_rotation_z((tt * 3.0).sin() * 0.14),
+                AnimKind::Bob => out.translation.y += (tt * 6.0).sin() * *amp,
+                AnimKind::Float => out.translation.y += (tt * 2.0).sin() * *amp,
+                AnimKind::PingPongZ => out.translation.z += tri(tt * 1.2) * *amp,
+                AnimKind::PingPongX => out.translation.x += tri(tt * 0.8) * *amp,
+                AnimKind::DriftBack => {
+                    let f = (tt * 0.6).fract();
+                    out.translation.x -= f * 0.5;
+                    out.scale *= 1.0 - 0.6 * f;
+                }
+                AnimKind::DriftUp => {
+                    let f = (tt * 0.7).fract();
+                    out.translation.y += f * 0.3;
+                    out.scale *= 1.0 - 0.5 * f;
+                }
+                AnimKind::Pendulum => out.translation.x += (tt * 3.0).sin() * 0.03,
+                AnimKind::SpinY => out.rotation = Quat::from_rotation_y(tt * 6.0) * out.rotation,
+                AnimKind::SpinLocal => out.rotation *= Quat::from_rotation_y(tt * 3.0),
+                AnimKind::Hop => out.translation.y += (tt * 8.0).sin().abs() * *amp,
+                AnimKind::Weave => out.translation.z += (tt * 2.5).sin() * *amp,
+                AnimKind::Lean => out.rotation = Quat::from_rotation_x((tt * 1.6).sin() * 0.07) * out.rotation,
+                // Les trois Mini serpentent : l'ampleur porte le numéro de phase.
+                AnimKind::Snake => out.translation.z += (tt * 3.0 + *amp * 2.1).sin() * 0.14,
+                AnimKind::BlinkSlow => visible &= (tt * 1.1) as i32 % 2 == 0,
+                AnimKind::Flutter => {
+                    out.rotation *= Quat::from_rotation_z((tt * 14.0).sin() * 0.35);
+                    out.translation.y += (tt * 9.0).sin() * 0.03;
+                }
+                AnimKind::Flap => out.rotation *= Quat::from_rotation_z((tt * 16.0).sin() * 0.4),
+                AnimKind::Fall => {
+                    // La portière se détache de temps en temps, puis revient d'un coup.
+                    let f = ((tt % 4.0 - 3.0) / 0.6).clamp(0.0, 1.0);
+                    out.translation.y -= f * 0.12;
+                    out.rotation *= Quat::from_rotation_x(f * 0.7);
+                }
+            }
+        }
+        *tf = out;
+        let want = if visible { Visibility::Inherited } else { Visibility::Hidden };
+        if *vis != want {
+            *vis = want;
+        }
+    }
+}
+
+// ---- Le Speed-Bus : il explose quand il sort de l'écran -----------------------
+
+/// Numéro du Speed-Bus dans `gen_vehicles::GEN`.
+pub const SPEED_BUS: usize = 8;
+/// Distance (en x) à laquelle un véhicule sort de l'écran.
+const SCREEN_EDGE: f32 = 11.5;
+
+#[derive(Component, Default)]
+pub struct SpeedBus {
+    exploded: bool,
+}
+
+/// Le Speed-Bus saute à la sortie de l'écran, puis reparaît de l'autre côté.
+pub fn speed_bus(
+    mut q: Query<(&crate::lanes::Mover, &Transform, &GlobalTransform, &mut Visibility, &mut SpeedBus)>,
+    frog: Res<crate::frog::Frog>,
+    mut fx: MessageWriter<crate::fx::Fx>,
+    mut sfx: MessageWriter<crate::audio::Sfx>,
+) {
+    for (m, tf, gt, mut vis, mut bus) in &mut q {
+        let outward = tf.translation.x * m.speed > 0.0;
+        if !bus.exploded && outward && tf.translation.x.abs() > SCREEN_EDGE {
+            bus.exploded = true;
+            *vis = Visibility::Hidden;
+            let at = gt.translation() + Vec3::Y * 0.5;
+            fx.write(crate::fx::Fx::Boom(at));
+            if (m.row - frog.row).abs() <= 7 {
+                sfx.write(crate::audio::Sfx::Explosion);
+            }
+        } else if bus.exploded && !outward {
+            // Revenu de l'autre côté : un bus tout neuf.
+            bus.exploded = false;
+            *vis = Visibility::Inherited;
         }
     }
 }

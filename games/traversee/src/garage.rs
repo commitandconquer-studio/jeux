@@ -16,6 +16,7 @@ use crate::progress::{ALL, Item, Progress, threshold};
 
 /// Le garage est bâti loin de la route, hors de vue du jeu.
 pub const ORIGIN: Vec3 = Vec3::new(400.0, 0.0, 0.0);
+const PER_PAGE: usize = 28;
 
 pub struct GaragePlugin;
 
@@ -44,6 +45,8 @@ pub enum Tab {
 pub struct View {
     pub tab: Tab,
     pub dirty: bool,
+    /// Page des véhicules (28 par page).
+    pub page: usize,
 }
 
 /// Tout ce que le garage fabrique : effacé et refait quand l'affichage change.
@@ -71,6 +74,7 @@ enum Act {
     Tab(Tab),
     Char(Character),
     Costume(Costume),
+    Page(i32),
 }
 
 fn scope() -> impl Bundle {
@@ -78,9 +82,9 @@ fn scope() -> impl Bundle {
 }
 
 fn vehicle_slot(i: usize) -> Vec3 {
-    const COLS: usize = 5;
+    const COLS: usize = 7;
     let (col, row) = ((i % COLS) as f32, (i / COLS) as f32);
-    ORIGIN + Vec3::new((col - 2.0) * 5.0, 0.0, (row - 1.15) * 4.6)
+    ORIGIN + Vec3::new((col - 3.0) * 4.7, 0.0, (row - 1.5) * 3.9 - 0.45)
 }
 
 fn character_slot(i: usize) -> Vec3 {
@@ -113,18 +117,23 @@ fn build(
     let heading;
     match view.tab {
         Tab::Vehicles => {
-            heading = tx!("Garage : {} / {} véhicules", "Garage: {} / {} vehicles", "Garage: {} / {} Fahrzeuge", "Garage: {} / {} veicoli", "Garaje: {} / {} vehículos")
-                .avec(&[&progress.count(), &ALL.len()]);
-            for (i, item) in ALL.iter().enumerate() {
+            let pages = ALL.len().div_ceil(PER_PAGE);
+            view.page = view.page.min(pages - 1);
+            let first = view.page * PER_PAGE;
+            let title = tx!("Garage : {} / {} véhicules", "Garage: {} / {} vehicles", "Garage: {} / {} Fahrzeuge", "Garage: {} / {} veicoli", "Garaje: {} / {} vehículos")
+                .avec(&[&ALL.iter().filter(|i| progress.has(**i)).count(), &ALL.len()]);
+            heading = format!("{title}  ({}/{})", view.page + 1, pages);
+            for (i, item) in ALL.iter().enumerate().skip(first).take(PER_PAGE) {
+                let i = i - first;
                 let at = vehicle_slot(i) - ORIGIN;
-                part(&mut commands, root, &kit.cyl, &plate, at + Vec3::Y * -0.15, Vec3::new(3.6, 0.2, 3.0));
+                part(&mut commands, root, &kit.cyl, &plate, at + Vec3::Y * -0.15, Vec3::new(3.1, 0.2, 2.5));
                 // Les longs véhicules sont réduits pour tenir sur leur plateau.
                 let len = match *item {
                     Item::Trains => 2.95,
                     Item::Vehicle(v) => v.len(),
                     _ => 2.0,
                 };
-                let slot = slot_entity(&mut commands, root, at, (2.7 / len).min(1.15), i);
+                let slot = slot_entity(&mut commands, root, at, (1.9 / len).min(1.0), i);
                 let color = i * 5 + 1;
                 match *item {
                     Item::Trains => spawn_train_car(&mut commands, &kit, slot, true),
@@ -138,7 +147,7 @@ fn build(
                     commands.entity(slot).insert(Locked);
                 }
                 let sub = if open { String::new() } else { pts(threshold(*item)) };
-                label(&mut commands, vehicle_slot(i) + Vec3::new(0.0, 0.0, 1.9), if open { item.name() } else { "???" }, sub, open, false, None);
+                label(&mut commands, vehicle_slot(i) + Vec3::new(0.0, 0.0, 1.45), if open { item.name() } else { "???" }, sub, open, false, None, true);
             }
         }
         Tab::Characters => {
@@ -162,7 +171,7 @@ fn build(
                 } else {
                     String::new()
                 };
-                label(&mut commands, character_slot(i) + Vec3::new(0.0, 0.0, 2.1), if open { ch.name() } else { "???" }, sub, open, chosen, open.then_some(Act::Char(*ch)));
+                label(&mut commands, character_slot(i) + Vec3::new(0.0, 0.0, 2.1), if open { ch.name() } else { "???" }, sub, open, chosen, open.then_some(Act::Char(*ch)), false);
             }
         }
         Tab::Costumes => {
@@ -186,7 +195,7 @@ fn build(
                 } else {
                     String::new()
                 };
-                label(&mut commands, character_slot(i) + Vec3::new(0.0, 0.0, 2.1), if open { co.name() } else { "???" }, sub, open, chosen, open.then_some(Act::Costume(*co)));
+                label(&mut commands, character_slot(i) + Vec3::new(0.0, 0.0, 2.1), if open { co.name() } else { "???" }, sub, open, chosen, open.then_some(Act::Costume(*co)), false);
             }
         }
         Tab::Worlds => {
@@ -205,7 +214,7 @@ fn build(
                     commands.entity(slot).insert(Locked);
                 }
                 let sub = if open { String::new() } else { pts(threshold(Item::World(*b))) };
-                label(&mut commands, center + Vec3::new(0.0, 0.0, 2.6), if open { b.name() } else { "???" }, sub, open, false, None);
+                label(&mut commands, center + Vec3::new(0.0, 0.0, 2.6), if open { b.name() } else { "???" }, sub, open, false, None, false);
             }
         }
     }
@@ -230,6 +239,14 @@ fn build(
         commands.entity(b).insert(Act::Tab(tab));
         if view.tab == tab {
             commands.entity(b).insert(BackgroundColor(Color::srgb(1.0, 0.88, 0.45)));
+        }
+    }
+    if view.tab == Tab::Vehicles && ALL.len() > PER_PAGE {
+        // Pages : précédent / suivant, en bas à droite.
+        let nav = commands.spawn((Node { position_type: PositionType::Absolute, right: px(20), bottom: px(20), column_gap: px(10), ..default() }, scope())).id();
+        for (label, d) in [(tx!("< Précédent", "< Previous", "< Zurück", "< Precedente", "< Anterior").t(), -1), (tx!("Suivant >", "Next >", "Weiter >", "Successivo >", "Siguiente >").t(), 1)] {
+            let (b, _) = spawn_button_sized(&mut commands, nav, label, 190.0, 56.0, 22.0);
+            commands.entity(b).insert(Act::Page(d));
         }
     }
     let corner = commands.spawn((Node { position_type: PositionType::Absolute, left: px(20), bottom: px(20), ..default() }, scope())).id();
@@ -268,7 +285,8 @@ fn slot_entity(commands: &mut Commands, root: Entity, at: Vec3, scale: f32, i: u
         .id()
 }
 
-fn label(commands: &mut Commands, at: Vec3, title: &str, sub: String, open: bool, chosen: bool, act: Option<Act>) {
+fn label(commands: &mut Commands, at: Vec3, title: &str, sub: String, open: bool, chosen: bool, act: Option<Act>, compact: bool) {
+    let (width, size, small) = if compact { (190.0, 14.0, 12.0) } else { (260.0, 18.0, 15.0) };
     let color = if chosen {
         Color::srgb(0.75, 0.45, 0.0)
     } else if open {
@@ -278,7 +296,7 @@ fn label(commands: &mut Commands, at: Vec3, title: &str, sub: String, open: bool
     };
     let mut e = commands.spawn((
         // La zone cliquable monte jusqu'au personnage : on peut cliquer dessus, pas seulement sur le nom.
-        Node { position_type: PositionType::Absolute, width: px(260), height: px(230), flex_direction: FlexDirection::Column, justify_content: JustifyContent::FlexEnd, align_items: AlignItems::Center, ..default() },
+        Node { position_type: PositionType::Absolute, width: px(width), height: px(230), flex_direction: FlexDirection::Column, justify_content: JustifyContent::FlexEnd, align_items: AlignItems::Center, ..default() },
         Label(at),
         scope(),
     ));
@@ -287,9 +305,9 @@ fn label(commands: &mut Commands, at: Vec3, title: &str, sub: String, open: bool
         None => e.insert(Pickable::IGNORE),
     };
     e.with_children(|p| {
-        p.spawn((Text::new(title), TextFont::from_font_size(18.0), TextColor(color), TextLayout::justify(Justify::Center), Pickable::IGNORE, game_common::ui::ThemedText));
+        p.spawn((Text::new(title), TextFont::from_font_size(size), TextColor(color), TextLayout::justify(Justify::Center), Pickable::IGNORE, game_common::ui::ThemedText));
         if !sub.is_empty() {
-            p.spawn((Text::new(sub), TextFont::from_font_size(15.0), TextColor(color), TextLayout::justify(Justify::Center), Pickable::IGNORE, game_common::ui::ThemedText));
+            p.spawn((Text::new(sub), TextFont::from_font_size(small), TextColor(color), TextLayout::justify(Justify::Center), Pickable::IGNORE, game_common::ui::ThemedText));
         }
     });
 }
@@ -326,7 +344,8 @@ fn place_labels(camera: Query<(&Camera, &GlobalTransform), With<Camera3d>>, mut 
     };
     for (l, mut node) in &mut labels {
         if let Ok(p) = cam.world_to_viewport(gt, l.0) {
-            node.left = px(p.x - 130.0);
+            let half = if let Val::Px(w) = node.width { w / 2.0 } else { 130.0 };
+            node.left = px(p.x - half);
             node.top = px(p.y - 175.0);
         }
     }
@@ -353,6 +372,11 @@ fn on_click(
     sfx.write(Sfx::Click);
     match *act {
         Act::Back => next.set(GameState::Menu),
+        Act::Page(d) => {
+            let pages = ALL.len().div_ceil(PER_PAGE) as i32;
+            view.page = (view.page as i32 + d).rem_euclid(pages) as usize;
+            view.dirty = true;
+        }
         Act::Tab(t) => {
             view.tab = t;
             view.dirty = true;

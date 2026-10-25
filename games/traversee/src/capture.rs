@@ -55,6 +55,11 @@ impl Plugin for CapturePlugin {
             .add_systems(Update, run_perf);
         }
         // TRAVERSEE_EAGLE=1 : scène de l'aigle (alerte, vol, enlèvement), crapaud immobile.
+        // TRAVERSEE_LAPSE=dossier : une photo toutes les 0,35 s, crapaud immobile (pour voir une animation).
+        if let Ok(dir) = std::env::var("TRAVERSEE_LAPSE") {
+            app.insert_resource(Lapse { dir, n: 0 }).add_systems(Update, run_lapse);
+            return;
+        }
         if let (Ok(dir), Ok(_)) = (std::env::var("TRAVERSEE_CAPTURE"), std::env::var("TRAVERSEE_EAGLE")) {
             app.insert_resource(EagleShots { dir, next: 0 }).add_systems(Update, run_eagle_capture);
             return;
@@ -129,6 +134,10 @@ fn run_capture(
         if cap.index == 1 {
             // Pour photographier l'annonce d'un déblocage en jeu.
             fx.write(crate::fx::Fx::Unlock(crate::progress::Item::Character(crate::characters::Character::Rabbit)));
+        }
+        if cap.index == 8 {
+            view.page = std::env::var("TRAVERSEE_PAGE").ok().and_then(|s| s.parse().ok()).unwrap_or(0);
+            view.dirty = true;
         }
         if cap.index == 9 {
             view.tab = crate::garage::Tab::Characters;
@@ -231,5 +240,36 @@ fn run_eagle_capture(
     if now - t0 >= at {
         shots.next += 1;
         commands.spawn(Screenshot::primary_window()).observe(save_to_disk(format!("{}/{name}.png", shots.dir)));
+    }
+}
+
+#[derive(Resource)]
+struct Lapse {
+    dir: String,
+    n: usize,
+}
+
+fn run_lapse(
+    time: Res<Time<Real>>,
+    mut commands: Commands,
+    mut lapse: ResMut<Lapse>,
+    state: Res<State<GameState>>,
+    mut next: ResMut<NextState<GameState>>,
+    mut exit: MessageWriter<AppExit>,
+) {
+    let now = time.elapsed_secs();
+    if *state.get() == GameState::Menu && now > 1.0 {
+        next.set(GameState::Playing);
+    }
+    if *state.get() != GameState::Playing {
+        return;
+    }
+    let due = 2.0 + lapse.n as f32 * 0.35;
+    if now >= due {
+        commands.spawn(Screenshot::primary_window()).observe(save_to_disk(format!("{}/l{:02}.png", lapse.dir, lapse.n)));
+        lapse.n += 1;
+        if lapse.n >= 45 {
+            exit.write(AppExit::Success);
+        }
     }
 }

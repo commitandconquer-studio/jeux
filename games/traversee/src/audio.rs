@@ -43,6 +43,8 @@ pub enum Sfx {
     Win,
     /// Cri aigu de l'aigle.
     Screech,
+    /// Grosse explosion (le Speed-Bus).
+    Explosion,
     /// Bonus rare (mouche dorée).
     Power,
     /// Début d'un nouveau monde.
@@ -67,6 +69,7 @@ pub struct Sounds {
     eat: Handle<AudioSource>,
     alarm: Handle<AudioSource>,
     win: Handle<AudioSource>,
+    explosion: Handle<AudioSource>,
     howl: Handle<AudioSource>,
     click: Handle<AudioSource>,
     music: Handle<AudioSource>,
@@ -94,6 +97,7 @@ impl FromWorld for Sounds {
             eat: load(lib::EAT),
             alarm: load(lib::ALARM),
             win: load(lib::WIN),
+            explosion: load(lib::EXPLOSION),
             howl: load(lib::WOLF_HOWL),
             click: load(lib::CLICK),
             music: load(lib::MUSIC_CAMPAGNE),
@@ -143,6 +147,7 @@ fn play_sfx(
             Sfx::Eat => (&sounds.eat, 0.9),
             Sfx::Alarm => (&sounds.alarm, 0.5),
             Sfx::Win => (&sounds.win, 0.7),
+            Sfx::Explosion => (&sounds.explosion, 0.55),
             Sfx::Screech => {
                 // Le hurlement du loup, accéléré, fait un cri de rapace.
                 commands.spawn((AudioPlayer::new(sounds.howl.clone()), PlaybackSettings::DESPAWN.with_volume(Volume::Linear(0.6)).with_speed(2.6)));

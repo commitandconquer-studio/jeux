@@ -1,6 +1,8 @@
 //! Progression : au début, presque rien ; le total des points de toutes les
 //! parties débloque peu à peu les mouches, les véhicules, les trains, les mondes,
 //! les personnages et leurs accessoires. Sauvegardé entre deux parties.
+use std::sync::LazyLock;
+
 use bevy::prelude::*;
 use game_common::{Score, tx};
 
@@ -24,7 +26,7 @@ pub enum Item {
 }
 
 /// Points cumulés nécessaires, dans l'ordre d'arrivée.
-pub const UNLOCKS: [(u32, Item); 32] = [
+const BASE_UNLOCKS: &[(u32, Item)] = &[
     (15, Item::Flies),
     (25, Item::Vehicle(Vehicle::Truck)),
     (40, Item::Costume(Costume::Cap)),
@@ -50,31 +52,41 @@ pub const UNLOCKS: [(u32, Item); 32] = [
     (1000, Item::Vehicle(Vehicle::Tractor)),
     (1100, Item::Costume(Costume::Crown)),
     (1250, Item::Character(Character::Fox)),
-    (1400, Item::Vehicle(Vehicle::Future)),
     (1600, Item::Costume(Costume::Party)),
     (1800, Item::Character(Character::Panda)),
     (2000, Item::Vehicle(Vehicle::Sheriff)),
     (2300, Item::Costume(Costume::Wizard)),
     (2600, Item::Character(Character::Duck)),
-    (3000, Item::Vehicle(Vehicle::Fantastic)),
 ];
 
+/// Tous les déblocages, par ordre de points : ceux ci-dessus et les véhicules décrits en pièces.
+pub static UNLOCKS: LazyLock<Vec<(u32, Item)>> = LazyLock::new(|| {
+    let mut all: Vec<(u32, Item)> = BASE_UNLOCKS.to_vec();
+    for (i, g) in crate::gen_vehicles::GEN.iter().enumerate() {
+        all.push((g.points, Item::Vehicle(Vehicle::Gen(i))));
+    }
+    all.sort_by_key(|(t, _)| *t);
+    all
+});
+
 /// Les véhicules, dans l'ordre d'affichage au garage.
-pub const ALL: [Item; 13] = [
-    Item::Vehicle(Vehicle::Car),
-    Item::Vehicle(Vehicle::Truck),
-    Item::Vehicle(Vehicle::Taxi),
-    Item::Trains,
-    Item::Vehicle(Vehicle::Moto),
-    Item::Vehicle(Vehicle::Bus),
-    Item::Vehicle(Vehicle::Pickup),
-    Item::Vehicle(Vehicle::Sport),
-    Item::Vehicle(Vehicle::Police),
-    Item::Vehicle(Vehicle::Tractor),
-    Item::Vehicle(Vehicle::Future),
-    Item::Vehicle(Vehicle::Sheriff),
-    Item::Vehicle(Vehicle::Fantastic),
-];
+pub static ALL: LazyLock<Vec<Item>> = LazyLock::new(|| {
+    let mut all = vec![
+        Item::Vehicle(Vehicle::Car),
+        Item::Vehicle(Vehicle::Truck),
+        Item::Vehicle(Vehicle::Taxi),
+        Item::Trains,
+        Item::Vehicle(Vehicle::Moto),
+        Item::Vehicle(Vehicle::Bus),
+        Item::Vehicle(Vehicle::Pickup),
+        Item::Vehicle(Vehicle::Sport),
+        Item::Vehicle(Vehicle::Police),
+        Item::Vehicle(Vehicle::Tractor),
+        Item::Vehicle(Vehicle::Sheriff),
+    ];
+    all.extend((0..crate::gen_vehicles::GEN.len()).map(|i| Item::Vehicle(Vehicle::Gen(i))));
+    all
+});
 
 impl Item {
     /// Le nom à afficher (petit nom des véhicules, nom des mondes, des personnages…).
@@ -87,7 +99,9 @@ impl Item {
             Item::Flies => tx!("Les mouches", "The flies", "Die Fliegen", "Le mosche", "Las moscas"),
             Item::Eagle => tx!("L'aigle (attention !)", "The eagle (watch out!)", "Der Adler (Vorsicht!)", "L'aquila (attenzione!)", "El águila (¡cuidado!)"),
             Item::GoldFlies => tx!("Les mouches dorées", "The golden flies", "Die goldenen Fliegen", "Le mosche dorate", "Las moscas doradas"),
+            Item::Vehicle(Vehicle::Gen(i)) => return crate::gen_vehicles::name(i),
             Item::Vehicle(v) => match v {
+                Vehicle::Gen(_) => unreachable!(),
                 Vehicle::Car => tx!("Pépette", "Penny", "Püppi", "Pepetta", "Pepita"),
                 Vehicle::Truck => tx!("Gros Bidon", "Big Barrel", "Dicker Brummer", "Gran Botte", "Gran Bidón"),
                 Vehicle::Taxi => tx!("Taxi Citron", "Lemon Cab", "Zitronen-Taxi", "Taxi Limone", "Taxi Limón"),
@@ -97,9 +111,7 @@ impl Item {
                 Vehicle::Sport => tx!("Éclair Fou", "Mad Flash", "Irrer Blitz", "Lampo Matto", "Rayo Loco"),
                 Vehicle::Police => tx!("Sirène Max", "Siren Max", "Sirenen-Max", "Sirena Max", "Sirena Max"),
                 Vehicle::Tractor => tx!("Gustave le Tracteur", "Gus the Tractor", "Traktor-Gustav", "Gustavo il Trattore", "Gustavo el Tractor"),
-                Vehicle::Future => tx!("Le Voyageur du Temps", "The Time Traveler", "Der Zeitreisende", "Il Viaggiatore del Tempo", "El Viajero del Tiempo"),
                 Vehicle::Sheriff => tx!("Shérif Casse-Cou", "Sheriff Daredevil", "Sheriff Draufgänger", "Sceriffo Spericolato", "Sheriff Temerario"),
-                Vehicle::Fantastic => tx!("Scanner le Fantastique", "Scanner the Fantastic", "Scanner der Fantastische", "Scanner il Fantastico", "Scanner el Fantástico"),
             },
         }
         .t()
@@ -146,7 +158,7 @@ impl Progress {
 
     /// Prochain objet à débloquer et son seuil.
     pub fn next(&self) -> Option<(u32, Item)> {
-        UNLOCKS.iter().find(|(t, _)| self.points() < *t).copied()
+        UNLOCKS.iter().filter(|(t, _)| self.points() < *t).min_by_key(|(t, _)| *t).copied()
     }
 
     /// Avancement vers le prochain objet (0 à 1), seuil précédent et suivant.

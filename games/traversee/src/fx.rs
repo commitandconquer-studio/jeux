@@ -22,6 +22,8 @@ pub enum Fx {
     Gulp(Vec3, u32),
     /// Un nouveau monde commence.
     World(crate::extra::Biome),
+    /// Explosion (le Speed-Bus).
+    Boom(Vec3),
     /// Plumes qui volent (l'aigle).
     Feathers(Vec3),
     /// Un déblocage vient d'être gagné.
@@ -75,6 +77,8 @@ struct FxMats {
     skin: Handle<StandardMaterial>,
     feather: Handle<StandardMaterial>,
     star: Handle<StandardMaterial>,
+    fire: Handle<StandardMaterial>,
+    smoke: Handle<StandardMaterial>,
     ring: Handle<Mesh>,
 }
 
@@ -102,6 +106,8 @@ fn setup(mut commands: Commands, mut mats: ResMut<Assets<StandardMaterial>>, mut
         skin: unlit(Color::srgb(0.40, 0.76, 0.34)),
         feather: unlit(Color::srgb(1.0, 0.98, 0.92)),
         star: unlit(Color::srgb(1.0, 0.85, 0.25)),
+        fire: unlit(Color::srgb(1.0, 0.45, 0.08)),
+        smoke: unlit(Color::srgb(0.22, 0.22, 0.25)),
         ring: meshes.add(Torus::new(0.46, 0.5)),
     });
     commands.spawn((
@@ -204,6 +210,22 @@ fn spawn_fx(
                 spawn_toast(&mut commands, item, queued as f32 * 1.1);
                 queued += 1;
                 sfx.write(crate::audio::Sfx::Win);
+            }
+            Fx::Boom(p) => {
+                // Boule de feu, fumée noire, éclats jaunes et onde de choc.
+                for _ in 0..34 {
+                    let v = Vec3::new(unit(&mut rng) * 4.5, 1.0 + 4.0 * unit(&mut rng).abs(), unit(&mut rng) * 3.0);
+                    puff(&mut commands, &kit, &mats.fire, p, v, 0.35 + 0.3 * unit(&mut rng).abs(), 0.9, 2.5);
+                }
+                for _ in 0..16 {
+                    let v = Vec3::new(unit(&mut rng) * 3.0, 1.5 + 3.0 * unit(&mut rng).abs(), unit(&mut rng) * 2.0);
+                    puff(&mut commands, &kit, &mats.smoke, p + Vec3::Y * 0.3, v, 0.5, 1.6, 0.6);
+                }
+                for _ in 0..12 {
+                    let v = Vec3::new(unit(&mut rng) * 6.0, 2.0 + 4.0 * unit(&mut rng).abs(), unit(&mut rng) * 4.0);
+                    puff(&mut commands, &kit, &mats.star, p, v, 0.22, 0.8, 7.0);
+                }
+                ring(&mut commands, &kit_ring(&mats), &mats.fire, p - Vec3::Y * 0.4, 6.0, 0.55);
             }
             Fx::Feathers(p) => {
                 for _ in 0..22 {

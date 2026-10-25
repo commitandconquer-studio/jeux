@@ -8,6 +8,7 @@ mod eagle;
 mod extra;
 mod frog;
 mod garage;
+mod gen_vehicles;
 mod fx;
 mod lanes;
 mod merge;
@@ -95,7 +96,8 @@ fn main() {
                 lanes::move_movers,
                 characters::rebuild_player,
                 extra::animate_flies,
-                extra::animate_scanner,
+                extra::speed_bus,
+                extra::animate_gen,
                 lanes::run_rails,
                 (frog::read_input, frog::update_frog, frog::collide)
                     .chain()
