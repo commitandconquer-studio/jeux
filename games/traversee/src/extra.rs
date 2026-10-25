@@ -692,13 +692,29 @@ pub fn spawn_scenery(c: &mut Commands, k: &Kit, x: &Extra, parent: Entity, biome
             }
         }
         // ---- Parc Jurassic'Croa : modèles décrits en pièces
-        (Biome::Jurassic, Scenery::Block) => spawn_model(c, k, x, parent, &crate::gen_worlds::JURA_BLOCKS[roll as usize % crate::gen_worlds::JURA_BLOCKS.len()], pos, roll as usize),
+        // Surtout des palmiers, fougères et buissons ; le rocher en fusion reste rare.
+        (Biome::Jurassic, Scenery::Block) => {
+            use crate::gen_worlds::JURA_BLOCKS as B;
+            let i = match roll {
+                0 | 3 | 6 => 0,
+                1 | 4 | 7 => 1,
+                2 | 5 => 3,
+                8 => [4, 5, 6][variant % 3],
+                _ if variant % 2 == 0 => 2,
+                _ => 0,
+            };
+            spawn_model(c, k, x, parent, &B[i], pos, variant)
+        }
         (Biome::Jurassic, Scenery::Side) => {
-            // Surtout de grands décors (palmiers, volcan…), parfois un obstacle.
-            if roll < 7 {
-                spawn_model(c, k, x, parent, &crate::gen_worlds::JURA_SIDES[roll as usize % crate::gen_worlds::JURA_SIDES.len()], pos, roll as usize);
-            } else {
-                spawn_model(c, k, x, parent, &crate::gen_worlds::JURA_BLOCKS[variant % crate::gen_worlds::JURA_BLOCKS.len()], pos, variant);
+            use crate::gen_worlds::{JURA_BLOCKS as B, JURA_SIDES as S};
+            // Grands palmiers la plupart du temps ; bâtiments et cascade parfois ; le volcan, très rarement.
+            match roll {
+                0..=5 => spawn_model(c, k, x, parent, &S[0], pos, variant),
+                6 => {
+                    let i = if variant % 12 == 0 { 1 } else { [2, 3, 4, 5][variant % 4] };
+                    spawn_model(c, k, x, parent, &S[i], pos, variant)
+                }
+                _ => spawn_model(c, k, x, parent, &B[[0, 1, 3][variant % 3]], pos, variant),
             }
         }
         (Biome::Jurassic, Scenery::Deco) => spawn_model(c, k, x, parent, &crate::gen_worlds::JURA_DECO[variant % crate::gen_worlds::JURA_DECO.len()], pos, variant),
