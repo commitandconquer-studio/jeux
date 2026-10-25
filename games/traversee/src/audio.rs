@@ -72,7 +72,9 @@ pub struct Sounds {
     alarm: Handle<AudioSource>,
     win: Handle<AudioSource>,
     explosion: Handle<AudioSource>,
-    howl: Handle<AudioSource>,
+    /// Cri de rapace et souffle de chute : sons déjà accélérés / ralentis (pas de changement de vitesse en cours de lecture).
+    screech: Handle<AudioSource>,
+    fall: Handle<AudioSource>,
     click: Handle<AudioSource>,
     music: Handle<AudioSource>,
     power: Handle<AudioSource>,
@@ -100,7 +102,8 @@ impl FromWorld for Sounds {
             alarm: load(lib::ALARM),
             win: load(lib::WIN),
             explosion: load(lib::EXPLOSION),
-            howl: load(lib::WOLF_HOWL),
+            screech: load("sounds/sfx/screech.wav"),
+            fall: load("sounds/sfx/fall.wav"),
             click: load(lib::CLICK),
             music: load(lib::MUSIC_CAMPAGNE),
             power: load(lib::POWER_UP),
@@ -150,15 +153,9 @@ fn play_sfx(
             Sfx::Alarm => (&sounds.alarm, 0.5),
             Sfx::Win => (&sounds.win, 0.7),
             Sfx::Explosion => (&sounds.explosion, 0.55),
-            Sfx::Fall => {
-                commands.spawn((AudioPlayer::new(sounds.howl.clone()), PlaybackSettings::DESPAWN.with_volume(Volume::Linear(0.45)).with_speed(0.45)));
-                continue;
-            }
-            Sfx::Screech => {
-                // Le hurlement du loup, accéléré, fait un cri de rapace.
-                commands.spawn((AudioPlayer::new(sounds.howl.clone()), PlaybackSettings::DESPAWN.with_volume(Volume::Linear(0.6)).with_speed(2.6)));
-                continue;
-            }
+            Sfx::Fall => (&sounds.fall, 0.45),
+            // Le hurlement du loup, accéléré, fait un cri de rapace (fichier préparé : un changement de vitesse en cours de lecture figeait la version web).
+            Sfx::Screech => (&sounds.screech, 0.6),
             Sfx::Train(v) => (&sounds.train, v),
         };
         commands.spawn((AudioPlayer::new(handle.clone()), PlaybackSettings::DESPAWN.with_volume(Volume::Linear(volume))));
