@@ -204,7 +204,7 @@ fn build(
             let have = worlds.iter().filter(|b| progress.has(Item::World(**b))).count();
             heading = tx!("Les mondes : {} / {}", "The worlds: {} / {}", "Die Welten: {} / {}", "I mondi: {} / {}", "Los mundos: {} / {}").avec(&[&have, &worlds.len()]);
             for (i, b) in worlds.iter().enumerate() {
-                let center = ORIGIN + Vec3::new((i as f32 - 2.5) * 5.6, 0.0, -1.0);
+                let center = ORIGIN + Vec3::new((i as f32 - 3.0) * 5.1, 0.0, -1.0);
                 let at = center - ORIGIN;
                 let (top, _) = extra.ground(&kit, *b, 0);
                 part(&mut commands, root, &kit.cyl, top, at + Vec3::Y * -0.15, Vec3::new(5.0, 0.2, 4.2));
@@ -271,7 +271,7 @@ fn world_sample(c: &mut Commands, kit: &Kit, x: &Extra, slot: Entity, biome: Bio
         }
         Biome::Desert => spawn_scenery(c, kit, x, slot, biome, Scenery::Block, Vec3::new(-0.2, 0.0, 0.0), 0, 0),
         Biome::Snow => spawn_scenery(c, kit, x, slot, biome, Scenery::Block, Vec3::new(-0.2, 0.0, 0.0), 4, 0),
-        Biome::Jurassic | Biome::Nippon => {
+        Biome::Jurassic | Biome::Nippon | Biome::Space => {
             spawn_scenery(c, kit, x, slot, biome, Scenery::Block, Vec3::new(-0.3, 0.0, 0.0), 0, 0);
             spawn_scenery(c, kit, x, slot, biome, Scenery::Block, Vec3::new(0.7, 0.0, 0.5), 3, 0);
         }

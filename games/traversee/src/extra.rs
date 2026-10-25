@@ -22,6 +22,11 @@ pub struct Extra {
     red_light: Handle<StandardMaterial>,
     blue_light: Handle<StandardMaterial>,
     black_stripe: Handle<StandardMaterial>,
+    pub bubble: Handle<StandardMaterial>,
+    /// Chemin de métal, plateformes octogonales et cargos de l'espace.
+    pub metal: Handle<StandardMaterial>,
+    pub metal_top: Handle<StandardMaterial>,
+    octagon: Handle<Mesh>,
     bus: Vec<Handle<StandardMaterial>>,
     green: Handle<StandardMaterial>,
     taxi: Handle<StandardMaterial>,
@@ -47,8 +52,12 @@ impl Extra {
 
 impl FromWorld for Extra {
     fn from_world(world: &mut World) -> Self {
+        let octagon = world.resource_mut::<Assets<Mesh>>().add(Cylinder::new(0.5, 1.0).mesh().resolution(8).build().with_duplicated_vertices().with_computed_flat_normals());
         let mut mats = world.resource_mut::<Assets<StandardMaterial>>();
         let biome = BiomeMats::new(&mut mats);
+        let metal = mats.add(flat_material(Color::srgb(0.70, 0.73, 0.78)));
+        let metal_top = mats.add(flat_material(Color::srgb(0.88, 0.90, 0.94)));
+        let bubble = mats.add(StandardMaterial { unlit: true, alpha_mode: AlphaMode::Blend, ..flat_material(Color::srgba(0.75, 0.92, 1.0, 0.32)) });
         // Toutes les couleurs des modèles décrits en pièces (véhicules et décors).
         let mut colors: Vec<([u8; 3], Handle<StandardMaterial>)> = Vec::new();
         let models = crate::gen_vehicles::GEN.iter().map(|g| (g.c2, g.c3)).chain(
@@ -56,7 +65,8 @@ impl FromWorld for Extra {
                 [t.blocks, t.sides, t.deco].into_iter().flatten().chain(t.animals.iter().map(|a| &a.model)).chain([&t.hero, &t.hat]).map(|m| (m.c2, m.c3))
             }),
         )
-        .chain(std::iter::once((FROG_GREEN, FROG_GREEN)));
+        .chain(std::iter::once((FROG_GREEN, FROG_GREEN)))
+        .chain(SPACE_CARGO.iter().map(|c| (*c, *c)));
         for rgb in models.flat_map(|(a, b)| [a, b]) {
             if !colors.iter().any(|(c, _)| *c == rgb) {
                 let col = Color::srgb(rgb[0] as f32 / 255.0, rgb[1] as f32 / 255.0, rgb[2] as f32 / 255.0);
@@ -73,6 +83,10 @@ impl FromWorld for Extra {
         let blue_light = glow(Color::srgb(0.2, 0.4, 1.0), LinearRgba::rgb(0.2, 0.5, 3.0));
         let mut f = |r: f32, g: f32, b: f32| mats.add(flat_material(Color::srgb(r, g, b)));
         Extra {
+            metal,
+            metal_top,
+            octagon,
+            bubble,
             biome,
             colors,
             flowers,
@@ -464,9 +478,14 @@ pub enum Biome {
     Jurassic,
     /// Nippon Kaboom.
     Nippon,
+    /// Cosmos Croâ : la Lune, ses vaisseaux et ses extraterrestres.
+    Space,
 }
 
 pub const BIOME_LEN: i32 = 60;
+
+/// Les couleurs des conteneurs des cargos de l'espace.
+pub const SPACE_CARGO: [[u8; 3]; 4] = [[232, 67, 58], [255, 138, 42], [55, 163, 255], [244, 246, 250]];
 
 /// La peau verte des héros décrits en pièces (matière `peinture`).
 pub const FROG_GREEN: [u8; 3] = [90, 170, 70];
@@ -510,7 +529,7 @@ pub struct Theme {
 pub static START_WORLD: std::sync::atomic::AtomicI32 = std::sync::atomic::AtomicI32::new(0);
 
 impl Biome {
-    pub const ALL: [Biome; 6] = [Biome::Prairie, Biome::Desert, Biome::Snow, Biome::Autumn, Biome::Jurassic, Biome::Nippon];
+    pub const ALL: [Biome; 7] = [Biome::Prairie, Biome::Desert, Biome::Snow, Biome::Autumn, Biome::Jurassic, Biome::Nippon, Biome::Space];
 
     /// Le monde décrit en pièces, pour les mondes à thème.
     pub fn theme(self) -> Option<&'static Theme> {
@@ -521,6 +540,7 @@ impl Biome {
         match self {
             Biome::Jurassic => Some(0),
             Biome::Nippon => Some(1),
+            Biome::Space => Some(2),
             _ => None,
         }
     }
@@ -536,13 +556,14 @@ impl Biome {
         // TRAVERSEE_BIOME=1..3 : voir un monde tout de suite (essais et captures).
         static ENV: std::sync::OnceLock<i32> = std::sync::OnceLock::new();
         let start = *ENV.get_or_init(|| std::env::var("TRAVERSEE_BIOME").ok().and_then(|s| s.parse().ok()).unwrap_or(0)) + START_WORLD.load(std::sync::atomic::Ordering::Relaxed);
-        let biome = match (row.max(0) / BIOME_LEN + start) % 6 {
+        let biome = match (row.max(0) / BIOME_LEN + start) % 7 {
             0 => Biome::Prairie,
             1 => Biome::Desert,
             2 => Biome::Snow,
             3 => Biome::Autumn,
             4 => Biome::Jurassic,
-            _ => Biome::Nippon,
+            5 => Biome::Nippon,
+            _ => Biome::Space,
         };
         if biome != Biome::Prairie && !crate::progress::unlocked(points, crate::progress::Item::World(biome)) {
             Biome::Prairie
@@ -558,7 +579,7 @@ impl Biome {
             Biome::Desert => tx!("Le désert", "The desert", "Die Wüste", "Il deserto", "El desierto"),
             Biome::Snow => tx!("La neige", "The snow", "Der Schnee", "La neve", "La nieve"),
             Biome::Autumn => tx!("L'automne", "Autumn", "Der Herbst", "L'autunno", "El otoño"),
-            Biome::Jurassic | Biome::Nippon => return (self.theme().unwrap().name)(),
+            Biome::Jurassic | Biome::Nippon | Biome::Space => return (self.theme().unwrap().name)(),
         }
         .t()
     }
@@ -645,7 +666,7 @@ impl Extra {
             Biome::Desert => (&self.biome.sand[i], &self.biome.sand_side),
             Biome::Snow => (&self.biome.snow[i], &self.biome.snow_side),
             Biome::Autumn => (&self.biome.autumn[i], &self.biome.autumn_side),
-            Biome::Jurassic | Biome::Nippon => {
+            Biome::Jurassic | Biome::Nippon | Biome::Space => {
                 let t = &self.biome.themed[biome.theme_index().unwrap()];
                 (&t.grass[i], &t.side)
             }
@@ -656,7 +677,7 @@ impl Extra {
     pub fn water<'a>(&'a self, kit: &'a Kit, biome: Biome) -> (&'a Handle<StandardMaterial>, &'a Handle<StandardMaterial>) {
         match biome {
             Biome::Snow => (&self.biome.ice, &self.biome.ice_side),
-            Biome::Jurassic | Biome::Nippon => {
+            Biome::Jurassic | Biome::Nippon | Biome::Space => {
                 let t = &self.biome.themed[biome.theme_index().unwrap()];
                 (&t.water, &t.water_side)
             }
@@ -760,7 +781,7 @@ pub fn spawn_scenery(c: &mut Commands, k: &Kit, x: &Extra, parent: Entity, biome
             }
         }
         // ---- Mondes à thème : modèles décrits en pièces
-        (Biome::Jurassic | Biome::Nippon, kind) => {
+        (Biome::Jurassic | Biome::Nippon | Biome::Space, kind) => {
             let t = biome.theme().unwrap();
             let pick = (roll as usize * 3 + variant) % 20;
             match kind {
@@ -823,6 +844,8 @@ pub enum Mat {
     /// Couleurs propres au modèle (`c2`, `c3`).
     C2,
     C3,
+    /// Globe ou dôme transparent.
+    Bulle,
 }
 
 pub struct Piece {
@@ -870,6 +893,8 @@ pub enum AnimKind {
     TailY,
     TailZ,
     TailX,
+    /// Tourne en continu sur place (astéroïdes).
+    SpinGroup,
     /// Pivote autour du bas du groupe (autour de Z ou de Y).
     SwingZBase,
     SwingYBase,
@@ -878,7 +903,7 @@ pub enum AnimKind {
 impl AnimKind {
     /// Les animations qui font tourner un groupe de pièces autour d'un point.
     fn pivoted(self) -> bool {
-        matches!(self, AnimKind::SwingZ | AnimKind::SwingXBase | AnimKind::TailY | AnimKind::TailZ | AnimKind::TailX | AnimKind::SwingZBase | AnimKind::SwingYBase)
+        matches!(self, AnimKind::SwingZ | AnimKind::SwingXBase | AnimKind::TailY | AnimKind::TailZ | AnimKind::TailX | AnimKind::SpinGroup | AnimKind::SwingZBase | AnimKind::SwingYBase)
     }
 }
 
@@ -898,6 +923,29 @@ pub struct Model {
 }
 
 /// Pose un décor décrit en pièces ; les pièces animées gardent leur forme de départ (voir `animate_gen`).
+/// Plateforme octogonale en métal, à la place du nénuphar.
+pub fn spawn_platform(c: &mut Commands, k: &Kit, x: &Extra, parent: Entity) {
+    part(c, parent, &x.octagon, &x.metal, Vec3::new(0.0, -0.15, 0.0), Vec3::new(0.9, 0.18, 0.9));
+    part(c, parent, &x.octagon, &x.metal_top, Vec3::new(0.0, -0.055, 0.0), Vec3::new(0.7, 0.02, 0.7));
+    part(c, parent, &k.ball, &x.blue_light, Vec3::new(0.3, -0.04, 0.3), Vec3::splat(0.07));
+    part(c, parent, &k.ball, &x.blue_light, Vec3::new(-0.3, -0.04, -0.3), Vec3::splat(0.07));
+}
+
+/// Cargo qui dérive dans le vide, à la place du rondin : coque et conteneurs de couleur.
+pub fn spawn_cargo(c: &mut Commands, k: &Kit, x: &Extra, parent: Entity, len: f32) {
+    part(c, parent, &k.cube, &x.metal, Vec3::new(0.0, -0.1, 0.0), Vec3::new(len, 0.2, 0.84));
+    part(c, parent, &k.cube, &x.metal_top, Vec3::new(0.0, 0.0, 0.0), Vec3::new(len - 0.1, 0.02, 0.72));
+    let n = len as usize;
+    let each = (len - 0.3) / n as f32;
+    for i in 0..n {
+        let col = x.color(SPACE_CARGO[(i + len as usize) % SPACE_CARGO.len()]);
+        part(c, parent, &k.cube, col, Vec3::new(-len / 2.0 + 0.15 + each * (i as f32 + 0.5), 0.2, 0.0), Vec3::new(each - 0.08, 0.34, 0.6));
+    }
+    for s in [-1.0, 1.0] {
+        part(c, parent, &k.ball, &x.blue_light, Vec3::new(s * (len / 2.0 + 0.02), -0.05, 0.0), Vec3::new(0.14, 0.14, 0.4));
+    }
+}
+
 pub fn spawn_model(c: &mut Commands, k: &Kit, x: &Extra, parent: Entity, m: &Model, pos: Vec3, seed: usize) {
     for (n, p) in m.pieces.iter().enumerate() {
         let tf = piece_transform(p, pos);
@@ -949,6 +997,7 @@ pub fn spawn_pivoted(c: &mut Commands, k: &Kit, x: &Extra, parent: Entity, m: &M
                     let pivot = match kind {
                         AnimKind::SwingZ => Vec3::new(mid.x, hi.y, mid.z),
                         AnimKind::SwingZBase | AnimKind::SwingYBase => Vec3::new(mid.x, lo.y, mid.z),
+                        AnimKind::SpinGroup => mid,
                         AnimKind::SwingXBase => Vec3::new(mid.x, mid.y, if mid.z > 0.0 { lo.z } else { hi.z }),
                         _ => Vec3::new(hi.x, mid.y, mid.z),
                     };
@@ -1000,6 +1049,7 @@ fn piece_material<'a>(k: &'a Kit, x: &'a Extra, mat: Mat, c2: [u8; 3], c3: [u8; 
         Mat::LumiereBleue => &x.blue_light,
         Mat::Blanc => &x.white,
         Mat::Noir => &x.black_stripe,
+        Mat::Bulle => &x.bubble,
         Mat::C2 => x.color(c2),
         Mat::C3 => x.color(c3),
     }
@@ -1109,6 +1159,7 @@ pub fn animate_gen(time: Res<Time>, mut q: Query<(&GenAnim, &mut Transform, &mut
                 AnimKind::SwingXBase => out.rotation *= Quat::from_rotation_x(-a.base.translation.z.signum() * (tt * 7.0 + *amp * std::f32::consts::TAU).sin() * 0.6),
                 AnimKind::TailY => out.rotation *= Quat::from_rotation_y((tt * 5.0).sin() * 0.35),
                 AnimKind::TailZ => out.rotation *= Quat::from_rotation_z((tt * 5.0).sin() * 0.2),
+                AnimKind::SpinGroup => out.rotation = Quat::from_euler(EulerRot::YXZ, tt * 0.9, tt * 0.6, 0.0),
                 AnimKind::TailX => out.rotation *= Quat::from_rotation_x((tt * 5.0).sin() * 0.2),
                 AnimKind::SwingZBase => out.rotation *= Quat::from_rotation_z((tt * 3.0 + *amp * std::f32::consts::TAU).sin() * 0.5),
                 AnimKind::SwingYBase => out.rotation *= Quat::from_rotation_y((tt * 3.0 + *amp * std::f32::consts::TAU).sin() * 0.6),

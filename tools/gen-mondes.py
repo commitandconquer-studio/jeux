@@ -14,24 +14,27 @@ T = os.path.join(ROOT, "games/traversee")
 # répartition des gros obstacles (indices de `obstacles`, 20 cases) et du décor des bords (0.. = bords, 100+i = obstacle i)
 WORLDS = [
     dict(tag="JURA", file="data/import/jurassic_croa.json", extra_animals=[],
-         side_pct=40,
+         side_pct=22,
          hat=[dict(forme="cylindre", position=[0.12, 0.76, 0], taille=[0.3, 0.16, 0.3], rotation_deg=[0, 0, 0], matiere="couleur_3"),
               dict(forme="cylindre", position=[0.12, 0.69, 0], taille=[0.56, 0.03, 0.56], rotation_deg=[0, 0, 0], matiere="couleur_3"),
               dict(forme="cylindre", position=[0.12, 0.725, 0], taille=[0.32, 0.03, 0.32], rotation_deg=[0, 0, 0], matiere="couleur_2")],
          blocks=[0] * 6 + [1] * 5 + [3] * 5 + [4, 5, 6, 2],
          sides=[0] * 11 + [100, 101, 103, 2, 3, 4, 5, 1, 0]),
     dict(tag="NIPPON", file="data/import/nippon_kaboom.json", keep_animals=["lapin_mochi", "tanuki_gourmand"],
-         extra_animals=["data/import/rex_crete_bleue_detaille.json", "data/import/nippon_extra_animaux.json"], hat=[], side_pct=14,
+         extra_animals=["data/import/rex_crete_bleue_detaille.json", "data/import/nippon_extra_animaux.json"], hat=[], side_pct=8,
          # Décor simple : cerisiers, bambous et lanternes ; un torii ou une enseigne de temps en temps.
          blocks=[0] * 6 + [3] * 5 + [1] * 3 + [5] * 3 + [6, 2, 4],
          sides=[100] * 8 + [103] * 5 + [101] * 3 + [2] * 2 + [5, 0]),
+    dict(tag="ESPACE", file="data/import/espace.json", extra_animals=[], hat=[], side_pct=0,
+         blocks=[0] * 8 + [1] * 6 + [2] * 6,
+         sides=[100] * 10 + [101] * 5 + [102] * 5),
 ]
 SHAPE_RS = {"cube": "Shape::Cube", "cylindre": "Shape::Cyl", "cone": "Shape::Cone", "sphere": "Shape::Sphere"}
 MAT_RS = {"vitre": "Mat::Vitre", "sombre": "Mat::Sombre", "pneu": "Mat::Pneu", "enjoliveur": "Mat::Enjoliveur",
           "phare": "Mat::Phare", "feu_arriere": "Mat::FeuArriere", "lumiere_rouge": "Mat::LumiereRouge", "lumiere_bleue": "Mat::LumiereBleue",
-          "blanc": "Mat::Blanc", "noir": "Mat::Noir", "couleur_2": "Mat::C2", "couleur_3": "Mat::C3"}
+          "blanc": "Mat::Blanc", "noir": "Mat::Noir", "couleur_2": "Mat::C2", "couleur_3": "Mat::C3", "bulle": "Mat::Bulle"}
 ANIM_RS = {"clignote": ("Blink", 0.0), "clignote_alterne": ("BlinkAlt", 0.0), "pulse": ("Pulse", 0.0), "rebond": ("Bob", 0.03),
-           "pendule": ("Pendulum", 0.0), "balance": ("Sway", 0.0), "derive_haut": ("DriftUp", 0.0), "flotte_verticale": ("Float", 0.03)}
+           "pendule": ("Pendulum", 0.0), "balance": ("Sway", 0.0), "derive_haut": ("DriftUp", 0.0), "flotte_verticale": ("Float", 0.03), "clignote_lent": ("BlinkSlow", 0.0), "rotation_groupe": ("SpinGroup", 0.0)}
 
 
 def f(x):

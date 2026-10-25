@@ -123,6 +123,8 @@ pub fn spawn_shadow(commands: &mut Commands, kit: &crate::models::Kit, mats: &mu
 pub enum Cause {
     Squashed,
     Drowned,
+    /// Tombé dans le vide (Cosmos Croâ).
+    Void,
     CarriedAway,
     TooSlow,
     Eagle,
@@ -138,6 +140,13 @@ impl Cause {
                 "Platsch! Ins Wasser gefallen",
                 "Splash! Caduto in acqua",
                 "¡Plof! Se cayó al agua"
+            ),
+            Cause::Void => tx!(
+                "Perdu dans le vide !",
+                "Lost in the void!",
+                "Im Nichts verloren!",
+                "Perso nel vuoto!",
+                "¡Perdido en el vacío!"
             ),
             Cause::CarriedAway => tx!(
                 "Emporté par le courant",
@@ -300,8 +309,13 @@ pub fn update_frog(
                 }
                 None => {
                     frog.pos.y = -0.15;
-                    die(Cause::Drowned, &mut death, &mut next);
-                    sfx.write(Sfx::Splash);
+                    if crate::space::in_space() {
+                        die(Cause::Void, &mut death, &mut next);
+                        sfx.write(Sfx::Fall);
+                    } else {
+                        die(Cause::Drowned, &mut death, &mut next);
+                        sfx.write(Sfx::Splash);
+                    }
                     return;
                 }
             }
@@ -465,6 +479,13 @@ pub fn sync_model(
         }
         Some(Cause::Drowned | Cause::CarriedAway) => {
             pos.y -= death.timer.min(1.0) * 0.8;
+            shadow_on = false;
+        }
+        Some(Cause::Void) => {
+            // Il tombe, de plus en plus vite, en tournant lentement.
+            pos.y -= death.timer * death.timer * 14.0;
+            tumble = Vec3::new(death.timer * 3.0, death.timer * 2.0, death.timer * 4.0);
+            scale = Vec3::splat((1.0 - death.timer * 0.5).max(0.3));
             shadow_on = false;
         }
         Some(Cause::Eagle) => {

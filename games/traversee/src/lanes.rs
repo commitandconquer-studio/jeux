@@ -7,8 +7,8 @@ use game_common::Rng;
 
 use crate::audio::{Mutable, Sfx, SoundOn, Sounds};
 use crate::frog::Frog;
-use crate::extra::{Biome, Deco, Extra, Scenery, Vehicle, pick_vehicle, spawn_deco, spawn_fly, spawn_floe, spawn_ice_pad, spawn_scenery, spawn_vehicle};
-use crate::models::{Kit, Prop, part, spawn_car, spawn_log, spawn_pad, spawn_prop, spawn_train, spawn_truck};
+use crate::extra::{Biome, Deco, Extra, Scenery, Vehicle, pick_vehicle, spawn_cargo, spawn_deco, spawn_fly, spawn_floe, spawn_ice_pad, spawn_platform, spawn_scenery, spawn_vehicle};
+use crate::models::{Kit, Prop, part, part_rot, spawn_car, spawn_log, spawn_pad, spawn_prop, spawn_train, spawn_truck};
 
 /// Colonnes jouables : de -COLS à +COLS.
 pub const COLS: i32 = 4;
@@ -193,7 +193,8 @@ fn spawn_lane(c: &mut Commands, kit: &Kit, x: &Extra, g: &mut LaneGen, points: u
     let ground = |c: &mut Commands, top: f32, center: &Handle<StandardMaterial>, side: &Handle<StandardMaterial>| {
         let y = top - 0.1;
         part(c, root, &kit.cube, center, Vec3::new(0.0, y, 0.0), Vec3::new(center_w, 0.2, 1.0));
-        for s in [-1.0, 1.0] {
+        // Dans l'espace, de chaque côté du chemin, c'est le vide.
+        for s in [-1.0, 1.0].into_iter().filter(|_| biome != Biome::Space) {
             part(c, root, &kit.cube, side, Vec3::new(side_x * s, y, 0.0), Vec3::new(side_w, 0.2, 1.0));
         }
     };
@@ -279,6 +280,9 @@ fn spawn_lane(c: &mut Commands, kit: &Kit, x: &Extra, g: &mut LaneGen, points: u
             }
             // Décor sur les côtés
             for col in (COLS + 1)..(HALF as i32) {
+                if biome == Biome::Space {
+                    break;
+                }
                 for s in [-1, 1] {
                     let at = Vec3::new((col * s) as f32, 0.0, 0.0);
                     let variant = g.rng.below(12) as usize;
@@ -313,11 +317,16 @@ fn spawn_lane(c: &mut Commands, kit: &Kit, x: &Extra, g: &mut LaneGen, points: u
             }
         }
         LaneKind::Road => {
-            ground(c, -0.02, &m.road, &m.road_side);
+            if biome == Biome::Space {
+                ground(c, -0.02, &x.metal, &x.metal);
+            } else {
+                ground(c, -0.02, &m.road, &m.road_side);
+            }
             if after_road {
                 // Pointillés entre deux voies de route
-                let mut x = -HALF;
-                while x < HALF {
+                let reach = if biome == Biome::Space { COLS as f32 + 0.5 } else { HALF };
+                let mut x = -reach;
+                while x < reach {
                     part(c, root, &kit.cube, &m.line, Vec3::new(x, -0.015, 0.5), Vec3::new(0.7, 0.01, 0.07));
                     x += 1.6;
                 }
@@ -376,7 +385,9 @@ fn spawn_lane(c: &mut Commands, kit: &Kit, x: &Extra, g: &mut LaneGen, points: u
         }
         LaneKind::River => {
             let (water, water_side) = x.water(kit, biome);
-            ground(c, -0.15, water, water_side);
+            if biome != Biome::Space {
+                ground(c, -0.15, water, water_side);
+            }
             let frozen = biome == Biome::Snow;
             if g.rng.below(4) == 0 {
                 // Nénuphars immobiles : toujours un sur le couloir, et beaucoup
@@ -386,7 +397,9 @@ fn spawn_lane(c: &mut Commands, kit: &Kit, x: &Extra, g: &mut LaneGen, points: u
                 for col in -COLS..=COLS {
                     if col == g.corridor || g.rng.below(10) < dense {
                         let mover = spawn_mover(c, root, row, col as f32, 0.0, 0.8, MoverKind::Pad, 1.0);
-                        if frozen {
+                        if biome == Biome::Space {
+                            spawn_platform(c, kit, x, mover);
+                        } else if frozen {
                             spawn_ice_pad(c, kit, x, mover);
                         } else {
                             spawn_pad(c, kit, mover, g.rng.below(3) == 0);
@@ -396,7 +409,9 @@ fn spawn_lane(c: &mut Commands, kit: &Kit, x: &Extra, g: &mut LaneGen, points: u
                 }
                 if count == 0 {
                     let mover = spawn_mover(c, root, row, 0.0, 0.0, 0.8, MoverKind::Pad, 1.0);
-                    if frozen {
+                    if biome == Biome::Space {
+                        spawn_platform(c, kit, x, mover);
+                    } else if frozen {
                         spawn_ice_pad(c, kit, x, mover);
                     } else {
                         spawn_pad(c, kit, mover, true);
@@ -414,7 +429,9 @@ fn spawn_lane(c: &mut Commands, kit: &Kit, x: &Extra, g: &mut LaneGen, points: u
                         break;
                     }
                     let mover = spawn_mover(c, root, row, x_pos + len / 2.0, speed, len, MoverKind::Log, 1.0);
-                    if frozen {
+                    if biome == Biome::Space {
+                        spawn_cargo(c, kit, x, mover, len);
+                    } else if frozen {
                         spawn_floe(c, kit, x, mover, len);
                     } else {
                         spawn_log(c, kit, mover, len);
@@ -423,15 +440,37 @@ fn spawn_lane(c: &mut Commands, kit: &Kit, x: &Extra, g: &mut LaneGen, points: u
                 }
             }
         }
+        LaneKind::Rail if biome == Biome::Space => {
+            // Dans l'espace, le train file dans un tube intergalactique transparent.
+            ground(c, 0.0, &x.metal, &x.metal);
+            let reach = COLS as f32 + 0.5;
+            let along_x = Quat::from_rotation_z(PI / 2.0);
+            part_rot(c, root, &kit.cyl, &x.bubble, Vec3::new(0.0, 0.5, 0.0), Vec3::new(1.15, reach * 2.0, 1.15), along_x);
+            let mut px = -reach;
+            while px <= reach {
+                part_rot(c, root, &kit.cyl, &x.metal_top, Vec3::new(px, 0.5, 0.0), Vec3::new(1.22, 0.1, 1.22), along_x);
+                px += 2.5;
+            }
+            let dir = if g.rng.below(2) == 0 { 1.0 } else { -1.0 };
+            let light = part(c, root, &kit.ball, &m.signal_off, Vec3::new(COLS as f32 + 1.0, 1.28, 0.42), Vec3::splat(0.26));
+            let train = spawn_mover(c, root, row, 0.0, 0.0, 1.0, MoverKind::Train, dir);
+            let len = spawn_train(c, kit, train, 2 + g.rng.below(3) as usize);
+            c.entity(train).insert((
+                Mover { row, speed: 0.0, half_len: len / 2.0, kind: MoverKind::Train },
+                Transform::from_xyz(-dir * (WRAP + len / 2.0), 0.0, 0.0).with_rotation(Quat::from_rotation_y(if dir > 0.0 { 0.0 } else { PI })),
+            ));
+            c.entity(root).insert(RailLane { train, light, bell: None, dir, timer: 1.0 + g.rand() * 4.0, phase: RailPhase::Waiting });
+        }
         LaneKind::Rail => {
             ground(c, 0.0, &m.gravel, &m.gravel);
-            let mut x = -HALF;
-            while x < HALF {
+            let reach = if biome == Biome::Space { COLS as f32 + 0.5 } else { HALF };
+            let mut x = -reach;
+            while x < reach {
                 part(c, root, &kit.cube, &m.sleeper, Vec3::new(x, 0.025, 0.0), Vec3::new(0.18, 0.05, 0.85));
                 x += 0.7;
             }
             for z in [-0.28, 0.28] {
-                part(c, root, &kit.cube, &m.rail, Vec3::new(0.0, 0.085, z), Vec3::new(HALF * 2.0, 0.07, 0.07));
+                part(c, root, &kit.cube, &m.rail, Vec3::new(0.0, 0.085, z), Vec3::new(reach * 2.0, 0.07, 0.07));
             }
             // Feu de signalisation au bord de la zone jouable
             let px = COLS as f32 + 1.0;

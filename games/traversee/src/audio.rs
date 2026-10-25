@@ -43,6 +43,8 @@ pub enum Sfx {
     Win,
     /// Cri aigu de l'aigle.
     Screech,
+    /// Chute dans le vide : un long souffle grave.
+    Fall,
     /// Grosse explosion (le Speed-Bus).
     Explosion,
     /// Bonus rare (mouche dorée).
@@ -148,6 +150,10 @@ fn play_sfx(
             Sfx::Alarm => (&sounds.alarm, 0.5),
             Sfx::Win => (&sounds.win, 0.7),
             Sfx::Explosion => (&sounds.explosion, 0.55),
+            Sfx::Fall => {
+                commands.spawn((AudioPlayer::new(sounds.howl.clone()), PlaybackSettings::DESPAWN.with_volume(Volume::Linear(0.45)).with_speed(0.45)));
+                continue;
+            }
             Sfx::Screech => {
                 // Le hurlement du loup, accéléré, fait un cri de rapace.
                 commands.spawn((AudioPlayer::new(sounds.howl.clone()), PlaybackSettings::DESPAWN.with_volume(Volume::Linear(0.6)).with_speed(2.6)));
@@ -216,6 +222,7 @@ fn music_world(
         Some(crate::extra::Biome::Autumn) => sounds.worlds[3].clone(),
         Some(crate::extra::Biome::Jurassic) => sounds.worlds[0].clone(),
         Some(crate::extra::Biome::Nippon) => sounds.worlds[3].clone(),
+        Some(crate::extra::Biome::Space) => sounds.worlds[2].clone(),
     };
     commands.spawn((AudioPlayer::new(track), PlaybackSettings::LOOP.with_volume(Volume::Linear(0.35)), Musique, Mutable));
 }

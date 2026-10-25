@@ -28989,6 +28989,1162 @@
     }
    ],
    "parties_mobiles": []
+  },
+  {
+   "id": "navette_pomme",
+   "univers": "cosmos_croa",
+   "classe": "voiture",
+   "noms": {
+    "fr": "Navette Pomme",
+    "en": "Apple Shuttle",
+    "de": "Apfel-Shuttle",
+    "es": "Lanzadera Manzana",
+    "it": "Navetta Mela"
+   },
+   "longueur": 1.9,
+   "largeur": 0.9,
+   "points_deblocage": 2400,
+   "couleur_2": "#f4f6fa",
+   "couleur_3": "#2a2f4a",
+   "pieces": [
+    {
+     "forme": "cube",
+     "position": [
+      0,
+      0.5,
+      0
+     ],
+     "taille": [
+      1.5,
+      0.28,
+      0.5
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      0
+     ],
+     "matiere": "couleur_2"
+    },
+    {
+     "forme": "cone",
+     "position": [
+      0.95,
+      0.5,
+      0
+     ],
+     "taille": [
+      0.5,
+      0.5,
+      0.5
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      -90
+     ],
+     "matiere": "couleur_2"
+    },
+    {
+     "forme": "cube",
+     "position": [
+      0.2,
+      0.7,
+      0
+     ],
+     "taille": [
+      0.7,
+      0.12,
+      0.44
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      0
+     ],
+     "matiere": "couleur_3"
+    },
+    {
+     "forme": "cube",
+     "position": [
+      0.55,
+      0.62,
+      0
+     ],
+     "taille": [
+      0.3,
+      0.1,
+      0.4
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      0
+     ],
+     "matiere": "vitre"
+    },
+    {
+     "forme": "cube",
+     "position": [
+      -0.2,
+      0.46,
+      0.5
+     ],
+     "taille": [
+      0.9,
+      0.05,
+      0.5
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      0
+     ],
+     "matiere": "couleur_2"
+    },
+    {
+     "forme": "cube",
+     "position": [
+      -0.2,
+      0.46,
+      -0.5
+     ],
+     "taille": [
+      0.9,
+      0.05,
+      0.5
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      0
+     ],
+     "matiere": "couleur_2"
+    },
+    {
+     "forme": "cube",
+     "position": [
+      -0.55,
+      0.78,
+      0
+     ],
+     "taille": [
+      0.4,
+      0.3,
+      0.05
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      0
+     ],
+     "matiere": "couleur_3"
+    },
+    {
+     "forme": "cube",
+     "position": [
+      -0.78,
+      0.5,
+      0
+     ],
+     "taille": [
+      0.1,
+      0.24,
+      0.4
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      0
+     ],
+     "matiere": "sombre"
+    },
+    {
+     "forme": "cone",
+     "position": [
+      -0.95,
+      0.5,
+      0.12
+     ],
+     "taille": [
+      0.2,
+      0.5,
+      0.2
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      90
+     ],
+     "matiere": "lumiere_rouge",
+     "id": "flamme"
+    },
+    {
+     "forme": "cone",
+     "position": [
+      -0.95,
+      0.5,
+      -0.12
+     ],
+     "taille": [
+      0.2,
+      0.5,
+      0.2
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      90
+     ],
+     "matiere": "lumiere_rouge",
+     "id": "flamme"
+    }
+   ],
+   "parties_mobiles": [
+    {
+     "piece": "flamme",
+     "type": "pulse"
+    }
+   ]
+  },
+  {
+   "id": "chasseur_etoile",
+   "univers": "cosmos_croa",
+   "classe": "voiture",
+   "noms": {
+    "fr": "Chasseur Étoilé",
+    "en": "Starry Fighter",
+    "de": "Sternjäger",
+    "es": "Caza Estelar",
+    "it": "Caccia Stellare"
+   },
+   "longueur": 1.5,
+   "largeur": 0.9,
+   "points_deblocage": 2700,
+   "couleur_2": "#e8433a",
+   "couleur_3": "#f4f6fa",
+   "pieces": [
+    {
+     "forme": "cube",
+     "position": [
+      0,
+      0.45,
+      0
+     ],
+     "taille": [
+      1.0,
+      0.18,
+      0.3
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      0
+     ],
+     "matiere": "couleur_2"
+    },
+    {
+     "forme": "cone",
+     "position": [
+      0.65,
+      0.45,
+      0
+     ],
+     "taille": [
+      0.3,
+      0.45,
+      0.3
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      -90
+     ],
+     "matiere": "couleur_2"
+    },
+    {
+     "forme": "sphere",
+     "position": [
+      0.15,
+      0.58,
+      0
+     ],
+     "taille": [
+      0.4,
+      0.2,
+      0.24
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      0
+     ],
+     "matiere": "bulle"
+    },
+    {
+     "forme": "cube",
+     "position": [
+      -0.1,
+      0.45,
+      0.4
+     ],
+     "taille": [
+      0.6,
+      0.04,
+      0.5
+     ],
+     "rotation_deg": [
+      0,
+      20,
+      0
+     ],
+     "matiere": "couleur_3"
+    },
+    {
+     "forme": "cube",
+     "position": [
+      -0.1,
+      0.45,
+      -0.4
+     ],
+     "taille": [
+      0.6,
+      0.04,
+      0.5
+     ],
+     "rotation_deg": [
+      0,
+      -20,
+      0
+     ],
+     "matiere": "couleur_3"
+    },
+    {
+     "forme": "cube",
+     "position": [
+      -0.3,
+      0.62,
+      0.0
+     ],
+     "taille": [
+      0.3,
+      0.2,
+      0.04
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      0
+     ],
+     "matiere": "couleur_3"
+    },
+    {
+     "forme": "cube",
+     "position": [
+      0.2,
+      0.45,
+      0.42
+     ],
+     "taille": [
+      0.1,
+      0.1,
+      0.1
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      0
+     ],
+     "matiere": "sombre"
+    },
+    {
+     "forme": "cube",
+     "position": [
+      0.2,
+      0.45,
+      -0.42
+     ],
+     "taille": [
+      0.1,
+      0.1,
+      0.1
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      0
+     ],
+     "matiere": "sombre"
+    },
+    {
+     "forme": "cone",
+     "position": [
+      -0.6,
+      0.45,
+      0.0
+     ],
+     "taille": [
+      0.18,
+      0.45,
+      0.18
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      90
+     ],
+     "matiere": "lumiere_rouge",
+     "id": "flamme"
+    }
+   ],
+   "parties_mobiles": [
+    {
+     "piece": "flamme",
+     "type": "pulse"
+    }
+   ]
+  },
+  {
+   "id": "cargo_vagabond",
+   "univers": "cosmos_croa",
+   "classe": "camion",
+   "noms": {
+    "fr": "Cargo Vagabond",
+    "en": "Wandering Freighter",
+    "de": "Wanderfrachter",
+    "es": "Carguero Errante",
+    "it": "Cargo Vagabondo"
+   },
+   "longueur": 3.4,
+   "largeur": 0.95,
+   "points_deblocage": 3400,
+   "couleur_2": "#9aa3b5",
+   "couleur_3": "#ff8a2a",
+   "pieces": [
+    {
+     "forme": "cube",
+     "position": [
+      0,
+      0.6,
+      0
+     ],
+     "taille": [
+      2.6,
+      0.5,
+      0.8
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      0
+     ],
+     "matiere": "couleur_2"
+    },
+    {
+     "forme": "cube",
+     "position": [
+      1.5,
+      0.6,
+      0
+     ],
+     "taille": [
+      0.7,
+      0.4,
+      0.6
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      0
+     ],
+     "matiere": "couleur_3"
+    },
+    {
+     "forme": "cube",
+     "position": [
+      1.7,
+      0.68,
+      0
+     ],
+     "taille": [
+      0.3,
+      0.14,
+      0.5
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      0
+     ],
+     "matiere": "vitre"
+    },
+    {
+     "forme": "cube",
+     "position": [
+      -0.2,
+      0.95,
+      0
+     ],
+     "taille": [
+      1.8,
+      0.3,
+      0.7
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      0
+     ],
+     "matiere": "couleur_3"
+    },
+    {
+     "forme": "cube",
+     "position": [
+      -0.2,
+      1.12,
+      0
+     ],
+     "taille": [
+      1.6,
+      0.04,
+      0.6
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      0
+     ],
+     "matiere": "sombre"
+    },
+    {
+     "forme": "cone",
+     "position": [
+      1.95,
+      0.6,
+      0
+     ],
+     "taille": [
+      0.5,
+      0.6,
+      0.5
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      -90
+     ],
+     "matiere": "couleur_3"
+    },
+    {
+     "forme": "cube",
+     "position": [
+      -0.9,
+      0.6,
+      0.41
+     ],
+     "taille": [
+      0.4,
+      0.3,
+      0.02
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      0
+     ],
+     "matiere": "couleur_3"
+    },
+    {
+     "forme": "cube",
+     "position": [
+      -0.9,
+      0.6,
+      -0.41
+     ],
+     "taille": [
+      0.4,
+      0.3,
+      0.02
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      0
+     ],
+     "matiere": "couleur_3"
+    },
+    {
+     "forme": "cube",
+     "position": [
+      -0.3,
+      0.6,
+      0.41
+     ],
+     "taille": [
+      0.4,
+      0.3,
+      0.02
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      0
+     ],
+     "matiere": "couleur_3"
+    },
+    {
+     "forme": "cube",
+     "position": [
+      -0.3,
+      0.6,
+      -0.41
+     ],
+     "taille": [
+      0.4,
+      0.3,
+      0.02
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      0
+     ],
+     "matiere": "couleur_3"
+    },
+    {
+     "forme": "cube",
+     "position": [
+      0.3,
+      0.6,
+      0.41
+     ],
+     "taille": [
+      0.4,
+      0.3,
+      0.02
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      0
+     ],
+     "matiere": "couleur_3"
+    },
+    {
+     "forme": "cube",
+     "position": [
+      0.3,
+      0.6,
+      -0.41
+     ],
+     "taille": [
+      0.4,
+      0.3,
+      0.02
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      0
+     ],
+     "matiere": "couleur_3"
+    },
+    {
+     "forme": "cone",
+     "position": [
+      -1.45,
+      0.45,
+      0.25
+     ],
+     "taille": [
+      0.24,
+      0.6,
+      0.24
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      90
+     ],
+     "matiere": "lumiere_rouge",
+     "id": "flamme"
+    },
+    {
+     "forme": "cone",
+     "position": [
+      -1.45,
+      0.45,
+      -0.25
+     ],
+     "taille": [
+      0.24,
+      0.6,
+      0.24
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      90
+     ],
+     "matiere": "lumiere_rouge",
+     "id": "flamme"
+    },
+    {
+     "forme": "cone",
+     "position": [
+      -1.45,
+      0.8,
+      0.0
+     ],
+     "taille": [
+      0.24,
+      0.6,
+      0.24
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      90
+     ],
+     "matiere": "lumiere_rouge",
+     "id": "flamme"
+    },
+    {
+     "forme": "sphere",
+     "position": [
+      1.0,
+      1.05,
+      0.0
+     ],
+     "taille": [
+      0.1,
+      0.1,
+      0.1
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      0
+     ],
+     "matiere": "lumiere_bleue",
+     "id": "gyro"
+    }
+   ],
+   "parties_mobiles": [
+    {
+     "piece": "flamme",
+     "type": "pulse"
+    },
+    {
+     "piece": "gyro",
+     "type": "pulse"
+    }
+   ]
+  },
+  {
+   "id": "taxi_soucoupe",
+   "univers": "cosmos_croa",
+   "classe": "voiture",
+   "noms": {
+    "fr": "Taxi Soucoupe",
+    "en": "Saucer Cab",
+    "de": "Untertassen-Taxi",
+    "es": "Taxi Platillo",
+    "it": "Taxi Disco"
+   },
+   "longueur": 1.7,
+   "largeur": 1.1,
+   "points_deblocage": 2900,
+   "couleur_2": "#ffd23f",
+   "couleur_3": "#2a2f4a",
+   "pieces": [
+    {
+     "forme": "sphere",
+     "position": [
+      0,
+      0.5,
+      0
+     ],
+     "taille": [
+      1.5,
+      0.28,
+      1.1
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      0
+     ],
+     "matiere": "couleur_2"
+    },
+    {
+     "forme": "sphere",
+     "position": [
+      0.05,
+      0.7,
+      0
+     ],
+     "taille": [
+      0.7,
+      0.4,
+      0.55
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      0
+     ],
+     "matiere": "bulle"
+    },
+    {
+     "forme": "cylindre",
+     "position": [
+      0,
+      0.36,
+      0
+     ],
+     "taille": [
+      0.7,
+      0.1,
+      0.7
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      0
+     ],
+     "matiere": "sombre"
+    },
+    {
+     "forme": "cube",
+     "position": [
+      0.05,
+      0.98,
+      0
+     ],
+     "taille": [
+      0.3,
+      0.1,
+      0.14
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      0
+     ],
+     "matiere": "blanc",
+     "id": "enseigne"
+    },
+    {
+     "forme": "sphere",
+     "position": [
+      0.62,
+      0.52,
+      0.3
+     ],
+     "taille": [
+      0.12,
+      0.1,
+      0.12
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      0
+     ],
+     "matiere": "phare"
+    },
+    {
+     "forme": "sphere",
+     "position": [
+      0.62,
+      0.52,
+      -0.3
+     ],
+     "taille": [
+      0.12,
+      0.1,
+      0.12
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      0
+     ],
+     "matiere": "phare"
+    },
+    {
+     "forme": "cube",
+     "position": [
+      0.0,
+      0.5,
+      0.0
+     ],
+     "taille": [
+      1.3,
+      0.04,
+      1.0
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      0
+     ],
+     "matiere": "couleur_3"
+    },
+    {
+     "forme": "sphere",
+     "position": [
+      -0.258,
+      0.45,
+      0.409
+     ],
+     "taille": [
+      0.1,
+      0.08,
+      0.1
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      0
+     ],
+     "matiere": "lumiere_bleue",
+     "id": "halo"
+    },
+    {
+     "forme": "sphere",
+     "position": [
+      -0.62,
+      0.45,
+      0.001
+     ],
+     "taille": [
+      0.1,
+      0.08,
+      0.1
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      0
+     ],
+     "matiere": "lumiere_bleue",
+     "id": "halo"
+    },
+    {
+     "forme": "sphere",
+     "position": [
+      -0.248,
+      0.45,
+      -0.412
+     ],
+     "taille": [
+      0.1,
+      0.08,
+      0.1
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      0
+     ],
+     "matiere": "lumiere_bleue",
+     "id": "halo"
+    }
+   ],
+   "parties_mobiles": [
+    {
+     "piece": "enseigne",
+     "type": "clignote"
+    },
+    {
+     "piece": "halo",
+     "type": "clignote_alterne"
+    },
+    {
+     "piece": "*",
+     "type": "flotte_verticale_0.04"
+    }
+   ]
+  },
+  {
+   "id": "fusee_bidon",
+   "univers": "cosmos_croa",
+   "classe": "camion",
+   "noms": {
+    "fr": "Fusée Bidon",
+    "en": "Rubbish Rocket",
+    "de": "Schrottrakete",
+    "es": "Cohete Chatarra",
+    "it": "Razzo Rottame"
+   },
+   "longueur": 2.4,
+   "largeur": 0.9,
+   "points_deblocage": 4000,
+   "couleur_2": "#e8ecf4",
+   "couleur_3": "#e8433a",
+   "pieces": [
+    {
+     "forme": "cylindre",
+     "position": [
+      0,
+      0.5,
+      0
+     ],
+     "taille": [
+      1.9,
+      0.5,
+      0.5
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      90
+     ],
+     "matiere": "couleur_2"
+    },
+    {
+     "forme": "cone",
+     "position": [
+      1.2,
+      0.5,
+      0
+     ],
+     "taille": [
+      0.5,
+      0.6,
+      0.5
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      -90
+     ],
+     "matiere": "couleur_3"
+    },
+    {
+     "forme": "sphere",
+     "position": [
+      0.5,
+      0.62,
+      0.22
+     ],
+     "taille": [
+      0.14,
+      0.14,
+      0.08
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      0
+     ],
+     "matiere": "bulle"
+    },
+    {
+     "forme": "sphere",
+     "position": [
+      0.5,
+      0.62,
+      -0.22
+     ],
+     "taille": [
+      0.14,
+      0.14,
+      0.08
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      0
+     ],
+     "matiere": "bulle"
+    },
+    {
+     "forme": "cube",
+     "position": [
+      -0.6,
+      0.5,
+      0.0
+     ],
+     "taille": [
+      0.4,
+      0.04,
+      1.1
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      0
+     ],
+     "matiere": "couleur_3"
+    },
+    {
+     "forme": "cube",
+     "position": [
+      -0.6,
+      0.5,
+      0.0
+     ],
+     "taille": [
+      0.4,
+      0.9,
+      0.04
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      0
+     ],
+     "matiere": "couleur_3"
+    },
+    {
+     "forme": "cube",
+     "position": [
+      0.1,
+      0.5,
+      0.0
+     ],
+     "taille": [
+      0.08,
+      0.52,
+      0.52
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      0
+     ],
+     "matiere": "couleur_3"
+    },
+    {
+     "forme": "cone",
+     "position": [
+      -1.2,
+      0.5,
+      0.0
+     ],
+     "taille": [
+      0.3,
+      0.75,
+      0.3
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      90
+     ],
+     "matiere": "lumiere_rouge",
+     "id": "flamme"
+    }
+   ],
+   "parties_mobiles": [
+    {
+     "piece": "flamme",
+     "type": "pulse"
+    }
+   ]
   }
  ]
 }

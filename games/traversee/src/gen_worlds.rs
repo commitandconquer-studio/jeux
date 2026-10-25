@@ -779,7 +779,7 @@ fn jura_hero_name() -> &'static str { tx!("Grenouille Ranger", "Ranger Frog", "R
 pub static JURA_THEME: Theme = Theme {
     blocks: &JURA_BLOCKS, sides: &JURA_SIDES, deco: &JURA_DECO, animals: &JURA_ANIMALS,
     block_mix: &[0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 3, 3, 3, 3, 3, 4, 5, 6, 2], side_mix: &[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 100, 101, 103, 2, 3, 4, 5, 1, 0],
-    side_pct: 40, vehicles: &[32, 33, 34, 35], colors: JURA_COLORS, points: 1500,
+    side_pct: 22, vehicles: &[32, 33, 34, 35], colors: JURA_COLORS, points: 1500,
     name: jura_name, banner: jura_banner, animal_name: jura_animal_name, hero_name: jura_hero_name,
     hero: Model { c2: [242, 140, 40], c3: [43, 111, 62], pieces: PIECES_34, anims: ANIMS_34 }, hat: Model { c2: [242, 140, 40], c3: [43, 111, 62], pieces: PIECES_35, anims: ANIMS_35 },
 };
@@ -1385,8 +1385,244 @@ fn nippon_hero_name() -> &'static str { tx!("Grenouille Ninja", "Ninja Frog", "N
 pub static NIPPON_THEME: Theme = Theme {
     blocks: &NIPPON_BLOCKS, sides: &NIPPON_SIDES, deco: &NIPPON_DECO, animals: &NIPPON_ANIMALS,
     block_mix: &[0, 0, 0, 0, 0, 0, 3, 3, 3, 3, 3, 1, 1, 1, 5, 5, 5, 6, 2, 4], side_mix: &[100, 100, 100, 100, 100, 100, 100, 100, 103, 103, 103, 103, 103, 101, 101, 101, 2, 2, 5, 0],
-    side_pct: 14, vehicles: &[36, 37, 38, 39, 40, 41], colors: NIPPON_COLORS, points: 1800,
+    side_pct: 8, vehicles: &[36, 37, 38, 39, 40, 41], colors: NIPPON_COLORS, points: 1800,
     name: nippon_name, banner: nippon_banner, animal_name: nippon_animal_name, hero_name: nippon_hero_name,
     hero: Model { c2: [242, 140, 40], c3: [200, 40, 60], pieces: PIECES_63, anims: ANIMS_63 }, hat: Model { c2: [242, 140, 40], c3: [200, 40, 60], pieces: PIECES_64, anims: ANIMS_64 },
 };
-pub static THEMES: [&Theme; 2] = [&JURA_THEME, &NIPPON_THEME];
+const PIECES_65: &[Piece] = &[
+    Piece { shape: Shape::Sphere, pos: [0.0, 0.3, 0.0], size: [0.95, 0.62, 0.8], rot: [0.0, 0.0, 0.0], mat: Mat::C2, id: None },
+    Piece { shape: Shape::Sphere, pos: [0.25, 0.55, 0.1], size: [0.55, 0.45, 0.5], rot: [0.0, 0.0, 0.0], mat: Mat::C2, id: None },
+    Piece { shape: Shape::Sphere, pos: [-0.28, 0.2, -0.2], size: [0.5, 0.4, 0.45], rot: [0.0, 0.0, 0.0], mat: Mat::C3, id: None },
+    Piece { shape: Shape::Sphere, pos: [0.3, 0.15, -0.3], size: [0.35, 0.3, 0.3], rot: [0.0, 0.0, 0.0], mat: Mat::C3, id: None },
+    Piece { shape: Shape::Sphere, pos: [-0.1, 0.5, -0.1], size: [0.3, 0.1, 0.3], rot: [0.0, 0.0, 0.0], mat: Mat::C3, id: None },
+];
+const ANIMS_65: &[Anim] = &[
+];
+const PIECES_66: &[Piece] = &[
+    Piece { shape: Shape::Sphere, pos: [0.0, 0.35, 0.0], size: [1.0, 0.7, 0.9], rot: [0.0, 0.0, 0.0], mat: Mat::C2, id: None },
+    Piece { shape: Shape::Sphere, pos: [-0.25, 0.2, 0.2], size: [0.5, 0.4, 0.5], rot: [0.0, 0.0, 0.0], mat: Mat::C2, id: None },
+    Piece { shape: Shape::Cone, pos: [0.15, 0.85, 0.0], size: [0.22, 0.6, 0.22], rot: [0.0, 0.0, -14.0], mat: Mat::C3, id: None },
+    Piece { shape: Shape::Cone, pos: [-0.1, 0.75, 0.15], size: [0.16, 0.45, 0.16], rot: [10.0, 0.0, 14.0], mat: Mat::C3, id: None },
+    Piece { shape: Shape::Sphere, pos: [0.15, 1.15, 0.0], size: [0.07, 0.07, 0.07], rot: [0.0, 0.0, 0.0], mat: Mat::LumiereBleue, id: Some("eclat") },
+];
+const ANIMS_66: &[Anim] = &[
+    Anim { target: "eclat", kind: AnimKind::Blink, amp: 0.0 },
+];
+const PIECES_67: &[Piece] = &[
+    Piece { shape: Shape::Sphere, pos: [0.0, 0.45, 0.0], size: [0.8, 0.9, 0.75], rot: [0.0, 0.0, 0.0], mat: Mat::C2, id: None },
+    Piece { shape: Shape::Sphere, pos: [0.1, 0.95, 0.05], size: [0.55, 0.7, 0.5], rot: [0.0, 0.0, 0.0], mat: Mat::C2, id: None },
+    Piece { shape: Shape::Sphere, pos: [-0.2, 0.2, -0.2], size: [0.5, 0.4, 0.5], rot: [0.0, 0.0, 0.0], mat: Mat::C3, id: None },
+    Piece { shape: Shape::Sphere, pos: [0.25, 0.3, 0.25], size: [0.4, 0.35, 0.4], rot: [0.0, 0.0, 0.0], mat: Mat::C3, id: None },
+    Piece { shape: Shape::Sphere, pos: [0.0, 1.25, 0.0], size: [0.3, 0.3, 0.3], rot: [0.0, 0.0, 0.0], mat: Mat::C3, id: None },
+];
+const ANIMS_67: &[Anim] = &[
+];
+const ESPACE_BLOCKS: [Model; 3] = [
+    Model { c2: [156, 158, 168], c3: [106, 108, 118], pieces: PIECES_65, anims: ANIMS_65 },
+    Model { c2: [141, 143, 153], c3: [164, 107, 255], pieces: PIECES_66, anims: ANIMS_66 },
+    Model { c2: [127, 129, 139], c3: [90, 92, 102], pieces: PIECES_67, anims: ANIMS_67 },
+];
+const PIECES_68: &[Piece] = &[
+    Piece { shape: Shape::Cyl, pos: [0.0, 1.6, 0.0], size: [0.9, 3.2, 0.9], rot: [0.0, 0.0, 0.0], mat: Mat::C2, id: None },
+    Piece { shape: Shape::Cone, pos: [0.0, 3.6, 0.0], size: [0.9, 1.0, 0.9], rot: [0.0, 0.0, 0.0], mat: Mat::C3, id: None },
+    Piece { shape: Shape::Cyl, pos: [0.0, 2.4, 0.0], size: [0.92, 0.12, 0.92], rot: [0.0, 0.0, 0.0], mat: Mat::C3, id: None },
+    Piece { shape: Shape::Sphere, pos: [0.45, 2.7, 0.0], size: [0.3, 0.3, 0.15], rot: [0.0, 0.0, 0.0], mat: Mat::Bulle, id: None },
+    Piece { shape: Shape::Cube, pos: [0.7, 0.7, 0.0], size: [0.7, 1.4, 0.08], rot: [0.0, 0.0, 0.0], mat: Mat::C3, id: None },
+    Piece { shape: Shape::Cube, pos: [-0.7, 0.7, 0.0], size: [0.7, 1.4, 0.08], rot: [0.0, 0.0, 0.0], mat: Mat::C3, id: None },
+    Piece { shape: Shape::Cube, pos: [0.0, 0.7, 0.7], size: [0.08, 1.4, 0.7], rot: [0.0, 0.0, 0.0], mat: Mat::C3, id: None },
+    Piece { shape: Shape::Cube, pos: [0.0, 0.7, -0.7], size: [0.08, 1.4, 0.7], rot: [0.0, 0.0, 0.0], mat: Mat::C3, id: None },
+    Piece { shape: Shape::Cube, pos: [0.0, 0.06, 0.0], size: [1.8, 0.12, 1.8], rot: [0.0, 0.0, 0.0], mat: Mat::Sombre, id: None },
+    Piece { shape: Shape::Cone, pos: [0.0, 0.35, 0.0], size: [0.55, 0.6, 0.55], rot: [180.0, 0.0, 0.0], mat: Mat::LumiereRouge, id: Some("flamme") },
+];
+const ANIMS_68: &[Anim] = &[
+    Anim { target: "flamme", kind: AnimKind::Pulse, amp: 0.0 },
+];
+const PIECES_69: &[Piece] = &[
+    Piece { shape: Shape::Sphere, pos: [0.0, 3.0, 0.0], size: [2.4, 2.4, 2.4], rot: [0.0, 0.0, 0.0], mat: Mat::C2, id: None },
+    Piece { shape: Shape::Cyl, pos: [0.0, 3.0, 0.0], size: [4.0, 0.06, 4.0], rot: [0.0, 0.0, 22.0], mat: Mat::C3, id: None },
+    Piece { shape: Shape::Cyl, pos: [0.0, 3.0, 0.0], size: [3.2, 0.08, 3.2], rot: [0.0, 0.0, 22.0], mat: Mat::C2, id: None },
+    Piece { shape: Shape::Cube, pos: [0.0, 3.35, 0.3], size: [2.3, 0.1, 0.1], rot: [0.0, 0.0, 0.0], mat: Mat::C3, id: None },
+    Piece { shape: Shape::Cyl, pos: [0.0, 0.9, 0.0], size: [0.1, 1.8, 0.1], rot: [0.0, 0.0, 0.0], mat: Mat::Sombre, id: None },
+    Piece { shape: Shape::Cube, pos: [0.0, 0.05, 0.0], size: [1.0, 0.1, 1.0], rot: [0.0, 0.0, 0.0], mat: Mat::Sombre, id: None },
+];
+const ANIMS_69: &[Anim] = &[
+];
+const PIECES_70: &[Piece] = &[
+    Piece { shape: Shape::Cyl, pos: [0.0, 1.2, 0.0], size: [0.5, 2.4, 0.5], rot: [0.0, 0.0, 0.0], mat: Mat::C2, id: None },
+    Piece { shape: Shape::Cube, pos: [0.0, 2.5, 0.0], size: [1.1, 0.5, 1.1], rot: [0.0, 0.0, 0.0], mat: Mat::C2, id: None },
+    Piece { shape: Shape::Cube, pos: [0.0, 2.5, 0.56], size: [1.0, 0.3, 0.02], rot: [0.0, 0.0, 0.0], mat: Mat::C3, id: None },
+    Piece { shape: Shape::Cube, pos: [0.0, 2.5, -0.56], size: [1.0, 0.3, 0.02], rot: [0.0, 0.0, 0.0], mat: Mat::C3, id: None },
+    Piece { shape: Shape::Cube, pos: [0.56, 2.5, 0.0], size: [0.02, 0.3, 1.0], rot: [0.0, 0.0, 0.0], mat: Mat::C3, id: None },
+    Piece { shape: Shape::Cube, pos: [-0.56, 2.5, 0.0], size: [0.02, 0.3, 1.0], rot: [0.0, 0.0, 0.0], mat: Mat::C3, id: None },
+    Piece { shape: Shape::Cube, pos: [0.0, 2.82, 0.0], size: [1.3, 0.1, 1.3], rot: [0.0, 0.0, 0.0], mat: Mat::Sombre, id: None },
+    Piece { shape: Shape::Cyl, pos: [0.0, 3.1, 0.0], size: [0.06, 0.5, 0.06], rot: [0.0, 0.0, 0.0], mat: Mat::Sombre, id: None },
+    Piece { shape: Shape::Cube, pos: [0.3, 3.4, 0.0], size: [0.7, 0.08, 0.3], rot: [0.0, 0.0, 0.0], mat: Mat::C3, id: Some("radar") },
+    Piece { shape: Shape::Sphere, pos: [0.0, 3.4, 0.0], size: [0.12, 0.12, 0.12], rot: [0.0, 0.0, 0.0], mat: Mat::LumiereRouge, id: Some("voyant") },
+    Piece { shape: Shape::Cube, pos: [0.0, 0.06, 0.0], size: [1.3, 0.12, 1.3], rot: [0.0, 0.0, 0.0], mat: Mat::Sombre, id: None },
+];
+const ANIMS_70: &[Anim] = &[
+    Anim { target: "voyant", kind: AnimKind::Blink, amp: 0.0 },
+    Anim { target: "radar", kind: AnimKind::TailY, amp: 0.0 },
+];
+const PIECES_71: &[Piece] = &[
+    Piece { shape: Shape::Cone, pos: [0.0, 1.5, 0.0], size: [1.0, 3.0, 1.0], rot: [0.0, 0.0, 0.0], mat: Mat::C2, id: None },
+    Piece { shape: Shape::Cone, pos: [0.8, 1.0, 0.3], size: [0.7, 2.0, 0.7], rot: [0.0, 0.0, -16.0], mat: Mat::C3, id: None },
+    Piece { shape: Shape::Cone, pos: [-0.8, 0.9, -0.2], size: [0.6, 1.8, 0.6], rot: [0.0, 0.0, 18.0], mat: Mat::C2, id: None },
+    Piece { shape: Shape::Cone, pos: [0.2, 0.8, -0.8], size: [0.55, 1.6, 0.55], rot: [-16.0, 0.0, 0.0], mat: Mat::C3, id: None },
+    Piece { shape: Shape::Cone, pos: [-0.1, 0.7, 0.8], size: [0.5, 1.4, 0.5], rot: [16.0, 0.0, 0.0], mat: Mat::C2, id: None },
+    Piece { shape: Shape::Sphere, pos: [0.0, 3.05, 0.0], size: [0.18, 0.18, 0.18], rot: [0.0, 0.0, 0.0], mat: Mat::LumiereBleue, id: Some("eclat") },
+    Piece { shape: Shape::Sphere, pos: [0.0, 0.1, 0.0], size: [2.2, 0.25, 2.2], rot: [0.0, 0.0, 0.0], mat: Mat::Sombre, id: None },
+];
+const ANIMS_71: &[Anim] = &[
+    Anim { target: "eclat", kind: AnimKind::Pulse, amp: 0.0 },
+];
+const ESPACE_SIDES: [Model; 4] = [
+    Model { c2: [244, 246, 250], c3: [232, 67, 58], pieces: PIECES_68, anims: ANIMS_68 },
+    Model { c2: [255, 154, 74], c3: [255, 224, 160], pieces: PIECES_69, anims: ANIMS_69 },
+    Model { c2: [232, 236, 244], c3: [55, 230, 255], pieces: PIECES_70, anims: ANIMS_70 },
+    Model { c2: [164, 107, 255], c3: [95, 243, 255], pieces: PIECES_71, anims: ANIMS_71 },
+];
+const PIECES_72: &[Piece] = &[
+    Piece { shape: Shape::Sphere, pos: [0.0, 0.07, 0.0], size: [0.22, 0.14, 0.2], rot: [0.0, 0.0, 0.0], mat: Mat::C2, id: None },
+    Piece { shape: Shape::Sphere, pos: [0.18, 0.04, 0.1], size: [0.12, 0.08, 0.1], rot: [0.0, 0.0, 0.0], mat: Mat::C3, id: None },
+];
+const ANIMS_72: &[Anim] = &[
+];
+const PIECES_73: &[Piece] = &[
+    Piece { shape: Shape::Cone, pos: [0.0, 0.15, 0.0], size: [0.12, 0.3, 0.12], rot: [0.0, 0.0, 0.0], mat: Mat::C2, id: None },
+    Piece { shape: Shape::Cone, pos: [0.1, 0.1, 0.03], size: [0.08, 0.2, 0.08], rot: [0.0, 0.0, 0.0], mat: Mat::C3, id: None },
+    Piece { shape: Shape::Cone, pos: [-0.08, 0.08, -0.04], size: [0.07, 0.16, 0.07], rot: [0.0, 0.0, 0.0], mat: Mat::C3, id: None },
+];
+const ANIMS_73: &[Anim] = &[
+];
+const ESPACE_DECO: [Model; 2] = [
+    Model { c2: [154, 157, 176], c3: [108, 111, 130], pieces: PIECES_72, anims: ANIMS_72 },
+    Model { c2: [164, 107, 255], c3: [95, 243, 255], pieces: PIECES_73, anims: ANIMS_73 },
+];
+const PIECES_74: &[Piece] = &[
+    Piece { shape: Shape::Sphere, pos: [0.0, 0.3, 0.0], size: [0.5, 0.4, 0.45], rot: [0.0, 0.0, 0.0], mat: Mat::C2, id: Some("roche") },
+    Piece { shape: Shape::Sphere, pos: [0.12, 0.42, 0.1], size: [0.28, 0.25, 0.26], rot: [0.0, 0.0, 0.0], mat: Mat::C3, id: Some("roche") },
+    Piece { shape: Shape::Sphere, pos: [-0.14, 0.2, -0.1], size: [0.24, 0.2, 0.22], rot: [0.0, 0.0, 0.0], mat: Mat::C3, id: Some("roche") },
+];
+const ANIMS_74: &[Anim] = &[
+    Anim { target: "roche", kind: AnimKind::SpinGroup, amp: 0.0 },
+];
+const PIECES_75: &[Piece] = &[
+    Piece { shape: Shape::Sphere, pos: [0.0, 0.5, 0.0], size: [1.0, 0.8, 0.9], rot: [0.0, 0.0, 0.0], mat: Mat::C2, id: Some("roche") },
+    Piece { shape: Shape::Sphere, pos: [0.3, 0.7, 0.2], size: [0.55, 0.5, 0.5], rot: [0.0, 0.0, 0.0], mat: Mat::C3, id: Some("roche") },
+    Piece { shape: Shape::Sphere, pos: [-0.3, 0.35, -0.25], size: [0.5, 0.45, 0.5], rot: [0.0, 0.0, 0.0], mat: Mat::C3, id: Some("roche") },
+    Piece { shape: Shape::Sphere, pos: [0.1, 0.25, 0.35], size: [0.4, 0.35, 0.4], rot: [0.0, 0.0, 0.0], mat: Mat::C2, id: Some("roche") },
+    Piece { shape: Shape::Sphere, pos: [-0.1, 0.75, -0.3], size: [0.35, 0.3, 0.35], rot: [0.0, 0.0, 0.0], mat: Mat::C2, id: Some("roche") },
+    Piece { shape: Shape::Sphere, pos: [0.4, 0.4, -0.35], size: [0.3, 0.25, 0.3], rot: [0.0, 0.0, 0.0], mat: Mat::C3, id: Some("roche") },
+];
+const ANIMS_75: &[Anim] = &[
+    Anim { target: "roche", kind: AnimKind::SpinGroup, amp: 0.0 },
+];
+const PIECES_76: &[Piece] = &[
+    Piece { shape: Shape::Sphere, pos: [0.0, 0.8, 0.0], size: [1.7, 1.4, 1.5], rot: [0.0, 0.0, 0.0], mat: Mat::C2, id: Some("roche") },
+    Piece { shape: Shape::Sphere, pos: [0.5, 1.2, 0.3], size: [0.9, 0.8, 0.8], rot: [0.0, 0.0, 0.0], mat: Mat::C3, id: Some("roche") },
+    Piece { shape: Shape::Sphere, pos: [-0.5, 0.6, -0.5], size: [0.9, 0.8, 0.8], rot: [0.0, 0.0, 0.0], mat: Mat::C3, id: Some("roche") },
+    Piece { shape: Shape::Sphere, pos: [0.2, 0.4, 0.6], size: [0.7, 0.6, 0.7], rot: [0.0, 0.0, 0.0], mat: Mat::C2, id: Some("roche") },
+    Piece { shape: Shape::Sphere, pos: [-0.3, 1.2, -0.3], size: [0.6, 0.5, 0.6], rot: [0.0, 0.0, 0.0], mat: Mat::C2, id: Some("roche") },
+    Piece { shape: Shape::Sphere, pos: [0.8, 0.6, -0.5], size: [0.5, 0.4, 0.5], rot: [0.0, 0.0, 0.0], mat: Mat::C3, id: Some("roche") },
+    Piece { shape: Shape::Sphere, pos: [-0.9, 0.9, 0.3], size: [0.5, 0.4, 0.5], rot: [0.0, 0.0, 0.0], mat: Mat::C3, id: Some("roche") },
+];
+const ANIMS_76: &[Anim] = &[
+    Anim { target: "roche", kind: AnimKind::SpinGroup, amp: 0.0 },
+];
+const PIECES_77: &[Piece] = &[
+    Piece { shape: Shape::Sphere, pos: [0.0, 0.9, 0.0], size: [1.9, 0.38, 1.9], rot: [0.0, 0.0, 0.0], mat: Mat::C2, id: Some("corps") },
+    Piece { shape: Shape::Sphere, pos: [0.0, 1.12, 0.0], size: [0.95, 0.65, 0.95], rot: [0.0, 0.0, 0.0], mat: Mat::Bulle, id: None },
+    Piece { shape: Shape::Sphere, pos: [0.0, 1.12, 0.0], size: [0.3, 0.32, 0.3], rot: [0.0, 0.0, 0.0], mat: Mat::C3, id: None },
+    Piece { shape: Shape::Sphere, pos: [0.1, 1.16, 0.1], size: [0.1, 0.1, 0.1], rot: [0.0, 0.0, 0.0], mat: Mat::Noir, id: None },
+    Piece { shape: Shape::Sphere, pos: [0.1, 1.16, -0.1], size: [0.1, 0.1, 0.1], rot: [0.0, 0.0, 0.0], mat: Mat::Noir, id: None },
+    Piece { shape: Shape::Cyl, pos: [0.0, 0.68, 0.0], size: [0.7, 0.14, 0.7], rot: [0.0, 0.0, 0.0], mat: Mat::Sombre, id: None },
+    Piece { shape: Shape::Sphere, pos: [0.78, 0.86, 0.0], size: [0.16, 0.12, 0.16], rot: [0.0, 0.0, 0.0], mat: Mat::LumiereRouge, id: Some("feu_b") },
+    Piece { shape: Shape::Sphere, pos: [0.552, 0.86, 0.552], size: [0.16, 0.12, 0.16], rot: [0.0, 0.0, 0.0], mat: Mat::LumiereBleue, id: Some("feu_a") },
+    Piece { shape: Shape::Sphere, pos: [0.0, 0.86, 0.78], size: [0.16, 0.12, 0.16], rot: [0.0, 0.0, 0.0], mat: Mat::LumiereRouge, id: Some("feu_b") },
+    Piece { shape: Shape::Sphere, pos: [-0.552, 0.86, 0.552], size: [0.16, 0.12, 0.16], rot: [0.0, 0.0, 0.0], mat: Mat::LumiereBleue, id: Some("feu_a") },
+    Piece { shape: Shape::Sphere, pos: [-0.78, 0.86, 0.0], size: [0.16, 0.12, 0.16], rot: [0.0, 0.0, 0.0], mat: Mat::LumiereRouge, id: Some("feu_b") },
+    Piece { shape: Shape::Sphere, pos: [-0.552, 0.86, -0.552], size: [0.16, 0.12, 0.16], rot: [0.0, 0.0, 0.0], mat: Mat::LumiereBleue, id: Some("feu_a") },
+    Piece { shape: Shape::Sphere, pos: [-0.0, 0.86, -0.78], size: [0.16, 0.12, 0.16], rot: [0.0, 0.0, 0.0], mat: Mat::LumiereRouge, id: Some("feu_b") },
+    Piece { shape: Shape::Sphere, pos: [0.552, 0.86, -0.552], size: [0.16, 0.12, 0.16], rot: [0.0, 0.0, 0.0], mat: Mat::LumiereBleue, id: Some("feu_a") },
+    Piece { shape: Shape::Cube, pos: [0.0, 0.42, 0.0], size: [0.4, 0.5, 0.4], rot: [0.0, 0.0, 0.0], mat: Mat::LumiereBleue, id: Some("rayon") },
+];
+const ANIMS_77: &[Anim] = &[
+    Anim { target: "corps", kind: AnimKind::Bob, amp: 0.05 },
+    Anim { target: "feu_a", kind: AnimKind::Blink, amp: 0.0 },
+    Anim { target: "feu_b", kind: AnimKind::BlinkAlt, amp: 0.0 },
+    Anim { target: "rayon", kind: AnimKind::BlinkSlow, amp: 0.0 },
+];
+const ESPACE_ANIMALS: [Animal; 4] = [
+    Animal { model: Model { c2: [156, 158, 168], c3: [106, 108, 118], pieces: PIECES_74, anims: ANIMS_74 }, len: 0.6, width: 0.5, points: 300, dangerous: false, flying: false },
+    Animal { model: Model { c2: [156, 158, 168], c3: [106, 108, 118], pieces: PIECES_75, anims: ANIMS_75 }, len: 1.1, width: 1.0, points: 600, dangerous: true, flying: false },
+    Animal { model: Model { c2: [134, 136, 147], c3: [90, 92, 102], pieces: PIECES_76, anims: ANIMS_76 }, len: 1.9, width: 1.7, points: 1900, dangerous: true, flying: false },
+    Animal { model: Model { c2: [200, 208, 224], c3: [55, 230, 255], pieces: PIECES_77, anims: ANIMS_77 }, len: 1.9, width: 1.9, points: 3000, dangerous: true, flying: true },
+];
+fn espace_animal_name(i: usize) -> &'static str {
+    match i {
+        0 => tx!("Caillou Spatial", "Space Pebble", "Weltraumkiesel", "Sassolino Spaziale", "Guijarro Espacial").t(),
+        1 => tx!("Astéroïde Qui Roule", "Rolling Asteroid", "Rollender Asteroid", "Asteroide Rotolante", "Asteroide Rodante").t(),
+        2 => tx!("Gros Caillou Pas Aimable", "Big Unfriendly Rock", "Großer Unfreundlicher Brocken", "Grosso Masso Antipatico", "Roca Grande Antipática").t(),
+        3 => tx!("Soucoupe Curieuse", "Curious Saucer", "Neugierige Untertasse", "Disco Curioso", "Platillo Curioso").t(),
+        _ => "?",
+    }
+}
+const PIECES_78: &[Piece] = &[
+    Piece { shape: Shape::Sphere, pos: [-0.05, 0.26, 0.0], size: [0.5, 0.34, 0.46], rot: [0.0, 0.0, 0.0], mat: Mat::Peinture, id: Some("corps") },
+    Piece { shape: Shape::Sphere, pos: [0.0, 0.17, 0.0], size: [0.38, 0.2, 0.4], rot: [0.0, 0.0, 0.0], mat: Mat::C2, id: None },
+    Piece { shape: Shape::Sphere, pos: [0.2, 0.36, 0.0], size: [0.36, 0.26, 0.4], rot: [0.0, 0.0, 0.0], mat: Mat::Peinture, id: None },
+    Piece { shape: Shape::Cube, pos: [0.37, 0.31, 0.0], size: [0.02, 0.02, 0.3], rot: [0.0, 0.0, 0.0], mat: Mat::Noir, id: None },
+    Piece { shape: Shape::Sphere, pos: [0.2, 0.54, 0.14], size: [0.15, 0.15, 0.15], rot: [0.0, 0.0, 0.0], mat: Mat::Peinture, id: None },
+    Piece { shape: Shape::Sphere, pos: [0.25, 0.56, 0.14], size: [0.11, 0.11, 0.11], rot: [0.0, 0.0, 0.0], mat: Mat::Blanc, id: None },
+    Piece { shape: Shape::Sphere, pos: [0.3, 0.57, 0.14], size: [0.06, 0.06, 0.06], rot: [0.0, 0.0, 0.0], mat: Mat::Noir, id: None },
+    Piece { shape: Shape::Sphere, pos: [-0.2, 0.2, 0.26], size: [0.22, 0.2, 0.14], rot: [0.0, 0.0, 0.0], mat: Mat::Peinture, id: None },
+    Piece { shape: Shape::Cube, pos: [-0.1, 0.07, 0.27], size: [0.14, 0.1, 0.1], rot: [0.0, 0.0, 0.0], mat: Mat::Peinture, id: None },
+    Piece { shape: Shape::Cube, pos: [-0.04, 0.025, 0.27], size: [0.26, 0.05, 0.12], rot: [0.0, 0.0, 0.0], mat: Mat::C2, id: None },
+    Piece { shape: Shape::Cyl, pos: [0.18, 0.1, 0.2], size: [0.07, 0.2, 0.07], rot: [0.0, 0.0, 0.0], mat: Mat::Peinture, id: None },
+    Piece { shape: Shape::Cube, pos: [0.22, 0.015, 0.2], size: [0.1, 0.03, 0.08], rot: [0.0, 0.0, 0.0], mat: Mat::C2, id: None },
+    Piece { shape: Shape::Sphere, pos: [0.2, 0.54, -0.14], size: [0.15, 0.15, 0.15], rot: [0.0, 0.0, 0.0], mat: Mat::Peinture, id: None },
+    Piece { shape: Shape::Sphere, pos: [0.25, 0.56, -0.14], size: [0.11, 0.11, 0.11], rot: [0.0, 0.0, 0.0], mat: Mat::Blanc, id: None },
+    Piece { shape: Shape::Sphere, pos: [0.3, 0.57, -0.14], size: [0.06, 0.06, 0.06], rot: [0.0, 0.0, 0.0], mat: Mat::Noir, id: None },
+    Piece { shape: Shape::Sphere, pos: [-0.2, 0.2, -0.26], size: [0.22, 0.2, 0.14], rot: [0.0, 0.0, 0.0], mat: Mat::Peinture, id: None },
+    Piece { shape: Shape::Cube, pos: [-0.1, 0.07, -0.27], size: [0.14, 0.1, 0.1], rot: [0.0, 0.0, 0.0], mat: Mat::Peinture, id: None },
+    Piece { shape: Shape::Cube, pos: [-0.04, 0.025, -0.27], size: [0.26, 0.05, 0.12], rot: [0.0, 0.0, 0.0], mat: Mat::C2, id: None },
+    Piece { shape: Shape::Cyl, pos: [0.18, 0.1, -0.2], size: [0.07, 0.2, 0.07], rot: [0.0, 0.0, 0.0], mat: Mat::Peinture, id: None },
+    Piece { shape: Shape::Cube, pos: [0.22, 0.015, -0.2], size: [0.1, 0.03, 0.08], rot: [0.0, 0.0, 0.0], mat: Mat::C2, id: None },
+    Piece { shape: Shape::Sphere, pos: [-0.12, 0.42, 0.1], size: [0.08, 0.05, 0.08], rot: [0.0, 0.0, 0.0], mat: Mat::C3, id: None },
+    Piece { shape: Shape::Sphere, pos: [-0.18, 0.4, -0.08], size: [0.06, 0.04, 0.06], rot: [0.0, 0.0, 0.0], mat: Mat::C3, id: None },
+];
+const ANIMS_78: &[Anim] = &[
+    Anim { target: "corps", kind: AnimKind::Bob, amp: 0.02 },
+];
+const PIECES_79: &[Piece] = &[
+    Piece { shape: Shape::Sphere, pos: [0.2, 0.46, 0.0], size: [0.7, 0.66, 0.7], rot: [0.0, 0.0, 0.0], mat: Mat::Bulle, id: Some("globe") },
+    Piece { shape: Shape::Cyl, pos: [0.1, 0.2, 0.0], size: [0.5, 0.07, 0.5], rot: [0.0, 0.0, 0.0], mat: Mat::Blanc, id: None },
+    Piece { shape: Shape::Cube, pos: [-0.28, 0.34, 0.0], size: [0.22, 0.34, 0.36], rot: [0.0, 0.0, 0.0], mat: Mat::Blanc, id: None },
+    Piece { shape: Shape::Cube, pos: [-0.28, 0.34, 0.0], size: [0.24, 0.1, 0.38], rot: [0.0, 0.0, 0.0], mat: Mat::C3, id: None },
+    Piece { shape: Shape::Cyl, pos: [0.0, 0.8, 0.0], size: [0.025, 0.2, 0.025], rot: [0.0, 0.0, 0.0], mat: Mat::Sombre, id: None },
+    Piece { shape: Shape::Sphere, pos: [0.0, 0.92, 0.0], size: [0.07, 0.07, 0.07], rot: [0.0, 0.0, 0.0], mat: Mat::LumiereRouge, id: Some("balise") },
+];
+const ANIMS_79: &[Anim] = &[
+    Anim { target: "balise", kind: AnimKind::Blink, amp: 0.0 },
+];
+const ESPACE_COLORS: WorldColors = WorldColors {
+    grass_a: [141, 143, 153],
+    grass_b: [127, 129, 139],
+    water: [5, 6, 15],
+    road: [42, 44, 58],
+    marking: [55, 230, 255],
+    log: [154, 163, 181],
+    sky: [11, 16, 48],
+};
+fn espace_name() -> &'static str { tx!("Cosmos Croâ", "Croak Cosmos", "Quak-Kosmos", "Cosmo Gra", "Cosmos Croa").t() }
+fn espace_banner() -> &'static str { tx!("Bienvenue dans le Cosmos Croâ ! Gardez votre casque, il n'y a pas d'air, mais il y a des Martiens.", "Welcome to the Croak Cosmos! Keep your helmet on: no air, but plenty of Martians.", "Willkommen im Quak-Kosmos! Helm aufbehalten: keine Luft, aber jede Menge Marsianer.", "Benvenuto nel Cosmo Gra! Tieni il casco: niente aria, ma tanti marziani.", "¡Bienvenido al Cosmos Croa! No te quites el casco: no hay aire, pero sí marcianos.").t() }
+fn espace_hero_name() -> &'static str { tx!("Grenouille Astronaute", "Astronaut Frog", "Astronauten-Frosch", "Rana Astronauta", "Rana Astronauta").t() }
+pub static ESPACE_THEME: Theme = Theme {
+    blocks: &ESPACE_BLOCKS, sides: &ESPACE_SIDES, deco: &ESPACE_DECO, animals: &ESPACE_ANIMALS,
+    block_mix: &[0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2], side_mix: &[100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 101, 101, 101, 101, 101, 102, 102, 102, 102, 102],
+    side_pct: 0, vehicles: &[42, 43, 44, 45, 46], colors: ESPACE_COLORS, points: 2400,
+    name: espace_name, banner: espace_banner, animal_name: espace_animal_name, hero_name: espace_hero_name,
+    hero: Model { c2: [244, 246, 250], c3: [255, 138, 42], pieces: PIECES_78, anims: ANIMS_78 }, hat: Model { c2: [244, 246, 250], c3: [255, 138, 42], pieces: PIECES_79, anims: ANIMS_79 },
+};
+pub static THEMES: [&Theme; 3] = [&JURA_THEME, &NIPPON_THEME, &ESPACE_THEME];

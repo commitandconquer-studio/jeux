@@ -17,6 +17,7 @@ mod models;
 mod petals;
 mod progress;
 mod screens;
+mod space;
 mod ui;
 
 use bevy::prelude::*;
@@ -64,7 +65,7 @@ fn main() {
     )
     .init_state::<GameState>()
     .add_plugins(StudioPlugin::new(Universe::Croa, game_common::ambiance::AmbiancePlugin::exterieur()))
-    .add_plugins((ui::UiPlugin, audio::AudioPlugin, capture::CapturePlugin, fx::FxPlugin, progress::ProgressPlugin, garage::GaragePlugin, eagle::EaglePlugin, screens::ScreensPlugin, petals::PetalsPlugin))
+    .add_plugins((ui::UiPlugin, audio::AudioPlugin, capture::CapturePlugin, fx::FxPlugin, progress::ProgressPlugin, garage::GaragePlugin, eagle::EaglePlugin, screens::ScreensPlugin, petals::PetalsPlugin, space::SpacePlugin))
     .init_resource::<characters::Selection>()
     .init_resource::<characters::Cast>()
     // Après le style commun : Traversée garde son ciel à elle.

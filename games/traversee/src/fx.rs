@@ -282,6 +282,11 @@ fn death_fx(
             virt.set_relative_speed(0.04);
             pop(&mut commands, tx!("SPLATCH !", "SPLAT!", "KLATSCH!", "SPLAT!", "¡PLAF!").t(), Color::srgb(1.0, 0.85, 0.2), 120.0);
         }
+        Some(Cause::Void) => {
+            shake.0 = 0.2;
+            punch.0 = 0.5;
+            pop(&mut commands, tx!("DANS LE VIDE !", "INTO THE VOID!", "INS NICHTS!", "NEL VUOTO!", "¡AL VACÍO!").t(), Color::srgb(0.6, 0.85, 1.0), 110.0);
+        }
         Some(Cause::Drowned | Cause::CarriedAway) => {
             fx.write(Fx::Splash(Vec3::new(p.x, 0.0, p.z)));
             shake.0 = 0.5;
