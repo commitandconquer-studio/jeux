@@ -15,4 +15,4 @@ web-time = "1.1"
 
 [target.'cfg(target_arch = "wasm32")'.dependencies]
 # Version web : lit les réglages du site (stockage local du navigateur).
-web-sys = { version = "0.3", features = ["Window", "Storage", "Navigator"] }
+web-sys = { version = "0.3", features = ["Window", "Storage", "Navigator", "Location"] }

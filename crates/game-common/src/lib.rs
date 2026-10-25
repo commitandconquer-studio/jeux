@@ -15,6 +15,20 @@ pub mod calendar;
 pub mod decor3d;
 pub mod models;
 pub mod save;
+
+/// Réglages d'essai passés dans l'adresse de la page web (`?nom1&nom2`) : `true` si `nom` y figure.
+/// Toujours `false` hors navigateur.
+#[cfg(target_arch = "wasm32")]
+pub fn url_flag(nom: &str) -> bool {
+    let query = web_sys::window().and_then(|w| w.location().search().ok()).unwrap_or_default();
+    query.trim_start_matches('?').split('&').any(|p| p == nom)
+}
+
+#[cfg(not(target_arch = "wasm32"))]
+pub fn url_flag(_nom: &str) -> bool {
+    false
+}
+
 pub mod sounds;
 pub mod space;
 pub mod splash;

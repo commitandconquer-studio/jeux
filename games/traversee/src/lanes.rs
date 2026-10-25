@@ -7,7 +7,7 @@ use game_common::Rng;
 
 use crate::audio::{Mutable, Sfx, SoundOn, Sounds};
 use crate::frog::Frog;
-use crate::extra::{Biome, Deco, Extra, Scenery, Vehicle, pick_vehicle, spawn_barge, spawn_cargo, spawn_coffin, spawn_deco, spawn_fly, spawn_floe, spawn_ice_pad, spawn_hologram_pad, spawn_platform, spawn_pumpkin_pad, spawn_scenery, spawn_vehicle};
+use crate::extra::{Biome, Deco, Extra, Scenery, Vehicle, pick_vehicle, spawn_barge, spawn_barrel_pad, spawn_cargo, spawn_coffin, spawn_deco, spawn_fly, spawn_floe, spawn_ice_pad, spawn_hologram_pad, spawn_platform, spawn_pumpkin_pad, spawn_raft, spawn_scenery, spawn_vehicle};
 use crate::models::{Kit, Prop, part, part_rot, spawn_car, spawn_log, spawn_pad, spawn_prop, spawn_train, spawn_truck};
 
 /// Colonnes jouables : de -COLS à +COLS.
@@ -326,10 +326,18 @@ fn spawn_lane(c: &mut Commands, kit: &Kit, x: &Extra, g: &mut LaneGen, points: u
             } else if let Some(dirt) = x.dirt_road(biome) {
                 // Au Far West : une piste de terre, ni goudron ni lignes blanches.
                 ground(c, -0.02, dirt, dirt);
+                if biome == Biome::Pirate {
+                    // Ponton : des joints entre les planches.
+                    let mut sx = -HALF;
+                    while sx < HALF {
+                        part(c, root, &kit.cube, &m.dark, Vec3::new(sx, -0.012, 0.0), Vec3::new(0.035, 0.012, 1.0));
+                        sx += 0.8;
+                    }
+                }
             } else {
                 ground(c, -0.02, &m.road, &m.road_side);
             }
-            if after_road && !matches!(biome, Biome::FarWest | Biome::Halloween | Biome::Medieval) {
+            if after_road && !matches!(biome, Biome::FarWest | Biome::Halloween | Biome::Medieval | Biome::Pirate) {
                 // Pointillés entre deux voies de route
                 let reach = if biome == Biome::Space { COLS as f32 + 0.5 } else { HALF };
                 let mut x = -reach;
@@ -417,6 +425,8 @@ fn spawn_lane(c: &mut Commands, kit: &Kit, x: &Extra, g: &mut LaneGen, points: u
                             spawn_platform(c, kit, x, mover);
                         } else if biome == Biome::Halloween {
                             spawn_pumpkin_pad(c, kit, x, mover);
+                        } else if biome == Biome::Pirate {
+                            spawn_barrel_pad(c, kit, x, mover);
                         } else if biome == Biome::Cyber {
                             spawn_hologram_pad(c, kit, x, mover);
                         } else if frozen {
@@ -433,6 +443,8 @@ fn spawn_lane(c: &mut Commands, kit: &Kit, x: &Extra, g: &mut LaneGen, points: u
                         spawn_platform(c, kit, x, mover);
                     } else if biome == Biome::Halloween {
                         spawn_pumpkin_pad(c, kit, x, mover);
+                    } else if biome == Biome::Pirate {
+                        spawn_barrel_pad(c, kit, x, mover);
                     } else if biome == Biome::Cyber {
                         spawn_hologram_pad(c, kit, x, mover);
                     } else if frozen {
@@ -457,6 +469,8 @@ fn spawn_lane(c: &mut Commands, kit: &Kit, x: &Extra, g: &mut LaneGen, points: u
                         spawn_cargo(c, kit, x, mover, len);
                     } else if biome == Biome::Halloween {
                         spawn_coffin(c, kit, x, mover, len);
+                    } else if biome == Biome::Pirate {
+                        spawn_raft(c, kit, x, mover, len);
                     } else if biome == Biome::Cyber {
                         spawn_barge(c, kit, x, mover, len);
                     } else if frozen {
@@ -495,7 +509,7 @@ fn spawn_lane(c: &mut Commands, kit: &Kit, x: &Extra, g: &mut LaneGen, points: u
         }
         LaneKind::Rail => {
             match x.dirt_road(biome) {
-                Some(dirt) if biome == Biome::Medieval => ground(c, 0.0, dirt, dirt),
+                Some(dirt) if matches!(biome, Biome::Medieval | Biome::Pirate) => ground(c, 0.0, dirt, dirt),
                 _ => ground(c, 0.0, &m.gravel, &m.gravel),
             }
             let reach = if biome == Biome::Space { COLS as f32 + 0.5 } else { HALF };

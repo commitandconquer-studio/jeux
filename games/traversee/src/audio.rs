@@ -224,6 +224,7 @@ fn music_world(
         Some(crate::extra::Biome::Halloween) => sounds.worlds[3].clone(),
         Some(crate::extra::Biome::Cyber) => sounds.worlds[2].clone(),
         Some(crate::extra::Biome::Medieval) => sounds.worlds[0].clone(),
+        Some(crate::extra::Biome::Pirate) => sounds.worlds[1].clone(),
     };
     commands.spawn((AudioPlayer::new(track), PlaybackSettings::LOOP.with_volume(Volume::Linear(0.35)), Musique, Mutable));
 }
@@ -247,6 +248,9 @@ fn music_speed(
     }
     let rate = if goal < *speed { 1.6 } else { 0.8 };
     *speed += (goal - *speed).clamp(-rate * time.delta_secs(), rate * time.delta_secs());
+    if game_common::url_flag("nospeed") {
+        return;
+    }
     for sink in &mut sinks {
         sink.set_speed(*speed);
     }

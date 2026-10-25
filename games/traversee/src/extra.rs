@@ -66,7 +66,7 @@ impl FromWorld for Extra {
             }),
         )
         .chain(std::iter::once((FROG_GREEN, FROG_GREEN)))
-        .chain(SPACE_CARGO.iter().chain(HALLOWEEN_COLORS.iter()).map(|c| (*c, *c)));
+        .chain(SPACE_CARGO.iter().chain(HALLOWEEN_COLORS.iter()).chain(PIRATE_COLORS.iter()).map(|c| (*c, *c)));
         for rgb in models.flat_map(|(a, b)| [a, b]) {
             if !colors.iter().any(|(c, _)| *c == rgb) {
                 let col = Color::srgb(rgb[0] as f32 / 255.0, rgb[1] as f32 / 255.0, rgb[2] as f32 / 255.0);
@@ -488,12 +488,17 @@ pub enum Biome {
     Cyber,
     /// Royaume de Croâ : Moyen Âge et dragon.
     Medieval,
+    /// Baie des Pirates : plage, ponton, kraken et perroquet.
+    Pirate,
 }
 
 pub const BIOME_LEN: i32 = 60;
 
 /// Cercueils et citrouilles flottantes d'Halloween.
 pub const HALLOWEEN_COLORS: [[u8; 3]; 4] = [[84, 52, 34], [230, 190, 60], [255, 128, 30], [60, 120, 50]];
+
+/// Bois, cordages et fer des tonneaux et radeaux de la baie.
+pub const PIRATE_COLORS: [[u8; 3]; 4] = [[160, 105, 58], [58, 42, 26], [220, 200, 150], [196, 57, 43]];
 
 /// Les couleurs des conteneurs des cargos de l'espace.
 pub const SPACE_CARGO: [[u8; 3]; 4] = [[232, 67, 58], [255, 138, 42], [55, 163, 255], [244, 246, 250]];
@@ -566,7 +571,7 @@ pub struct Theme {
 pub static START_WORLD: std::sync::atomic::AtomicI32 = std::sync::atomic::AtomicI32::new(0);
 
 impl Biome {
-    pub const ALL: [Biome; 11] = [Biome::Prairie, Biome::Desert, Biome::Snow, Biome::Autumn, Biome::Jurassic, Biome::Nippon, Biome::Space, Biome::FarWest, Biome::Halloween, Biome::Cyber, Biome::Medieval];
+    pub const ALL: [Biome; 12] = [Biome::Prairie, Biome::Desert, Biome::Snow, Biome::Autumn, Biome::Jurassic, Biome::Nippon, Biome::Space, Biome::FarWest, Biome::Halloween, Biome::Cyber, Biome::Medieval, Biome::Pirate];
 
     /// Le monde décrit en pièces, pour les mondes à thème.
     pub fn theme(self) -> Option<&'static Theme> {
@@ -582,6 +587,7 @@ impl Biome {
             Biome::Halloween => Some(4),
             Biome::Cyber => Some(5),
             Biome::Medieval => Some(6),
+            Biome::Pirate => Some(7),
             _ => None,
         }
     }
@@ -597,7 +603,7 @@ impl Biome {
         // TRAVERSEE_BIOME=1..3 : voir un monde tout de suite (essais et captures).
         static ENV: std::sync::OnceLock<i32> = std::sync::OnceLock::new();
         let start = *ENV.get_or_init(|| std::env::var("TRAVERSEE_BIOME").ok().and_then(|s| s.parse().ok()).unwrap_or(0)) + START_WORLD.load(std::sync::atomic::Ordering::Relaxed);
-        let biome = match (row.max(0) / BIOME_LEN + start) % 11 {
+        let biome = match (row.max(0) / BIOME_LEN + start) % 12 {
             0 => Biome::Prairie,
             1 => Biome::Desert,
             2 => Biome::Snow,
@@ -608,7 +614,8 @@ impl Biome {
             7 => Biome::FarWest,
             8 => Biome::Halloween,
             9 => Biome::Cyber,
-            _ => Biome::Medieval,
+            10 => Biome::Medieval,
+            _ => Biome::Pirate,
         };
         if biome != Biome::Prairie && !crate::progress::unlocked(points, crate::progress::Item::World(biome)) {
             Biome::Prairie
@@ -624,7 +631,7 @@ impl Biome {
             Biome::Desert => tx!("Le désert", "The desert", "Die Wüste", "Il deserto", "El desierto"),
             Biome::Snow => tx!("La neige", "The snow", "Der Schnee", "La neve", "La nieve"),
             Biome::Autumn => tx!("L'automne", "Autumn", "Der Herbst", "L'autunno", "El otoño"),
-            Biome::Jurassic | Biome::Nippon | Biome::Space | Biome::FarWest | Biome::Halloween | Biome::Cyber | Biome::Medieval => return (self.theme().unwrap().name)(),
+            Biome::Jurassic | Biome::Nippon | Biome::Space | Biome::FarWest | Biome::Halloween | Biome::Cyber | Biome::Medieval | Biome::Pirate => return (self.theme().unwrap().name)(),
         }
         .t()
     }
@@ -707,7 +714,7 @@ impl BiomeMats {
 impl Extra {
     /// La piste du monde (terre battue), à la place de la route goudronnée.
     pub fn dirt_road(&self, biome: Biome) -> Option<&Handle<StandardMaterial>> {
-        matches!(biome, Biome::FarWest | Biome::Halloween | Biome::Cyber | Biome::Medieval).then(|| &self.biome.themed[biome.theme_index().unwrap()].road)
+        matches!(biome, Biome::FarWest | Biome::Halloween | Biome::Cyber | Biome::Medieval | Biome::Pirate).then(|| &self.biome.themed[biome.theme_index().unwrap()].road)
     }
 
     /// Sol de l'herbe (deux teintes en alternance) et bords, selon le monde.
@@ -718,7 +725,7 @@ impl Extra {
             Biome::Desert => (&self.biome.sand[i], &self.biome.sand_side),
             Biome::Snow => (&self.biome.snow[i], &self.biome.snow_side),
             Biome::Autumn => (&self.biome.autumn[i], &self.biome.autumn_side),
-            Biome::Jurassic | Biome::Nippon | Biome::Space | Biome::FarWest | Biome::Halloween | Biome::Cyber | Biome::Medieval => {
+            Biome::Jurassic | Biome::Nippon | Biome::Space | Biome::FarWest | Biome::Halloween | Biome::Cyber | Biome::Medieval | Biome::Pirate => {
                 let t = &self.biome.themed[biome.theme_index().unwrap()];
                 (&t.grass[i], &t.side)
             }
@@ -729,7 +736,7 @@ impl Extra {
     pub fn water<'a>(&'a self, kit: &'a Kit, biome: Biome) -> (&'a Handle<StandardMaterial>, &'a Handle<StandardMaterial>) {
         match biome {
             Biome::Snow => (&self.biome.ice, &self.biome.ice_side),
-            Biome::Jurassic | Biome::Nippon | Biome::Space | Biome::FarWest | Biome::Halloween | Biome::Cyber | Biome::Medieval => {
+            Biome::Jurassic | Biome::Nippon | Biome::Space | Biome::FarWest | Biome::Halloween | Biome::Cyber | Biome::Medieval | Biome::Pirate => {
                 let t = &self.biome.themed[biome.theme_index().unwrap()];
                 (&t.water, &t.water_side)
             }
@@ -833,7 +840,7 @@ pub fn spawn_scenery(c: &mut Commands, k: &Kit, x: &Extra, parent: Entity, biome
             }
         }
         // ---- Mondes à thème : modèles décrits en pièces
-        (Biome::Jurassic | Biome::Nippon | Biome::Space | Biome::FarWest | Biome::Halloween | Biome::Cyber | Biome::Medieval, kind) => {
+        (Biome::Jurassic | Biome::Nippon | Biome::Space | Biome::FarWest | Biome::Halloween | Biome::Cyber | Biome::Medieval | Biome::Pirate, kind) => {
             let t = biome.theme().unwrap();
             let pick = (roll as usize * 3 + variant) % 20;
             match kind {
@@ -997,6 +1004,36 @@ pub fn spawn_barge(c: &mut Commands, k: &Kit, x: &Extra, parent: Entity, len: f3
     for s in [-1.0, 1.0] {
         part(c, parent, &k.cube, &x.blue_light, Vec3::new(0.0, -0.02, s * 0.38), Vec3::new(len - 0.1, 0.05, 0.03));
         part(c, parent, &k.cube, &x.red_light, Vec3::new(s * (len / 2.0 + 0.01), 0.0, 0.0), Vec3::new(0.03, 0.08, 0.3));
+    }
+}
+
+/// Tonneau qui flotte sur la mer, à la place du nénuphar.
+pub fn spawn_barrel_pad(c: &mut Commands, k: &Kit, x: &Extra, parent: Entity) {
+    let wood = x.color(PIRATE_COLORS[0]);
+    let dark = x.color(PIRATE_COLORS[1]);
+    part(c, parent, &k.cyl, wood, Vec3::new(0.0, -0.1, 0.0), Vec3::new(0.66, 0.5, 0.66));
+    part(c, parent, &k.cyl, dark, Vec3::new(0.0, -0.22, 0.0), Vec3::new(0.69, 0.05, 0.69));
+    part(c, parent, &k.cyl, dark, Vec3::new(0.0, 0.0, 0.0), Vec3::new(0.69, 0.05, 0.69));
+    part(c, parent, &k.cyl, x.color(PIRATE_COLORS[2]), Vec3::new(0.0, 0.16, 0.0), Vec3::new(0.52, 0.02, 0.52));
+}
+
+/// Radeau de planches, à la place du rondin : planches liées par des cordes, parfois une caisse dessus.
+pub fn spawn_raft(c: &mut Commands, k: &Kit, x: &Extra, parent: Entity, len: f32) {
+    let wood = x.color(PIRATE_COLORS[0]);
+    let dark = x.color(PIRATE_COLORS[1]);
+    let rope = x.color(PIRATE_COLORS[2]);
+    part(c, parent, &k.cube, wood, Vec3::new(0.0, -0.05, 0.0), Vec3::new(len, 0.2, 0.72));
+    for z in [-0.18, 0.0, 0.18] {
+        part(c, parent, &k.cube, dark, Vec3::new(0.0, 0.055, z + 0.09), Vec3::new(len - 0.04, 0.012, 0.015));
+    }
+    let n = len as usize;
+    for i in 0..=n {
+        let px = -len / 2.0 + 0.2 + (len - 0.4) * i as f32 / n as f32;
+        part(c, parent, &k.cube, rope, Vec3::new(px, 0.06, 0.0), Vec3::new(0.07, 0.03, 0.76));
+    }
+    if n >= 3 {
+        part(c, parent, &k.cube, dark, Vec3::new(len * 0.2, 0.22, 0.0), Vec3::new(0.42, 0.3, 0.42));
+        part(c, parent, &k.cube, wood, Vec3::new(len * 0.2, 0.39, 0.0), Vec3::new(0.46, 0.04, 0.46));
     }
 }
 

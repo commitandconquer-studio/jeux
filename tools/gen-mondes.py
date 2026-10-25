@@ -40,13 +40,16 @@ WORLDS = [
     dict(tag="MOYENAGE", file="data/import/moyenage.json", extra_animals=[], hat=[], side_pct=7, only_own=True,
          blocks=[0] * 7 + [1] * 4 + [2] * 3 + [3] * 3 + [4] * 3,
          sides=[100] * 12 + [1] * 3 + [2] * 3 + [0] * 2),
+    dict(tag="PIRATES", file="data/import/pirates.json", extra_animals=[], hat=[], side_pct=7, only_own=True,
+         blocks=[0] * 8 + [1] * 3 + [2] * 4 + [3] * 3 + [4] * 2,
+         sides=[100] * 13 + [1] * 3 + [2] * 3 + [0]),
 ]
 SHAPE_RS = {"cube": "Shape::Cube", "cylindre": "Shape::Cyl", "cone": "Shape::Cone", "sphere": "Shape::Sphere"}
 MAT_RS = {"vitre": "Mat::Vitre", "sombre": "Mat::Sombre", "pneu": "Mat::Pneu", "enjoliveur": "Mat::Enjoliveur",
           "phare": "Mat::Phare", "feu_arriere": "Mat::FeuArriere", "lumiere_rouge": "Mat::LumiereRouge", "lumiere_bleue": "Mat::LumiereBleue",
           "blanc": "Mat::Blanc", "noir": "Mat::Noir", "couleur_2": "Mat::C2", "couleur_3": "Mat::C3", "bulle": "Mat::Bulle"}
 ANIM_RS = {"clignote": ("Blink", 0.0), "clignote_alterne": ("BlinkAlt", 0.0), "pulse": ("Pulse", 0.0), "rebond": ("Bob", 0.03),
-           "pendule": ("Pendulum", 0.0), "balance": ("Sway", 0.0), "derive_haut": ("DriftUp", 0.0), "flotte_verticale": ("Float", 0.03), "clignote_lent": ("BlinkSlow", 0.0), "rotation_groupe": ("SpinGroup", 0.0)}
+           "pendule": ("Pendulum", 0.0), "balance": ("Sway", 0.0), "derive_haut": ("DriftUp", 0.0), "flotte_verticale": ("Float", 0.03), "clignote_lent": ("BlinkSlow", 0.0), "rotation_groupe": ("SpinGroup", 0.0), "vibre": ("Vibrate", 0.012)}
 
 
 def f(x):
