@@ -5,6 +5,7 @@ mod audio;
 mod capture;
 mod extra;
 mod frog;
+mod garage;
 mod fx;
 mod lanes;
 mod merge;
@@ -25,6 +26,7 @@ use models::Kit;
 pub enum GameState {
     #[default]
     Menu,
+    Garage,
     Playing,
     Dying,
     GameOver,
@@ -56,7 +58,7 @@ fn main() {
     )
     .init_state::<GameState>()
     .add_plugins(StudioPlugin::new(Universe::Croa, game_common::ambiance::AmbiancePlugin::exterieur()))
-    .add_plugins((ui::UiPlugin, audio::AudioPlugin, capture::CapturePlugin, fx::FxPlugin, progress::ProgressPlugin))
+    .add_plugins((ui::UiPlugin, audio::AudioPlugin, capture::CapturePlugin, fx::FxPlugin, progress::ProgressPlugin, garage::GaragePlugin))
     // Après le style commun : Traversée garde son ciel à elle.
     .insert_resource(ClearColor(Color::srgb(0.80, 0.90, 0.95)))
     // Carte d'ombres plus légère que le réglage commun (4096) : bien assez
@@ -154,6 +156,17 @@ fn follow_camera(
     }
     if playing && frog.pos.z > cam.0 + 6.0 {
         frog::die(Cause::TooSlow, &mut death, &mut next);
+    }
+    // Au garage, la caméra regarde la vitrine, loin de la route.
+    if *state.get() == GameState::Garage {
+        for (mut tf, mut proj) in &mut q {
+            let at = garage::ORIGIN;
+            *tf = Transform::from_translation(at + Vec3::new(0.0, 22.0, 11.0)).looking_at(at, Vec3::Y);
+            if let Projection::Orthographic(o) = &mut *proj {
+                o.scale = 1.5;
+            }
+        }
+        return;
     }
     // La caméra glisse un peu vers le côté où se trouve le crapaud.
     *cam_x += (frog.pos.x * 0.4 - *cam_x) * (dt * 4.0).min(1.0);

@@ -81,6 +81,7 @@ M: sonido · Esc: menú"
 #[derive(Component, Clone, Copy)]
 enum UiAction {
     Play,
+    Garage,
     Menu,
 }
 
@@ -99,12 +100,13 @@ fn button(commands: &mut Commands, parent: Entity, label: &str, action: UiAction
 fn spawn_menu(mut commands: Commands, progress: Res<Progress>) {
     let panel = spawn_panel(&mut commands, DespawnOnExit(GameState::Menu));
     spawn_text(&mut commands, panel, tx!("TRAVERSÉE", "CROSSING", "ÜBERQUERUNG", "TRAVERSATA", "TRAVESÍA").t(), 64.0);
-    let total = crate::progress::UNLOCKS.len() + 1;
+    let total = crate::progress::ALL.len();
     let line = tx!("Véhicules débloqués : {} / {}", "Vehicles unlocked: {} / {}", "Fahrzeuge freigeschaltet: {} / {}", "Veicoli sbloccati: {} / {}", "Vehículos desbloqueados: {} / {}")
         .avec(&[&progress.count(), &total]);
     spawn_text(&mut commands, panel, line, 20.0);
     spawn_gap(&mut commands, panel, 8.0);
     button(&mut commands, panel, tx!("Jouer", "Play", "Spielen", "Gioca", "Jugar").t(), UiAction::Play);
+    button(&mut commands, panel, tx!("Garage", "Garage", "Garage", "Garage", "Garaje").t(), UiAction::Garage);
     pied_de_menu(&mut commands, panel);
 }
 
@@ -198,6 +200,7 @@ fn on_click(
     sfx.write(Sfx::Click);
     match *action {
         UiAction::Play => next.set(GameState::Playing),
+        UiAction::Garage => next.set(GameState::Garage),
         UiAction::Menu => next.set(GameState::Menu),
     }
 }

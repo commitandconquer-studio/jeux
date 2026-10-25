@@ -31,23 +31,41 @@ pub const UNLOCKS: [(u32, Item); 12] = [
     (1500, Item::Vehicle(Vehicle::Fantastic)),
 ];
 
+/// Tous les objets, dans l'ordre d'affichage au garage.
+pub const ALL: [Item; 13] = [
+    Item::Vehicle(Vehicle::Car),
+    Item::Vehicle(Vehicle::Truck),
+    Item::Vehicle(Vehicle::Taxi),
+    Item::Trains,
+    Item::Vehicle(Vehicle::Moto),
+    Item::Vehicle(Vehicle::Bus),
+    Item::Vehicle(Vehicle::Pickup),
+    Item::Vehicle(Vehicle::Sport),
+    Item::Vehicle(Vehicle::Police),
+    Item::Vehicle(Vehicle::Tractor),
+    Item::Vehicle(Vehicle::Future),
+    Item::Vehicle(Vehicle::Sheriff),
+    Item::Vehicle(Vehicle::Fantastic),
+];
+
 impl Item {
+    /// Le petit nom de chaque véhicule.
     pub fn name(self) -> &'static str {
         match self {
-            Item::Trains => tx!("Les trains", "Trains", "Züge", "I treni", "Los trenes"),
+            Item::Trains => tx!("Le Rapide Rouge", "The Red Rocket", "Der Rote Blitz", "Il Rapido Rosso", "El Rayo Rojo"),
             Item::Vehicle(v) => match v {
-                Vehicle::Truck => tx!("Camion", "Truck", "Lastwagen", "Camion", "Camión"),
-                Vehicle::Taxi => tx!("Taxi", "Taxi", "Taxi", "Taxi", "Taxi"),
-                Vehicle::Moto => tx!("Moto", "Motorbike", "Motorrad", "Moto", "Moto"),
-                Vehicle::Bus => tx!("Bus", "Bus", "Bus", "Autobus", "Autobús"),
-                Vehicle::Pickup => tx!("Pick-up", "Pickup", "Pick-up", "Pick-up", "Camioneta"),
-                Vehicle::Sport => tx!("Voiture de sport", "Sports car", "Sportwagen", "Auto sportiva", "Coche deportivo"),
-                Vehicle::Police => tx!("Voiture de police", "Police car", "Polizeiwagen", "Auto della polizia", "Coche de policía"),
-                Vehicle::Tractor => tx!("Tracteur", "Tractor", "Traktor", "Trattore", "Tractor"),
-                Vehicle::Future => tx!("Le bolide du futur", "The car from the future", "Das Auto aus der Zukunft", "L'auto dal futuro", "El coche del futuro"),
-                Vehicle::Sheriff => tx!("Le bolide du shérif", "The sheriff's racer", "Der Sheriff-Flitzer", "Il bolide dello sceriffo", "El bólido del sheriff"),
-                Vehicle::Fantastic => tx!("La voiture fantastique", "The talking car", "Das Wunderauto", "L'auto fantastica", "El coche fantástico"),
-                Vehicle::Car => tx!("Voiture", "Car", "Auto", "Auto", "Coche"),
+                Vehicle::Car => tx!("Pépette", "Penny", "Püppi", "Pepetta", "Pepita"),
+                Vehicle::Truck => tx!("Gros Bidon", "Big Barrel", "Dicker Brummer", "Gran Botte", "Gran Bidón"),
+                Vehicle::Taxi => tx!("Taxi Citron", "Lemon Cab", "Zitronen-Taxi", "Taxi Limone", "Taxi Limón"),
+                Vehicle::Moto => tx!("Zim-Zim", "Zoomy", "Flitzer", "Sfreccia", "Zumbi"),
+                Vehicle::Bus => tx!("Le Bus Rigolo", "The Jolly Bus", "Der Lustige Bus", "Il Bus Allegro", "El Bus Alegre"),
+                Vehicle::Pickup => tx!("Rocky le Pick-up", "Rocky the Pickup", "Rocky der Pick-up", "Rocky il Pick-up", "Rocky la Camioneta"),
+                Vehicle::Sport => tx!("Éclair Fou", "Mad Flash", "Irrer Blitz", "Lampo Matto", "Rayo Loco"),
+                Vehicle::Police => tx!("Sirène Max", "Siren Max", "Sirenen-Max", "Sirena Max", "Sirena Max"),
+                Vehicle::Tractor => tx!("Gustave le Tracteur", "Gus the Tractor", "Traktor-Gustav", "Gustavo il Trattore", "Gustavo el Tractor"),
+                Vehicle::Future => tx!("Le Voyageur du Temps", "The Time Traveler", "Der Zeitreisende", "Il Viaggiatore del Tempo", "El Viajero del Tiempo"),
+                Vehicle::Sheriff => tx!("Shérif Casse-Cou", "Sheriff Daredevil", "Sheriff Draufgänger", "Sceriffo Spericolato", "Sheriff Temerario"),
+                Vehicle::Fantastic => tx!("Scanner le Fantastique", "Scanner the Fantastic", "Scanner der Fantastische", "Scanner il Fantastico", "Scanner el Fantástico"),
             },
         }
         .t()

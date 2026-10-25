@@ -11,7 +11,7 @@ use crate::models::Kit;
 use crate::frog::{Cause, Death, Frog, die};
 
 /// (nom, état, secondes avant la capture, pilote automatique)
-const SHOTS: [(&str, GameState, f32, bool); 8] = [
+const SHOTS: [(&str, GameState, f32, bool); 9] = [
     ("1-menu", GameState::Menu, 4.0, false),
     ("2-depart", GameState::Playing, 1.0, false),
     ("3-en-route", GameState::Playing, 2.5, true),
@@ -22,6 +22,7 @@ const SHOTS: [(&str, GameState, f32, bool); 8] = [
     ("7-noye", GameState::Dying, 0.25, true),
     // Une mouche posée sur la 3e case : le crapaud la gobe en avançant.
     ("8-mouche", GameState::Playing, 1.2, true),
+    ("9-garage", GameState::Garage, 1.0, false),
 ];
 
 #[derive(Resource)]
