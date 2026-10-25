@@ -41,5 +41,13 @@
     <p class="installer-lien"><a href="{{ get_url(path='@/installer.md', lang=lang) }}">{{ trans(key="voir_installation", lang=lang) }} →</a></p>
   </aside>
 </div>
+{%- if page.extra.chiffres %}
+<section class="jeu-chiffres">{% for c in page.extra.chiffres %}<div><strong>{{ c.n }}</strong><span>{{ c.t }}</span></div>{% endfor %}</section>
+{%- endif %}
+{%- if page.extra.captures %}
+<section class="galerie">{% for c in page.extra.captures %}
+  <figure><img src="{{ get_url(path='img/jeux/' ~ page.extra.dossier ~ '/' ~ c.img ~ '.jpg') }}" alt="{{ c.t }}" loading="lazy"><figcaption>{{ c.t }}</figcaption></figure>{% endfor %}
+</section>
+{%- endif %}
 <p class="retour"><a href="{{ get_url(path='@/jeux/_index.md', lang=lang) }}">← {{ trans(key="retour_jeux", lang=lang) }}</a></p>
 {% endblock %}

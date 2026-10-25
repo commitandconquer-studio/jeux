@@ -147,7 +147,7 @@ fn build(
                     commands.entity(slot).insert(Locked);
                 }
                 let sub = if open { String::new() } else { pts(threshold(*item)) };
-                label(&mut commands, vehicle_slot(i) + Vec3::new(0.0, 0.0, 1.45), if open { item.name() } else { "???" }, sub, open, false, None, true);
+                label(&mut commands, vehicle_slot(i) + Vec3::new(0.0, 0.0, 1.25), if open { item.name() } else { "???" }, sub, open, false, None, true);
             }
         }
         Tab::Characters => {
@@ -346,7 +346,7 @@ fn place_labels(camera: Query<(&Camera, &GlobalTransform), With<Camera3d>>, mut 
         if let Ok(p) = cam.world_to_viewport(gt, l.0) {
             let half = if let Val::Px(w) = node.width { w / 2.0 } else { 130.0 };
             node.left = px(p.x - half);
-            node.top = px(p.y - 175.0);
+            node.top = px(p.y - 210.0);
         }
     }
 }
