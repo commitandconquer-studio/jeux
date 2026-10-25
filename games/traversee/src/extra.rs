@@ -32,6 +32,7 @@ pub struct Extra {
     silver: Handle<StandardMaterial>,
     glow_blue: Handle<StandardMaterial>,
     glow_orange: Handle<StandardMaterial>,
+    biome: BiomeMats,
     /// Index de la peinture blanche dans la palette des voitures.
     white_car: usize,
     /// Index de la peinture jaune (taxi).
@@ -41,6 +42,7 @@ pub struct Extra {
 impl FromWorld for Extra {
     fn from_world(world: &mut World) -> Self {
         let mut mats = world.resource_mut::<Assets<StandardMaterial>>();
+        let biome = BiomeMats::new(&mut mats);
         let mut f = |r: f32, g: f32, b: f32| mats.add(flat_material(Color::srgb(r, g, b)));
         let flowers = vec![f(0.98, 0.45, 0.62), f(1.0, 0.85, 0.25), f(0.97, 0.97, 0.97), f(0.92, 0.25, 0.25), f(0.65, 0.45, 0.92), f(1.0, 0.6, 0.2)];
         let bus = vec![f(0.98, 0.78, 0.15), f(0.25, 0.65, 0.40), f(0.85, 0.25, 0.25), f(0.30, 0.50, 0.85)];
@@ -53,6 +55,7 @@ impl FromWorld for Extra {
         let blue_light = glow(Color::srgb(0.2, 0.4, 1.0), LinearRgba::rgb(0.2, 0.5, 3.0));
         let mut f = |r: f32, g: f32, b: f32| mats.add(flat_material(Color::srgb(r, g, b)));
         Extra {
+            biome,
             flowers,
             petal_center: f(1.0, 0.8, 0.2),
             stem: f(0.30, 0.58, 0.26),
@@ -452,5 +455,235 @@ pub fn animate_scanner(time: Res<Time>, mut q: Query<&mut Transform, With<Scanne
     let tri = (t % 2.0 - 1.0).abs() * 2.0 - 1.0;
     for mut tf in &mut q {
         tf.translation.z = tri * 0.26;
+    }
+}
+
+// ---- Décors par monde ------------------------------------------------------
+
+/// Les mondes se suivent tous les 60 rangs : prairie, désert, neige, automne.
+#[derive(Clone, Copy, PartialEq, Eq, Debug)]
+pub enum Biome {
+    Prairie,
+    Desert,
+    Snow,
+    Autumn,
+}
+
+pub const BIOME_LEN: i32 = 60;
+
+impl Biome {
+    pub fn of(row: i32) -> Self {
+        // TRAVERSEE_BIOME=1..3 : voir un monde tout de suite (essais et captures).
+        static START: std::sync::OnceLock<i32> = std::sync::OnceLock::new();
+        let start = *START.get_or_init(|| std::env::var("TRAVERSEE_BIOME").ok().and_then(|s| s.parse().ok()).unwrap_or(0));
+        match (row.max(0) / BIOME_LEN + start) % 4 {
+            0 => Biome::Prairie,
+            1 => Biome::Desert,
+            2 => Biome::Snow,
+            _ => Biome::Autumn,
+        }
+    }
+
+    pub fn name(self) -> &'static str {
+        use game_common::tx;
+        match self {
+            Biome::Prairie => tx!("La prairie", "The meadow", "Die Wiese", "Il prato", "La pradera"),
+            Biome::Desert => tx!("Le désert", "The desert", "Die Wüste", "Il deserto", "El desierto"),
+            Biome::Snow => tx!("La neige", "The snow", "Der Schnee", "La neve", "La nieve"),
+            Biome::Autumn => tx!("L'automne", "Autumn", "Der Herbst", "L'autunno", "El otoño"),
+        }
+        .t()
+    }
+}
+
+/// Matériaux des mondes autres que la prairie.
+struct BiomeMats {
+    sand: [Handle<StandardMaterial>; 2],
+    sand_side: Handle<StandardMaterial>,
+    snow: [Handle<StandardMaterial>; 2],
+    snow_side: Handle<StandardMaterial>,
+    autumn: [Handle<StandardMaterial>; 2],
+    autumn_side: Handle<StandardMaterial>,
+    ice: Handle<StandardMaterial>,
+    ice_side: Handle<StandardMaterial>,
+    ice_block: Handle<StandardMaterial>,
+    ice_top: Handle<StandardMaterial>,
+    ice_rock: Handle<StandardMaterial>,
+    sandstone: Handle<StandardMaterial>,
+    cactus: Handle<StandardMaterial>,
+    dry: Handle<StandardMaterial>,
+    dead_wood: Handle<StandardMaterial>,
+    snow_white: Handle<StandardMaterial>,
+    carrot: Handle<StandardMaterial>,
+    scarf: Handle<StandardMaterial>,
+    leaves: [Handle<StandardMaterial>; 3],
+    pumpkin: Handle<StandardMaterial>,
+}
+
+impl BiomeMats {
+    fn new(mats: &mut Assets<StandardMaterial>) -> Self {
+        let mut f = |r: f32, g: f32, b: f32| mats.add(flat_material(Color::srgb(r, g, b)));
+        Self {
+            sand: [f(0.94, 0.83, 0.56), f(0.90, 0.79, 0.51)],
+            sand_side: f(0.82, 0.69, 0.43),
+            snow: [f(0.97, 0.98, 1.0), f(0.92, 0.95, 0.98)],
+            snow_side: f(0.82, 0.88, 0.95),
+            autumn: [f(0.80, 0.72, 0.36), f(0.75, 0.67, 0.32)],
+            autumn_side: f(0.66, 0.56, 0.28),
+            ice: f(0.74, 0.90, 0.98),
+            ice_side: f(0.66, 0.82, 0.92),
+            ice_block: f(0.88, 0.96, 1.0),
+            ice_top: f(0.98, 1.0, 1.0),
+            ice_rock: f(0.68, 0.84, 0.94),
+            sandstone: f(0.80, 0.56, 0.36),
+            cactus: f(0.30, 0.65, 0.35),
+            dry: f(0.72, 0.64, 0.34),
+            dead_wood: f(0.45, 0.36, 0.30),
+            snow_white: f(0.97, 0.98, 1.0),
+            carrot: f(0.98, 0.55, 0.15),
+            scarf: f(0.85, 0.2, 0.25),
+            leaves: [f(0.95, 0.55, 0.15), f(0.80, 0.25, 0.15), f(0.96, 0.80, 0.22)],
+            pumpkin: f(0.96, 0.52, 0.12),
+        }
+    }
+}
+
+impl Extra {
+    /// Sol de l'herbe (deux teintes en alternance) et bords, selon le monde.
+    pub fn ground<'a>(&'a self, kit: &'a Kit, biome: Biome, row: i32) -> (&'a Handle<StandardMaterial>, &'a Handle<StandardMaterial>) {
+        let i = row.rem_euclid(2) as usize;
+        match biome {
+            Biome::Prairie => (&kit.m.grass[i], &kit.m.grass_side),
+            Biome::Desert => (&self.biome.sand[i], &self.biome.sand_side),
+            Biome::Snow => (&self.biome.snow[i], &self.biome.snow_side),
+            Biome::Autumn => (&self.biome.autumn[i], &self.biome.autumn_side),
+        }
+    }
+
+    /// Eau de la rivière (gelée dans la neige) et ses bords.
+    pub fn water<'a>(&'a self, kit: &'a Kit, biome: Biome) -> (&'a Handle<StandardMaterial>, &'a Handle<StandardMaterial>) {
+        match biome {
+            Biome::Snow => (&self.biome.ice, &self.biome.ice_side),
+            _ => (&kit.m.water, &kit.m.water_side),
+        }
+    }
+}
+
+/// Un morceau de banquise qui dérive, à la place du rondin.
+pub fn spawn_floe(c: &mut Commands, k: &Kit, x: &Extra, parent: Entity, len: f32) {
+    part(c, parent, &k.cube, &x.biome.ice_block, Vec3::new(0.0, -0.06, 0.0), Vec3::new(len, 0.44, 0.84));
+    part(c, parent, &k.cube, &x.biome.ice_top, Vec3::new(0.0, 0.17, 0.0), Vec3::new(len - 0.18, 0.03, 0.68));
+}
+
+/// Un îlot de glace immobile, à la place du nénuphar.
+pub fn spawn_ice_pad(c: &mut Commands, k: &Kit, x: &Extra, parent: Entity) {
+    part(c, parent, &k.cube, &x.biome.ice_block, Vec3::new(0.0, -0.17, 0.0), Vec3::new(0.85, 0.22, 0.85));
+    part(c, parent, &k.cube, &x.biome.ice_top, Vec3::new(0.0, -0.055, 0.0), Vec3::new(0.7, 0.02, 0.7));
+}
+
+#[derive(Clone, Copy, PartialEq, Eq)]
+pub enum Scenery {
+    /// Gros obstacle sur la zone jouable.
+    Block,
+    /// Décor des bords (on ne passe pas dessus de toute façon).
+    Side,
+    /// Petit décor sans collision.
+    Deco,
+}
+
+/// Cactus, bonhommes de neige, citrouilles… selon le monde. `roll` : 0 à 9.
+#[allow(clippy::too_many_arguments)]
+pub fn spawn_scenery(c: &mut Commands, k: &Kit, x: &Extra, parent: Entity, biome: Biome, kind: Scenery, pos: Vec3, roll: u32, variant: usize) {
+    let b = &x.biome;
+    let m = &k.m;
+    match (biome, kind) {
+        (Biome::Prairie, Scenery::Deco) | (Biome::Prairie, Scenery::Side) | (Biome::Prairie, Scenery::Block) => unreachable!("la prairie reste dans lanes.rs"),
+        // ---- Désert
+        (Biome::Desert, Scenery::Block) | (Biome::Desert, Scenery::Side) if roll < 6 => {
+            part(c, parent, &k.cyl, &b.cactus, pos + Vec3::Y * 0.42, Vec3::new(0.26, 0.84, 0.26));
+            part(c, parent, &k.cube, &b.cactus, pos + Vec3::new(0.19, 0.44, 0.0), Vec3::new(0.16, 0.1, 0.12));
+            part(c, parent, &k.cyl, &b.cactus, pos + Vec3::new(0.28, 0.58, 0.0), Vec3::new(0.14, 0.36, 0.14));
+            if variant % 2 == 0 {
+                part(c, parent, &k.cube, &b.cactus, pos + Vec3::new(-0.19, 0.3, 0.0), Vec3::new(0.16, 0.1, 0.12));
+                part(c, parent, &k.cyl, &b.cactus, pos + Vec3::new(-0.28, 0.42, 0.0), Vec3::new(0.14, 0.3, 0.14));
+            }
+            part(c, parent, &k.blob, &m.flower, pos + Vec3::Y * 0.86, Vec3::splat(0.12));
+        }
+        (Biome::Desert, Scenery::Block) | (Biome::Desert, Scenery::Side) if roll < 9 => {
+            let rot = Quat::from_rotation_y(variant as f32 * 1.1);
+            part_rot(c, parent, &k.rock, &b.sandstone, pos + Vec3::Y * 0.2, Vec3::new(0.85, 0.6, 0.7), rot);
+            part_rot(c, parent, &k.rock, &b.sandstone, pos + Vec3::new(0.3, 0.1, 0.1), Vec3::new(0.4, 0.3, 0.35), rot);
+        }
+        (Biome::Desert, Scenery::Block) | (Biome::Desert, Scenery::Side) => {
+            // Arbre mort
+            part(c, parent, &k.cyl, &b.dead_wood, pos + Vec3::Y * 0.45, Vec3::new(0.14, 0.9, 0.14));
+            part_rot(c, parent, &k.cube, &b.dead_wood, pos + Vec3::new(0.18, 0.7, 0.0), Vec3::new(0.35, 0.07, 0.07), Quat::from_rotation_z(0.6));
+            part_rot(c, parent, &k.cube, &b.dead_wood, pos + Vec3::new(-0.15, 0.55, 0.0), Vec3::new(0.3, 0.06, 0.06), Quat::from_rotation_z(-0.7));
+        }
+        (Biome::Desert, Scenery::Deco) => {
+            for i in 0..5 {
+                let a = i as f32 * 1.3 + variant as f32;
+                let off = Vec3::new(a.cos(), 0.0, a.sin()) * 0.1;
+                part_rot(c, parent, &k.cone, &b.dry, pos + off + Vec3::Y * 0.13, Vec3::new(0.08, 0.28, 0.08), Quat::from_rotation_z(a.cos() * 0.3));
+            }
+        }
+        // ---- Neige
+        (Biome::Snow, Scenery::Block) | (Biome::Snow, Scenery::Side) if roll < 4 || roll == 9 => {
+            part(c, parent, &k.cyl, &m.trunk, pos + Vec3::Y * 0.2, Vec3::new(0.16, 0.4, 0.16));
+            part(c, parent, &k.cone, &m.pine, pos + Vec3::Y * 0.8, Vec3::new(0.8, 0.95, 0.8));
+            part(c, parent, &k.cone, &b.snow_white, pos + Vec3::Y * 1.0, Vec3::new(0.52, 0.55, 0.52));
+            part(c, parent, &k.cone, &m.pine, pos + Vec3::Y * 1.2, Vec3::new(0.58, 0.7, 0.58));
+            part(c, parent, &k.cone, &b.snow_white, pos + Vec3::Y * 1.36, Vec3::new(0.34, 0.34, 0.34));
+        }
+        (Biome::Snow, Scenery::Block) | (Biome::Snow, Scenery::Side) if roll < 6 => {
+            // Bonhomme de neige
+            part(c, parent, &k.ball, &b.snow_white, pos + Vec3::Y * 0.27, Vec3::splat(0.56));
+            part(c, parent, &k.ball, &b.snow_white, pos + Vec3::Y * 0.7, Vec3::splat(0.42));
+            part(c, parent, &k.ball, &b.snow_white, pos + Vec3::Y * 1.02, Vec3::splat(0.32));
+            part_rot(c, parent, &k.cone, &b.carrot, pos + Vec3::new(0.0, 1.02, -0.19), Vec3::new(0.07, 0.2, 0.07), Quat::from_rotation_x(-std::f32::consts::FRAC_PI_2));
+            for s in [-1.0, 1.0] {
+                part(c, parent, &k.ball, &m.tire, pos + Vec3::new(0.07 * s, 1.08, -0.14), Vec3::splat(0.05));
+                part_rot(c, parent, &k.cube, &m.trunk, pos + Vec3::new(0.3 * s, 0.76, 0.0), Vec3::new(0.34, 0.04, 0.04), Quat::from_rotation_z(0.5 * s));
+            }
+            part(c, parent, &k.cyl, &m.tire, pos + Vec3::Y * 1.2, Vec3::new(0.2, 0.16, 0.2));
+            part(c, parent, &k.cyl, &m.tire, pos + Vec3::Y * 1.17, Vec3::new(0.3, 0.02, 0.3));
+            part(c, parent, &k.cube, &b.scarf, pos + Vec3::new(0.0, 0.88, 0.0), Vec3::new(0.34, 0.06, 0.34));
+        }
+        (Biome::Snow, Scenery::Block) | (Biome::Snow, Scenery::Side) => {
+            let rot = Quat::from_rotation_y(variant as f32 * 1.3);
+            part_rot(c, parent, &k.rock, &b.ice_rock, pos + Vec3::Y * 0.2, Vec3::new(0.75, 0.55, 0.65), rot);
+            part_rot(c, parent, &k.rock, &b.snow_white, pos + Vec3::Y * 0.4, Vec3::new(0.5, 0.2, 0.42), rot);
+        }
+        (Biome::Snow, Scenery::Deco) => {
+            for (dx, dz, sz) in [(-0.12, 0.05, 0.22), (0.1, -0.08, 0.3), (0.12, 0.14, 0.16)] {
+                part(c, parent, &k.blob, &b.snow_white, pos + Vec3::new(dx, 0.07, dz), Vec3::new(sz, sz * 0.5, sz));
+            }
+            if variant % 3 == 0 {
+                part(c, parent, &k.cone, &b.ice_rock, pos + Vec3::new(0.0, 0.18, 0.0), Vec3::new(0.12, 0.36, 0.12));
+                part(c, parent, &k.cone, &b.ice_rock, pos + Vec3::new(0.13, 0.12, 0.05), Vec3::new(0.09, 0.24, 0.09));
+            }
+        }
+        // ---- Automne
+        (Biome::Autumn, Scenery::Block) | (Biome::Autumn, Scenery::Side) if roll < 5 => {
+            part(c, parent, &k.cyl, &m.trunk, pos + Vec3::Y * 0.25, Vec3::new(0.18, 0.5, 0.18));
+            part(c, parent, &k.blob, &b.leaves[variant % 3], pos + Vec3::Y * 0.8, Vec3::new(0.9, 0.82, 0.9));
+            part(c, parent, &k.blob, &b.leaves[(variant + 1) % 3], pos + Vec3::new(0.22, 0.62, 0.1), Vec3::splat(0.45));
+        }
+        (Biome::Autumn, Scenery::Block) | (Biome::Autumn, Scenery::Side) if roll < 8 => {
+            // Citrouille
+            part(c, parent, &k.ball, &b.pumpkin, pos + Vec3::Y * 0.22, Vec3::new(0.62, 0.48, 0.62));
+            part(c, parent, &k.cube, &m.pad, pos + Vec3::Y * 0.5, Vec3::new(0.06, 0.12, 0.06));
+        }
+        (Biome::Autumn, Scenery::Block) | (Biome::Autumn, Scenery::Side) => {
+            let rot = Quat::from_rotation_y(variant as f32 * 1.3);
+            part_rot(c, parent, &k.rock, &m.stone, pos + Vec3::Y * 0.15, Vec3::new(0.7, 0.45, 0.6), rot);
+        }
+        (Biome::Autumn, Scenery::Deco) => {
+            for i in 0..6 {
+                let a = i as f32 * 1.05 + variant as f32;
+                let col = &b.leaves[(i + variant) % 3];
+                part_rot(c, parent, &k.cube, col, pos + Vec3::new(a.cos() * 0.14, 0.02, a.sin() * 0.14), Vec3::new(0.12, 0.02, 0.09), Quat::from_rotation_y(a * 2.0));
+            }
+        }
     }
 }

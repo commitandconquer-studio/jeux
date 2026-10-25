@@ -252,6 +252,10 @@ pub fn update_frog(
             if to_row % 10 == 0 {
                 sfx.write(Sfx::Chime);
             }
+            // Un nouveau monde commence : on le dit à l'écran.
+            if to_row > 0 && to_row % crate::extra::BIOME_LEN == 0 {
+                fx.write(Fx::World(crate::extra::Biome::of(to_row)));
+            }
         }
         // Une mouche sur la case : on la gobe.
         let col = to.x.round() as i32;

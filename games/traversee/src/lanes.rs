@@ -7,7 +7,7 @@ use game_common::Rng;
 
 use crate::audio::{Mutable, Sfx, SoundOn, Sounds};
 use crate::frog::Frog;
-use crate::extra::{Deco, Extra, Vehicle, pick_vehicle, spawn_deco, spawn_fly, spawn_vehicle};
+use crate::extra::{Biome, Deco, Extra, Scenery, Vehicle, pick_vehicle, spawn_deco, spawn_fly, spawn_floe, spawn_ice_pad, spawn_scenery, spawn_vehicle};
 use crate::models::{Kit, Prop, part, spawn_car, spawn_log, spawn_pad, spawn_prop, spawn_train, spawn_truck};
 
 /// Colonnes jouables : de -COLS à +COLS.
@@ -172,6 +172,7 @@ fn spawn_lane(c: &mut Commands, kit: &Kit, x: &Extra, g: &mut LaneGen, points: u
     let row = g.next_row;
     g.next_row += 1;
     let kind = g.next_kind(row, points);
+    let biome = Biome::of(row);
     let after_road = g.prev == LaneKind::Road;
     g.prev = kind;
 
@@ -192,8 +193,8 @@ fn spawn_lane(c: &mut Commands, kit: &Kit, x: &Extra, g: &mut LaneGen, points: u
     let mut blocked = Vec::new();
     match kind {
         LaneKind::Grass => {
-            let grass = &m.grass[row.rem_euclid(2) as usize];
-            ground(c, 0.0, grass, &m.grass_side);
+            let (grass, side) = x.ground(kit, biome, row);
+            ground(c, 0.0, grass, side);
             // Obstacles dans la zone jouable
             if row < 0 {
                 blocked = (-COLS..=COLS).collect();
@@ -209,6 +210,11 @@ fn spawn_lane(c: &mut Commands, kit: &Kit, x: &Extra, g: &mut LaneGen, points: u
             for &col in &blocked {
                 let variant = g.rng.below(6) as usize;
                 let at = Vec3::new(col as f32, 0.0, 0.0);
+                if biome != Biome::Prairie {
+                    let roll = g.rng.below(10);
+                    spawn_scenery(c, kit, x, root, biome, Scenery::Block, at, roll, variant);
+                    continue;
+                }
                 match g.rng.below(10) {
                     0..=3 => spawn_prop(c, kit, root, Prop::Tree, at, variant),
                     4..=6 => spawn_prop(c, kit, root, Prop::Pine, at, variant),
@@ -221,6 +227,12 @@ fn spawn_lane(c: &mut Commands, kit: &Kit, x: &Extra, g: &mut LaneGen, points: u
                 for _ in 0..g.rng.below(4) {
                     let col = g.rng.below((COLS * 2 + 1) as u32) as i32 - COLS;
                     if blocked.contains(&col) {
+                        continue;
+                    }
+                    if biome != Biome::Prairie {
+                        let variant = g.rng.below(12) as usize;
+                        let jitter = Vec3::new(g.rand() * 0.3 - 0.15, 0.0, g.rand() * 0.3 - 0.15);
+                        spawn_scenery(c, kit, x, root, biome, Scenery::Deco, Vec3::new(col as f32, 0.0, 0.0) + jitter, 0, variant);
                         continue;
                     }
                     let deco = match g.rng.below(10) {
@@ -248,6 +260,15 @@ fn spawn_lane(c: &mut Commands, kit: &Kit, x: &Extra, g: &mut LaneGen, points: u
                 for s in [-1, 1] {
                     let at = Vec3::new((col * s) as f32, 0.0, 0.0);
                     let variant = g.rng.below(12) as usize;
+                    if biome != Biome::Prairie {
+                        if g.rng.below(10) < 4 {
+                            let roll = g.rng.below(10);
+                            spawn_scenery(c, kit, x, root, biome, Scenery::Side, at, roll, variant);
+                        } else if g.rng.below(10) < 3 {
+                            spawn_scenery(c, kit, x, root, biome, Scenery::Deco, at, 0, variant);
+                        }
+                        continue;
+                    }
                     if g.rng.below(10) < 4 {
                         let prop = match g.rng.below(10) {
                             0..=3 => Prop::Tree,
@@ -299,34 +320,48 @@ fn spawn_lane(c: &mut Commands, kit: &Kit, x: &Extra, g: &mut LaneGen, points: u
             }
         }
         LaneKind::River => {
-            ground(c, -0.15, &m.water, &m.water_side);
+            let (water, water_side) = x.water(kit, biome);
+            ground(c, -0.15, water, water_side);
+            let frozen = biome == Biome::Snow;
             if g.rng.below(4) == 0 {
                 // Nénuphars immobiles
                 let mut count = 0;
                 for col in -COLS..=COLS {
                     if g.rng.below(10) < 4 {
                         let mover = spawn_mover(c, root, row, col as f32, 0.0, 0.8, MoverKind::Pad, 1.0);
-                        spawn_pad(c, kit, mover, g.rng.below(3) == 0);
+                        if frozen {
+                            spawn_ice_pad(c, kit, x, mover);
+                        } else {
+                            spawn_pad(c, kit, mover, g.rng.below(3) == 0);
+                        }
                         count += 1;
                     }
                 }
                 if count == 0 {
                     let mover = spawn_mover(c, root, row, 0.0, 0.0, 0.8, MoverKind::Pad, 1.0);
-                    spawn_pad(c, kit, mover, true);
+                    if frozen {
+                        spawn_ice_pad(c, kit, x, mover);
+                    } else {
+                        spawn_pad(c, kit, mover, true);
+                    }
                 }
             } else {
                 let d = difficulty(row);
                 let dir = if g.rng.below(2) == 0 { 1.0 } else { -1.0 };
                 let speed = (1.0 + g.rand() * 1.2 + d * 1.5) * dir;
-                let mut x = -WRAP + g.rand() * 2.0;
+                let mut x_pos = -WRAP + g.rand() * 2.0;
                 loop {
                     let len = [2.0, 3.0, 4.0][g.rng.below(3) as usize];
-                    if x + len > WRAP - 1.0 {
+                    if x_pos + len > WRAP - 1.0 {
                         break;
                     }
-                    let mover = spawn_mover(c, root, row, x + len / 2.0, speed, len, MoverKind::Log, 1.0);
-                    spawn_log(c, kit, mover, len);
-                    x += len + 1.2 + g.rand() * (2.6 - d);
+                    let mover = spawn_mover(c, root, row, x_pos + len / 2.0, speed, len, MoverKind::Log, 1.0);
+                    if frozen {
+                        spawn_floe(c, kit, x, mover, len);
+                    } else {
+                        spawn_log(c, kit, mover, len);
+                    }
+                    x_pos += len + 1.2 + g.rand() * (2.6 - d);
                 }
             }
         }

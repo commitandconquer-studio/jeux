@@ -20,6 +20,8 @@ pub enum Fx {
     Burst(Vec3),
     /// Une mouche gobée : étincelles et points gagnés.
     Gulp(Vec3, u32),
+    /// Un nouveau monde commence.
+    World(crate::extra::Biome),
 }
 
 /// Éclair blanc plein écran qui s'éteint tout seul.
@@ -185,6 +187,10 @@ fn spawn_fx(mut commands: Commands, mut reader: MessageReader<Fx>, kit: Res<Kit>
                 ring(&mut commands, &kit_ring(&mats), &mats.star, Vec3::new(p.x, p.y - 0.3, p.z), 1.6, 0.35);
                 points_text(&mut commands, points);
             }
+            Fx::World(b) => {
+                let line = tx!("Bienvenue : {}", "Welcome: {}", "Willkommen: {}", "Benvenuti: {}", "Bienvenido: {}").avec(&[&b.name()]);
+                pop(&mut commands, &line, Color::srgb(1.0, 1.0, 1.0), 64.0);
+            }
             Fx::Ripple(p) => {
                 for _ in 0..4 {
                     let v = Vec3::new(unit(&mut rng), 0.0, unit(&mut rng)).normalize_or_zero() * 0.6;
@@ -228,13 +234,13 @@ fn death_fx(
             flash.0 = 0.8;
             punch.0 = 1.0;
             virt.set_relative_speed(0.04);
-            pop(&mut commands, tx!("SPLATCH !", "SPLAT!", "KLATSCH!", "SPLAT!", "¡PLAF!").t(), Color::srgb(1.0, 0.85, 0.2));
+            pop(&mut commands, tx!("SPLATCH !", "SPLAT!", "KLATSCH!", "SPLAT!", "¡PLAF!").t(), Color::srgb(1.0, 0.85, 0.2), 120.0);
         }
         Some(Cause::Drowned | Cause::CarriedAway) => {
             fx.write(Fx::Splash(Vec3::new(p.x, 0.0, p.z)));
             shake.0 = 0.5;
             punch.0 = 0.6;
-            pop(&mut commands, tx!("PLOUF !", "SPLASH!", "PLATSCH!", "SPLASH!", "¡CHOF!").t(), Color::srgb(0.45, 0.8, 1.0));
+            pop(&mut commands, tx!("PLOUF !", "SPLASH!", "PLATSCH!", "SPLASH!", "¡CHOF!").t(), Color::srgb(0.45, 0.8, 1.0), 120.0);
         }
         Some(Cause::TooSlow) => {
             fx.write(Fx::Burst(p));
@@ -251,7 +257,7 @@ fn update_flash(time: Res<Time<Real>>, mut flash: ResMut<Flash>, mut q: Query<&m
     }
 }
 
-fn pop(commands: &mut Commands, word: &str, color: Color) {
+fn pop(commands: &mut Commands, word: &str, color: Color, size: f32) {
     commands
         .spawn((
             Node {
@@ -273,7 +279,7 @@ fn pop(commands: &mut Commands, word: &str, color: Color) {
                 TextShadow { offset: Vec2::splat(5.0), color: Color::srgba(0.1, 0.05, 0.0, 0.8) },
                 Pickable::IGNORE,
                 ThemedText,
-                PopText { age: 0.0, size: 120.0 },
+                PopText { age: 0.0, size },
             ));
         });
 }
