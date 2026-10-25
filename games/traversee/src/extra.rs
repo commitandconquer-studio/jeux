@@ -480,6 +480,8 @@ pub enum Biome {
     Nippon,
     /// Cosmos Croâ : la Lune, ses vaisseaux et ses extraterrestres.
     Space,
+    /// Far West Croâ : diligences, chevaux, bisons et vieux train.
+    FarWest,
 }
 
 pub const BIOME_LEN: i32 = 60;
@@ -501,8 +503,34 @@ pub struct WorldColors {
     pub sky: [u8; 3],
 }
 
+/// Une voiture du vieux train à vapeur (locomotive, tender, wagons) ; `len` en cases.
+pub struct TrainCar {
+    pub model: Model,
+    pub len: f32,
+}
+
+/// Le vieux train du monde : locomotive, tender, puis des wagons.
+pub fn spawn_old_train(c: &mut Commands, k: &Kit, x: &Extra, parent: Entity, t: &Theme, wagons: usize) -> f32 {
+    let mut order = vec![0usize, 1];
+    order.extend((0..wagons).map(|i| 2 + i % 2));
+    let gap = 0.15;
+    let total: f32 = order.iter().map(|i| t.train[*i].len).sum::<f32>() + gap * (order.len() - 1) as f32;
+    let mut front = total / 2.0;
+    for i in order {
+        let car = &t.train[i];
+        let holder = c.spawn((Transform::from_xyz(front - car.len / 2.0, 0.0, 0.0), Visibility::default(), ChildOf(parent))).id();
+        spawn_pivoted(c, k, x, holder, &car.model, i);
+        front -= car.len + gap;
+    }
+    total
+}
+
 /// Un monde décrit en pièces (`gen_worlds.rs`) : décors, animaux, véhicules, héros et son chapeau.
 pub struct Theme {
+    /// Le vieux train du monde (vide : le train habituel).
+    pub train: &'static [TrainCar],
+    /// Sur la route : seulement ses propres véhicules et animaux (pas de voitures ordinaires).
+    pub only_own: bool,
     pub blocks: &'static [Model],
     pub sides: &'static [Model],
     pub deco: &'static [Model],
@@ -529,7 +557,7 @@ pub struct Theme {
 pub static START_WORLD: std::sync::atomic::AtomicI32 = std::sync::atomic::AtomicI32::new(0);
 
 impl Biome {
-    pub const ALL: [Biome; 7] = [Biome::Prairie, Biome::Desert, Biome::Snow, Biome::Autumn, Biome::Jurassic, Biome::Nippon, Biome::Space];
+    pub const ALL: [Biome; 8] = [Biome::Prairie, Biome::Desert, Biome::Snow, Biome::Autumn, Biome::Jurassic, Biome::Nippon, Biome::Space, Biome::FarWest];
 
     /// Le monde décrit en pièces, pour les mondes à thème.
     pub fn theme(self) -> Option<&'static Theme> {
@@ -540,7 +568,8 @@ impl Biome {
         match self {
             Biome::Jurassic => Some(0),
             Biome::Nippon => Some(1),
-            Biome::Space => Some(2),
+            Biome::Space => Some(3),
+            Biome::FarWest => Some(2),
             _ => None,
         }
     }
@@ -556,14 +585,15 @@ impl Biome {
         // TRAVERSEE_BIOME=1..3 : voir un monde tout de suite (essais et captures).
         static ENV: std::sync::OnceLock<i32> = std::sync::OnceLock::new();
         let start = *ENV.get_or_init(|| std::env::var("TRAVERSEE_BIOME").ok().and_then(|s| s.parse().ok()).unwrap_or(0)) + START_WORLD.load(std::sync::atomic::Ordering::Relaxed);
-        let biome = match (row.max(0) / BIOME_LEN + start) % 7 {
+        let biome = match (row.max(0) / BIOME_LEN + start) % 8 {
             0 => Biome::Prairie,
             1 => Biome::Desert,
             2 => Biome::Snow,
             3 => Biome::Autumn,
             4 => Biome::Jurassic,
             5 => Biome::Nippon,
-            _ => Biome::Space,
+            6 => Biome::Space,
+            _ => Biome::FarWest,
         };
         if biome != Biome::Prairie && !crate::progress::unlocked(points, crate::progress::Item::World(biome)) {
             Biome::Prairie
@@ -579,7 +609,7 @@ impl Biome {
             Biome::Desert => tx!("Le désert", "The desert", "Die Wüste", "Il deserto", "El desierto"),
             Biome::Snow => tx!("La neige", "The snow", "Der Schnee", "La neve", "La nieve"),
             Biome::Autumn => tx!("L'automne", "Autumn", "Der Herbst", "L'autunno", "El otoño"),
-            Biome::Jurassic | Biome::Nippon | Biome::Space => return (self.theme().unwrap().name)(),
+            Biome::Jurassic | Biome::Nippon | Biome::Space | Biome::FarWest => return (self.theme().unwrap().name)(),
         }
         .t()
     }
@@ -612,6 +642,7 @@ struct BiomeMats {
 }
 
 struct ThemeMats {
+    road: Handle<StandardMaterial>,
     grass: [Handle<StandardMaterial>; 2],
     side: Handle<StandardMaterial>,
     water: Handle<StandardMaterial>,
@@ -625,6 +656,7 @@ impl BiomeMats {
         let themed = crate::gen_worlds::THEMES
             .iter()
             .map(|t| ThemeMats {
+                road: c(t.colors.road, 1.0),
                 grass: [c(t.colors.grass_a, 1.0), c(t.colors.grass_b, 1.0)],
                 side: c(t.colors.grass_a, 0.8),
                 water: c(t.colors.water, 1.0),
@@ -658,6 +690,11 @@ impl BiomeMats {
 }
 
 impl Extra {
+    /// La piste du monde (terre battue), à la place de la route goudronnée.
+    pub fn dirt_road(&self, biome: Biome) -> Option<&Handle<StandardMaterial>> {
+        (biome == Biome::FarWest).then(|| &self.biome.themed[biome.theme_index().unwrap()].road)
+    }
+
     /// Sol de l'herbe (deux teintes en alternance) et bords, selon le monde.
     pub fn ground<'a>(&'a self, kit: &'a Kit, biome: Biome, row: i32) -> (&'a Handle<StandardMaterial>, &'a Handle<StandardMaterial>) {
         let i = row.rem_euclid(2) as usize;
@@ -666,7 +703,7 @@ impl Extra {
             Biome::Desert => (&self.biome.sand[i], &self.biome.sand_side),
             Biome::Snow => (&self.biome.snow[i], &self.biome.snow_side),
             Biome::Autumn => (&self.biome.autumn[i], &self.biome.autumn_side),
-            Biome::Jurassic | Biome::Nippon | Biome::Space => {
+            Biome::Jurassic | Biome::Nippon | Biome::Space | Biome::FarWest => {
                 let t = &self.biome.themed[biome.theme_index().unwrap()];
                 (&t.grass[i], &t.side)
             }
@@ -677,7 +714,7 @@ impl Extra {
     pub fn water<'a>(&'a self, kit: &'a Kit, biome: Biome) -> (&'a Handle<StandardMaterial>, &'a Handle<StandardMaterial>) {
         match biome {
             Biome::Snow => (&self.biome.ice, &self.biome.ice_side),
-            Biome::Jurassic | Biome::Nippon | Biome::Space => {
+            Biome::Jurassic | Biome::Nippon | Biome::Space | Biome::FarWest => {
                 let t = &self.biome.themed[biome.theme_index().unwrap()];
                 (&t.water, &t.water_side)
             }
@@ -781,7 +818,7 @@ pub fn spawn_scenery(c: &mut Commands, k: &Kit, x: &Extra, parent: Entity, biome
             }
         }
         // ---- Mondes à thème : modèles décrits en pièces
-        (Biome::Jurassic | Biome::Nippon | Biome::Space, kind) => {
+        (Biome::Jurassic | Biome::Nippon | Biome::Space | Biome::FarWest, kind) => {
             let t = biome.theme().unwrap();
             let pick = (roll as usize * 3 + variant) % 20;
             match kind {

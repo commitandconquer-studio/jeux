@@ -88,6 +88,12 @@ fn vehicle_slot(i: usize) -> Vec3 {
     ORIGIN + Vec3::new((col - 3.0) * 4.7, 0.0, (row - 1.5) * 3.9 - 0.45)
 }
 
+/// Les mondes : deux rangées de quatre, plus espacées que les personnages (la ligne « départ ici » ne touche pas la rangée du dessous).
+fn world_slot(i: usize) -> Vec3 {
+    let (col, row) = ((i % 4) as f32, (i / 4) as f32);
+    ORIGIN + Vec3::new((col - 1.5) * 5.6, 0.0, (row - 0.5) * 6.0 - 1.9)
+}
+
 fn character_slot(i: usize) -> Vec3 {
     let (col, row) = ((i % 4) as f32, (i / 4) as f32);
     ORIGIN + Vec3::new((col - 1.5) * 5.6, 0.0, (row - 0.5) * 5.1 - 1.9)
@@ -204,11 +210,11 @@ fn build(
             let have = worlds.iter().filter(|b| progress.has(Item::World(**b))).count();
             heading = tx!("Les mondes : {} / {}", "The worlds: {} / {}", "Die Welten: {} / {}", "I mondi: {} / {}", "Los mundos: {} / {}").avec(&[&have, &worlds.len()]);
             for (i, b) in worlds.iter().enumerate() {
-                let center = ORIGIN + Vec3::new((i as f32 - 3.0) * 5.1, 0.0, -1.0);
+                let center = world_slot(i);
                 let at = center - ORIGIN;
                 let (top, _) = extra.ground(&kit, *b, 0);
-                part(&mut commands, root, &kit.cyl, top, at + Vec3::Y * -0.15, Vec3::new(5.0, 0.2, 4.2));
-                let slot = slot_entity(&mut commands, root, at, 2.0, i);
+                part(&mut commands, root, &kit.cyl, top, at + Vec3::Y * -0.15, Vec3::new(4.4, 0.2, 3.6));
+                let slot = slot_entity(&mut commands, root, at, 1.8, i);
                 world_sample(&mut commands, &kit, &extra, slot, *b);
                 let open = progress.has(Item::World(*b));
                 if !open {
@@ -222,7 +228,7 @@ fn build(
                 } else {
                     String::new()
                 };
-                label(&mut commands, center + Vec3::new(0.0, 0.0, 2.6), if open { b.name() } else { "???" }, sub, open, chosen, open.then_some(Act::World(*b)), false);
+                label(&mut commands, center + Vec3::new(0.0, 0.0, 2.1), if open { b.name() } else { "???" }, sub, open, chosen, open.then_some(Act::World(*b)), false);
             }
         }
     }
@@ -246,7 +252,7 @@ fn build(
         let (b, _) = spawn_button_sized(&mut commands, tabs, name, 190.0, 44.0, 20.0);
         commands.entity(b).insert(Act::Tab(tab));
         if view.tab == tab {
-            commands.entity(b).insert(BackgroundColor(Color::srgb(1.0, 0.88, 0.45)));
+            commands.entity(b).insert((BackgroundColor(Color::srgb(1.0, 0.88, 0.45)), game_common::ui::ButtonColor(Color::srgb(1.0, 0.88, 0.45))));
         }
     }
     if view.tab == Tab::Vehicles && ALL.len() > PER_PAGE {
@@ -271,7 +277,7 @@ fn world_sample(c: &mut Commands, kit: &Kit, x: &Extra, slot: Entity, biome: Bio
         }
         Biome::Desert => spawn_scenery(c, kit, x, slot, biome, Scenery::Block, Vec3::new(-0.2, 0.0, 0.0), 0, 0),
         Biome::Snow => spawn_scenery(c, kit, x, slot, biome, Scenery::Block, Vec3::new(-0.2, 0.0, 0.0), 4, 0),
-        Biome::Jurassic | Biome::Nippon | Biome::Space => {
+        Biome::Jurassic | Biome::Nippon | Biome::Space | Biome::FarWest => {
             spawn_scenery(c, kit, x, slot, biome, Scenery::Block, Vec3::new(-0.3, 0.0, 0.0), 0, 0);
             spawn_scenery(c, kit, x, slot, biome, Scenery::Block, Vec3::new(0.7, 0.0, 0.5), 3, 0);
         }
@@ -318,9 +324,9 @@ fn label(commands: &mut Commands, at: Vec3, title: &str, sub: String, open: bool
     };
     e.with_children(|p| {
         p.spawn((Text::new(title), TextFont::from_font_size(size), TextColor(color), TextLayout::justify(Justify::Center), Pickable::IGNORE, game_common::ui::ThemedText));
-        if !sub.is_empty() {
-            p.spawn((Text::new(sub), TextFont::from_font_size(small), TextColor(color), TextLayout::justify(Justify::Center), Pickable::IGNORE, game_common::ui::ThemedText));
-        }
+        // La ligne d'état est toujours là (même vide) : le nom reste à la même place, sans toucher le plateau.
+        let sub = if sub.is_empty() { " ".to_string() } else { sub };
+        p.spawn((Text::new(sub), TextFont::from_font_size(small), TextColor(color), TextLayout::justify(Justify::Center), Pickable::IGNORE, game_common::ui::ThemedText));
     });
 }
 
@@ -358,7 +364,7 @@ fn place_labels(camera: Query<(&Camera, &GlobalTransform), With<Camera3d>>, mut 
         if let Ok(p) = cam.world_to_viewport(gt, l.0) {
             let half = if let Val::Px(w) = node.width { w / 2.0 } else { 130.0 };
             node.left = px(p.x - half);
-            node.top = px(p.y - 210.0);
+            node.top = px(p.y - 188.0);
         }
     }
 }

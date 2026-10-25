@@ -92,13 +92,14 @@ fn update_sky(
     cam: Res<crate::CamZ>,
     mut stars: Query<(&Star, &mut Transform, &mut Visibility), Without<Backdrop>>,
     mut backdrop: Query<(&mut Transform, &mut Visibility), With<Backdrop>>,
+    state: Res<State<crate::GameState>>,
     mut amb: ResMut<game_common::ambiance::Ambiance>,
     mut saved: Local<Option<(game_common::ambiance::Moment, Option<game_common::ambiance::Meteo>)>>,
 ) {
     let space = Biome::of(frog.max_row_i(), progress.total + score.current) == Biome::Space;
     IN_SPACE.store(space, std::sync::atomic::Ordering::Relaxed);
-    // Dans le vide : pas de coucher de soleil ni de pluie, une lumière neutre (le métal reste gris).
-    if space {
+    // Dans le vide et au garage : pas de coucher de soleil ni de pluie, une lumière neutre.
+    if space || *state.get() == crate::GameState::Garage {
         if saved.is_none() {
             *saved = Some((amb.moment, amb.meteo));
         }

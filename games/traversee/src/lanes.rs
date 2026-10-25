@@ -119,6 +119,10 @@ impl LaneGen {
         if row < 3 {
             return LaneKind::Grass;
         }
+        // TRAVERSEE_RAIL=1 : une voie ferrée sur deux, trains tout de suite (essais).
+        if std::env::var("TRAVERSEE_RAIL").is_ok() {
+            return if row % 2 == 0 { LaneKind::Rail } else { LaneKind::Grass };
+        }
         if self.queue.is_empty() {
             let d = difficulty(row);
             let r = self.rand();
@@ -319,10 +323,13 @@ fn spawn_lane(c: &mut Commands, kit: &Kit, x: &Extra, g: &mut LaneGen, points: u
         LaneKind::Road => {
             if biome == Biome::Space {
                 ground(c, -0.02, &x.metal, &x.metal);
+            } else if let Some(dirt) = x.dirt_road(biome) {
+                // Au Far West : une piste de terre, ni goudron ni lignes blanches.
+                ground(c, -0.02, dirt, dirt);
             } else {
                 ground(c, -0.02, &m.road, &m.road_side);
             }
-            if after_road {
+            if after_road && biome != Biome::FarWest {
                 // Pointillés entre deux voies de route
                 let reach = if biome == Biome::Space { COLS as f32 + 0.5 } else { HALF };
                 let mut x = -reach;
@@ -337,9 +344,10 @@ fn spawn_lane(c: &mut Commands, kit: &Kit, x: &Extra, g: &mut LaneGen, points: u
             let mut x_pos = -WRAP + g.rand() * 3.0;
             loop {
                 let mut vehicle = pick_vehicle(g.rng.below(1000), points);
+                let own = biome.theme().is_some_and(|t| t.only_own);
                 // Dans le parc, surtout les véhicules du parc (ceux déjà gagnés).
                 if let (Some(theme), Some(ti)) = (biome.theme(), biome.theme_index()) {
-                    let r = g.rng.below(100);
+                    let r = if own { g.rng.below(80) } else { g.rng.below(100) };
                     if r < 55 {
                         // Des animaux qui traversent (ceux déjà gagnés ; ceux qui volent ne traversent pas).
                         let open: Vec<usize> = (0..theme.animals.len())
@@ -355,6 +363,14 @@ fn spawn_lane(c: &mut Commands, kit: &Kit, x: &Extra, g: &mut LaneGen, points: u
                         let open: Vec<usize> = theme.vehicles.iter().copied().filter(|i| crate::progress::unlocked(points, crate::progress::Item::Vehicle(Vehicle::Gen(*i)))).collect();
                         if !open.is_empty() {
                             vehicle = Vehicle::Gen(open[g.rng.below(open.len() as u32) as usize]);
+                        }
+                    }
+                    // Dans les mondes « purs » (Far West, espace), jamais de voiture ordinaire :
+                    // on retombe sur le premier animal ou véhicule du monde.
+                    if own && !matches!(vehicle, Vehicle::Beast(..)) && !theme.vehicles.contains(&match vehicle { Vehicle::Gen(i) => i, _ => usize::MAX }) {
+                        let first = (0..theme.animals.len()).find(|i| !theme.animals[*i].flying);
+                        if let Some(i) = first {
+                            vehicle = Vehicle::Beast(ti, i);
                         }
                     }
                 }
@@ -454,20 +470,24 @@ fn spawn_lane(c: &mut Commands, kit: &Kit, x: &Extra, g: &mut LaneGen, points: u
             let dir = if g.rng.below(2) == 0 { 1.0 } else { -1.0 };
             let light = part(c, root, &kit.ball, &m.signal_off, Vec3::new(COLS as f32 + 1.0, 1.28, 0.42), Vec3::splat(0.26));
             let train = spawn_mover(c, root, row, 0.0, 0.0, 1.0, MoverKind::Train, dir);
-            let len = spawn_train(c, kit, train, 2 + g.rng.below(3) as usize);
+            let wagons = 2 + g.rng.below(3) as usize;
+            let len = match biome.theme() {
+                Some(t) if !t.train.is_empty() => crate::extra::spawn_old_train(c, kit, x, train, t, wagons),
+                _ => spawn_train(c, kit, train, wagons),
+            };
             c.entity(train).insert((
                 Mover { row, speed: 0.0, half_len: len / 2.0, kind: MoverKind::Train },
                 Transform::from_xyz(-dir * (WRAP + len / 2.0), 0.0, 0.0).with_rotation(Quat::from_rotation_y(if dir > 0.0 { 0.0 } else { PI })),
             ));
-            c.entity(root).insert(RailLane { train, light, bell: None, dir, timer: 1.0 + g.rand() * 4.0, phase: RailPhase::Waiting });
+            c.entity(root).insert(RailLane { train, light, bell: None, dir, timer: if std::env::var("TRAVERSEE_RAIL").is_ok() { 0.3 } else { 1.0 + g.rand() * 4.0 }, phase: RailPhase::Waiting });
         }
         LaneKind::Rail => {
             ground(c, 0.0, &m.gravel, &m.gravel);
             let reach = if biome == Biome::Space { COLS as f32 + 0.5 } else { HALF };
-            let mut x = -reach;
-            while x < reach {
-                part(c, root, &kit.cube, &m.sleeper, Vec3::new(x, 0.025, 0.0), Vec3::new(0.18, 0.05, 0.85));
-                x += 0.7;
+            let mut sx = -reach;
+            while sx < reach {
+                part(c, root, &kit.cube, &m.sleeper, Vec3::new(sx, 0.025, 0.0), Vec3::new(0.18, 0.05, 0.85));
+                sx += 0.7;
             }
             for z in [-0.28, 0.28] {
                 part(c, root, &kit.cube, &m.rail, Vec3::new(0.0, 0.085, z), Vec3::new(reach * 2.0, 0.07, 0.07));
@@ -478,7 +498,11 @@ fn spawn_lane(c: &mut Commands, kit: &Kit, x: &Extra, g: &mut LaneGen, points: u
             let light = part(c, root, &kit.ball, &m.signal_off, Vec3::new(px, 1.28, 0.42), Vec3::splat(0.26));
             let dir = if g.rng.below(2) == 0 { 1.0 } else { -1.0 };
             let train = spawn_mover(c, root, row, 0.0, 0.0, 1.0, MoverKind::Train, dir);
-            let len = spawn_train(c, kit, train, 2 + g.rng.below(3) as usize);
+            let wagons = 2 + g.rng.below(3) as usize;
+            let len = match biome.theme() {
+                Some(t) if !t.train.is_empty() => crate::extra::spawn_old_train(c, kit, x, train, t, wagons),
+                _ => spawn_train(c, kit, train, wagons),
+            };
             c.entity(train).insert((
                 Mover { row, speed: 0.0, half_len: len / 2.0, kind: MoverKind::Train },
                 Transform::from_xyz(-dir * (WRAP + len / 2.0), 0.0, 0.0)
@@ -489,7 +513,7 @@ fn spawn_lane(c: &mut Commands, kit: &Kit, x: &Extra, g: &mut LaneGen, points: u
                 light,
                 bell: None,
                 dir,
-                timer: 1.0 + g.rand() * 4.0,
+                timer: if std::env::var("TRAVERSEE_RAIL").is_ok() { 0.3 } else { 1.0 + g.rand() * 4.0 },
                 phase: RailPhase::Waiting,
             });
         }

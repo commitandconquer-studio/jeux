@@ -25,7 +25,10 @@ WORLDS = [
          # Décor simple : cerisiers, bambous et lanternes ; un torii ou une enseigne de temps en temps.
          blocks=[0] * 6 + [3] * 5 + [1] * 3 + [5] * 3 + [6, 2, 4],
          sides=[100] * 8 + [103] * 5 + [101] * 3 + [2] * 2 + [5, 0]),
-    dict(tag="ESPACE", file="data/import/espace.json", extra_animals=[], hat=[], side_pct=0,
+    dict(tag="FARWEST", file="data/import/farwest.json", extra_animals=[], hat=[], side_pct=8, only_own=True,
+         blocks=[0] * 8 + [1] * 5 + [2] * 3 + [3] * 2 + [4] * 2,
+         sides=[100] * 10 + [0] + [3] * 3 + [1, 2, 101]),
+    dict(tag="ESPACE", file="data/import/espace.json", extra_animals=[], hat=[], side_pct=0, only_own=True,
          blocks=[0] * 8 + [1] * 6 + [2] * 6,
          sides=[100] * 10 + [101] * 5 + [102] * 5),
 ]
@@ -86,7 +89,7 @@ rs = ["// Généré par tools/gen-mondes.py à partir de data/import/*.json : ne
       "#![allow(dead_code)]",
       "use game_common::tx;",
       "",
-      "use crate::extra::{Anim, AnimKind, Animal, Mat, Model, Piece, Shape, Theme, WorldColors};",
+      "use crate::extra::{Anim, AnimKind, Animal, Mat, Model, Piece, Shape, Theme, TrainCar, WorldColors};",
       ""]
 n = 0
 
@@ -138,6 +141,10 @@ for W in WORLDS:
     h = d["heros"]
     hero = model(h, hero=True)
     acc = model(dict(h["accessoire"], couleur_2=h["couleur_2"], couleur_3=h["couleur_3"]), hero=True, extra_pieces=W["hat"])
+    cars = [(model(t), t["longueur"]) for t in w.get("train", [])]
+    rs.append(f"const {tag}_TRAIN: [TrainCar; {len(cars)}] = [")
+    rs += [f"    TrainCar {{ model: {m}, len: {f(l)} }}," for m, l in cars]
+    rs.append("];")
     rs.append(f"const {tag}_COLORS: WorldColors = WorldColors {{")
     for k, field in (("herbe_a", "grass_a"), ("herbe_b", "grass_b"), ("eau", "water"), ("sol_voie_route", "road"), ("marquage", "marking"), ("rondin", "log"), ("ciel", "sky")):
         rs.append(f"    {field}: {rgb(w[k])},")
@@ -147,6 +154,7 @@ for W in WORLDS:
     rs.append(f"fn {tag.lower()}_hero_name() -> &'static str {{ {tx(h['noms'])}.t() }}")
     idx = [vids.index(v) for v in w["vehicules_du_monde"]]
     rs.append(f"pub static {tag}_THEME: Theme = Theme {{")
+    rs.append(f"    train: &{tag}_TRAIN, only_own: {str(W.get('only_own', False)).lower()},")
     rs.append(f"    blocks: &{tag}_BLOCKS, sides: &{tag}_SIDES, deco: &{tag}_DECO, animals: &{tag}_ANIMALS,")
     rs.append(f"    block_mix: &{W['blocks']}, side_mix: &{W['sides']},")
     rs.append(f"    side_pct: {W['side_pct']}, vehicles: &{idx}, colors: {tag}_COLORS, points: {w['points_deblocage']},")
