@@ -52,9 +52,11 @@ impl FromWorld for Extra {
         // Toutes les couleurs des modèles décrits en pièces (véhicules et décors).
         let mut colors: Vec<([u8; 3], Handle<StandardMaterial>)> = Vec::new();
         let models = crate::gen_vehicles::GEN.iter().map(|g| (g.c2, g.c3)).chain(
-            [&crate::gen_worlds::JURA_BLOCKS[..], &crate::gen_worlds::JURA_SIDES[..], &crate::gen_worlds::JURA_DECO[..]].into_iter().flatten().map(|m| (m.c2, m.c3)),
+            crate::gen_worlds::THEMES.iter().flat_map(|t| {
+                [t.blocks, t.sides, t.deco].into_iter().flatten().chain(t.animals.iter().map(|a| &a.model)).chain([&t.hero, &t.hat]).map(|m| (m.c2, m.c3))
+            }),
         )
-        .chain(crate::gen_worlds::JURA_ANIMALS.iter().map(|a| (a.model.c2, a.model.c3)));
+        .chain(std::iter::once((FROG_GREEN, FROG_GREEN)));
         for rgb in models.flat_map(|(a, b)| [a, b]) {
             if !colors.iter().any(|(c, _)| *c == rgb) {
                 let col = Color::srgb(rgb[0] as f32 / 255.0, rgb[1] as f32 / 255.0, rgb[2] as f32 / 255.0);
@@ -133,7 +135,7 @@ pub enum Vehicle {
     /// Un véhicule décrit en pièces (`gen_vehicles.rs`), par son numéro.
     Gen(usize),
     /// Un animal du parc (`gen_worlds::JURA_ANIMALS`) qui traverse la route.
-    Beast(usize),
+    Beast(usize, usize),
 }
 
 impl Vehicle {
@@ -143,7 +145,7 @@ impl Vehicle {
             Vehicle::Car | Vehicle::Police | Vehicle::Taxi => 1.6,
             Vehicle::Sheriff => 1.7,
             Vehicle::Gen(i) => crate::gen_vehicles::GEN[i].len,
-            Vehicle::Beast(i) => crate::gen_worlds::JURA_ANIMALS[i].len,
+            Vehicle::Beast(t, i) => crate::gen_worlds::THEMES[t].animals[i].len,
             Vehicle::Truck => 2.9,
             Vehicle::Bus => 3.6,
             Vehicle::Sport => 1.7,
@@ -207,7 +209,7 @@ pub fn spawn_vehicle(c: &mut Commands, k: &Kit, x: &Extra, parent: Entity, v: Ve
     let paint = &m.car[color % m.car.len()];
     match v {
         Vehicle::Gen(i) => spawn_gen(c, k, x, parent, i, color),
-        Vehicle::Beast(i) => spawn_animal(c, k, x, parent, i),
+        Vehicle::Beast(t, i) => spawn_animal(c, k, x, parent, t, i),
         Vehicle::Car | Vehicle::Truck => unreachable!("voitures et camions viennent de decor3d"),
         Vehicle::Bus => {
             let body = &x.bus[color % x.bus.len()];
@@ -460,15 +462,68 @@ pub enum Biome {
     Autumn,
     /// Le Parc Jurassic'Croa (décor décrit en pièces, `gen_worlds.rs`).
     Jurassic,
+    /// Nippon Kaboom.
+    Nippon,
 }
 
 pub const BIOME_LEN: i32 = 60;
+
+/// La peau verte des héros décrits en pièces (matière `peinture`).
+pub const FROG_GREEN: [u8; 3] = [90, 170, 70];
+
+/// Les couleurs d'un monde à thème (sol, eau, route…).
+pub struct WorldColors {
+    pub grass_a: [u8; 3],
+    pub grass_b: [u8; 3],
+    pub water: [u8; 3],
+    pub road: [u8; 3],
+    pub marking: [u8; 3],
+    pub log: [u8; 3],
+    pub sky: [u8; 3],
+}
+
+/// Un monde décrit en pièces (`gen_worlds.rs`) : décors, animaux, véhicules, héros et son chapeau.
+pub struct Theme {
+    pub blocks: &'static [Model],
+    pub sides: &'static [Model],
+    pub deco: &'static [Model],
+    pub animals: &'static [Animal],
+    /// Quel gros obstacle poser, selon le tirage (indices dans `blocks`).
+    pub block_mix: &'static [usize],
+    /// Décor des bords : indices dans `sides`, ou 100 + indice d'un obstacle.
+    pub side_mix: &'static [usize],
+    /// Numéros (dans `gen_vehicles::GEN`) des véhicules qui roulent dans ce monde.
+    /// Chance (en %) de poser un décor sur chaque case du bord.
+    pub side_pct: u32,
+    pub vehicles: &'static [usize],
+    pub colors: WorldColors,
+    pub points: u32,
+    pub name: fn() -> &'static str,
+    pub banner: fn() -> &'static str,
+    pub animal_name: fn(usize) -> &'static str,
+    pub hero_name: fn() -> &'static str,
+    pub hero: Model,
+    pub hat: Model,
+}
 
 /// Le monde où commence la partie (choisi au garage, pour jouer ou tester un univers précis).
 pub static START_WORLD: std::sync::atomic::AtomicI32 = std::sync::atomic::AtomicI32::new(0);
 
 impl Biome {
-    pub const ALL: [Biome; 5] = [Biome::Prairie, Biome::Desert, Biome::Snow, Biome::Autumn, Biome::Jurassic];
+    pub const ALL: [Biome; 6] = [Biome::Prairie, Biome::Desert, Biome::Snow, Biome::Autumn, Biome::Jurassic, Biome::Nippon];
+
+    /// Le monde décrit en pièces, pour les mondes à thème.
+    pub fn theme(self) -> Option<&'static Theme> {
+        self.theme_index().map(|i| crate::gen_worlds::THEMES[i])
+    }
+
+    pub fn theme_index(self) -> Option<usize> {
+        match self {
+            Biome::Jurassic => Some(0),
+            Biome::Nippon => Some(1),
+            _ => None,
+        }
+    }
 
     pub fn index(self) -> i32 {
         Biome::ALL.iter().position(|b| *b == self).unwrap_or(0) as i32
@@ -481,12 +536,13 @@ impl Biome {
         // TRAVERSEE_BIOME=1..3 : voir un monde tout de suite (essais et captures).
         static ENV: std::sync::OnceLock<i32> = std::sync::OnceLock::new();
         let start = *ENV.get_or_init(|| std::env::var("TRAVERSEE_BIOME").ok().and_then(|s| s.parse().ok()).unwrap_or(0)) + START_WORLD.load(std::sync::atomic::Ordering::Relaxed);
-        let biome = match (row.max(0) / BIOME_LEN + start) % 5 {
+        let biome = match (row.max(0) / BIOME_LEN + start) % 6 {
             0 => Biome::Prairie,
             1 => Biome::Desert,
             2 => Biome::Snow,
             3 => Biome::Autumn,
-            _ => Biome::Jurassic,
+            4 => Biome::Jurassic,
+            _ => Biome::Nippon,
         };
         if biome != Biome::Prairie && !crate::progress::unlocked(points, crate::progress::Item::World(biome)) {
             Biome::Prairie
@@ -502,7 +558,7 @@ impl Biome {
             Biome::Desert => tx!("Le désert", "The desert", "Die Wüste", "Il deserto", "El desierto"),
             Biome::Snow => tx!("La neige", "The snow", "Der Schnee", "La neve", "La nieve"),
             Biome::Autumn => tx!("L'automne", "Autumn", "Der Herbst", "L'autunno", "El otoño"),
-            Biome::Jurassic => return crate::gen_worlds::jura_name(),
+            Biome::Jurassic | Biome::Nippon => return (self.theme().unwrap().name)(),
         }
         .t()
     }
@@ -530,26 +586,32 @@ struct BiomeMats {
     scarf: Handle<StandardMaterial>,
     leaves: [Handle<StandardMaterial>; 3],
     pumpkin: Handle<StandardMaterial>,
-    jura: [Handle<StandardMaterial>; 2],
-    jura_side: Handle<StandardMaterial>,
-    jura_water: Handle<StandardMaterial>,
-    jura_water_side: Handle<StandardMaterial>,
+    /// Sol et eau de chaque monde à thème.
+    themed: Vec<ThemeMats>,
+}
+
+struct ThemeMats {
+    grass: [Handle<StandardMaterial>; 2],
+    side: Handle<StandardMaterial>,
+    water: Handle<StandardMaterial>,
+    water_side: Handle<StandardMaterial>,
 }
 
 impl BiomeMats {
     fn new(mats: &mut Assets<StandardMaterial>) -> Self {
         let mut f = |r: f32, g: f32, b: f32| mats.add(flat_material(Color::srgb(r, g, b)));
-        let jc = &crate::gen_worlds::JURA_COLORS;
         let mut c = |rgb: [u8; 3], k: f32| f(rgb[0] as f32 / 255.0 * k, rgb[1] as f32 / 255.0 * k, rgb[2] as f32 / 255.0 * k);
-        let jura = [c(jc.grass_a, 1.0), c(jc.grass_b, 1.0)];
-        let jura_side = c(jc.grass_a, 0.8);
-        let jura_water = c(jc.water, 1.0);
-        let jura_water_side = c(jc.water, 0.8);
+        let themed = crate::gen_worlds::THEMES
+            .iter()
+            .map(|t| ThemeMats {
+                grass: [c(t.colors.grass_a, 1.0), c(t.colors.grass_b, 1.0)],
+                side: c(t.colors.grass_a, 0.8),
+                water: c(t.colors.water, 1.0),
+                water_side: c(t.colors.water, 0.8),
+            })
+            .collect();
         Self {
-            jura,
-            jura_side,
-            jura_water,
-            jura_water_side,
+            themed,
             sand: [f(0.94, 0.83, 0.56), f(0.90, 0.79, 0.51)],
             sand_side: f(0.82, 0.69, 0.43),
             snow: [f(0.97, 0.98, 1.0), f(0.92, 0.95, 0.98)],
@@ -583,7 +645,10 @@ impl Extra {
             Biome::Desert => (&self.biome.sand[i], &self.biome.sand_side),
             Biome::Snow => (&self.biome.snow[i], &self.biome.snow_side),
             Biome::Autumn => (&self.biome.autumn[i], &self.biome.autumn_side),
-            Biome::Jurassic => (&self.biome.jura[i], &self.biome.jura_side),
+            Biome::Jurassic | Biome::Nippon => {
+                let t = &self.biome.themed[biome.theme_index().unwrap()];
+                (&t.grass[i], &t.side)
+            }
         }
     }
 
@@ -591,7 +656,10 @@ impl Extra {
     pub fn water<'a>(&'a self, kit: &'a Kit, biome: Biome) -> (&'a Handle<StandardMaterial>, &'a Handle<StandardMaterial>) {
         match biome {
             Biome::Snow => (&self.biome.ice, &self.biome.ice_side),
-            Biome::Jurassic => (&self.biome.jura_water, &self.biome.jura_water_side),
+            Biome::Jurassic | Biome::Nippon => {
+                let t = &self.biome.themed[biome.theme_index().unwrap()];
+                (&t.water, &t.water_side)
+            }
             _ => (&kit.m.water, &kit.m.water_side),
         }
     }
@@ -691,33 +759,19 @@ pub fn spawn_scenery(c: &mut Commands, k: &Kit, x: &Extra, parent: Entity, biome
                 part(c, parent, &k.cone, &b.ice_rock, pos + Vec3::new(0.13, 0.12, 0.05), Vec3::new(0.09, 0.24, 0.09));
             }
         }
-        // ---- Parc Jurassic'Croa : modèles décrits en pièces
-        // Surtout des palmiers, fougères et buissons ; le rocher en fusion reste rare.
-        (Biome::Jurassic, Scenery::Block) => {
-            use crate::gen_worlds::JURA_BLOCKS as B;
-            let i = match roll {
-                0 | 3 | 6 => 0,
-                1 | 4 | 7 => 1,
-                2 | 5 => 3,
-                8 => [4, 5, 6][variant % 3],
-                _ if variant % 2 == 0 => 2,
-                _ => 0,
-            };
-            spawn_model(c, k, x, parent, &B[i], pos, variant)
-        }
-        (Biome::Jurassic, Scenery::Side) => {
-            use crate::gen_worlds::{JURA_BLOCKS as B, JURA_SIDES as S};
-            // Grands palmiers la plupart du temps ; bâtiments et cascade parfois ; le volcan, très rarement.
-            match roll {
-                0..=5 => spawn_model(c, k, x, parent, &S[0], pos, variant),
-                6 => {
-                    let i = if variant % 12 == 0 { 1 } else { [2, 3, 4, 5][variant % 4] };
-                    spawn_model(c, k, x, parent, &S[i], pos, variant)
-                }
-                _ => spawn_model(c, k, x, parent, &B[[0, 1, 3][variant % 3]], pos, variant),
+        // ---- Mondes à thème : modèles décrits en pièces
+        (Biome::Jurassic | Biome::Nippon, kind) => {
+            let t = biome.theme().unwrap();
+            let pick = (roll as usize * 3 + variant) % 20;
+            match kind {
+                Scenery::Block => spawn_model(c, k, x, parent, &t.blocks[t.block_mix[pick % t.block_mix.len()]], pos, variant),
+                Scenery::Side => match t.side_mix[pick % t.side_mix.len()] {
+                    i if i >= 100 => spawn_model(c, k, x, parent, &t.blocks[i - 100], pos, variant),
+                    i => spawn_model(c, k, x, parent, &t.sides[i], pos, variant),
+                },
+                Scenery::Deco => spawn_model(c, k, x, parent, &t.deco[variant % t.deco.len()], pos, variant),
             }
         }
-        (Biome::Jurassic, Scenery::Deco) => spawn_model(c, k, x, parent, &crate::gen_worlds::JURA_DECO[variant % crate::gen_worlds::JURA_DECO.len()], pos, variant),
         // ---- Automne
         (Biome::Autumn, Scenery::Block) | (Biome::Autumn, Scenery::Side) if roll < 5 => {
             part(c, parent, &k.cyl, &m.trunk, pos + Vec3::Y * 0.25, Vec3::new(0.18, 0.5, 0.18));
@@ -814,14 +868,17 @@ pub enum AnimKind {
     SwingXBase,
     /// Queue qui frétille (de gauche à droite, ou de haut en bas).
     TailY,
-    #[allow(dead_code)]
     TailZ,
+    TailX,
+    /// Pivote autour du bas du groupe (autour de Z ou de Y).
+    SwingZBase,
+    SwingYBase,
 }
 
 impl AnimKind {
     /// Les animations qui font tourner un groupe de pièces autour d'un point.
     fn pivoted(self) -> bool {
-        matches!(self, AnimKind::SwingZ | AnimKind::SwingXBase | AnimKind::TailY | AnimKind::TailZ)
+        matches!(self, AnimKind::SwingZ | AnimKind::SwingXBase | AnimKind::TailY | AnimKind::TailZ | AnimKind::TailX | AnimKind::SwingZBase | AnimKind::SwingYBase)
     }
 }
 
@@ -844,7 +901,7 @@ pub struct Model {
 pub fn spawn_model(c: &mut Commands, k: &Kit, x: &Extra, parent: Entity, m: &Model, pos: Vec3, seed: usize) {
     for (n, p) in m.pieces.iter().enumerate() {
         let tf = piece_transform(p, pos);
-        let e = c.spawn((Mesh3d(piece_mesh(k, p.shape).clone()), MeshMaterial3d(piece_material(k, x, p.mat, m.c2, m.c3, 0).clone()), tf, ChildOf(parent))).id();
+        let e = c.spawn((Mesh3d(piece_mesh(k, p.shape).clone()), MeshMaterial3d(piece_material(k, x, p.mat, m.c2, m.c3, usize::MAX).clone()), tf, ChildOf(parent))).id();
         let kinds: Vec<(AnimKind, f32)> = m.anims.iter().filter(|a| matches_target(a.target, p.id)).map(|a| (a.kind, a.amp)).collect();
         if !kinds.is_empty() {
             c.entity(e).insert(GenAnim { kinds, base: tf, phase: (seed * 31 + n) as f32 * 0.37 });
@@ -864,9 +921,12 @@ pub struct Animal {
 }
 
 /// Pose un animal (avant = +X) ; les groupes de pièces animés par rotation sont rangés sous un pivot.
-pub fn spawn_animal(c: &mut Commands, k: &Kit, x: &Extra, parent: Entity, i: usize) {
-    let a = &crate::gen_worlds::JURA_ANIMALS[i];
-    let m = &a.model;
+pub fn spawn_animal(c: &mut Commands, k: &Kit, x: &Extra, parent: Entity, theme: usize, i: usize) {
+    spawn_pivoted(c, k, x, parent, &crate::gen_worlds::THEMES[theme].animals[i].model, i);
+}
+
+/// Un modèle dont certains groupes de pièces (pattes, ailes, queue…) pivotent autour de leur attache.
+pub fn spawn_pivoted(c: &mut Commands, k: &Kit, x: &Extra, parent: Entity, m: &Model, i: usize) {
     let body = c.spawn((Transform::default(), Visibility::default(), ChildOf(parent))).id();
     let mut pivots: Vec<(&'static str, Entity, Vec3)> = Vec::new();
     for (n, p) in m.pieces.iter().enumerate() {
@@ -888,6 +948,7 @@ pub fn spawn_animal(c: &mut Commands, k: &Kit, x: &Extra, parent: Entity, i: usi
                     let mid = (lo + hi) / 2.0;
                     let pivot = match kind {
                         AnimKind::SwingZ => Vec3::new(mid.x, hi.y, mid.z),
+                        AnimKind::SwingZBase | AnimKind::SwingYBase => Vec3::new(mid.x, lo.y, mid.z),
                         AnimKind::SwingXBase => Vec3::new(mid.x, mid.y, if mid.z > 0.0 { lo.z } else { hi.z }),
                         _ => Vec3::new(hi.x, mid.y, mid.z),
                     };
@@ -900,7 +961,7 @@ pub fn spawn_animal(c: &mut Commands, k: &Kit, x: &Extra, parent: Entity, i: usi
             tf.translation -= at.1;
             owner = at.0;
         }
-        let e = c.spawn((Mesh3d(piece_mesh(k, p.shape).clone()), MeshMaterial3d(piece_material(k, x, p.mat, m.c2, m.c3, 0).clone()), tf, ChildOf(owner))).id();
+        let e = c.spawn((Mesh3d(piece_mesh(k, p.shape).clone()), MeshMaterial3d(piece_material(k, x, p.mat, m.c2, m.c3, usize::MAX).clone()), tf, ChildOf(owner))).id();
         if swing.is_none() {
             let kinds: Vec<(AnimKind, f32)> = m.anims.iter().filter(|an| matches_target(an.target, p.id)).map(|an| (an.kind, an.amp)).collect();
             if !kinds.is_empty() {
@@ -926,6 +987,8 @@ fn piece_mesh(k: &Kit, s: Shape) -> &Handle<Mesh> {
 
 fn piece_material<'a>(k: &'a Kit, x: &'a Extra, mat: Mat, c2: [u8; 3], c3: [u8; 3], color: usize) -> &'a Handle<StandardMaterial> {
     match mat {
+        // `usize::MAX` : pas de palette de voitures, la peau verte des héros.
+        Mat::Peinture if color == usize::MAX => x.color(FROG_GREEN),
         Mat::Peinture => &k.m.car[color % k.m.car.len()],
         Mat::Vitre => &k.m.glass,
         Mat::Sombre => &k.m.dark,
@@ -1046,6 +1109,9 @@ pub fn animate_gen(time: Res<Time>, mut q: Query<(&GenAnim, &mut Transform, &mut
                 AnimKind::SwingXBase => out.rotation *= Quat::from_rotation_x(-a.base.translation.z.signum() * (tt * 7.0 + *amp * std::f32::consts::TAU).sin() * 0.6),
                 AnimKind::TailY => out.rotation *= Quat::from_rotation_y((tt * 5.0).sin() * 0.35),
                 AnimKind::TailZ => out.rotation *= Quat::from_rotation_z((tt * 5.0).sin() * 0.2),
+                AnimKind::TailX => out.rotation *= Quat::from_rotation_x((tt * 5.0).sin() * 0.2),
+                AnimKind::SwingZBase => out.rotation *= Quat::from_rotation_z((tt * 3.0 + *amp * std::f32::consts::TAU).sin() * 0.5),
+                AnimKind::SwingYBase => out.rotation *= Quat::from_rotation_y((tt * 3.0 + *amp * std::f32::consts::TAU).sin() * 0.6),
                 AnimKind::Fall => {
                     // La portière se détache de temps en temps, puis revient d'un coup.
                     let f = ((tt % 4.0 - 3.0) / 0.6).clamp(0.0, 1.0);

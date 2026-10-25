@@ -461,9 +461,15 @@ pub fn rebuild_player(
     cast: Res<Cast>,
     mut mats: ResMut<Assets<StandardMaterial>>,
     model: Query<Entity, With<FrogModel>>,
-    mut built: Local<Option<(Character, Costume)>>,
+    frog: Res<crate::frog::Frog>,
+    progress: Res<Progress>,
+    score: Res<game_common::Score>,
+    extra: Res<crate::extra::Extra>,
+    mut built: Local<Option<(Character, Costume, Option<usize>)>>,
 ) {
-    let want = (selection.character, selection.costume);
+    // Dans un monde à thème, on joue le héros du monde (avec son chapeau).
+    let theme = crate::extra::Biome::of(frog.max_row_i(), progress.total + score.current).theme_index();
+    let want = (selection.character, selection.costume, theme);
     if *built == Some(want) {
         return;
     }
@@ -472,6 +478,14 @@ pub fn rebuild_player(
     };
     *built = Some(want);
     commands.entity(root).despawn_related::<Children>();
+    if let Some(t) = theme {
+        // Les héros du monde regardent vers +X ; les personnages vers -Z.
+        let holder = commands.spawn((Transform::from_rotation(Quat::from_rotation_y(std::f32::consts::FRAC_PI_2)), Visibility::default(), ChildOf(root))).id();
+        let th = crate::gen_worlds::THEMES[t];
+        crate::extra::spawn_pivoted(&mut commands, &kit, &extra, holder, &th.hero, 7);
+        crate::extra::spawn_pivoted(&mut commands, &kit, &extra, holder, &th.hat, 8);
+        return;
+    }
     spawn_character(&mut commands, want.0, want.1, &kit, &frog_kit, &cast, &mut mats, root);
 }
 

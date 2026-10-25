@@ -1,0 +1,3727 @@
+{
+ "vehicules": [
+  {
+   "id": "mini_camion_pepere",
+   "univers": "nippon_kaboom",
+   "classe": "voiture",
+   "noms": {
+    "fr": "Mini-Camion Pépère",
+    "en": "Granddad Mini-Truck",
+    "de": "Opa-Minitransporter",
+    "es": "Minicamión Abuelito",
+    "it": "Mini-Camion Nonno"
+   },
+   "points_deblocage": 0,
+   "longueur": 1.6,
+   "largeur": 0.9,
+   "couleur_2": "#f0f0f4",
+   "couleur_3": "#8a8f99",
+   "pieces": [
+    {
+     "forme": "cube",
+     "position": [
+      0,
+      0.17,
+      0
+     ],
+     "taille": [
+      1.4,
+      0.1,
+      0.64
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      0
+     ],
+     "matiere": "sombre"
+    },
+    {
+     "forme": "cube",
+     "position": [
+      0.3,
+      0.42,
+      0
+     ],
+     "taille": [
+      0.7,
+      0.45,
+      0.74
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      0
+     ],
+     "matiere": "peinture"
+    },
+    {
+     "forme": "cube",
+     "position": [
+      0.34,
+      0.68,
+      0
+     ],
+     "taille": [
+      0.56,
+      0.2,
+      0.7
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      0
+     ],
+     "matiere": "peinture"
+    },
+    {
+     "forme": "cube",
+     "position": [
+      0.62,
+      0.7,
+      0
+     ],
+     "taille": [
+      0.02,
+      0.16,
+      0.6
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      -10
+     ],
+     "matiere": "vitre"
+    },
+    {
+     "forme": "cube",
+     "position": [
+      0.34,
+      0.7,
+      0.355
+     ],
+     "taille": [
+      0.4,
+      0.14,
+      0.01
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      0
+     ],
+     "matiere": "vitre"
+    },
+    {
+     "forme": "cube",
+     "position": [
+      0.34,
+      0.7,
+      -0.355
+     ],
+     "taille": [
+      0.4,
+      0.14,
+      0.01
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      0
+     ],
+     "matiere": "vitre"
+    },
+    {
+     "forme": "cube",
+     "position": [
+      -0.45,
+      0.4,
+      0
+     ],
+     "taille": [
+      0.7,
+      0.18,
+      0.76
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      0
+     ],
+     "matiere": "couleur_2"
+    },
+    {
+     "forme": "cube",
+     "position": [
+      -0.45,
+      0.55,
+      0.37
+     ],
+     "taille": [
+      0.7,
+      0.1,
+      0.02
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      0
+     ],
+     "matiere": "couleur_2"
+    },
+    {
+     "forme": "cube",
+     "position": [
+      -0.45,
+      0.55,
+      -0.37
+     ],
+     "taille": [
+      0.7,
+      0.1,
+      0.02
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      0
+     ],
+     "matiere": "couleur_2"
+    },
+    {
+     "forme": "cube",
+     "position": [
+      -0.45,
+      0.6,
+      0
+     ],
+     "taille": [
+      0.02,
+      0.1,
+      0.7
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      0
+     ],
+     "matiere": "couleur_2"
+    },
+    {
+     "forme": "cube",
+     "position": [
+      -0.8,
+      0.5,
+      0
+     ],
+     "taille": [
+      0.02,
+      0.3,
+      0.76
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      0
+     ],
+     "matiere": "couleur_2"
+    },
+    {
+     "forme": "cube",
+     "position": [
+      -0.1,
+      0.5,
+      0
+     ],
+     "taille": [
+      0.02,
+      0.3,
+      0.76
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      0
+     ],
+     "matiere": "couleur_2"
+    },
+    {
+     "forme": "cube",
+     "position": [
+      -0.45,
+      0.58,
+      0
+     ],
+     "taille": [
+      0.5,
+      0.2,
+      0.4
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      0
+     ],
+     "matiere": "couleur_3"
+    },
+    {
+     "forme": "cube",
+     "position": [
+      0.75,
+      0.34,
+      0.25
+     ],
+     "taille": [
+      0.04,
+      0.08,
+      0.14
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      0
+     ],
+     "matiere": "phare"
+    },
+    {
+     "forme": "cube",
+     "position": [
+      -0.75,
+      0.34,
+      0.25
+     ],
+     "taille": [
+      0.04,
+      0.08,
+      0.14
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      0
+     ],
+     "matiere": "lumiere_rouge"
+    },
+    {
+     "forme": "cube",
+     "position": [
+      0.75,
+      0.34,
+      -0.25
+     ],
+     "taille": [
+      0.04,
+      0.08,
+      0.14
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      0
+     ],
+     "matiere": "phare"
+    },
+    {
+     "forme": "cube",
+     "position": [
+      -0.75,
+      0.34,
+      -0.25
+     ],
+     "taille": [
+      0.04,
+      0.08,
+      0.14
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      0
+     ],
+     "matiere": "lumiere_rouge"
+    },
+    {
+     "forme": "cube",
+     "position": [
+      0.76,
+      0.2,
+      0
+     ],
+     "taille": [
+      0.06,
+      0.07,
+      0.74
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      0
+     ],
+     "matiere": "sombre"
+    },
+    {
+     "forme": "cylindre",
+     "position": [
+      0.45,
+      0.13,
+      0.37
+     ],
+     "taille": [
+      0.26,
+      0.1,
+      0.26
+     ],
+     "rotation_deg": [
+      90,
+      0,
+      0
+     ],
+     "matiere": "noir"
+    },
+    {
+     "forme": "cylindre",
+     "position": [
+      0.45,
+      0.13,
+      0.375
+     ],
+     "taille": [
+      0.13,
+      0.12,
+      0.13
+     ],
+     "rotation_deg": [
+      90,
+      0,
+      0
+     ],
+     "matiere": "blanc"
+    },
+    {
+     "forme": "cylindre",
+     "position": [
+      0.45,
+      0.13,
+      -0.37
+     ],
+     "taille": [
+      0.26,
+      0.1,
+      0.26
+     ],
+     "rotation_deg": [
+      90,
+      0,
+      0
+     ],
+     "matiere": "noir"
+    },
+    {
+     "forme": "cylindre",
+     "position": [
+      0.45,
+      0.13,
+      -0.375
+     ],
+     "taille": [
+      0.13,
+      0.12,
+      0.13
+     ],
+     "rotation_deg": [
+      90,
+      0,
+      0
+     ],
+     "matiere": "blanc"
+    },
+    {
+     "forme": "cylindre",
+     "position": [
+      -0.45,
+      0.13,
+      0.37
+     ],
+     "taille": [
+      0.26,
+      0.1,
+      0.26
+     ],
+     "rotation_deg": [
+      90,
+      0,
+      0
+     ],
+     "matiere": "noir"
+    },
+    {
+     "forme": "cylindre",
+     "position": [
+      -0.45,
+      0.13,
+      0.375
+     ],
+     "taille": [
+      0.13,
+      0.12,
+      0.13
+     ],
+     "rotation_deg": [
+      90,
+      0,
+      0
+     ],
+     "matiere": "blanc"
+    },
+    {
+     "forme": "cylindre",
+     "position": [
+      -0.45,
+      0.13,
+      -0.37
+     ],
+     "taille": [
+      0.26,
+      0.1,
+      0.26
+     ],
+     "rotation_deg": [
+      90,
+      0,
+      0
+     ],
+     "matiere": "noir"
+    },
+    {
+     "forme": "cylindre",
+     "position": [
+      -0.45,
+      0.13,
+      -0.375
+     ],
+     "taille": [
+      0.13,
+      0.12,
+      0.13
+     ],
+     "rotation_deg": [
+      90,
+      0,
+      0
+     ],
+     "matiere": "blanc"
+    }
+   ],
+   "parties_mobiles": []
+  },
+  {
+   "id": "taxi_dentelle",
+   "univers": "nippon_kaboom",
+   "classe": "voiture",
+   "noms": {
+    "fr": "Taxi Dentelle",
+    "en": "Lace Taxi",
+    "de": "Spitzen-Taxi",
+    "es": "Taxi Encaje",
+    "it": "Taxi Pizzo"
+   },
+   "points_deblocage": 300,
+   "longueur": 1.7,
+   "largeur": 0.9,
+   "couleur_2": "#ffffff",
+   "couleur_3": "#ffd23f",
+   "pieces": [
+    {
+     "forme": "cube",
+     "position": [
+      0,
+      0.17,
+      0
+     ],
+     "taille": [
+      1.5,
+      0.1,
+      0.66
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      0
+     ],
+     "matiere": "sombre"
+    },
+    {
+     "forme": "cube",
+     "position": [
+      0,
+      0.34,
+      0
+     ],
+     "taille": [
+      1.6,
+      0.22,
+      0.74
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      0
+     ],
+     "matiere": "peinture"
+    },
+    {
+     "forme": "cube",
+     "position": [
+      -0.05,
+      0.58,
+      0
+     ],
+     "taille": [
+      0.9,
+      0.26,
+      0.7
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      0
+     ],
+     "matiere": "peinture"
+    },
+    {
+     "forme": "cube",
+     "position": [
+      -0.05,
+      0.6,
+      0.355
+     ],
+     "taille": [
+      0.7,
+      0.16,
+      0.01
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      0
+     ],
+     "matiere": "vitre"
+    },
+    {
+     "forme": "cube",
+     "position": [
+      -0.05,
+      0.6,
+      -0.355
+     ],
+     "taille": [
+      0.7,
+      0.16,
+      0.01
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      0
+     ],
+     "matiere": "vitre"
+    },
+    {
+     "forme": "cube",
+     "position": [
+      0.4,
+      0.6,
+      0
+     ],
+     "taille": [
+      0.02,
+      0.16,
+      0.56
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      -12
+     ],
+     "matiere": "vitre"
+    },
+    {
+     "forme": "cube",
+     "position": [
+      -0.5,
+      0.6,
+      0
+     ],
+     "taille": [
+      0.02,
+      0.16,
+      0.56
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      0
+     ],
+     "matiere": "vitre"
+    },
+    {
+     "forme": "cube",
+     "position": [
+      -0.05,
+      0.74,
+      0
+     ],
+     "taille": [
+      0.92,
+      0.04,
+      0.72
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      0
+     ],
+     "matiere": "peinture"
+    },
+    {
+     "forme": "cube",
+     "position": [
+      -0.05,
+      0.82,
+      0
+     ],
+     "taille": [
+      0.24,
+      0.12,
+      0.12
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      0
+     ],
+     "matiere": "couleur_3",
+     "nom": "lanterne"
+    },
+    {
+     "forme": "cube",
+     "position": [
+      -0.05,
+      0.82,
+      0.065
+     ],
+     "taille": [
+      0.14,
+      0.05,
+      0.01
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      0
+     ],
+     "matiere": "noir"
+    },
+    {
+     "forme": "cube",
+     "position": [
+      0.15,
+      0.36,
+      0.375
+     ],
+     "taille": [
+      0.5,
+      0.04,
+      0.01
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      0
+     ],
+     "matiere": "noir"
+    },
+    {
+     "forme": "cube",
+     "position": [
+      0.15,
+      0.36,
+      -0.375
+     ],
+     "taille": [
+      0.5,
+      0.04,
+      0.01
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      0
+     ],
+     "matiere": "noir"
+    },
+    {
+     "forme": "cube",
+     "position": [
+      0.35,
+      0.54,
+      0.4
+     ],
+     "taille": [
+      0.06,
+      0.05,
+      0.04
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      0
+     ],
+     "matiere": "sombre"
+    },
+    {
+     "forme": "cube",
+     "position": [
+      0.35,
+      0.54,
+      -0.4
+     ],
+     "taille": [
+      0.06,
+      0.05,
+      0.04
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      0
+     ],
+     "matiere": "sombre"
+    },
+    {
+     "forme": "cube",
+     "position": [
+      0.8,
+      0.34,
+      0.25
+     ],
+     "taille": [
+      0.04,
+      0.08,
+      0.14
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      0
+     ],
+     "matiere": "phare"
+    },
+    {
+     "forme": "cube",
+     "position": [
+      -0.8,
+      0.34,
+      0.25
+     ],
+     "taille": [
+      0.04,
+      0.08,
+      0.14
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      0
+     ],
+     "matiere": "lumiere_rouge"
+    },
+    {
+     "forme": "cube",
+     "position": [
+      0.8,
+      0.34,
+      -0.25
+     ],
+     "taille": [
+      0.04,
+      0.08,
+      0.14
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      0
+     ],
+     "matiere": "phare"
+    },
+    {
+     "forme": "cube",
+     "position": [
+      -0.8,
+      0.34,
+      -0.25
+     ],
+     "taille": [
+      0.04,
+      0.08,
+      0.14
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      0
+     ],
+     "matiere": "lumiere_rouge"
+    },
+    {
+     "forme": "cube",
+     "position": [
+      0.81,
+      0.2,
+      0
+     ],
+     "taille": [
+      0.06,
+      0.07,
+      0.76
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      0
+     ],
+     "matiere": "sombre"
+    },
+    {
+     "forme": "cube",
+     "position": [
+      -0.81,
+      0.2,
+      0
+     ],
+     "taille": [
+      0.06,
+      0.07,
+      0.76
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      0
+     ],
+     "matiere": "sombre"
+    },
+    {
+     "forme": "cube",
+     "position": [
+      0.5,
+      0.46,
+      0
+     ],
+     "taille": [
+      0.4,
+      0.02,
+      0.4
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      0
+     ],
+     "matiere": "blanc"
+    },
+    {
+     "forme": "cylindre",
+     "position": [
+      0.5,
+      0.14,
+      0.375
+     ],
+     "taille": [
+      0.28,
+      0.11,
+      0.28
+     ],
+     "rotation_deg": [
+      90,
+      0,
+      0
+     ],
+     "matiere": "noir"
+    },
+    {
+     "forme": "cylindre",
+     "position": [
+      0.5,
+      0.14,
+      0.38
+     ],
+     "taille": [
+      0.14,
+      0.13,
+      0.14
+     ],
+     "rotation_deg": [
+      90,
+      0,
+      0
+     ],
+     "matiere": "blanc"
+    },
+    {
+     "forme": "cylindre",
+     "position": [
+      0.5,
+      0.14,
+      -0.375
+     ],
+     "taille": [
+      0.28,
+      0.11,
+      0.28
+     ],
+     "rotation_deg": [
+      90,
+      0,
+      0
+     ],
+     "matiere": "noir"
+    },
+    {
+     "forme": "cylindre",
+     "position": [
+      0.5,
+      0.14,
+      -0.38
+     ],
+     "taille": [
+      0.14,
+      0.13,
+      0.14
+     ],
+     "rotation_deg": [
+      90,
+      0,
+      0
+     ],
+     "matiere": "blanc"
+    },
+    {
+     "forme": "cylindre",
+     "position": [
+      -0.5,
+      0.14,
+      0.375
+     ],
+     "taille": [
+      0.28,
+      0.11,
+      0.28
+     ],
+     "rotation_deg": [
+      90,
+      0,
+      0
+     ],
+     "matiere": "noir"
+    },
+    {
+     "forme": "cylindre",
+     "position": [
+      -0.5,
+      0.14,
+      0.38
+     ],
+     "taille": [
+      0.14,
+      0.13,
+      0.14
+     ],
+     "rotation_deg": [
+      90,
+      0,
+      0
+     ],
+     "matiere": "blanc"
+    },
+    {
+     "forme": "cylindre",
+     "position": [
+      -0.5,
+      0.14,
+      -0.375
+     ],
+     "taille": [
+      0.28,
+      0.11,
+      0.28
+     ],
+     "rotation_deg": [
+      90,
+      0,
+      0
+     ],
+     "matiere": "noir"
+    },
+    {
+     "forme": "cylindre",
+     "position": [
+      -0.5,
+      0.14,
+      -0.38
+     ],
+     "taille": [
+      0.14,
+      0.13,
+      0.14
+     ],
+     "rotation_deg": [
+      90,
+      0,
+      0
+     ],
+     "matiere": "blanc"
+    }
+   ],
+   "parties_mobiles": [
+    {
+     "piece": "lanterne",
+     "animation": "clignote"
+    }
+   ]
+  },
+  {
+   "id": "scooter_frimeur",
+   "univers": "nippon_kaboom",
+   "classe": "moto",
+   "noms": {
+    "fr": "Scooter Frimeur",
+    "en": "Showoff Scooter",
+    "de": "Angeber-Roller",
+    "es": "Scooter Presumido",
+    "it": "Scooter Sbruffone"
+   },
+   "points_deblocage": 150,
+   "largeur": 0.5,
+   "longueur": 1.2,
+   "couleur_2": "#35d0ff",
+   "couleur_3": "#ff5fa8",
+   "pieces": [
+    {
+     "forme": "cylindre",
+     "position": [
+      0.38,
+      0.15,
+      0
+     ],
+     "taille": [
+      0.3,
+      0.08,
+      0.3
+     ],
+     "rotation_deg": [
+      90,
+      0,
+      0
+     ],
+     "matiere": "noir"
+    },
+    {
+     "forme": "cylindre",
+     "position": [
+      0.38,
+      0.15,
+      0
+     ],
+     "taille": [
+      0.18,
+      0.1,
+      0.18
+     ],
+     "rotation_deg": [
+      90,
+      0,
+      0
+     ],
+     "matiere": "blanc"
+    },
+    {
+     "forme": "cylindre",
+     "position": [
+      -0.38,
+      0.15,
+      0
+     ],
+     "taille": [
+      0.3,
+      0.08,
+      0.3
+     ],
+     "rotation_deg": [
+      90,
+      0,
+      0
+     ],
+     "matiere": "noir"
+    },
+    {
+     "forme": "cylindre",
+     "position": [
+      -0.38,
+      0.15,
+      0
+     ],
+     "taille": [
+      0.18,
+      0.1,
+      0.18
+     ],
+     "rotation_deg": [
+      90,
+      0,
+      0
+     ],
+     "matiere": "blanc"
+    },
+    {
+     "forme": "cube",
+     "position": [
+      0,
+      0.22,
+      0
+     ],
+     "taille": [
+      0.6,
+      0.07,
+      0.26
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      0
+     ],
+     "matiere": "peinture"
+    },
+    {
+     "forme": "cube",
+     "position": [
+      0.38,
+      0.46,
+      0
+     ],
+     "taille": [
+      0.1,
+      0.5,
+      0.28
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      0
+     ],
+     "matiere": "peinture"
+    },
+    {
+     "forme": "cube",
+     "position": [
+      -0.25,
+      0.36,
+      0
+     ],
+     "taille": [
+      0.45,
+      0.3,
+      0.28
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      0
+     ],
+     "matiere": "peinture"
+    },
+    {
+     "forme": "cube",
+     "position": [
+      -0.2,
+      0.56,
+      0
+     ],
+     "taille": [
+      0.4,
+      0.07,
+      0.24
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      0
+     ],
+     "matiere": "sombre"
+    },
+    {
+     "forme": "cube",
+     "position": [
+      -0.45,
+      0.8,
+      0
+     ],
+     "taille": [
+      0.06,
+      0.5,
+      0.3
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      0
+     ],
+     "matiere": "couleur_2"
+    },
+    {
+     "forme": "cube",
+     "position": [
+      -0.47,
+      1.05,
+      0
+     ],
+     "taille": [
+      0.06,
+      0.1,
+      0.34
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      0
+     ],
+     "matiere": "couleur_2"
+    },
+    {
+     "forme": "cylindre",
+     "position": [
+      -0.5,
+      0.95,
+      0.2
+     ],
+     "taille": [
+      0.02,
+      0.5,
+      0.02
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      -10
+     ],
+     "matiere": "sombre",
+     "nom": "fanion"
+    },
+    {
+     "forme": "cube",
+     "position": [
+      -0.55,
+      1.1,
+      0.2
+     ],
+     "taille": [
+      0.2,
+      0.12,
+      0.02
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      0
+     ],
+     "matiere": "couleur_3",
+     "nom": "fanion"
+    },
+    {
+     "forme": "cube",
+     "position": [
+      0.38,
+      0.78,
+      0
+     ],
+     "taille": [
+      0.06,
+      0.04,
+      0.46
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      0
+     ],
+     "matiere": "sombre"
+    },
+    {
+     "forme": "sphere",
+     "position": [
+      0.46,
+      0.62,
+      0
+     ],
+     "taille": [
+      0.12,
+      0.12,
+      0.12
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      0
+     ],
+     "matiere": "phare"
+    },
+    {
+     "forme": "cube",
+     "position": [
+      -0.55,
+      0.4,
+      0
+     ],
+     "taille": [
+      0.04,
+      0.07,
+      0.12
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      0
+     ],
+     "matiere": "lumiere_rouge"
+    },
+    {
+     "forme": "cube",
+     "position": [
+      -0.1,
+      0.52,
+      0.12
+     ],
+     "taille": [
+      0.2,
+      0.2,
+      0.26
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      0
+     ],
+     "matiere": "couleur_3"
+    },
+    {
+     "forme": "cylindre",
+     "position": [
+      -0.55,
+      0.3,
+      0.1
+     ],
+     "taille": [
+      0.05,
+      0.3,
+      0.05
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      90
+     ],
+     "matiere": "sombre"
+    }
+   ],
+   "parties_mobiles": [
+    {
+     "piece": "fanion",
+     "animation": "balance"
+    }
+   ]
+  },
+  {
+   "id": "bus_sakura",
+   "univers": "nippon_kaboom",
+   "classe": "bus",
+   "noms": {
+    "fr": "Bus Sakura",
+    "en": "Cherry Blossom Bus",
+    "de": "Kirschblüten-Bus",
+    "es": "Autobús Sakura",
+    "it": "Autobus Sakura"
+   },
+   "points_deblocage": 800,
+   "longueur": 3.7,
+   "largeur": 0.9,
+   "couleur_2": "#ffb7d0",
+   "couleur_3": "#ff5fa8",
+   "pieces": [
+    {
+     "forme": "cube",
+     "position": [
+      0,
+      0.2,
+      0
+     ],
+     "taille": [
+      3.4,
+      0.1,
+      0.66
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      0
+     ],
+     "matiere": "sombre"
+    },
+    {
+     "forme": "cube",
+     "position": [
+      0,
+      0.62,
+      0
+     ],
+     "taille": [
+      3.6,
+      0.74,
+      0.78
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      0
+     ],
+     "matiere": "peinture"
+    },
+    {
+     "forme": "cube",
+     "position": [
+      -1.3,
+      0.78,
+      0.395
+     ],
+     "taille": [
+      0.3,
+      0.2,
+      0.01
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      0
+     ],
+     "matiere": "vitre"
+    },
+    {
+     "forme": "cube",
+     "position": [
+      -1.3,
+      0.78,
+      -0.395
+     ],
+     "taille": [
+      0.3,
+      0.2,
+      0.01
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      0
+     ],
+     "matiere": "vitre"
+    },
+    {
+     "forme": "cube",
+     "position": [
+      -0.92,
+      0.78,
+      0.395
+     ],
+     "taille": [
+      0.3,
+      0.2,
+      0.01
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      0
+     ],
+     "matiere": "vitre"
+    },
+    {
+     "forme": "cube",
+     "position": [
+      -0.92,
+      0.78,
+      -0.395
+     ],
+     "taille": [
+      0.3,
+      0.2,
+      0.01
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      0
+     ],
+     "matiere": "vitre"
+    },
+    {
+     "forme": "cube",
+     "position": [
+      -0.54,
+      0.78,
+      0.395
+     ],
+     "taille": [
+      0.3,
+      0.2,
+      0.01
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      0
+     ],
+     "matiere": "vitre"
+    },
+    {
+     "forme": "cube",
+     "position": [
+      -0.54,
+      0.78,
+      -0.395
+     ],
+     "taille": [
+      0.3,
+      0.2,
+      0.01
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      0
+     ],
+     "matiere": "vitre"
+    },
+    {
+     "forme": "cube",
+     "position": [
+      -0.16,
+      0.78,
+      0.395
+     ],
+     "taille": [
+      0.3,
+      0.2,
+      0.01
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      0
+     ],
+     "matiere": "vitre"
+    },
+    {
+     "forme": "cube",
+     "position": [
+      -0.16,
+      0.78,
+      -0.395
+     ],
+     "taille": [
+      0.3,
+      0.2,
+      0.01
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      0
+     ],
+     "matiere": "vitre"
+    },
+    {
+     "forme": "cube",
+     "position": [
+      0.22,
+      0.78,
+      0.395
+     ],
+     "taille": [
+      0.3,
+      0.2,
+      0.01
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      0
+     ],
+     "matiere": "vitre"
+    },
+    {
+     "forme": "cube",
+     "position": [
+      0.22,
+      0.78,
+      -0.395
+     ],
+     "taille": [
+      0.3,
+      0.2,
+      0.01
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      0
+     ],
+     "matiere": "vitre"
+    },
+    {
+     "forme": "cube",
+     "position": [
+      0.6,
+      0.78,
+      0.395
+     ],
+     "taille": [
+      0.3,
+      0.2,
+      0.01
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      0
+     ],
+     "matiere": "vitre"
+    },
+    {
+     "forme": "cube",
+     "position": [
+      0.6,
+      0.78,
+      -0.395
+     ],
+     "taille": [
+      0.3,
+      0.2,
+      0.01
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      0
+     ],
+     "matiere": "vitre"
+    },
+    {
+     "forme": "cube",
+     "position": [
+      0.98,
+      0.78,
+      0.395
+     ],
+     "taille": [
+      0.3,
+      0.2,
+      0.01
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      0
+     ],
+     "matiere": "vitre"
+    },
+    {
+     "forme": "cube",
+     "position": [
+      0.98,
+      0.78,
+      -0.395
+     ],
+     "taille": [
+      0.3,
+      0.2,
+      0.01
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      0
+     ],
+     "matiere": "vitre"
+    },
+    {
+     "forme": "cube",
+     "position": [
+      1.36,
+      0.78,
+      0.395
+     ],
+     "taille": [
+      0.3,
+      0.2,
+      0.01
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      0
+     ],
+     "matiere": "vitre"
+    },
+    {
+     "forme": "cube",
+     "position": [
+      1.36,
+      0.78,
+      -0.395
+     ],
+     "taille": [
+      0.3,
+      0.2,
+      0.01
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      0
+     ],
+     "matiere": "vitre"
+    },
+    {
+     "forme": "cube",
+     "position": [
+      1.79,
+      0.75,
+      0.2
+     ],
+     "taille": [
+      0.02,
+      0.22,
+      0.3
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      0
+     ],
+     "matiere": "vitre"
+    },
+    {
+     "forme": "cube",
+     "position": [
+      1.79,
+      0.75,
+      -0.2
+     ],
+     "taille": [
+      0.02,
+      0.22,
+      0.3
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      0
+     ],
+     "matiere": "vitre"
+    },
+    {
+     "forme": "cube",
+     "position": [
+      0,
+      1.0,
+      0
+     ],
+     "taille": [
+      3.4,
+      0.04,
+      0.7
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      0
+     ],
+     "matiere": "couleur_2"
+    },
+    {
+     "forme": "sphere",
+     "position": [
+      -1.2,
+      0.42,
+      0.395
+     ],
+     "taille": [
+      0.18,
+      0.18,
+      0.02
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      0
+     ],
+     "matiere": "couleur_2"
+    },
+    {
+     "forme": "sphere",
+     "position": [
+      -1.2,
+      0.42,
+      -0.395
+     ],
+     "taille": [
+      0.18,
+      0.18,
+      0.02
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      0
+     ],
+     "matiere": "couleur_2"
+    },
+    {
+     "forme": "sphere",
+     "position": [
+      -0.6,
+      0.42,
+      0.395
+     ],
+     "taille": [
+      0.18,
+      0.18,
+      0.02
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      0
+     ],
+     "matiere": "couleur_2"
+    },
+    {
+     "forme": "sphere",
+     "position": [
+      -0.6,
+      0.42,
+      -0.395
+     ],
+     "taille": [
+      0.18,
+      0.18,
+      0.02
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      0
+     ],
+     "matiere": "couleur_2"
+    },
+    {
+     "forme": "sphere",
+     "position": [
+      0.0,
+      0.42,
+      0.395
+     ],
+     "taille": [
+      0.18,
+      0.18,
+      0.02
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      0
+     ],
+     "matiere": "couleur_2"
+    },
+    {
+     "forme": "sphere",
+     "position": [
+      0.0,
+      0.42,
+      -0.395
+     ],
+     "taille": [
+      0.18,
+      0.18,
+      0.02
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      0
+     ],
+     "matiere": "couleur_2"
+    },
+    {
+     "forme": "sphere",
+     "position": [
+      0.6,
+      0.42,
+      0.395
+     ],
+     "taille": [
+      0.18,
+      0.18,
+      0.02
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      0
+     ],
+     "matiere": "couleur_2"
+    },
+    {
+     "forme": "sphere",
+     "position": [
+      0.6,
+      0.42,
+      -0.395
+     ],
+     "taille": [
+      0.18,
+      0.18,
+      0.02
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      0
+     ],
+     "matiere": "couleur_2"
+    },
+    {
+     "forme": "sphere",
+     "position": [
+      1.2,
+      0.42,
+      0.395
+     ],
+     "taille": [
+      0.18,
+      0.18,
+      0.02
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      0
+     ],
+     "matiere": "couleur_2"
+    },
+    {
+     "forme": "sphere",
+     "position": [
+      1.2,
+      0.42,
+      -0.395
+     ],
+     "taille": [
+      0.18,
+      0.18,
+      0.02
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      0
+     ],
+     "matiere": "couleur_2"
+    },
+    {
+     "forme": "cube",
+     "position": [
+      1.8,
+      0.34,
+      0.28
+     ],
+     "taille": [
+      0.04,
+      0.08,
+      0.14
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      0
+     ],
+     "matiere": "phare"
+    },
+    {
+     "forme": "cube",
+     "position": [
+      -1.8,
+      0.34,
+      0.28
+     ],
+     "taille": [
+      0.04,
+      0.08,
+      0.14
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      0
+     ],
+     "matiere": "lumiere_rouge"
+    },
+    {
+     "forme": "cube",
+     "position": [
+      1.8,
+      0.34,
+      -0.28
+     ],
+     "taille": [
+      0.04,
+      0.08,
+      0.14
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      0
+     ],
+     "matiere": "phare"
+    },
+    {
+     "forme": "cube",
+     "position": [
+      -1.8,
+      0.34,
+      -0.28
+     ],
+     "taille": [
+      0.04,
+      0.08,
+      0.14
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      0
+     ],
+     "matiere": "lumiere_rouge"
+    },
+    {
+     "forme": "cube",
+     "position": [
+      1.8,
+      0.22,
+      0
+     ],
+     "taille": [
+      0.06,
+      0.08,
+      0.78
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      0
+     ],
+     "matiere": "sombre"
+    },
+    {
+     "forme": "cube",
+     "position": [
+      1.82,
+      0.9,
+      0
+     ],
+     "taille": [
+      0.02,
+      0.14,
+      0.4
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      0
+     ],
+     "matiere": "couleur_3",
+     "nom": "destination"
+    },
+    {
+     "forme": "cylindre",
+     "position": [
+      1.15,
+      0.16,
+      0.4
+     ],
+     "taille": [
+      0.32,
+      0.11,
+      0.32
+     ],
+     "rotation_deg": [
+      90,
+      0,
+      0
+     ],
+     "matiere": "noir"
+    },
+    {
+     "forme": "cylindre",
+     "position": [
+      1.15,
+      0.16,
+      0.405
+     ],
+     "taille": [
+      0.16,
+      0.13,
+      0.16
+     ],
+     "rotation_deg": [
+      90,
+      0,
+      0
+     ],
+     "matiere": "blanc"
+    },
+    {
+     "forme": "cylindre",
+     "position": [
+      1.15,
+      0.16,
+      -0.4
+     ],
+     "taille": [
+      0.32,
+      0.11,
+      0.32
+     ],
+     "rotation_deg": [
+      90,
+      0,
+      0
+     ],
+     "matiere": "noir"
+    },
+    {
+     "forme": "cylindre",
+     "position": [
+      1.15,
+      0.16,
+      -0.405
+     ],
+     "taille": [
+      0.16,
+      0.13,
+      0.16
+     ],
+     "rotation_deg": [
+      90,
+      0,
+      0
+     ],
+     "matiere": "blanc"
+    },
+    {
+     "forme": "cylindre",
+     "position": [
+      -1.15,
+      0.16,
+      0.4
+     ],
+     "taille": [
+      0.32,
+      0.11,
+      0.32
+     ],
+     "rotation_deg": [
+      90,
+      0,
+      0
+     ],
+     "matiere": "noir"
+    },
+    {
+     "forme": "cylindre",
+     "position": [
+      -1.15,
+      0.16,
+      0.405
+     ],
+     "taille": [
+      0.16,
+      0.13,
+      0.16
+     ],
+     "rotation_deg": [
+      90,
+      0,
+      0
+     ],
+     "matiere": "blanc"
+    },
+    {
+     "forme": "cylindre",
+     "position": [
+      -1.15,
+      0.16,
+      -0.4
+     ],
+     "taille": [
+      0.32,
+      0.11,
+      0.32
+     ],
+     "rotation_deg": [
+      90,
+      0,
+      0
+     ],
+     "matiere": "noir"
+    },
+    {
+     "forme": "cylindre",
+     "position": [
+      -1.15,
+      0.16,
+      -0.405
+     ],
+     "taille": [
+      0.16,
+      0.13,
+      0.16
+     ],
+     "rotation_deg": [
+      90,
+      0,
+      0
+     ],
+     "matiere": "blanc"
+    }
+   ],
+   "parties_mobiles": [
+    {
+     "piece": "destination",
+     "animation": "clignote"
+    }
+   ]
+  },
+  {
+   "id": "camion_ramen_fou",
+   "univers": "nippon_kaboom",
+   "classe": "camion",
+   "noms": {
+    "fr": "Camion Ramen-Fou",
+    "en": "Mad Ramen Truck",
+    "de": "Verrückter Ramen-Laster",
+    "es": "Camión Ramen Loco",
+    "it": "Camion Ramen Pazzo"
+   },
+   "points_deblocage": 1400,
+   "longueur": 2.9,
+   "largeur": 1.0,
+   "couleur_2": "#ff5a3c",
+   "couleur_3": "#ffd23f",
+   "pieces": [
+    {
+     "forme": "cube",
+     "position": [
+      0,
+      0.2,
+      0
+     ],
+     "taille": [
+      2.8,
+      0.1,
+      0.64
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      0
+     ],
+     "matiere": "sombre"
+    },
+    {
+     "forme": "cube",
+     "position": [
+      1.0,
+      0.52,
+      0
+     ],
+     "taille": [
+      0.8,
+      0.5,
+      0.76
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      0
+     ],
+     "matiere": "couleur_3"
+    },
+    {
+     "forme": "cube",
+     "position": [
+      1.15,
+      0.8,
+      0
+     ],
+     "taille": [
+      0.45,
+      0.2,
+      0.74
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      0
+     ],
+     "matiere": "vitre"
+    },
+    {
+     "forme": "cube",
+     "position": [
+      -0.3,
+      0.65,
+      0
+     ],
+     "taille": [
+      2.0,
+      0.7,
+      0.82
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      0
+     ],
+     "matiere": "peinture"
+    },
+    {
+     "forme": "cube",
+     "position": [
+      -0.3,
+      0.65,
+      0.415
+     ],
+     "taille": [
+      1.2,
+      0.3,
+      0.01
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      0
+     ],
+     "matiere": "vitre"
+    },
+    {
+     "forme": "cube",
+     "position": [
+      -0.3,
+      0.88,
+      0.44
+     ],
+     "taille": [
+      1.3,
+      0.04,
+      0.1
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      0
+     ],
+     "matiere": "couleur_2"
+    },
+    {
+     "forme": "cube",
+     "position": [
+      -0.3,
+      0.65,
+      -0.415
+     ],
+     "taille": [
+      1.2,
+      0.3,
+      0.01
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      0
+     ],
+     "matiere": "vitre"
+    },
+    {
+     "forme": "cube",
+     "position": [
+      -0.3,
+      0.88,
+      -0.44
+     ],
+     "taille": [
+      1.3,
+      0.04,
+      0.1
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      0
+     ],
+     "matiere": "couleur_2"
+    },
+    {
+     "forme": "cylindre",
+     "position": [
+      -0.3,
+      1.1,
+      0
+     ],
+     "taille": [
+      0.7,
+      0.3,
+      0.7
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      0
+     ],
+     "matiere": "couleur_2"
+    },
+    {
+     "forme": "cylindre",
+     "position": [
+      -0.3,
+      1.26,
+      0
+     ],
+     "taille": [
+      0.62,
+      0.02,
+      0.62
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      0
+     ],
+     "matiere": "couleur_3"
+    },
+    {
+     "forme": "sphere",
+     "position": [
+      -0.3,
+      1.3,
+      0
+     ],
+     "taille": [
+      0.3,
+      0.12,
+      0.3
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      0
+     ],
+     "matiere": "blanc"
+    },
+    {
+     "forme": "cylindre",
+     "position": [
+      -0.4,
+      1.45,
+      0.1
+     ],
+     "taille": [
+      0.1,
+      0.3,
+      0.1
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      0
+     ],
+     "matiere": "blanc",
+     "nom": "vapeur"
+    },
+    {
+     "forme": "cylindre",
+     "position": [
+      -0.2,
+      1.55,
+      -0.1
+     ],
+     "taille": [
+      0.1,
+      0.3,
+      0.1
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      0
+     ],
+     "matiere": "blanc",
+     "nom": "vapeur"
+    },
+    {
+     "forme": "cube",
+     "position": [
+      1.45,
+      0.4,
+      0.25
+     ],
+     "taille": [
+      0.04,
+      0.08,
+      0.14
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      0
+     ],
+     "matiere": "phare"
+    },
+    {
+     "forme": "cube",
+     "position": [
+      -1.45,
+      0.4,
+      0.25
+     ],
+     "taille": [
+      0.04,
+      0.08,
+      0.14
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      0
+     ],
+     "matiere": "lumiere_rouge"
+    },
+    {
+     "forme": "cube",
+     "position": [
+      1.45,
+      0.4,
+      -0.25
+     ],
+     "taille": [
+      0.04,
+      0.08,
+      0.14
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      0
+     ],
+     "matiere": "phare"
+    },
+    {
+     "forme": "cube",
+     "position": [
+      -1.45,
+      0.4,
+      -0.25
+     ],
+     "taille": [
+      0.04,
+      0.08,
+      0.14
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      0
+     ],
+     "matiere": "lumiere_rouge"
+    },
+    {
+     "forme": "cube",
+     "position": [
+      1.42,
+      0.4,
+      0
+     ],
+     "taille": [
+      0.06,
+      0.1,
+      0.78
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      0
+     ],
+     "matiere": "sombre"
+    },
+    {
+     "forme": "cube",
+     "position": [
+      -1.0,
+      0.7,
+      0.415
+     ],
+     "taille": [
+      0.4,
+      0.2,
+      0.01
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      0
+     ],
+     "matiere": "lumiere_rouge",
+     "nom": "enseigne"
+    },
+    {
+     "forme": "cylindre",
+     "position": [
+      1.0,
+      0.16,
+      0.4
+     ],
+     "taille": [
+      0.32,
+      0.11,
+      0.32
+     ],
+     "rotation_deg": [
+      90,
+      0,
+      0
+     ],
+     "matiere": "noir"
+    },
+    {
+     "forme": "cylindre",
+     "position": [
+      1.0,
+      0.16,
+      0.405
+     ],
+     "taille": [
+      0.16,
+      0.13,
+      0.16
+     ],
+     "rotation_deg": [
+      90,
+      0,
+      0
+     ],
+     "matiere": "blanc"
+    },
+    {
+     "forme": "cylindre",
+     "position": [
+      1.0,
+      0.16,
+      -0.4
+     ],
+     "taille": [
+      0.32,
+      0.11,
+      0.32
+     ],
+     "rotation_deg": [
+      90,
+      0,
+      0
+     ],
+     "matiere": "noir"
+    },
+    {
+     "forme": "cylindre",
+     "position": [
+      1.0,
+      0.16,
+      -0.405
+     ],
+     "taille": [
+      0.16,
+      0.13,
+      0.16
+     ],
+     "rotation_deg": [
+      90,
+      0,
+      0
+     ],
+     "matiere": "blanc"
+    },
+    {
+     "forme": "cylindre",
+     "position": [
+      -0.75,
+      0.16,
+      0.4
+     ],
+     "taille": [
+      0.32,
+      0.11,
+      0.32
+     ],
+     "rotation_deg": [
+      90,
+      0,
+      0
+     ],
+     "matiere": "noir"
+    },
+    {
+     "forme": "cylindre",
+     "position": [
+      -0.75,
+      0.16,
+      0.405
+     ],
+     "taille": [
+      0.16,
+      0.13,
+      0.16
+     ],
+     "rotation_deg": [
+      90,
+      0,
+      0
+     ],
+     "matiere": "blanc"
+    },
+    {
+     "forme": "cylindre",
+     "position": [
+      -0.75,
+      0.16,
+      -0.4
+     ],
+     "taille": [
+      0.32,
+      0.11,
+      0.32
+     ],
+     "rotation_deg": [
+      90,
+      0,
+      0
+     ],
+     "matiere": "noir"
+    },
+    {
+     "forme": "cylindre",
+     "position": [
+      -0.75,
+      0.16,
+      -0.405
+     ],
+     "taille": [
+      0.16,
+      0.13,
+      0.16
+     ],
+     "rotation_deg": [
+      90,
+      0,
+      0
+     ],
+     "matiere": "blanc"
+    },
+    {
+     "forme": "cylindre",
+     "position": [
+      -1.05,
+      0.16,
+      0.4
+     ],
+     "taille": [
+      0.32,
+      0.11,
+      0.32
+     ],
+     "rotation_deg": [
+      90,
+      0,
+      0
+     ],
+     "matiere": "noir"
+    },
+    {
+     "forme": "cylindre",
+     "position": [
+      -1.05,
+      0.16,
+      0.405
+     ],
+     "taille": [
+      0.16,
+      0.13,
+      0.16
+     ],
+     "rotation_deg": [
+      90,
+      0,
+      0
+     ],
+     "matiere": "blanc"
+    },
+    {
+     "forme": "cylindre",
+     "position": [
+      -1.05,
+      0.16,
+      -0.4
+     ],
+     "taille": [
+      0.32,
+      0.11,
+      0.32
+     ],
+     "rotation_deg": [
+      90,
+      0,
+      0
+     ],
+     "matiere": "noir"
+    },
+    {
+     "forme": "cylindre",
+     "position": [
+      -1.05,
+      0.16,
+      -0.405
+     ],
+     "taille": [
+      0.16,
+      0.13,
+      0.16
+     ],
+     "rotation_deg": [
+      90,
+      0,
+      0
+     ],
+     "matiere": "blanc"
+    }
+   ],
+   "parties_mobiles": [
+    {
+     "piece": "vapeur",
+     "animation": "derive_haut"
+    },
+    {
+     "piece": "enseigne",
+     "animation": "clignote_alterne"
+    }
+   ]
+  },
+  {
+   "id": "train_pointe_canard",
+   "univers": "nippon_kaboom",
+   "classe": "bus",
+   "noms": {
+    "fr": "Train Pointe-de-Canard",
+    "en": "Duck-Beak Train",
+    "de": "Entenschnabel-Zug",
+    "es": "Tren Pico de Pato",
+    "it": "Treno Becco d'Anatra"
+   },
+   "points_deblocage": 2000,
+   "longueur": 4.8,
+   "largeur": 0.8,
+   "couleur_2": "#ffffff",
+   "couleur_3": "#ff5fa8",
+   "pieces": [
+    {
+     "forme": "cube",
+     "position": [
+      0.0,
+      0.12,
+      0
+     ],
+     "taille": [
+      4.6,
+      0.1,
+      0.66
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      0
+     ],
+     "matiere": "sombre"
+    },
+    {
+     "forme": "cube",
+     "position": [
+      -0.8,
+      0.5,
+      0
+     ],
+     "taille": [
+      3.0,
+      0.62,
+      0.8
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      0
+     ],
+     "matiere": "peinture"
+    },
+    {
+     "forme": "cube",
+     "position": [
+      1.2,
+      0.46,
+      0
+     ],
+     "taille": [
+      1.2,
+      0.5,
+      0.76
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      0
+     ],
+     "matiere": "peinture"
+    },
+    {
+     "forme": "cube",
+     "position": [
+      1.95,
+      0.4,
+      0
+     ],
+     "taille": [
+      0.5,
+      0.3,
+      0.6
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      0
+     ],
+     "matiere": "peinture"
+    },
+    {
+     "forme": "cone",
+     "position": [
+      2.3,
+      0.38,
+      0
+     ],
+     "taille": [
+      0.3,
+      0.4,
+      0.5
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      -90
+     ],
+     "matiere": "peinture"
+    },
+    {
+     "forme": "cube",
+     "position": [
+      -2.0,
+      0.6,
+      0.405
+     ],
+     "taille": [
+      0.3,
+      0.2,
+      0.01
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      0
+     ],
+     "matiere": "vitre"
+    },
+    {
+     "forme": "cube",
+     "position": [
+      -2.0,
+      0.6,
+      -0.405
+     ],
+     "taille": [
+      0.3,
+      0.2,
+      0.01
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      0
+     ],
+     "matiere": "vitre"
+    },
+    {
+     "forme": "cube",
+     "position": [
+      -1.5,
+      0.6,
+      0.405
+     ],
+     "taille": [
+      0.3,
+      0.2,
+      0.01
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      0
+     ],
+     "matiere": "vitre"
+    },
+    {
+     "forme": "cube",
+     "position": [
+      -1.5,
+      0.6,
+      -0.405
+     ],
+     "taille": [
+      0.3,
+      0.2,
+      0.01
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      0
+     ],
+     "matiere": "vitre"
+    },
+    {
+     "forme": "cube",
+     "position": [
+      -1.0,
+      0.6,
+      0.405
+     ],
+     "taille": [
+      0.3,
+      0.2,
+      0.01
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      0
+     ],
+     "matiere": "vitre"
+    },
+    {
+     "forme": "cube",
+     "position": [
+      -1.0,
+      0.6,
+      -0.405
+     ],
+     "taille": [
+      0.3,
+      0.2,
+      0.01
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      0
+     ],
+     "matiere": "vitre"
+    },
+    {
+     "forme": "cube",
+     "position": [
+      -0.5,
+      0.6,
+      0.405
+     ],
+     "taille": [
+      0.3,
+      0.2,
+      0.01
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      0
+     ],
+     "matiere": "vitre"
+    },
+    {
+     "forme": "cube",
+     "position": [
+      -0.5,
+      0.6,
+      -0.405
+     ],
+     "taille": [
+      0.3,
+      0.2,
+      0.01
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      0
+     ],
+     "matiere": "vitre"
+    },
+    {
+     "forme": "cube",
+     "position": [
+      0.0,
+      0.6,
+      0.405
+     ],
+     "taille": [
+      0.3,
+      0.2,
+      0.01
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      0
+     ],
+     "matiere": "vitre"
+    },
+    {
+     "forme": "cube",
+     "position": [
+      0.0,
+      0.6,
+      -0.405
+     ],
+     "taille": [
+      0.3,
+      0.2,
+      0.01
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      0
+     ],
+     "matiere": "vitre"
+    },
+    {
+     "forme": "cube",
+     "position": [
+      0.5,
+      0.6,
+      0.405
+     ],
+     "taille": [
+      0.3,
+      0.2,
+      0.01
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      0
+     ],
+     "matiere": "vitre"
+    },
+    {
+     "forme": "cube",
+     "position": [
+      0.5,
+      0.6,
+      -0.405
+     ],
+     "taille": [
+      0.3,
+      0.2,
+      0.01
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      0
+     ],
+     "matiere": "vitre"
+    },
+    {
+     "forme": "cube",
+     "position": [
+      1.0,
+      0.6,
+      0.405
+     ],
+     "taille": [
+      0.3,
+      0.2,
+      0.01
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      0
+     ],
+     "matiere": "vitre"
+    },
+    {
+     "forme": "cube",
+     "position": [
+      1.0,
+      0.6,
+      -0.405
+     ],
+     "taille": [
+      0.3,
+      0.2,
+      0.01
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      0
+     ],
+     "matiere": "vitre"
+    },
+    {
+     "forme": "cube",
+     "position": [
+      -0.4,
+      0.42,
+      0.405
+     ],
+     "taille": [
+      3.2,
+      0.05,
+      0.01
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      0
+     ],
+     "matiere": "couleur_2"
+    },
+    {
+     "forme": "cube",
+     "position": [
+      1.25,
+      0.6,
+      0.385
+     ],
+     "taille": [
+      0.5,
+      0.16,
+      0.01
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      0
+     ],
+     "matiere": "vitre"
+    },
+    {
+     "forme": "cube",
+     "position": [
+      -0.4,
+      0.42,
+      -0.405
+     ],
+     "taille": [
+      3.2,
+      0.05,
+      0.01
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      0
+     ],
+     "matiere": "couleur_2"
+    },
+    {
+     "forme": "cube",
+     "position": [
+      1.25,
+      0.6,
+      -0.385
+     ],
+     "taille": [
+      0.5,
+      0.16,
+      0.01
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      0
+     ],
+     "matiere": "vitre"
+    },
+    {
+     "forme": "cube",
+     "position": [
+      1.85,
+      0.6,
+      0
+     ],
+     "taille": [
+      0.5,
+      0.14,
+      0.5
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      -18
+     ],
+     "matiere": "vitre"
+    },
+    {
+     "forme": "sphere",
+     "position": [
+      2.35,
+      0.35,
+      0
+     ],
+     "taille": [
+      0.08,
+      0.08,
+      0.08
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      0
+     ],
+     "matiere": "phare"
+    },
+    {
+     "forme": "cube",
+     "position": [
+      -2.32,
+      0.45,
+      0
+     ],
+     "taille": [
+      0.04,
+      0.2,
+      0.6
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      0
+     ],
+     "matiere": "couleur_2"
+    },
+    {
+     "forme": "cube",
+     "position": [
+      -2.32,
+      0.35,
+      0.25
+     ],
+     "taille": [
+      0.04,
+      0.08,
+      0.1
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      0
+     ],
+     "matiere": "lumiere_rouge"
+    },
+    {
+     "forme": "cube",
+     "position": [
+      -2.32,
+      0.35,
+      -0.25
+     ],
+     "taille": [
+      0.04,
+      0.08,
+      0.1
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      0
+     ],
+     "matiere": "lumiere_rouge"
+    },
+    {
+     "forme": "cylindre",
+     "position": [
+      1.6,
+      0.1,
+      0.3
+     ],
+     "taille": [
+      0.2,
+      0.1,
+      0.2
+     ],
+     "rotation_deg": [
+      90,
+      0,
+      0
+     ],
+     "matiere": "noir"
+    },
+    {
+     "forme": "cylindre",
+     "position": [
+      1.6,
+      0.1,
+      -0.3
+     ],
+     "taille": [
+      0.2,
+      0.1,
+      0.2
+     ],
+     "rotation_deg": [
+      90,
+      0,
+      0
+     ],
+     "matiere": "noir"
+    },
+    {
+     "forme": "cylindre",
+     "position": [
+      0.8,
+      0.1,
+      0.3
+     ],
+     "taille": [
+      0.2,
+      0.1,
+      0.2
+     ],
+     "rotation_deg": [
+      90,
+      0,
+      0
+     ],
+     "matiere": "noir"
+    },
+    {
+     "forme": "cylindre",
+     "position": [
+      0.8,
+      0.1,
+      -0.3
+     ],
+     "taille": [
+      0.2,
+      0.1,
+      0.2
+     ],
+     "rotation_deg": [
+      90,
+      0,
+      0
+     ],
+     "matiere": "noir"
+    },
+    {
+     "forme": "cylindre",
+     "position": [
+      -0.6,
+      0.1,
+      0.3
+     ],
+     "taille": [
+      0.2,
+      0.1,
+      0.2
+     ],
+     "rotation_deg": [
+      90,
+      0,
+      0
+     ],
+     "matiere": "noir"
+    },
+    {
+     "forme": "cylindre",
+     "position": [
+      -0.6,
+      0.1,
+      -0.3
+     ],
+     "taille": [
+      0.2,
+      0.1,
+      0.2
+     ],
+     "rotation_deg": [
+      90,
+      0,
+      0
+     ],
+     "matiere": "noir"
+    },
+    {
+     "forme": "cylindre",
+     "position": [
+      -1.4,
+      0.1,
+      0.3
+     ],
+     "taille": [
+      0.2,
+      0.1,
+      0.2
+     ],
+     "rotation_deg": [
+      90,
+      0,
+      0
+     ],
+     "matiere": "noir"
+    },
+    {
+     "forme": "cylindre",
+     "position": [
+      -1.4,
+      0.1,
+      -0.3
+     ],
+     "taille": [
+      0.2,
+      0.1,
+      0.2
+     ],
+     "rotation_deg": [
+      90,
+      0,
+      0
+     ],
+     "matiere": "noir"
+    },
+    {
+     "forme": "cylindre",
+     "position": [
+      -2.0,
+      0.1,
+      0.3
+     ],
+     "taille": [
+      0.2,
+      0.1,
+      0.2
+     ],
+     "rotation_deg": [
+      90,
+      0,
+      0
+     ],
+     "matiere": "noir"
+    },
+    {
+     "forme": "cylindre",
+     "position": [
+      -2.0,
+      0.1,
+      -0.3
+     ],
+     "taille": [
+      0.2,
+      0.1,
+      0.2
+     ],
+     "rotation_deg": [
+      90,
+      0,
+      0
+     ],
+     "matiere": "noir"
+    },
+    {
+     "forme": "cube",
+     "position": [
+      -0.8,
+      0.84,
+      0
+     ],
+     "taille": [
+      2.8,
+      0.04,
+      0.7
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      0
+     ],
+     "matiere": "couleur_2"
+    },
+    {
+     "forme": "cube",
+     "position": [
+      0.0,
+      0.9,
+      0
+     ],
+     "taille": [
+      0.4,
+      0.1,
+      0.3
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      0
+     ],
+     "matiere": "sombre"
+    }
+   ],
+   "parties_mobiles": []
+  }
+ ]
+}

@@ -195,7 +195,7 @@ fn run_eagle(
             }
             // L'aigle arrive par le haut ou le bas de l'écran.
             let z = if dir > 0.0 { cam.0 - 15.0 } else { cam.0 + 13.0 };
-            let park = crate::extra::Biome::of(frog.max_row_i(), progress.total + score.current) == crate::extra::Biome::Jurassic;
+            let park = crate::extra::Biome::of(frog.max_row_i(), progress.total + score.current).theme_index();
             spawn_eagle(&mut commands, &kit, &extra, &ek, col, dir, z, park);
             for (e, _, _, strip) in &visuals {
                 if strip {
@@ -242,7 +242,7 @@ fn run_eagle(
     }
 }
 
-fn spawn_eagle(c: &mut Commands, k: &Kit, x: &crate::extra::Extra, e: &EagleKit, col: i32, dir: f32, z: f32, pterodactyl: bool) {
+fn spawn_eagle(c: &mut Commands, k: &Kit, x: &crate::extra::Extra, e: &EagleKit, col: i32, dir: f32, z: f32, theme: Option<usize>) {
     // Modèle tourné vers -Z, puis pivoté selon le sens du vol.
     let root = c
         .spawn((
@@ -251,11 +251,11 @@ fn spawn_eagle(c: &mut Commands, k: &Kit, x: &crate::extra::Extra, e: &EagleKit,
             EagleVisual,
         ))
         .id();
-    if pterodactyl {
-        // Dans le parc, c'est le ptéro du JSON qui fond sur le crapaud (modèle tourné vers +X).
-        if let Some(i) = crate::gen_worlds::JURA_ANIMALS.iter().position(|a| a.flying) {
+    if let Some(t) = theme {
+        // Dans un monde à thème, c'est son animal volant (ptéro, carpe…) qui fond sur le crapaud (modèle tourné vers +X).
+        if let Some(i) = crate::gen_worlds::THEMES[t].animals.iter().position(|a| a.flying) {
             let holder = c.spawn((Transform::from_xyz(0.0, -0.6, 0.0).with_rotation(Quat::from_rotation_y(PI / 2.0)), Visibility::default(), ChildOf(root))).id();
-            crate::extra::spawn_animal(c, k, x, holder, i);
+            crate::extra::spawn_animal(c, k, x, holder, t, i);
             shadow(c, k, e, col, z);
             return;
         }

@@ -283,7 +283,8 @@ fn spawn_lane(c: &mut Commands, kit: &Kit, x: &Extra, g: &mut LaneGen, points: u
                     let at = Vec3::new((col * s) as f32, 0.0, 0.0);
                     let variant = g.rng.below(12) as usize;
                     if biome != Biome::Prairie {
-                        if g.rng.below(10) < 4 {
+                        let side_pct = biome.theme().map_or(40, |t| t.side_pct);
+                        if g.rng.below(100) < side_pct {
                             let roll = g.rng.below(10);
                             spawn_scenery(c, kit, x, root, biome, Scenery::Side, at, roll, variant);
                         } else if g.rng.below(10) < 3 {
@@ -328,28 +329,35 @@ fn spawn_lane(c: &mut Commands, kit: &Kit, x: &Extra, g: &mut LaneGen, points: u
             loop {
                 let mut vehicle = pick_vehicle(g.rng.below(1000), points);
                 // Dans le parc, surtout les véhicules du parc (ceux déjà gagnés).
-                if biome == Biome::Jurassic {
+                if let (Some(theme), Some(ti)) = (biome.theme(), biome.theme_index()) {
                     let r = g.rng.below(100);
                     if r < 55 {
-                        // Des dinosaures qui traversent (ceux déjà gagnés ; le ptéro vole, il ne traverse pas).
-                        let open: Vec<usize> = (0..crate::gen_worlds::JURA_ANIMALS.len())
+                        // Des animaux qui traversent (ceux déjà gagnés ; ceux qui volent ne traversent pas).
+                        let open: Vec<usize> = (0..theme.animals.len())
                             .filter(|i| {
-                                let a = &crate::gen_worlds::JURA_ANIMALS[*i];
-                                !a.flying && points >= crate::progress::rescale(a.points.max(crate::gen_worlds::JURA_POINTS))
+                                let a = &theme.animals[*i];
+                                !a.flying && points >= crate::progress::rescale(a.points.max(theme.points))
                             })
                             .collect();
                         if !open.is_empty() {
-                            vehicle = Vehicle::Beast(open[g.rng.below(open.len() as u32) as usize]);
+                            vehicle = Vehicle::Beast(ti, open[g.rng.below(open.len() as u32) as usize]);
                         }
                     } else if r < 75 {
-                        let open: Vec<usize> = crate::gen_worlds::JURA_VEHICLES.iter().copied().filter(|i| crate::progress::unlocked(points, crate::progress::Item::Vehicle(Vehicle::Gen(*i)))).collect();
+                        let open: Vec<usize> = theme.vehicles.iter().copied().filter(|i| crate::progress::unlocked(points, crate::progress::Item::Vehicle(Vehicle::Gen(*i)))).collect();
                         if !open.is_empty() {
                             vehicle = Vehicle::Gen(open[g.rng.below(open.len() as u32) as usize]);
                         }
                     }
                 }
+                // TRAVERSEE_BEAST=3 : tous les véhicules des mondes à thème sont l'animal n° 3 (essais).
+                if let (Some(_), Some(ti)) = (biome.theme(), biome.theme_index()) {
+                    static BEAST: std::sync::OnceLock<Option<usize>> = std::sync::OnceLock::new();
+                    if let Some(i) = *BEAST.get_or_init(|| std::env::var("TRAVERSEE_BEAST").ok().and_then(|s| s.parse().ok())) {
+                        vehicle = Vehicle::Beast(ti, i.min(crate::gen_worlds::THEMES[ti].animals.len() - 1));
+                    }
+                }
                 let kind = match vehicle {
-                    Vehicle::Beast(i) if !crate::gen_worlds::JURA_ANIMALS[i].dangerous => MoverKind::Critter,
+                    Vehicle::Beast(t, i) if !crate::gen_worlds::THEMES[t].animals[i].dangerous => MoverKind::Critter,
                     _ => MoverKind::Car,
                 };
                 let len = vehicle.len();

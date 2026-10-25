@@ -996,7 +996,7 @@ for v in V:
         v["pieces"] += [P("c", (1.803, 0.89, 0), (0.01, 0.17, 0.7), "noir")] + digits("2552", 1.812, 0.89, 0.27, 0.18)
 
 # --- Véhicules importés d'un univers (fichiers JSON de data/import)
-IMPORTS = [("data/import/jurassic_croa_vehicules.json", 1500)]  # (fichier, points ajoutés au déblocage)
+IMPORTS = [("data/import/jurassic_croa_vehicules.json", 1500), ("data/import/nippon_kaboom_vehicules.json", 1800)]  # (fichier, points ajoutés au déblocage)
 for fichier, decalage in IMPORTS:
     with open(os.path.join(ROOT, "games/traversee", fichier), encoding="utf-8") as fh:
         for v in json.load(fh)["vehicules"]:
@@ -1033,7 +1033,7 @@ ANIM_RS = {"clignote": ("Blink", 0.0), "clignote_alterne": ("BlinkAlt", 0.0), "c
            "sautille": ("Hop", 0.04), "embardee_laterale": ("Weave", 0.05), "penche_dans_les_virages": ("Lean", 0.0),
            "serpente_phase": ("Snake", 0.0), "clignote_lent": ("BlinkSlow", 0.0), "flotte_vent": ("Flutter", 0.0),
            "oscille_tete": ("Sway", 0.0), "bat_au_vent": ("Flap", 0.0), "tombe_periodiquement": ("Fall", 0.0),
-           "rotation_z": ("SpinLocal", 0.0), "fumee": ("DriftUp", 0.0), "derive_arriere_boucle": ("DriftBack", 0.0)}
+           "rotation_z": ("SpinLocal", 0.0), "derive_haut": ("DriftUp", 0.0), "rebond": ("Bob", 0.03), "fumee": ("DriftUp", 0.0), "derive_arriere_boucle": ("DriftBack", 0.0)}
 
 
 def parse_anim(t):

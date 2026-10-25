@@ -1,0 +1,818 @@
+{
+ "animaux": [
+  {
+   "id": "rex_crete_bleue",
+   "univers": "hommage",
+   "classe": "geant",
+   "noms": {
+    "fr": "Rex Crête-Bleue",
+    "en": "Blue-Crest Rex",
+    "de": "Blaukamm-Rex",
+    "es": "Rex Cresta Azul",
+    "it": "Rex Cresta Blu"
+   },
+   "comportement": "charge",
+   "vitesse": 2.2,
+   "dangereux": true,
+   "points_deblocage": 4200,
+   "couleur_2": "#8d939c",
+   "couleur_3": "#2f7be0",
+   "pieces": [
+    {
+     "forme": "cube",
+     "position": [
+      0.368,
+      1.65,
+      0
+     ],
+     "taille": [
+      1.656,
+      1.1,
+      1.5
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      0
+     ],
+     "matiere": "couleur_2",
+     "nom": "corps"
+    },
+    {
+     "forme": "cube",
+     "position": [
+      0.368,
+      1.32,
+      0
+     ],
+     "taille": [
+      1.49,
+      0.396,
+      1.545
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      0
+     ],
+     "matiere": "blanc"
+    },
+    {
+     "forme": "cube",
+     "position": [
+      1.012,
+      2.29,
+      0
+     ],
+     "taille": [
+      0.497,
+      0.5,
+      0.595
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      0
+     ],
+     "matiere": "couleur_2"
+    },
+    {
+     "forme": "cube",
+     "position": [
+      1.748,
+      2.38,
+      0
+     ],
+     "taille": [
+      1.104,
+      0.8,
+      0.85
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      0
+     ],
+     "matiere": "couleur_2"
+    },
+    {
+     "forme": "sphere",
+     "position": [
+      1.969,
+      2.54,
+      0.425
+     ],
+     "taille": [
+      0.14,
+      0.14,
+      0.14
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      0
+     ],
+     "matiere": "blanc"
+    },
+    {
+     "forme": "sphere",
+     "position": [
+      2.0,
+      2.54,
+      0.467
+     ],
+     "taille": [
+      0.07,
+      0.07,
+      0.07
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      0
+     ],
+     "matiere": "noir"
+    },
+    {
+     "forme": "sphere",
+     "position": [
+      1.969,
+      2.54,
+      -0.425
+     ],
+     "taille": [
+      0.14,
+      0.14,
+      0.14
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      0
+     ],
+     "matiere": "blanc"
+    },
+    {
+     "forme": "sphere",
+     "position": [
+      2.0,
+      2.54,
+      -0.467
+     ],
+     "taille": [
+      0.07,
+      0.07,
+      0.07
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      0
+     ],
+     "matiere": "noir"
+    },
+    {
+     "forme": "cylindre",
+     "position": [
+      0.5,
+      0.64,
+      0.42
+     ],
+     "taille": [
+      0.36,
+      0.92,
+      0.36
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      0
+     ],
+     "matiere": "couleur_2",
+     "nom": "patte_g"
+    },
+    {
+     "forme": "cube",
+     "position": [
+      0.68,
+      0.09,
+      0.42
+     ],
+     "taille": [
+      0.72,
+      0.18,
+      0.42
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      0
+     ],
+     "matiere": "sombre",
+     "nom": "patte_g"
+    },
+    {
+     "forme": "cylindre",
+     "position": [
+      0.5,
+      0.64,
+      -0.42
+     ],
+     "taille": [
+      0.36,
+      0.92,
+      0.36
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      0
+     ],
+     "matiere": "couleur_2",
+     "nom": "patte_d"
+    },
+    {
+     "forme": "cube",
+     "position": [
+      0.68,
+      0.09,
+      -0.42
+     ],
+     "taille": [
+      0.72,
+      0.18,
+      0.42
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      0
+     ],
+     "matiere": "sombre",
+     "nom": "patte_d"
+    },
+    {
+     "forme": "cone",
+     "position": [
+      -1.38,
+      1.815,
+      0
+     ],
+     "taille": [
+      0.75,
+      1.84,
+      0.75
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      90
+     ],
+     "matiere": "couleur_2",
+     "nom": "queue"
+    },
+    {
+     "forme": "cube",
+     "position": [
+      1.698,
+      1.86,
+      0
+     ],
+     "taille": [
+      1.049,
+      0.22,
+      0.8
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      0
+     ],
+     "matiere": "noir"
+    },
+    {
+     "forme": "cone",
+     "position": [
+      2.2,
+      2.0,
+      -0.28
+     ],
+     "taille": [
+      0.07,
+      0.14,
+      0.07
+     ],
+     "rotation_deg": [
+      180,
+      0,
+      0
+     ],
+     "matiere": "blanc"
+    },
+    {
+     "forme": "cone",
+     "position": [
+      2.2,
+      2.0,
+      -0.1
+     ],
+     "taille": [
+      0.07,
+      0.14,
+      0.07
+     ],
+     "rotation_deg": [
+      180,
+      0,
+      0
+     ],
+     "matiere": "blanc"
+    },
+    {
+     "forme": "cone",
+     "position": [
+      2.2,
+      2.0,
+      0.1
+     ],
+     "taille": [
+      0.07,
+      0.14,
+      0.07
+     ],
+     "rotation_deg": [
+      180,
+      0,
+      0
+     ],
+     "matiere": "blanc"
+    },
+    {
+     "forme": "cone",
+     "position": [
+      2.2,
+      2.0,
+      0.28
+     ],
+     "taille": [
+      0.07,
+      0.14,
+      0.07
+     ],
+     "rotation_deg": [
+      180,
+      0,
+      0
+     ],
+     "matiere": "blanc"
+    },
+    {
+     "forme": "cube",
+     "position": [
+      2.28,
+      2.43,
+      0
+     ],
+     "taille": [
+      0.04,
+      0.05,
+      0.4
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      0
+     ],
+     "matiere": "noir"
+    },
+    {
+     "forme": "cube",
+     "position": [
+      1.096,
+      1.65,
+      0.5
+     ],
+     "taille": [
+      0.3,
+      0.08,
+      0.08
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      0
+     ],
+     "matiere": "couleur_2"
+    },
+    {
+     "forme": "cone",
+     "position": [
+      1.266,
+      1.65,
+      0.5
+     ],
+     "taille": [
+      0.05,
+      0.1,
+      0.05
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      -90
+     ],
+     "matiere": "blanc"
+    },
+    {
+     "forme": "cube",
+     "position": [
+      1.096,
+      1.65,
+      -0.5
+     ],
+     "taille": [
+      0.3,
+      0.08,
+      0.08
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      0
+     ],
+     "matiere": "couleur_2"
+    },
+    {
+     "forme": "cone",
+     "position": [
+      1.266,
+      1.65,
+      -0.5
+     ],
+     "taille": [
+      0.05,
+      0.1,
+      0.05
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      -90
+     ],
+     "matiere": "blanc"
+    },
+    {
+     "forme": "cone",
+     "position": [
+      1.998,
+      2.955,
+      0
+     ],
+     "taille": [
+      0.16,
+      0.35,
+      0.1
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      12
+     ],
+     "matiere": "couleur_3",
+     "nom": "crete"
+    },
+    {
+     "forme": "cone",
+     "position": [
+      1.668,
+      2.955,
+      0
+     ],
+     "taille": [
+      0.16,
+      0.35,
+      0.1
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      12
+     ],
+     "matiere": "couleur_3",
+     "nom": "crete"
+    },
+    {
+     "forme": "cone",
+     "position": [
+      1.338,
+      2.955,
+      0
+     ],
+     "taille": [
+      0.16,
+      0.35,
+      0.1
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      12
+     ],
+     "matiere": "couleur_3",
+     "nom": "crete"
+    },
+    {
+     "forme": "cone",
+     "position": [
+      1.008,
+      2.42,
+      0
+     ],
+     "taille": [
+      0.16,
+      0.44,
+      0.1
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      12
+     ],
+     "matiere": "couleur_3",
+     "nom": "crete"
+    },
+    {
+     "forme": "cone",
+     "position": [
+      0.678,
+      2.41,
+      0
+     ],
+     "taille": [
+      0.16,
+      0.42,
+      0.1
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      12
+     ],
+     "matiere": "couleur_3",
+     "nom": "crete"
+    },
+    {
+     "forme": "cone",
+     "position": [
+      0.348,
+      2.4,
+      0
+     ],
+     "taille": [
+      0.16,
+      0.4,
+      0.1
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      12
+     ],
+     "matiere": "couleur_3",
+     "nom": "crete"
+    },
+    {
+     "forme": "cone",
+     "position": [
+      0.018,
+      2.39,
+      0
+     ],
+     "taille": [
+      0.16,
+      0.38,
+      0.1
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      12
+     ],
+     "matiere": "couleur_3",
+     "nom": "crete"
+    },
+    {
+     "forme": "cone",
+     "position": [
+      -0.312,
+      2.38,
+      0
+     ],
+     "taille": [
+      0.16,
+      0.36,
+      0.1
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      12
+     ],
+     "matiere": "couleur_3",
+     "nom": "crete"
+    },
+    {
+     "forme": "cone",
+     "position": [
+      -0.642,
+      2.185,
+      0
+     ],
+     "taille": [
+      0.16,
+      0.3,
+      0.1
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      12
+     ],
+     "matiere": "couleur_3",
+     "nom": "crete"
+    },
+    {
+     "forme": "cone",
+     "position": [
+      -0.972,
+      2.185,
+      0
+     ],
+     "taille": [
+      0.16,
+      0.3,
+      0.1
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      12
+     ],
+     "matiere": "couleur_3",
+     "nom": "crete"
+    },
+    {
+     "forme": "cone",
+     "position": [
+      -1.302,
+      2.185,
+      0
+     ],
+     "taille": [
+      0.16,
+      0.3,
+      0.1
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      12
+     ],
+     "matiere": "couleur_3",
+     "nom": "crete"
+    },
+    {
+     "forme": "sphere",
+     "position": [
+      1.638,
+      3.15,
+      0
+     ],
+     "taille": [
+      0.08,
+      0.08,
+      0.08
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      0
+     ],
+     "matiere": "lumiere_bleue",
+     "nom": "crete_pointe"
+    },
+    {
+     "forme": "sphere",
+     "position": [
+      0.648,
+      2.64,
+      0
+     ],
+     "taille": [
+      0.08,
+      0.08,
+      0.08
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      0
+     ],
+     "matiere": "lumiere_bleue",
+     "nom": "crete_pointe"
+    },
+    {
+     "forme": "sphere",
+     "position": [
+      -0.342,
+      2.58,
+      0
+     ],
+     "taille": [
+      0.08,
+      0.08,
+      0.08
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      0
+     ],
+     "matiere": "lumiere_bleue",
+     "nom": "crete_pointe"
+    },
+    {
+     "forme": "sphere",
+     "position": [
+      -1.002,
+      2.355,
+      0
+     ],
+     "taille": [
+      0.08,
+      0.08,
+      0.08
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      0
+     ],
+     "matiere": "lumiere_bleue",
+     "nom": "crete_pointe"
+    },
+    {
+     "forme": "cube",
+     "position": [
+      0.368,
+      2.22,
+      0
+     ],
+     "taille": [
+      1.6,
+      0.04,
+      0.3
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      0
+     ],
+     "matiere": "sombre"
+    }
+   ],
+   "parties_mobiles": [
+    {
+     "piece": "corps",
+     "animation": "rebond",
+     "amplitude": 0.02
+    },
+    {
+     "piece": "patte_g",
+     "animation": "pendule",
+     "phase": 0.0,
+     "axe": "z",
+     "pivot": "haut"
+    },
+    {
+     "piece": "patte_d",
+     "animation": "pendule",
+     "phase": 0.5,
+     "axe": "z",
+     "pivot": "haut"
+    },
+    {
+     "piece": "queue",
+     "animation": "balance",
+     "axe": "y"
+    },
+    {
+     "piece": "crete_pointe",
+     "animation": "pulse"
+    }
+   ],
+   "longueur": 4.6,
+   "largeur": 1.5
+  }
+ ]
+}

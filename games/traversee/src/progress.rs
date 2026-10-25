@@ -55,7 +55,6 @@ const BASE_UNLOCKS: &[(u32, Item)] = &[
     (640, Item::Costume(Costume::Pirate)),
     (720, Item::Vehicle(Vehicle::Police)),
     (800, Item::World(Biome::Autumn)),
-    (crate::gen_worlds::JURA_POINTS, Item::World(Biome::Jurassic)),
     (900, Item::Character(Character::Hedgehog)),
     (1000, Item::Vehicle(Vehicle::Tractor)),
     (1100, Item::Costume(Costume::Crown)),
@@ -72,6 +71,11 @@ pub static UNLOCKS: LazyLock<Vec<(u32, Item)>> = LazyLock::new(|| {
     let mut all: Vec<(u32, Item)> = BASE_UNLOCKS.iter().map(|(t, i)| (rescale(*t), *i)).collect();
     for (i, g) in crate::gen_vehicles::GEN.iter().enumerate() {
         all.push((rescale(g.points), Item::Vehicle(Vehicle::Gen(i))));
+    }
+    for b in Biome::ALL {
+        if let Some(t) = b.theme() {
+            all.push((rescale(t.points), Item::World(b)));
+        }
     }
     all.sort_by_key(|(t, _)| *t);
     all
@@ -110,7 +114,7 @@ impl Item {
             Item::Vehicle(Vehicle::Gen(i)) => return crate::gen_vehicles::name(i),
             Item::Vehicle(v) => match v {
                 Vehicle::Gen(_) => unreachable!(),
-                Vehicle::Beast(i) => return crate::gen_worlds::jura_animal_name(i),
+                Vehicle::Beast(t, i) => return (crate::gen_worlds::THEMES[t].animal_name)(i),
                 Vehicle::Car => tx!("Pépette", "Penny", "Püppi", "Pepetta", "Pepita"),
                 Vehicle::Truck => tx!("Gros Bidon", "Big Barrel", "Dicker Brummer", "Gran Botte", "Gran Bidón"),
                 Vehicle::Taxi => tx!("Taxi Citron", "Lemon Cab", "Zitronen-Taxi", "Taxi Limone", "Taxi Limón"),
