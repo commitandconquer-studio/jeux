@@ -124,6 +124,8 @@ pub struct Progress {
     /// Meilleur score d'avant la dernière partie, et si elle l'a battu.
     pub best_before: u32,
     pub new_record: bool,
+    /// Points atteints en cours de partie : ce qui vient d'être gagné est déjà utilisable.
+    pub live: u32,
 }
 
 impl Default for Progress {
@@ -132,19 +134,19 @@ impl Default for Progress {
         let forced = std::env::var("TRAVERSEE_POINTS").ok().and_then(|s| s.parse().ok());
         let total = forced.or_else(|| game_common::save::load(SAVE, "total").and_then(|s| s.parse().ok())).unwrap_or(0);
         let best_before = game_common::save::load(SAVE, "best").and_then(|s| s.parse().ok()).unwrap_or(0);
-        Self { total, fresh: Vec::new(), best_before, new_record: false }
+        Self { total, fresh: Vec::new(), best_before, new_record: false, live: 0 }
     }
 }
 
 impl Progress {
     /// Nombre d'objets gagnés jusqu'ici.
     pub fn count(&self) -> usize {
-        UNLOCKS.iter().filter(|(t, _)| self.total >= *t).count()
+        UNLOCKS.iter().filter(|(t, _)| self.points() >= *t).count()
     }
 
     /// Prochain objet à débloquer et son seuil.
     pub fn next(&self) -> Option<(u32, Item)> {
-        UNLOCKS.iter().find(|(t, _)| self.total < *t).copied()
+        UNLOCKS.iter().find(|(t, _)| self.points() < *t).copied()
     }
 
     /// Avancement vers le prochain objet (0 à 1), seuil précédent et suivant.
@@ -156,8 +158,13 @@ impl Progress {
         }
     }
 
+    /// Points pris en compte : le total, ou plus si la partie en cours est déjà plus loin.
+    pub fn points(&self) -> u32 {
+        self.total.max(self.live)
+    }
+
     pub fn has(&self, item: Item) -> bool {
-        unlocked(self.total, item)
+        unlocked(self.points(), item)
     }
 }
 
@@ -188,7 +195,7 @@ fn commit(mut progress: ResMut<Progress>, score: Res<Score>) {
     let after = progress.total;
     progress.fresh = UNLOCKS.iter().filter(|(t, _)| before < *t && *t <= after).map(|(_, i)| *i).collect();
     // Les modes d'essai (captures, mesures, points forcés) ne touchent pas la sauvegarde.
-    if ["TRAVERSEE_CAPTURE", "TRAVERSEE_PERF", "TRAVERSEE_POINTS"].iter().any(|k| std::env::var(k).is_ok()) {
+    if test_mode() {
         return;
     }
     game_common::save::store(SAVE, "total", &after.to_string());
@@ -197,7 +204,7 @@ fn commit(mut progress: ResMut<Progress>, score: Res<Score>) {
 
 /// Pendant la partie : dès qu'un seuil est franchi, on l'annonce à l'écran.
 fn announce(
-    progress: Res<Progress>,
+    mut progress: ResMut<Progress>,
     score: Res<Score>,
     mut last: Local<Option<u32>>,
     mut fx: MessageWriter<crate::fx::Fx>,
@@ -209,6 +216,11 @@ fn announce(
             if before < *t && *t <= now {
                 fx.write(crate::fx::Fx::Unlock(*item));
             }
+        }
+        // On le garde tout de suite : même si on ferme le jeu avant la fin de la partie.
+        progress.live = now;
+        if !test_mode() {
+            game_common::save::store(SAVE, "total", &now.to_string());
         }
     }
     *last = Some(now);
@@ -236,4 +248,8 @@ impl Item {
             Item::Flies | Item::GoldFlies | Item::Eagle => Color::srgb(0.2, 0.7, 0.7),
         }
     }
+}
+
+fn test_mode() -> bool {
+    ["TRAVERSEE_CAPTURE", "TRAVERSEE_PERF", "TRAVERSEE_POINTS"].iter().any(|k| std::env::var(k).is_ok())
 }

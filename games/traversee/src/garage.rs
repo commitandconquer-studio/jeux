@@ -133,7 +133,7 @@ fn build(
                     Item::Vehicle(v) => spawn_vehicle(&mut commands, &kit, &extra, slot, v, color),
                     _ => {}
                 }
-                let open = progress.total >= threshold(*item);
+                let open = progress.has(*item);
                 if !open {
                     commands.entity(slot).insert(Locked);
                 }
@@ -277,7 +277,8 @@ fn label(commands: &mut Commands, at: Vec3, title: &str, sub: String, open: bool
         Color::srgb(0.38, 0.40, 0.46)
     };
     let mut e = commands.spawn((
-        Node { position_type: PositionType::Absolute, width: px(260), flex_direction: FlexDirection::Column, align_items: AlignItems::Center, ..default() },
+        // La zone cliquable monte jusqu'au personnage : on peut cliquer dessus, pas seulement sur le nom.
+        Node { position_type: PositionType::Absolute, width: px(260), height: px(230), flex_direction: FlexDirection::Column, justify_content: JustifyContent::FlexEnd, align_items: AlignItems::Center, ..default() },
         Label(at),
         scope(),
     ));
@@ -326,7 +327,7 @@ fn place_labels(camera: Query<(&Camera, &GlobalTransform), With<Camera3d>>, mut 
     for (l, mut node) in &mut labels {
         if let Ok(p) = cam.world_to_viewport(gt, l.0) {
             node.left = px(p.x - 130.0);
-            node.top = px(p.y);
+            node.top = px(p.y - 175.0);
         }
     }
 }
