@@ -96,14 +96,23 @@ fn update_sky(
     mut amb: ResMut<game_common::ambiance::Ambiance>,
     mut saved: Local<Option<(game_common::ambiance::Moment, Option<game_common::ambiance::Meteo>)>>,
 ) {
-    let space = Biome::of(frog.max_row_i(), progress.total + score.current) == Biome::Space;
+    let biome = Biome::of(frog.max_row_i(), progress.total + score.current);
+    let space = biome == Biome::Space;
     IN_SPACE.store(space, std::sync::atomic::Ordering::Relaxed);
     // Dans le vide et au garage : pas de coucher de soleil ni de pluie, une lumière neutre.
-    if space || *state.get() == crate::GameState::Garage {
+    // À Halloween : toujours le crépuscule orangé.
+    let forced = if space || *state.get() == crate::GameState::Garage {
+        Some(game_common::ambiance::Moment::Jour)
+    } else if biome == Biome::Halloween {
+        Some(game_common::ambiance::Moment::Soir)
+    } else {
+        None
+    };
+    if let Some(moment) = forced {
         if saved.is_none() {
             *saved = Some((amb.moment, amb.meteo));
         }
-        amb.moment = game_common::ambiance::Moment::Jour;
+        amb.moment = moment;
         amb.meteo = None;
     } else if let Some((moment, meteo)) = saved.take() {
         amb.moment = moment;

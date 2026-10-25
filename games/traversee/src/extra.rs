@@ -66,7 +66,7 @@ impl FromWorld for Extra {
             }),
         )
         .chain(std::iter::once((FROG_GREEN, FROG_GREEN)))
-        .chain(SPACE_CARGO.iter().map(|c| (*c, *c)));
+        .chain(SPACE_CARGO.iter().chain(HALLOWEEN_COLORS.iter()).map(|c| (*c, *c)));
         for rgb in models.flat_map(|(a, b)| [a, b]) {
             if !colors.iter().any(|(c, _)| *c == rgb) {
                 let col = Color::srgb(rgb[0] as f32 / 255.0, rgb[1] as f32 / 255.0, rgb[2] as f32 / 255.0);
@@ -482,9 +482,14 @@ pub enum Biome {
     Space,
     /// Far West Croâ : diligences, chevaux, bisons et vieux train.
     FarWest,
+    /// Halloween Croâ : cimetière, créatures, train fantôme.
+    Halloween,
 }
 
 pub const BIOME_LEN: i32 = 60;
+
+/// Cercueils et citrouilles flottantes d'Halloween.
+pub const HALLOWEEN_COLORS: [[u8; 3]; 4] = [[84, 52, 34], [230, 190, 60], [255, 128, 30], [60, 120, 50]];
 
 /// Les couleurs des conteneurs des cargos de l'espace.
 pub const SPACE_CARGO: [[u8; 3]; 4] = [[232, 67, 58], [255, 138, 42], [55, 163, 255], [244, 246, 250]];
@@ -557,7 +562,7 @@ pub struct Theme {
 pub static START_WORLD: std::sync::atomic::AtomicI32 = std::sync::atomic::AtomicI32::new(0);
 
 impl Biome {
-    pub const ALL: [Biome; 8] = [Biome::Prairie, Biome::Desert, Biome::Snow, Biome::Autumn, Biome::Jurassic, Biome::Nippon, Biome::Space, Biome::FarWest];
+    pub const ALL: [Biome; 9] = [Biome::Prairie, Biome::Desert, Biome::Snow, Biome::Autumn, Biome::Jurassic, Biome::Nippon, Biome::Space, Biome::FarWest, Biome::Halloween];
 
     /// Le monde décrit en pièces, pour les mondes à thème.
     pub fn theme(self) -> Option<&'static Theme> {
@@ -570,6 +575,7 @@ impl Biome {
             Biome::Nippon => Some(1),
             Biome::Space => Some(3),
             Biome::FarWest => Some(2),
+            Biome::Halloween => Some(4),
             _ => None,
         }
     }
@@ -585,7 +591,7 @@ impl Biome {
         // TRAVERSEE_BIOME=1..3 : voir un monde tout de suite (essais et captures).
         static ENV: std::sync::OnceLock<i32> = std::sync::OnceLock::new();
         let start = *ENV.get_or_init(|| std::env::var("TRAVERSEE_BIOME").ok().and_then(|s| s.parse().ok()).unwrap_or(0)) + START_WORLD.load(std::sync::atomic::Ordering::Relaxed);
-        let biome = match (row.max(0) / BIOME_LEN + start) % 8 {
+        let biome = match (row.max(0) / BIOME_LEN + start) % 9 {
             0 => Biome::Prairie,
             1 => Biome::Desert,
             2 => Biome::Snow,
@@ -593,7 +599,8 @@ impl Biome {
             4 => Biome::Jurassic,
             5 => Biome::Nippon,
             6 => Biome::Space,
-            _ => Biome::FarWest,
+            7 => Biome::FarWest,
+            _ => Biome::Halloween,
         };
         if biome != Biome::Prairie && !crate::progress::unlocked(points, crate::progress::Item::World(biome)) {
             Biome::Prairie
@@ -609,7 +616,7 @@ impl Biome {
             Biome::Desert => tx!("Le désert", "The desert", "Die Wüste", "Il deserto", "El desierto"),
             Biome::Snow => tx!("La neige", "The snow", "Der Schnee", "La neve", "La nieve"),
             Biome::Autumn => tx!("L'automne", "Autumn", "Der Herbst", "L'autunno", "El otoño"),
-            Biome::Jurassic | Biome::Nippon | Biome::Space | Biome::FarWest => return (self.theme().unwrap().name)(),
+            Biome::Jurassic | Biome::Nippon | Biome::Space | Biome::FarWest | Biome::Halloween => return (self.theme().unwrap().name)(),
         }
         .t()
     }
@@ -692,7 +699,7 @@ impl BiomeMats {
 impl Extra {
     /// La piste du monde (terre battue), à la place de la route goudronnée.
     pub fn dirt_road(&self, biome: Biome) -> Option<&Handle<StandardMaterial>> {
-        (biome == Biome::FarWest).then(|| &self.biome.themed[biome.theme_index().unwrap()].road)
+        matches!(biome, Biome::FarWest | Biome::Halloween).then(|| &self.biome.themed[biome.theme_index().unwrap()].road)
     }
 
     /// Sol de l'herbe (deux teintes en alternance) et bords, selon le monde.
@@ -703,7 +710,7 @@ impl Extra {
             Biome::Desert => (&self.biome.sand[i], &self.biome.sand_side),
             Biome::Snow => (&self.biome.snow[i], &self.biome.snow_side),
             Biome::Autumn => (&self.biome.autumn[i], &self.biome.autumn_side),
-            Biome::Jurassic | Biome::Nippon | Biome::Space | Biome::FarWest => {
+            Biome::Jurassic | Biome::Nippon | Biome::Space | Biome::FarWest | Biome::Halloween => {
                 let t = &self.biome.themed[biome.theme_index().unwrap()];
                 (&t.grass[i], &t.side)
             }
@@ -714,7 +721,7 @@ impl Extra {
     pub fn water<'a>(&'a self, kit: &'a Kit, biome: Biome) -> (&'a Handle<StandardMaterial>, &'a Handle<StandardMaterial>) {
         match biome {
             Biome::Snow => (&self.biome.ice, &self.biome.ice_side),
-            Biome::Jurassic | Biome::Nippon | Biome::Space | Biome::FarWest => {
+            Biome::Jurassic | Biome::Nippon | Biome::Space | Biome::FarWest | Biome::Halloween => {
                 let t = &self.biome.themed[biome.theme_index().unwrap()];
                 (&t.water, &t.water_side)
             }
@@ -818,7 +825,7 @@ pub fn spawn_scenery(c: &mut Commands, k: &Kit, x: &Extra, parent: Entity, biome
             }
         }
         // ---- Mondes à thème : modèles décrits en pièces
-        (Biome::Jurassic | Biome::Nippon | Biome::Space | Biome::FarWest, kind) => {
+        (Biome::Jurassic | Biome::Nippon | Biome::Space | Biome::FarWest | Biome::Halloween, kind) => {
             let t = biome.theme().unwrap();
             let pick = (roll as usize * 3 + variant) % 20;
             match kind {
@@ -966,6 +973,26 @@ pub fn spawn_platform(c: &mut Commands, k: &Kit, x: &Extra, parent: Entity) {
     part(c, parent, &x.octagon, &x.metal_top, Vec3::new(0.0, -0.055, 0.0), Vec3::new(0.7, 0.02, 0.7));
     part(c, parent, &k.ball, &x.blue_light, Vec3::new(0.3, -0.04, 0.3), Vec3::splat(0.07));
     part(c, parent, &k.ball, &x.blue_light, Vec3::new(-0.3, -0.04, -0.3), Vec3::splat(0.07));
+}
+
+/// Cercueil qui flotte dans le marais, à la place du rondin.
+pub fn spawn_coffin(c: &mut Commands, k: &Kit, x: &Extra, parent: Entity, len: f32) {
+    let wood = x.color(HALLOWEEN_COLORS[0]);
+    let gold = x.color(HALLOWEEN_COLORS[1]);
+    part(c, parent, &k.cube, wood, Vec3::new(0.0, -0.05, 0.0), Vec3::new(len, 0.28, 0.66));
+    part(c, parent, &k.cube, wood, Vec3::new(-len * 0.42, -0.05, 0.0), Vec3::new(len * 0.16, 0.28, 0.5));
+    part(c, parent, &k.cube, wood, Vec3::new(0.0, 0.1, 0.0), Vec3::new(len - 0.25, 0.04, 0.5));
+    part(c, parent, &k.cube, gold, Vec3::new(len * 0.2, 0.13, 0.0), Vec3::new(0.5, 0.03, 0.08));
+    part(c, parent, &k.cube, gold, Vec3::new(len * 0.2, 0.13, 0.0), Vec3::new(0.08, 0.03, 0.4));
+}
+
+/// Citrouille flottante, à la place du nénuphar.
+pub fn spawn_pumpkin_pad(c: &mut Commands, k: &Kit, x: &Extra, parent: Entity) {
+    let orange = x.color(HALLOWEEN_COLORS[2]);
+    part(c, parent, &k.ball, orange, Vec3::new(0.0, -0.1, 0.0), Vec3::new(0.85, 0.5, 0.85));
+    part(c, parent, &k.ball, orange, Vec3::new(0.22, -0.1, 0.0), Vec3::new(0.4, 0.5, 0.8));
+    part(c, parent, &k.ball, orange, Vec3::new(-0.22, -0.1, 0.0), Vec3::new(0.4, 0.5, 0.8));
+    part(c, parent, &k.cyl, x.color(HALLOWEEN_COLORS[3]), Vec3::new(0.0, 0.18, 0.0), Vec3::new(0.1, 0.16, 0.1));
 }
 
 /// Cargo qui dérive dans le vide, à la place du rondin : coque et conteneurs de couleur.

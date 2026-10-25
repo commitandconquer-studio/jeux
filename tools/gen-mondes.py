@@ -31,6 +31,9 @@ WORLDS = [
     dict(tag="ESPACE", file="data/import/espace.json", extra_animals=[], hat=[], side_pct=0, only_own=True,
          blocks=[0] * 8 + [1] * 6 + [2] * 6,
          sides=[100] * 10 + [101] * 5 + [102] * 5),
+    dict(tag="HALLOWEEN", file="data/import/halloween.json", extra_animals=[], hat=[], side_pct=6, only_own=True,
+         blocks=[0] * 7 + [1] * 6 + [2] * 4 + [3] * 3,
+         sides=[1] * 8 + [0] * 2 + [102] * 6 + [100] * 4),
 ]
 SHAPE_RS = {"cube": "Shape::Cube", "cylindre": "Shape::Cyl", "cone": "Shape::Cone", "sphere": "Shape::Sphere"}
 MAT_RS = {"vitre": "Mat::Vitre", "sombre": "Mat::Sombre", "pneu": "Mat::Pneu", "enjoliveur": "Mat::Enjoliveur",

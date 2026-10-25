@@ -7,7 +7,7 @@ use game_common::Rng;
 
 use crate::audio::{Mutable, Sfx, SoundOn, Sounds};
 use crate::frog::Frog;
-use crate::extra::{Biome, Deco, Extra, Scenery, Vehicle, pick_vehicle, spawn_cargo, spawn_deco, spawn_fly, spawn_floe, spawn_ice_pad, spawn_platform, spawn_scenery, spawn_vehicle};
+use crate::extra::{Biome, Deco, Extra, Scenery, Vehicle, pick_vehicle, spawn_cargo, spawn_coffin, spawn_deco, spawn_fly, spawn_floe, spawn_ice_pad, spawn_platform, spawn_pumpkin_pad, spawn_scenery, spawn_vehicle};
 use crate::models::{Kit, Prop, part, part_rot, spawn_car, spawn_log, spawn_pad, spawn_prop, spawn_train, spawn_truck};
 
 /// Colonnes jouables : de -COLS à +COLS.
@@ -329,7 +329,7 @@ fn spawn_lane(c: &mut Commands, kit: &Kit, x: &Extra, g: &mut LaneGen, points: u
             } else {
                 ground(c, -0.02, &m.road, &m.road_side);
             }
-            if after_road && biome != Biome::FarWest {
+            if after_road && x.dirt_road(biome).is_none() {
                 // Pointillés entre deux voies de route
                 let reach = if biome == Biome::Space { COLS as f32 + 0.5 } else { HALF };
                 let mut x = -reach;
@@ -415,6 +415,8 @@ fn spawn_lane(c: &mut Commands, kit: &Kit, x: &Extra, g: &mut LaneGen, points: u
                         let mover = spawn_mover(c, root, row, col as f32, 0.0, 0.8, MoverKind::Pad, 1.0);
                         if biome == Biome::Space {
                             spawn_platform(c, kit, x, mover);
+                        } else if biome == Biome::Halloween {
+                            spawn_pumpkin_pad(c, kit, x, mover);
                         } else if frozen {
                             spawn_ice_pad(c, kit, x, mover);
                         } else {
@@ -427,6 +429,8 @@ fn spawn_lane(c: &mut Commands, kit: &Kit, x: &Extra, g: &mut LaneGen, points: u
                     let mover = spawn_mover(c, root, row, 0.0, 0.0, 0.8, MoverKind::Pad, 1.0);
                     if biome == Biome::Space {
                         spawn_platform(c, kit, x, mover);
+                    } else if biome == Biome::Halloween {
+                        spawn_pumpkin_pad(c, kit, x, mover);
                     } else if frozen {
                         spawn_ice_pad(c, kit, x, mover);
                     } else {
@@ -447,6 +451,8 @@ fn spawn_lane(c: &mut Commands, kit: &Kit, x: &Extra, g: &mut LaneGen, points: u
                     let mover = spawn_mover(c, root, row, x_pos + len / 2.0, speed, len, MoverKind::Log, 1.0);
                     if biome == Biome::Space {
                         spawn_cargo(c, kit, x, mover, len);
+                    } else if biome == Biome::Halloween {
+                        spawn_coffin(c, kit, x, mover, len);
                     } else if frozen {
                         spawn_floe(c, kit, x, mover, len);
                     } else {

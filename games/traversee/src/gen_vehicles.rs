@@ -1834,7 +1834,92 @@ const ANIMS_46: &[Anim] = &[
     Anim { target: "flamme", kind: AnimKind::Pulse, amp: 0.0 },
 ];
 
-pub const GEN: [Gen; 47] = [
+const PIECES_47: &[Piece] = &[
+    Piece { shape: Shape::Cube, pos: [0.0, 0.2, 0.0], size: [2.5, 0.1, 0.7], rot: [0.0, 0.0, 0.0], mat: Mat::Sombre, id: None },
+    Piece { shape: Shape::Cube, pos: [0.0, 0.5, 0.0], size: [2.7, 0.45, 0.86], rot: [0.0, 0.0, 0.0], mat: Mat::C2, id: None },
+    Piece { shape: Shape::Cube, pos: [0.95, 0.85, 0.0], size: [0.7, 0.3, 0.8], rot: [0.0, 0.0, 0.0], mat: Mat::C2, id: None },
+    Piece { shape: Shape::Cube, pos: [0.95, 0.88, 0.41], size: [0.5, 0.2, 0.02], rot: [0.0, 0.0, 0.0], mat: Mat::Vitre, id: None },
+    Piece { shape: Shape::Cube, pos: [0.95, 0.88, -0.41], size: [0.5, 0.2, 0.02], rot: [0.0, 0.0, 0.0], mat: Mat::Vitre, id: None },
+    Piece { shape: Shape::Cube, pos: [1.31, 0.88, 0.0], size: [0.02, 0.2, 0.7], rot: [0.0, 0.0, 0.0], mat: Mat::Vitre, id: None },
+    Piece { shape: Shape::Cube, pos: [-0.35, 0.95, 0.0], size: [1.5, 0.45, 0.78], rot: [0.0, 0.0, 0.0], mat: Mat::Vitre, id: None },
+    Piece { shape: Shape::Cube, pos: [-0.35, 0.72, 0.0], size: [1.55, 0.04, 0.82], rot: [0.0, 0.0, 0.0], mat: Mat::C3, id: None },
+    Piece { shape: Shape::Cube, pos: [-0.35, 1.2, 0.0], size: [1.55, 0.05, 0.82], rot: [0.0, 0.0, 0.0], mat: Mat::C2, id: None },
+    Piece { shape: Shape::Cube, pos: [-0.35, 0.95, 0.0], size: [1.2, 0.3, 0.4], rot: [0.0, 0.0, 0.0], mat: Mat::C3, id: None },
+    Piece { shape: Shape::Cube, pos: [1.35, 0.35, 0.28], size: [0.05, 0.08, 0.14], rot: [0.0, 0.0, 0.0], mat: Mat::Phare, id: None },
+    Piece { shape: Shape::Cube, pos: [1.35, 0.35, -0.28], size: [0.05, 0.08, 0.14], rot: [0.0, 0.0, 0.0], mat: Mat::Phare, id: None },
+    Piece { shape: Shape::Cube, pos: [-1.36, 0.35, 0.28], size: [0.05, 0.08, 0.14], rot: [0.0, 0.0, 0.0], mat: Mat::FeuArriere, id: None },
+    Piece { shape: Shape::Cube, pos: [-1.36, 0.35, -0.28], size: [0.05, 0.08, 0.14], rot: [0.0, 0.0, 0.0], mat: Mat::FeuArriere, id: None },
+    Piece { shape: Shape::Sphere, pos: [1.1, 1.08, 0.0], size: [0.1, 0.1, 0.1], rot: [0.0, 0.0, 0.0], mat: Mat::LumiereBleue, id: Some("gyro") },
+    Piece { shape: Shape::Cyl, pos: [0.9, 0.18, 0.42], size: [0.36, 0.11, 0.36], rot: [90.0, 0.0, 0.0], mat: Mat::Pneu, id: None },
+    Piece { shape: Shape::Cyl, pos: [0.9, 0.18, 0.425], size: [0.198, 0.13, 0.198], rot: [90.0, 0.0, 0.0], mat: Mat::Enjoliveur, id: None },
+    Piece { shape: Shape::Cyl, pos: [0.9, 0.18, -0.42], size: [0.36, 0.11, 0.36], rot: [90.0, 0.0, 0.0], mat: Mat::Pneu, id: None },
+    Piece { shape: Shape::Cyl, pos: [0.9, 0.18, -0.425], size: [0.198, 0.13, 0.198], rot: [90.0, 0.0, 0.0], mat: Mat::Enjoliveur, id: None },
+    Piece { shape: Shape::Cyl, pos: [-0.9, 0.18, 0.42], size: [0.36, 0.11, 0.36], rot: [90.0, 0.0, 0.0], mat: Mat::Pneu, id: None },
+    Piece { shape: Shape::Cyl, pos: [-0.9, 0.18, 0.425], size: [0.198, 0.13, 0.198], rot: [90.0, 0.0, 0.0], mat: Mat::Enjoliveur, id: None },
+    Piece { shape: Shape::Cyl, pos: [-0.9, 0.18, -0.42], size: [0.36, 0.11, 0.36], rot: [90.0, 0.0, 0.0], mat: Mat::Pneu, id: None },
+    Piece { shape: Shape::Cyl, pos: [-0.9, 0.18, -0.425], size: [0.198, 0.13, 0.198], rot: [90.0, 0.0, 0.0], mat: Mat::Enjoliveur, id: None },
+];
+const ANIMS_47: &[Anim] = &[
+    Anim { target: "gyro", kind: AnimKind::Pulse, amp: 0.0 },
+];
+
+const PIECES_48: &[Piece] = &[
+    Piece { shape: Shape::Sphere, pos: [0.0, 0.72, 0.0], size: [1.5, 1.05, 1.0], rot: [0.0, 0.0, 0.0], mat: Mat::C2, id: None },
+    Piece { shape: Shape::Sphere, pos: [0.3, 0.72, 0.0], size: [0.7, 1.05, 0.98], rot: [0.0, 0.0, 0.0], mat: Mat::C2, id: None },
+    Piece { shape: Shape::Sphere, pos: [-0.3, 0.72, 0.0], size: [0.7, 1.05, 0.98], rot: [0.0, 0.0, 0.0], mat: Mat::C2, id: None },
+    Piece { shape: Shape::Cyl, pos: [0.0, 1.28, 0.0], size: [0.12, 0.2, 0.12], rot: [0.0, 0.0, 0.0], mat: Mat::C3, id: None },
+    Piece { shape: Shape::Cube, pos: [0.1, 0.8, 0.5], size: [0.45, 0.3, 0.03], rot: [0.0, 0.0, 0.0], mat: Mat::Phare, id: None },
+    Piece { shape: Shape::Cube, pos: [0.1, 0.8, -0.5], size: [0.45, 0.3, 0.03], rot: [0.0, 0.0, 0.0], mat: Mat::Phare, id: None },
+    Piece { shape: Shape::Cube, pos: [0.0, 0.3, 0.0], size: [1.6, 0.1, 0.7], rot: [0.0, 0.0, 0.0], mat: Mat::Sombre, id: None },
+    Piece { shape: Shape::Cube, pos: [0.9, 0.34, 0.0], size: [0.15, 0.1, 0.5], rot: [0.0, 0.0, 0.0], mat: Mat::C3, id: None },
+    Piece { shape: Shape::Sphere, pos: [1.0, 0.5, 0.0], size: [0.12, 0.12, 0.12], rot: [0.0, 0.0, 0.0], mat: Mat::LumiereRouge, id: Some("feu") },
+    Piece { shape: Shape::Cyl, pos: [0.55, 0.28, 0.5], size: [0.56, 0.11, 0.56], rot: [90.0, 0.0, 0.0], mat: Mat::Pneu, id: None },
+    Piece { shape: Shape::Cyl, pos: [0.55, 0.28, 0.505], size: [0.308, 0.13, 0.308], rot: [90.0, 0.0, 0.0], mat: Mat::Enjoliveur, id: None },
+    Piece { shape: Shape::Cyl, pos: [0.55, 0.28, -0.5], size: [0.56, 0.11, 0.56], rot: [90.0, 0.0, 0.0], mat: Mat::Pneu, id: None },
+    Piece { shape: Shape::Cyl, pos: [0.55, 0.28, -0.505], size: [0.308, 0.13, 0.308], rot: [90.0, 0.0, 0.0], mat: Mat::Enjoliveur, id: None },
+    Piece { shape: Shape::Cyl, pos: [-0.55, 0.28, 0.5], size: [0.56, 0.11, 0.56], rot: [90.0, 0.0, 0.0], mat: Mat::Pneu, id: None },
+    Piece { shape: Shape::Cyl, pos: [-0.55, 0.28, 0.505], size: [0.308, 0.13, 0.308], rot: [90.0, 0.0, 0.0], mat: Mat::Enjoliveur, id: None },
+    Piece { shape: Shape::Cyl, pos: [-0.55, 0.28, -0.5], size: [0.56, 0.11, 0.56], rot: [90.0, 0.0, 0.0], mat: Mat::Pneu, id: None },
+    Piece { shape: Shape::Cyl, pos: [-0.55, 0.28, -0.505], size: [0.308, 0.13, 0.308], rot: [90.0, 0.0, 0.0], mat: Mat::Enjoliveur, id: None },
+];
+const ANIMS_48: &[Anim] = &[
+    Anim { target: "feu", kind: AnimKind::BlinkAlt, amp: 0.0 },
+];
+
+const PIECES_49: &[Piece] = &[
+    Piece { shape: Shape::Cube, pos: [0.0, 0.25, 0.0], size: [2.9, 0.1, 0.7], rot: [0.0, 0.0, 0.0], mat: Mat::Sombre, id: None },
+    Piece { shape: Shape::Cube, pos: [0.95, 0.6, 0.0], size: [0.9, 0.6, 0.88], rot: [0.0, 0.0, 0.0], mat: Mat::C2, id: None },
+    Piece { shape: Shape::Cube, pos: [1.15, 0.9, 0.0], size: [0.45, 0.2, 0.8], rot: [0.0, 0.0, 0.0], mat: Mat::Vitre, id: None },
+    Piece { shape: Shape::Cube, pos: [-0.4, 0.95, 0.0], size: [1.9, 1.1, 0.95], rot: [0.0, 0.0, 0.0], mat: Mat::C3, id: None },
+    Piece { shape: Shape::Cube, pos: [-0.4, 0.62, 0.48], size: [1.9, 0.14, 0.02], rot: [0.0, 0.0, 0.0], mat: Mat::C2, id: None },
+    Piece { shape: Shape::Cube, pos: [-0.4, 0.95, 0.48], size: [1.9, 0.14, 0.02], rot: [0.0, 0.0, 0.0], mat: Mat::C2, id: None },
+    Piece { shape: Shape::Cube, pos: [-0.4, 1.28, 0.48], size: [1.9, 0.14, 0.02], rot: [0.0, 0.0, 0.0], mat: Mat::C2, id: None },
+    Piece { shape: Shape::Cube, pos: [-0.4, 0.62, -0.48], size: [1.9, 0.14, 0.02], rot: [0.0, 0.0, 0.0], mat: Mat::C2, id: None },
+    Piece { shape: Shape::Cube, pos: [-0.4, 0.95, -0.48], size: [1.9, 0.14, 0.02], rot: [0.0, 0.0, 0.0], mat: Mat::C2, id: None },
+    Piece { shape: Shape::Cube, pos: [-0.4, 1.28, -0.48], size: [1.9, 0.14, 0.02], rot: [0.0, 0.0, 0.0], mat: Mat::C2, id: None },
+    Piece { shape: Shape::Sphere, pos: [0.9, 1.15, 0.0], size: [0.3, 0.26, 0.3], rot: [0.0, 0.0, 0.0], mat: Mat::C3, id: Some("clou") },
+    Piece { shape: Shape::Cube, pos: [1.46, 0.5, 0.28], size: [0.04, 0.08, 0.14], rot: [0.0, 0.0, 0.0], mat: Mat::Phare, id: None },
+    Piece { shape: Shape::Cube, pos: [1.46, 0.5, -0.28], size: [0.04, 0.08, 0.14], rot: [0.0, 0.0, 0.0], mat: Mat::Phare, id: None },
+    Piece { shape: Shape::Sphere, pos: [-1.0, 1.7, 0.0], size: [0.18, 0.18, 0.18], rot: [0.0, 0.0, 0.0], mat: Mat::LumiereRouge, id: Some("gyro") },
+    Piece { shape: Shape::Cyl, pos: [1.0, 0.26, 0.42], size: [0.52, 0.11, 0.52], rot: [90.0, 0.0, 0.0], mat: Mat::Pneu, id: None },
+    Piece { shape: Shape::Cyl, pos: [1.0, 0.26, 0.425], size: [0.286, 0.13, 0.286], rot: [90.0, 0.0, 0.0], mat: Mat::Enjoliveur, id: None },
+    Piece { shape: Shape::Cyl, pos: [1.0, 0.26, -0.42], size: [0.52, 0.11, 0.52], rot: [90.0, 0.0, 0.0], mat: Mat::Pneu, id: None },
+    Piece { shape: Shape::Cyl, pos: [1.0, 0.26, -0.425], size: [0.286, 0.13, 0.286], rot: [90.0, 0.0, 0.0], mat: Mat::Enjoliveur, id: None },
+    Piece { shape: Shape::Cyl, pos: [-0.2, 0.26, 0.42], size: [0.52, 0.11, 0.52], rot: [90.0, 0.0, 0.0], mat: Mat::Pneu, id: None },
+    Piece { shape: Shape::Cyl, pos: [-0.2, 0.26, 0.425], size: [0.286, 0.13, 0.286], rot: [90.0, 0.0, 0.0], mat: Mat::Enjoliveur, id: None },
+    Piece { shape: Shape::Cyl, pos: [-0.2, 0.26, -0.42], size: [0.52, 0.11, 0.52], rot: [90.0, 0.0, 0.0], mat: Mat::Pneu, id: None },
+    Piece { shape: Shape::Cyl, pos: [-0.2, 0.26, -0.425], size: [0.286, 0.13, 0.286], rot: [90.0, 0.0, 0.0], mat: Mat::Enjoliveur, id: None },
+    Piece { shape: Shape::Cyl, pos: [-1.1, 0.26, 0.42], size: [0.52, 0.11, 0.52], rot: [90.0, 0.0, 0.0], mat: Mat::Pneu, id: None },
+    Piece { shape: Shape::Cyl, pos: [-1.1, 0.26, 0.425], size: [0.286, 0.13, 0.286], rot: [90.0, 0.0, 0.0], mat: Mat::Enjoliveur, id: None },
+    Piece { shape: Shape::Cyl, pos: [-1.1, 0.26, -0.42], size: [0.52, 0.11, 0.52], rot: [90.0, 0.0, 0.0], mat: Mat::Pneu, id: None },
+    Piece { shape: Shape::Cyl, pos: [-1.1, 0.26, -0.425], size: [0.286, 0.13, 0.286], rot: [90.0, 0.0, 0.0], mat: Mat::Enjoliveur, id: None },
+];
+const ANIMS_49: &[Anim] = &[
+    Anim { target: "gyro", kind: AnimKind::Pulse, amp: 0.0 },
+    Anim { target: "clou", kind: AnimKind::Float, amp: 0.04 },
+];
+
+pub const GEN: [Gen; 50] = [
     Gen { len: 1.6, points: 25, class: "voiture", c2: [136, 136, 136], c3: [136, 136, 136], pieces: PIECES_0, anims: ANIMS_0 },
     Gen { len: 1.6, points: 50, class: "voiture", c2: [136, 136, 136], c3: [136, 136, 136], pieces: PIECES_1, anims: ANIMS_1 },
     Gen { len: 1.6, points: 100, class: "voiture", c2: [136, 136, 136], c3: [136, 136, 136], pieces: PIECES_2, anims: ANIMS_2 },
@@ -1882,6 +1967,9 @@ pub const GEN: [Gen; 47] = [
     Gen { len: 3.4, points: 3400, class: "camion", c2: [154, 163, 181], c3: [255, 138, 42], pieces: PIECES_44, anims: ANIMS_44 },
     Gen { len: 1.7, points: 2900, class: "voiture", c2: [255, 210, 63], c3: [42, 47, 74], pieces: PIECES_45, anims: ANIMS_45 },
     Gen { len: 2.4, points: 4000, class: "camion", c2: [232, 236, 244], c3: [232, 67, 58], pieces: PIECES_46, anims: ANIMS_46 },
+    Gen { len: 2.8, points: 3600, class: "voiture", c2: [30, 30, 38], c3: [200, 200, 208], pieces: PIECES_47, anims: ANIMS_47 },
+    Gen { len: 2.0, points: 3900, class: "voiture", c2: [255, 138, 31], c3: [255, 210, 63], pieces: PIECES_48, anims: ANIMS_48 },
+    Gen { len: 3.0, points: 4300, class: "camion", c2: [122, 63, 160], c3: [255, 122, 200], pieces: PIECES_49, anims: ANIMS_49 },
 ];
 
 /// Le nom du véhicule dans la langue en cours.
@@ -1934,6 +2022,9 @@ pub fn name(i: usize) -> &'static str {
         44 => tx!("Cargo Vagabond", "Wandering Freighter", "Wanderfrachter", "Cargo Vagabondo", "Carguero Errante").t(),
         45 => tx!("Taxi Soucoupe", "Saucer Cab", "Untertassen-Taxi", "Taxi Disco", "Taxi Platillo").t(),
         46 => tx!("Fusée Bidon", "Rubbish Rocket", "Schrottrakete", "Razzo Rottame", "Cohete Chatarra").t(),
+        47 => tx!("Corbillard Pressé", "Hurried Hearse", "Eiliger Leichenwagen", "Carro Funebre Frettoloso", "Coche Fúnebre con Prisa").t(),
+        48 => tx!("Carrosse Citrouille", "Pumpkin Coach", "Kürbiskutsche", "Carrozza Zucca", "Carroza Calabaza").t(),
+        49 => tx!("Camion à Bonbons", "Candy Truck", "Süßigkeiten-Laster", "Camion di Caramelle", "Camión de Caramelos").t(),
         _ => "?",
     }
 }

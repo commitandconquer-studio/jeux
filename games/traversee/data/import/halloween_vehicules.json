@@ -1,0 +1,1341 @@
+{
+ "vehicules": [
+  {
+   "id": "corbillard",
+   "univers": "halloween",
+   "classe": "voiture",
+   "noms": {
+    "fr": "Corbillard Pressé",
+    "en": "Hurried Hearse",
+    "de": "Eiliger Leichenwagen",
+    "es": "Coche Fúnebre con Prisa",
+    "it": "Carro Funebre Frettoloso"
+   },
+   "longueur": 2.8,
+   "largeur": 0.9,
+   "points_deblocage": 0,
+   "couleur_2": "#1e1e26",
+   "couleur_3": "#c8c8d0",
+   "pieces": [
+    {
+     "forme": "cube",
+     "position": [
+      0,
+      0.2,
+      0
+     ],
+     "taille": [
+      2.5,
+      0.1,
+      0.7
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      0
+     ],
+     "matiere": "sombre"
+    },
+    {
+     "forme": "cube",
+     "position": [
+      0,
+      0.5,
+      0
+     ],
+     "taille": [
+      2.7,
+      0.45,
+      0.86
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      0
+     ],
+     "matiere": "couleur_2"
+    },
+    {
+     "forme": "cube",
+     "position": [
+      0.95,
+      0.85,
+      0
+     ],
+     "taille": [
+      0.7,
+      0.3,
+      0.8
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      0
+     ],
+     "matiere": "couleur_2"
+    },
+    {
+     "forme": "cube",
+     "position": [
+      0.95,
+      0.88,
+      0.41
+     ],
+     "taille": [
+      0.5,
+      0.2,
+      0.02
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      0
+     ],
+     "matiere": "vitre"
+    },
+    {
+     "forme": "cube",
+     "position": [
+      0.95,
+      0.88,
+      -0.41
+     ],
+     "taille": [
+      0.5,
+      0.2,
+      0.02
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      0
+     ],
+     "matiere": "vitre"
+    },
+    {
+     "forme": "cube",
+     "position": [
+      1.31,
+      0.88,
+      0
+     ],
+     "taille": [
+      0.02,
+      0.2,
+      0.7
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      0
+     ],
+     "matiere": "vitre"
+    },
+    {
+     "forme": "cube",
+     "position": [
+      -0.35,
+      0.95,
+      0
+     ],
+     "taille": [
+      1.5,
+      0.45,
+      0.78
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      0
+     ],
+     "matiere": "vitre"
+    },
+    {
+     "forme": "cube",
+     "position": [
+      -0.35,
+      0.72,
+      0
+     ],
+     "taille": [
+      1.55,
+      0.04,
+      0.82
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      0
+     ],
+     "matiere": "couleur_3"
+    },
+    {
+     "forme": "cube",
+     "position": [
+      -0.35,
+      1.2,
+      0
+     ],
+     "taille": [
+      1.55,
+      0.05,
+      0.82
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      0
+     ],
+     "matiere": "couleur_2"
+    },
+    {
+     "forme": "cube",
+     "position": [
+      -0.35,
+      0.95,
+      0
+     ],
+     "taille": [
+      1.2,
+      0.3,
+      0.4
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      0
+     ],
+     "matiere": "couleur_3"
+    },
+    {
+     "forme": "cube",
+     "position": [
+      1.35,
+      0.35,
+      0.28
+     ],
+     "taille": [
+      0.05,
+      0.08,
+      0.14
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      0
+     ],
+     "matiere": "phare"
+    },
+    {
+     "forme": "cube",
+     "position": [
+      1.35,
+      0.35,
+      -0.28
+     ],
+     "taille": [
+      0.05,
+      0.08,
+      0.14
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      0
+     ],
+     "matiere": "phare"
+    },
+    {
+     "forme": "cube",
+     "position": [
+      -1.36,
+      0.35,
+      0.28
+     ],
+     "taille": [
+      0.05,
+      0.08,
+      0.14
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      0
+     ],
+     "matiere": "feu_arriere"
+    },
+    {
+     "forme": "cube",
+     "position": [
+      -1.36,
+      0.35,
+      -0.28
+     ],
+     "taille": [
+      0.05,
+      0.08,
+      0.14
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      0
+     ],
+     "matiere": "feu_arriere"
+    },
+    {
+     "forme": "sphere",
+     "position": [
+      1.1,
+      1.08,
+      0
+     ],
+     "taille": [
+      0.1,
+      0.1,
+      0.1
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      0
+     ],
+     "matiere": "lumiere_bleue",
+     "nom": "gyro"
+    },
+    {
+     "forme": "cylindre",
+     "position": [
+      0.9,
+      0.18,
+      0.42
+     ],
+     "taille": [
+      0.36,
+      0.11,
+      0.36
+     ],
+     "rotation_deg": [
+      90,
+      0,
+      0
+     ],
+     "matiere": "pneu"
+    },
+    {
+     "forme": "cylindre",
+     "position": [
+      0.9,
+      0.18,
+      0.425
+     ],
+     "taille": [
+      0.198,
+      0.13,
+      0.198
+     ],
+     "rotation_deg": [
+      90,
+      0,
+      0
+     ],
+     "matiere": "enjoliveur"
+    },
+    {
+     "forme": "cylindre",
+     "position": [
+      0.9,
+      0.18,
+      -0.42
+     ],
+     "taille": [
+      0.36,
+      0.11,
+      0.36
+     ],
+     "rotation_deg": [
+      90,
+      0,
+      0
+     ],
+     "matiere": "pneu"
+    },
+    {
+     "forme": "cylindre",
+     "position": [
+      0.9,
+      0.18,
+      -0.425
+     ],
+     "taille": [
+      0.198,
+      0.13,
+      0.198
+     ],
+     "rotation_deg": [
+      90,
+      0,
+      0
+     ],
+     "matiere": "enjoliveur"
+    },
+    {
+     "forme": "cylindre",
+     "position": [
+      -0.9,
+      0.18,
+      0.42
+     ],
+     "taille": [
+      0.36,
+      0.11,
+      0.36
+     ],
+     "rotation_deg": [
+      90,
+      0,
+      0
+     ],
+     "matiere": "pneu"
+    },
+    {
+     "forme": "cylindre",
+     "position": [
+      -0.9,
+      0.18,
+      0.425
+     ],
+     "taille": [
+      0.198,
+      0.13,
+      0.198
+     ],
+     "rotation_deg": [
+      90,
+      0,
+      0
+     ],
+     "matiere": "enjoliveur"
+    },
+    {
+     "forme": "cylindre",
+     "position": [
+      -0.9,
+      0.18,
+      -0.42
+     ],
+     "taille": [
+      0.36,
+      0.11,
+      0.36
+     ],
+     "rotation_deg": [
+      90,
+      0,
+      0
+     ],
+     "matiere": "pneu"
+    },
+    {
+     "forme": "cylindre",
+     "position": [
+      -0.9,
+      0.18,
+      -0.425
+     ],
+     "taille": [
+      0.198,
+      0.13,
+      0.198
+     ],
+     "rotation_deg": [
+      90,
+      0,
+      0
+     ],
+     "matiere": "enjoliveur"
+    }
+   ],
+   "parties_mobiles": [
+    {
+     "piece": "gyro",
+     "animation": "pulse"
+    }
+   ]
+  },
+  {
+   "id": "carrosse_citrouille",
+   "univers": "halloween",
+   "classe": "voiture",
+   "noms": {
+    "fr": "Carrosse Citrouille",
+    "en": "Pumpkin Coach",
+    "de": "Kürbiskutsche",
+    "es": "Carroza Calabaza",
+    "it": "Carrozza Zucca"
+   },
+   "longueur": 2.0,
+   "largeur": 1.0,
+   "points_deblocage": 300,
+   "couleur_2": "#ff8a1f",
+   "couleur_3": "#ffd23f",
+   "pieces": [
+    {
+     "forme": "sphere",
+     "position": [
+      0,
+      0.72,
+      0
+     ],
+     "taille": [
+      1.5,
+      1.05,
+      1.0
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      0
+     ],
+     "matiere": "couleur_2"
+    },
+    {
+     "forme": "sphere",
+     "position": [
+      0.3,
+      0.72,
+      0
+     ],
+     "taille": [
+      0.7,
+      1.05,
+      0.98
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      0
+     ],
+     "matiere": "couleur_2"
+    },
+    {
+     "forme": "sphere",
+     "position": [
+      -0.3,
+      0.72,
+      0
+     ],
+     "taille": [
+      0.7,
+      1.05,
+      0.98
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      0
+     ],
+     "matiere": "couleur_2"
+    },
+    {
+     "forme": "cylindre",
+     "position": [
+      0,
+      1.28,
+      0
+     ],
+     "taille": [
+      0.12,
+      0.2,
+      0.12
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      0
+     ],
+     "matiere": "couleur_3"
+    },
+    {
+     "forme": "cube",
+     "position": [
+      0.1,
+      0.8,
+      0.5
+     ],
+     "taille": [
+      0.45,
+      0.3,
+      0.03
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      0
+     ],
+     "matiere": "phare"
+    },
+    {
+     "forme": "cube",
+     "position": [
+      0.1,
+      0.8,
+      -0.5
+     ],
+     "taille": [
+      0.45,
+      0.3,
+      0.03
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      0
+     ],
+     "matiere": "phare"
+    },
+    {
+     "forme": "cube",
+     "position": [
+      0.0,
+      0.3,
+      0
+     ],
+     "taille": [
+      1.6,
+      0.1,
+      0.7
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      0
+     ],
+     "matiere": "sombre"
+    },
+    {
+     "forme": "cube",
+     "position": [
+      0.9,
+      0.34,
+      0
+     ],
+     "taille": [
+      0.15,
+      0.1,
+      0.5
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      0
+     ],
+     "matiere": "couleur_3"
+    },
+    {
+     "forme": "sphere",
+     "position": [
+      1.0,
+      0.5,
+      0.0
+     ],
+     "taille": [
+      0.12,
+      0.12,
+      0.12
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      0
+     ],
+     "matiere": "lumiere_rouge",
+     "nom": "feu"
+    },
+    {
+     "forme": "cylindre",
+     "position": [
+      0.55,
+      0.28,
+      0.5
+     ],
+     "taille": [
+      0.56,
+      0.11,
+      0.56
+     ],
+     "rotation_deg": [
+      90,
+      0,
+      0
+     ],
+     "matiere": "pneu"
+    },
+    {
+     "forme": "cylindre",
+     "position": [
+      0.55,
+      0.28,
+      0.505
+     ],
+     "taille": [
+      0.308,
+      0.13,
+      0.308
+     ],
+     "rotation_deg": [
+      90,
+      0,
+      0
+     ],
+     "matiere": "enjoliveur"
+    },
+    {
+     "forme": "cylindre",
+     "position": [
+      0.55,
+      0.28,
+      -0.5
+     ],
+     "taille": [
+      0.56,
+      0.11,
+      0.56
+     ],
+     "rotation_deg": [
+      90,
+      0,
+      0
+     ],
+     "matiere": "pneu"
+    },
+    {
+     "forme": "cylindre",
+     "position": [
+      0.55,
+      0.28,
+      -0.505
+     ],
+     "taille": [
+      0.308,
+      0.13,
+      0.308
+     ],
+     "rotation_deg": [
+      90,
+      0,
+      0
+     ],
+     "matiere": "enjoliveur"
+    },
+    {
+     "forme": "cylindre",
+     "position": [
+      -0.55,
+      0.28,
+      0.5
+     ],
+     "taille": [
+      0.56,
+      0.11,
+      0.56
+     ],
+     "rotation_deg": [
+      90,
+      0,
+      0
+     ],
+     "matiere": "pneu"
+    },
+    {
+     "forme": "cylindre",
+     "position": [
+      -0.55,
+      0.28,
+      0.505
+     ],
+     "taille": [
+      0.308,
+      0.13,
+      0.308
+     ],
+     "rotation_deg": [
+      90,
+      0,
+      0
+     ],
+     "matiere": "enjoliveur"
+    },
+    {
+     "forme": "cylindre",
+     "position": [
+      -0.55,
+      0.28,
+      -0.5
+     ],
+     "taille": [
+      0.56,
+      0.11,
+      0.56
+     ],
+     "rotation_deg": [
+      90,
+      0,
+      0
+     ],
+     "matiere": "pneu"
+    },
+    {
+     "forme": "cylindre",
+     "position": [
+      -0.55,
+      0.28,
+      -0.505
+     ],
+     "taille": [
+      0.308,
+      0.13,
+      0.308
+     ],
+     "rotation_deg": [
+      90,
+      0,
+      0
+     ],
+     "matiere": "enjoliveur"
+    }
+   ],
+   "parties_mobiles": [
+    {
+     "piece": "feu",
+     "animation": "clignote_alterne"
+    }
+   ]
+  },
+  {
+   "id": "camion_bonbons",
+   "univers": "halloween",
+   "classe": "camion",
+   "noms": {
+    "fr": "Camion à Bonbons",
+    "en": "Candy Truck",
+    "de": "Süßigkeiten-Laster",
+    "es": "Camión de Caramelos",
+    "it": "Camion di Caramelle"
+   },
+   "longueur": 3.0,
+   "largeur": 1.0,
+   "points_deblocage": 700,
+   "couleur_2": "#7a3fa0",
+   "couleur_3": "#ff7ac8",
+   "pieces": [
+    {
+     "forme": "cube",
+     "position": [
+      0,
+      0.25,
+      0
+     ],
+     "taille": [
+      2.9,
+      0.1,
+      0.7
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      0
+     ],
+     "matiere": "sombre"
+    },
+    {
+     "forme": "cube",
+     "position": [
+      0.95,
+      0.6,
+      0
+     ],
+     "taille": [
+      0.9,
+      0.6,
+      0.88
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      0
+     ],
+     "matiere": "couleur_2"
+    },
+    {
+     "forme": "cube",
+     "position": [
+      1.15,
+      0.9,
+      0
+     ],
+     "taille": [
+      0.45,
+      0.2,
+      0.8
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      0
+     ],
+     "matiere": "vitre"
+    },
+    {
+     "forme": "cube",
+     "position": [
+      -0.4,
+      0.95,
+      0
+     ],
+     "taille": [
+      1.9,
+      1.1,
+      0.95
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      0
+     ],
+     "matiere": "couleur_3"
+    },
+    {
+     "forme": "cube",
+     "position": [
+      -0.4,
+      0.62,
+      0.48
+     ],
+     "taille": [
+      1.9,
+      0.14,
+      0.02
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      0
+     ],
+     "matiere": "couleur_2"
+    },
+    {
+     "forme": "cube",
+     "position": [
+      -0.4,
+      0.95,
+      0.48
+     ],
+     "taille": [
+      1.9,
+      0.14,
+      0.02
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      0
+     ],
+     "matiere": "couleur_2"
+    },
+    {
+     "forme": "cube",
+     "position": [
+      -0.4,
+      1.28,
+      0.48
+     ],
+     "taille": [
+      1.9,
+      0.14,
+      0.02
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      0
+     ],
+     "matiere": "couleur_2"
+    },
+    {
+     "forme": "cube",
+     "position": [
+      -0.4,
+      0.62,
+      -0.48
+     ],
+     "taille": [
+      1.9,
+      0.14,
+      0.02
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      0
+     ],
+     "matiere": "couleur_2"
+    },
+    {
+     "forme": "cube",
+     "position": [
+      -0.4,
+      0.95,
+      -0.48
+     ],
+     "taille": [
+      1.9,
+      0.14,
+      0.02
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      0
+     ],
+     "matiere": "couleur_2"
+    },
+    {
+     "forme": "cube",
+     "position": [
+      -0.4,
+      1.28,
+      -0.48
+     ],
+     "taille": [
+      1.9,
+      0.14,
+      0.02
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      0
+     ],
+     "matiere": "couleur_2"
+    },
+    {
+     "forme": "sphere",
+     "position": [
+      0.9,
+      1.15,
+      0
+     ],
+     "taille": [
+      0.3,
+      0.26,
+      0.3
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      0
+     ],
+     "matiere": "couleur_3",
+     "nom": "clou"
+    },
+    {
+     "forme": "cube",
+     "position": [
+      1.46,
+      0.5,
+      0.28
+     ],
+     "taille": [
+      0.04,
+      0.08,
+      0.14
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      0
+     ],
+     "matiere": "phare"
+    },
+    {
+     "forme": "cube",
+     "position": [
+      1.46,
+      0.5,
+      -0.28
+     ],
+     "taille": [
+      0.04,
+      0.08,
+      0.14
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      0
+     ],
+     "matiere": "phare"
+    },
+    {
+     "forme": "sphere",
+     "position": [
+      -1.0,
+      1.7,
+      0
+     ],
+     "taille": [
+      0.18,
+      0.18,
+      0.18
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      0
+     ],
+     "matiere": "lumiere_rouge",
+     "nom": "gyro"
+    },
+    {
+     "forme": "cylindre",
+     "position": [
+      1.0,
+      0.26,
+      0.42
+     ],
+     "taille": [
+      0.52,
+      0.11,
+      0.52
+     ],
+     "rotation_deg": [
+      90,
+      0,
+      0
+     ],
+     "matiere": "pneu"
+    },
+    {
+     "forme": "cylindre",
+     "position": [
+      1.0,
+      0.26,
+      0.425
+     ],
+     "taille": [
+      0.286,
+      0.13,
+      0.286
+     ],
+     "rotation_deg": [
+      90,
+      0,
+      0
+     ],
+     "matiere": "enjoliveur"
+    },
+    {
+     "forme": "cylindre",
+     "position": [
+      1.0,
+      0.26,
+      -0.42
+     ],
+     "taille": [
+      0.52,
+      0.11,
+      0.52
+     ],
+     "rotation_deg": [
+      90,
+      0,
+      0
+     ],
+     "matiere": "pneu"
+    },
+    {
+     "forme": "cylindre",
+     "position": [
+      1.0,
+      0.26,
+      -0.425
+     ],
+     "taille": [
+      0.286,
+      0.13,
+      0.286
+     ],
+     "rotation_deg": [
+      90,
+      0,
+      0
+     ],
+     "matiere": "enjoliveur"
+    },
+    {
+     "forme": "cylindre",
+     "position": [
+      -0.2,
+      0.26,
+      0.42
+     ],
+     "taille": [
+      0.52,
+      0.11,
+      0.52
+     ],
+     "rotation_deg": [
+      90,
+      0,
+      0
+     ],
+     "matiere": "pneu"
+    },
+    {
+     "forme": "cylindre",
+     "position": [
+      -0.2,
+      0.26,
+      0.425
+     ],
+     "taille": [
+      0.286,
+      0.13,
+      0.286
+     ],
+     "rotation_deg": [
+      90,
+      0,
+      0
+     ],
+     "matiere": "enjoliveur"
+    },
+    {
+     "forme": "cylindre",
+     "position": [
+      -0.2,
+      0.26,
+      -0.42
+     ],
+     "taille": [
+      0.52,
+      0.11,
+      0.52
+     ],
+     "rotation_deg": [
+      90,
+      0,
+      0
+     ],
+     "matiere": "pneu"
+    },
+    {
+     "forme": "cylindre",
+     "position": [
+      -0.2,
+      0.26,
+      -0.425
+     ],
+     "taille": [
+      0.286,
+      0.13,
+      0.286
+     ],
+     "rotation_deg": [
+      90,
+      0,
+      0
+     ],
+     "matiere": "enjoliveur"
+    },
+    {
+     "forme": "cylindre",
+     "position": [
+      -1.1,
+      0.26,
+      0.42
+     ],
+     "taille": [
+      0.52,
+      0.11,
+      0.52
+     ],
+     "rotation_deg": [
+      90,
+      0,
+      0
+     ],
+     "matiere": "pneu"
+    },
+    {
+     "forme": "cylindre",
+     "position": [
+      -1.1,
+      0.26,
+      0.425
+     ],
+     "taille": [
+      0.286,
+      0.13,
+      0.286
+     ],
+     "rotation_deg": [
+      90,
+      0,
+      0
+     ],
+     "matiere": "enjoliveur"
+    },
+    {
+     "forme": "cylindre",
+     "position": [
+      -1.1,
+      0.26,
+      -0.42
+     ],
+     "taille": [
+      0.52,
+      0.11,
+      0.52
+     ],
+     "rotation_deg": [
+      90,
+      0,
+      0
+     ],
+     "matiere": "pneu"
+    },
+    {
+     "forme": "cylindre",
+     "position": [
+      -1.1,
+      0.26,
+      -0.425
+     ],
+     "taille": [
+      0.286,
+      0.13,
+      0.286
+     ],
+     "rotation_deg": [
+      90,
+      0,
+      0
+     ],
+     "matiere": "enjoliveur"
+    }
+   ],
+   "parties_mobiles": [
+    {
+     "piece": "gyro",
+     "animation": "pulse"
+    },
+    {
+     "piece": "clou",
+     "animation": "flotte_verticale_0.04"
+    }
+   ]
+  }
+ ]
+}

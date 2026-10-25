@@ -996,7 +996,7 @@ for v in V:
         v["pieces"] += [P("c", (1.803, 0.89, 0), (0.01, 0.17, 0.7), "noir")] + digits("2552", 1.812, 0.89, 0.27, 0.18)
 
 # --- Véhicules importés d'un univers (fichiers JSON de data/import)
-IMPORTS = [("data/import/jurassic_croa_vehicules.json", 1500), ("data/import/nippon_kaboom_vehicules.json", 1800), ("data/import/espace_vehicules.json", 2400)]  # (fichier, points ajoutés au déblocage)
+IMPORTS = [("data/import/jurassic_croa_vehicules.json", 1500), ("data/import/nippon_kaboom_vehicules.json", 1800), ("data/import/espace_vehicules.json", 2400), ("data/import/halloween_vehicules.json", 3600)]  # (fichier, points ajoutés au déblocage)
 for fichier, decalage in IMPORTS:
     with open(os.path.join(ROOT, "games/traversee", fichier), encoding="utf-8") as fh:
         for v in json.load(fh)["vehicules"]:
