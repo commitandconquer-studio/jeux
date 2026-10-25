@@ -6,6 +6,7 @@ mod capture;
 mod frog;
 mod fx;
 mod lanes;
+mod merge;
 mod models;
 mod ui;
 
@@ -56,6 +57,9 @@ fn main() {
     .add_plugins((ui::UiPlugin, audio::AudioPlugin, capture::CapturePlugin, fx::FxPlugin))
     // Après le style commun : Traversée garde son ciel à elle.
     .insert_resource(ClearColor(Color::srgb(0.80, 0.90, 0.95)))
+    // Carte d'ombres plus légère que le réglage commun (4096) : bien assez
+    // net pour cette scène, et bien moins lourd sur les petites cartes.
+    .insert_resource(bevy::light::DirectionalLightShadowMap { size: 2048 })
     .add_systems(Update, game_common::langue::rebatir_menu(GameState::Menu))
     .init_resource::<Kit>()
     .init_resource::<FrogKit>()
@@ -75,6 +79,7 @@ fn main() {
             Update,
             (
                 lanes::ensure_lanes,
+                merge::merge_lanes,
                 lanes::move_movers,
                 lanes::run_rails,
                 (frog::read_input, frog::update_frog, frog::collide)
@@ -94,6 +99,7 @@ fn setup(mut commands: Commands, frog_kit: Res<FrogKit>, kit: Res<Kit>, mut mats
     commands.spawn(iso_camera(Vec3::new(0.0, 0.0, -LOOK_AHEAD), 15.0, 13.0));
     let frog = spawn_frog(&mut commands, &frog_kit);
     commands.entity(frog).insert(FrogModel);
+    frog::decorate(&mut commands, frog, &kit, &mut mats);
 }
 
 #[allow(clippy::too_many_arguments)]
@@ -126,9 +132,11 @@ fn follow_camera(
     mut cam: ResMut<CamZ>,
     mut cam_x: Local<f32>,
     mut shake: ResMut<fx::Shake>,
+    mut punch: ResMut<fx::Punch>,
+    real: Res<Time<Real>>,
     mut death: ResMut<Death>,
     mut next: ResMut<NextState<GameState>>,
-    mut q: Query<&mut Transform, With<Camera3d>>,
+    mut q: Query<(&mut Transform, &mut Projection), With<Camera3d>>,
 ) {
     let dt = time.delta_secs();
     let playing = *state.get() == GameState::Playing;
@@ -149,7 +157,12 @@ fn follow_camera(
     let t = time.elapsed_secs();
     let k = shake.0 * shake.0 * 0.5;
     let jolt = Vec3::new((t * 53.0).sin(), (t * 71.0).sin() * 0.6, (t * 47.0).cos()) * k;
-    for mut tf in &mut q {
+    // Coup de zoom à l'impact, qui retombe vite.
+    punch.0 = (punch.0 - real.delta_secs() * 1.6).max(0.0);
+    for (mut tf, mut proj) in &mut q {
         *tf = Transform::from_translation(target + CAM_OFFSET + jolt).looking_at(target + jolt, Vec3::Y);
+        if let Projection::Orthographic(o) = &mut *proj {
+            o.scale = 1.0 - 0.18 * punch.0 * punch.0;
+        }
     }
 }

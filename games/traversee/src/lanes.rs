@@ -71,6 +71,12 @@ pub struct RailLane {
     phase: RailPhase,
 }
 
+impl RailLane {
+    pub fn light(&self) -> Entity {
+        self.light
+    }
+}
+
 #[derive(Clone, Copy, PartialEq, Eq)]
 enum RailPhase {
     Waiting,

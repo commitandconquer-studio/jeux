@@ -13,8 +13,8 @@ const HOP_TIME: f32 = 0.14;
 const HOP_HEIGHT: f32 = 0.45;
 /// Demi-largeur du crapaud pour les collisions.
 const FROG_HALF: f32 = 0.26;
-/// Taille du modèle : assez gros pour rester lisible entre les camions.
-const FROG_SCALE: f32 = 1.4;
+/// Taille du modèle.
+const FROG_SCALE: f32 = 1.15;
 
 #[derive(Resource, Default)]
 pub struct Frog {
@@ -33,6 +33,10 @@ pub struct Frog {
 }
 
 const LAND_TIME: f32 = 0.14;
+/// Durée de l'image figée quand un véhicule percute le crapaud.
+const IMPACT_FREEZE: f32 = 0.12;
+/// Durée du vol du crapaud projeté.
+const FLIGHT_TIME: f32 = 0.8;
 
 struct Hop {
     from: Vec3,
@@ -60,13 +64,39 @@ pub struct FrogShadow {
     halo: bool,
 }
 
+/// Détails propres à Traversée, ajoutés au crapaud commun : dos rayé, joues
+/// roses, narines, reflets dans les yeux, orteils, gorge claire.
+pub fn decorate(commands: &mut Commands, frog: Entity, kit: &crate::models::Kit, mats: &mut Assets<StandardMaterial>) {
+    let mut m = |r: f32, g: f32, b: f32| mats.add(game_common::flat_material(Color::srgb(r, g, b)));
+    let stripe = m(0.62, 0.86, 0.42);
+    let cheek = m(0.98, 0.58, 0.62);
+    let dark = m(0.14, 0.34, 0.14);
+    let toe = m(0.28, 0.58, 0.24);
+    let white = m(1.0, 1.0, 1.0);
+    let throat = m(0.92, 0.95, 0.66);
+    let (cube, ball) = (&kit.cube, &kit.ball);
+    crate::models::part(commands, frog, cube, &stripe, Vec3::new(0.0, 0.436, 0.1), Vec3::new(0.1, 0.02, 0.42));
+    crate::models::part(commands, frog, cube, &throat, Vec3::new(0.0, 0.2, -0.455), Vec3::new(0.3, 0.1, 0.03));
+    for s in [-1.0, 1.0] {
+        crate::models::part(commands, frog, ball, &cheek, Vec3::new(0.23 * s, 0.28, -0.4), Vec3::new(0.1, 0.1, 0.05));
+        crate::models::part(commands, frog, cube, &dark, Vec3::new(0.07 * s, 0.445, -0.435), Vec3::splat(0.03));
+        crate::models::part(commands, frog, ball, &white, Vec3::new(0.145 * s, 0.545, -0.44), Vec3::splat(0.04));
+        // Orteils : trois par patte avant, trois par patte arrière
+        for dx in [-0.055, 0.0, 0.055] {
+            crate::models::part(commands, frog, cube, &toe, Vec3::new(0.27 * s + dx, 0.02, -0.5), Vec3::new(0.04, 0.035, 0.09));
+            crate::models::part(commands, frog, cube, &toe, Vec3::new(0.43 * s + dx, 0.02, -0.14), Vec3::new(0.04, 0.035, 0.09));
+        }
+        // Tache sur chaque flanc
+        crate::models::part(commands, frog, cube, &dark, Vec3::new(0.315 * s, 0.3, 0.12), Vec3::new(0.02, 0.1, 0.12));
+    }
+}
+
 pub fn spawn_shadow(commands: &mut Commands, kit: &crate::models::Kit, mats: &mut Assets<StandardMaterial>) {
     let blend = |mats: &mut Assets<StandardMaterial>, c: Color| {
         mats.add(StandardMaterial { unlit: true, alpha_mode: AlphaMode::Blend, ..game_common::flat_material(c) })
     };
-    let halo = blend(mats, Color::srgba(1.0, 1.0, 0.8, 0.85));
     let dark = blend(mats, Color::srgba(0.05, 0.1, 0.05, 0.45));
-    for (mat, halo) in [(halo, true), (dark, false)] {
+    for (mat, halo) in [(dark, false)] {
         commands.spawn((
             Mesh3d(kit.cyl.clone()),
             MeshMaterial3d(mat),
@@ -113,6 +143,10 @@ impl Cause {
 pub struct Death {
     pub cause: Option<Cause>,
     timer: f32,
+    /// Où le choc projette le crapaud (selon la vitesse et le sens du véhicule).
+    pub fling: Vec3,
+    /// Hauteur du vol.
+    pub fling_height: f32,
 }
 
 pub fn die(cause: Cause, death: &mut Death, next: &mut NextState<GameState>) {
@@ -293,16 +327,22 @@ pub fn collide(
     };
     let hit = movers
         .iter()
-        .any(|(m, tf)| m.row == row && m.is_deadly() && (tf.translation.x - x).abs() < m.half_len + FROG_HALF);
-    if hit && death.cause.is_none() {
+        .find(|(m, tf)| m.row == row && m.is_deadly() && (tf.translation.x - x).abs() < m.half_len + FROG_HALF);
+    if let Some((m, _)) = hit
+        && death.cause.is_none()
+    {
         die(Cause::Squashed, &mut death, &mut next);
+        // Un train l'envoie bien plus loin et plus haut qu'une voiture.
+        let train = m.kind == MoverKind::Train;
+        death.fling = Vec3::new(m.speed.signum() * if train { 9.0 } else { 3.6 }, 0.0, -0.8);
+        death.fling_height = if train { 5.5 } else { 3.2 };
         sfx.write(Sfx::Crash);
         sfx.write(Sfx::Honk);
     }
 }
 
 /// Après la mort : petite animation, puis écran de fin. Un appui saute l'attente.
-/// Le temps réel compte (le ralenti de l'impact ne rallonge pas la pause).
+/// Le temps réel compte : le ralenti de l'impact ne rallonge pas la pause.
 pub fn dying(
     time: Res<Time<Real>>,
     keys: Res<ButtonInput<KeyCode>>,
@@ -313,13 +353,20 @@ pub fn dying(
     mut next: ResMut<NextState<GameState>>,
 ) {
     death.timer += time.delta_secs();
-    if death.timer > 0.3 {
+    if death.cause == Some(Cause::Squashed) {
+        // Image figée à l'impact, puis ralenti, puis retour à la normale.
+        virt.set_relative_speed(match death.timer {
+            t if t < IMPACT_FREEZE => 0.04,
+            t if t < 0.7 => 0.3,
+            _ => 1.0,
+        });
+    } else {
         virt.set_relative_speed(1.0);
     }
     let pressed = keys.get_just_pressed().next().is_some()
         || mouse.just_pressed(MouseButton::Left)
         || touches.iter_just_pressed().next().is_some();
-    if death.timer > 1.0 || (death.timer > 0.5 && pressed) {
+    if death.timer > 1.4 || (death.timer > 0.6 && pressed) {
         next.set(GameState::GameOver);
     }
 }
@@ -338,6 +385,7 @@ pub fn sync_model(
     let mut scale = Vec3::ONE;
     let mut yaw = frog.yaw;
     let mut lift = 0.0;
+    let mut tumble = Vec3::ZERO;
     if let Some(h) = &frog.hop {
         let t = h.t.min(1.0);
         let s = (t * PI).sin();
@@ -355,7 +403,24 @@ pub fn sync_model(
     }
     let mut shadow_on = true;
     match death.cause {
-        Some(Cause::Squashed) => scale = Vec3::new(1.45, 0.12, 1.45),
+        Some(Cause::Squashed) => {
+            let t = death.timer;
+            if t < IMPACT_FREEZE {
+                // Écrasé net sur place, le temps d'un battement.
+                scale = Vec3::new(1.4, 0.4, 1.4);
+            } else {
+                // Puis projeté en l'air en tournoyant, et retombe à plat.
+                let a = ((t - IMPACT_FREEZE) / FLIGHT_TIME).min(1.0);
+                pos += death.fling * a + Vec3::Y * 4.0 * a * (1.0 - a) * death.fling_height;
+                tumble = Vec3::new(a * 17.0, a * 9.0, a * 12.0) * (1.0 - a * 0.1);
+                scale = if a < 1.0 { Vec3::ONE } else { Vec3::new(1.45, 0.12, 1.45) };
+                if a >= 1.0 {
+                    tumble = Vec3::ZERO;
+                    pos.y = ground.y;
+                    yaw = 0.0;
+                }
+            }
+        }
         Some(Cause::Drowned | Cause::CarriedAway) => {
             pos.y -= death.timer.min(1.0) * 0.8;
             shadow_on = false;
@@ -369,7 +434,7 @@ pub fn sync_model(
     }
     for mut tf in &mut q {
         tf.translation = pos;
-        tf.rotation = Quat::from_rotation_y(yaw);
+        tf.rotation = Quat::from_rotation_y(yaw) * Quat::from_euler(EulerRot::XYZ, tumble.x, tumble.y, tumble.z);
         tf.scale = scale * FROG_SCALE;
     }
     for (mut tf, shadow) in &mut shadows {

@@ -8,14 +8,15 @@ use crate::GameState;
 use crate::frog::{Cause, Death, Frog, die};
 
 /// (nom, état, secondes avant la capture, pilote automatique)
-const SHOTS: [(&str, GameState, f32, bool); 6] = [
+const SHOTS: [(&str, GameState, f32, bool); 7] = [
     ("1-menu", GameState::Menu, 4.0, false),
     ("2-depart", GameState::Playing, 1.0, false),
     ("3-en-route", GameState::Playing, 2.5, true),
     ("4-plus-loin", GameState::Playing, 2.5, true),
     // Dying : on joue tout droit jusqu'à la mort, puis on photographie l'effet.
-    ("5-ecrase", GameState::Dying, 0.2, true),
-    ("6-noye", GameState::Dying, 0.2, true),
+    ("5-ecrase-impact", GameState::Dying, 0.08, true),
+    ("6-ecrase-vol", GameState::Dying, 0.45, true),
+    ("7-noye", GameState::Dying, 0.25, true),
 ];
 
 #[derive(Resource)]
@@ -82,8 +83,10 @@ fn run_capture(
         }
         // Mort forcée, pour photographier chaque effet : écrasé, puis noyé.
         if *state.get() == GameState::Playing && frog.row >= 2 {
-            let cause = if cap.index == 4 { Cause::Squashed } else { Cause::Drowned };
+            let cause = if cap.index < 6 { Cause::Squashed } else { Cause::Drowned };
             die(cause, &mut death, &mut next);
+            death.fling = Vec3::new(3.6, 0.0, -0.8);
+            death.fling_height = 3.2;
         }
         cap.started = true; // on a vu la partie vivante : la prochaine mort est la bonne
         return;
@@ -124,8 +127,13 @@ fn run_perf(
     mut next: ResMut<NextState<GameState>>,
     mut exit: MessageWriter<AppExit>,
     mut last: Local<f32>,
+    mut windows: Query<&mut Window>,
 ) {
     let now = time.elapsed_secs();
+    for mut w in &mut windows {
+        // Sans synchronisation verticale : on voit la vraie vitesse, pas le plafond de 60.
+        w.present_mode = bevy::window::PresentMode::AutoNoVsync;
+    }
     if now > 25.0 {
         exit.write(AppExit::Success);
     }
