@@ -324,7 +324,14 @@ fn spawn_lane(c: &mut Commands, kit: &Kit, x: &Extra, g: &mut LaneGen, points: u
             let speed = (1.8 + g.rand() * 1.6 + d * 3.0) * dir;
             let mut x_pos = -WRAP + g.rand() * 3.0;
             loop {
-                let vehicle = pick_vehicle(g.rng.below(1000), points);
+                let mut vehicle = pick_vehicle(g.rng.below(1000), points);
+                // Dans le parc, surtout les véhicules du parc (ceux déjà gagnés).
+                if biome == Biome::Jurassic && g.rng.below(100) < 65 {
+                    let open: Vec<usize> = crate::gen_worlds::JURA_VEHICLES.iter().copied().filter(|i| crate::progress::unlocked(points, crate::progress::Item::Vehicle(Vehicle::Gen(*i)))).collect();
+                    if !open.is_empty() {
+                        vehicle = Vehicle::Gen(open[g.rng.below(open.len() as u32) as usize]);
+                    }
+                }
                 let len = vehicle.len();
                 if x_pos + len > WRAP - 2.0 {
                     break;

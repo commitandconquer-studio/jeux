@@ -9,6 +9,7 @@ mod extra;
 mod frog;
 mod garage;
 mod gen_vehicles;
+mod gen_worlds;
 mod fx;
 mod lanes;
 mod merge;

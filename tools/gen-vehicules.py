@@ -995,6 +995,18 @@ for v in V:
     if v["id"] == "speed_bus_50":
         v["pieces"] += [P("c", (1.803, 0.89, 0), (0.01, 0.17, 0.7), "noir")] + digits("2552", 1.812, 0.89, 0.27, 0.18)
 
+# --- Véhicules importés d'un univers (fichiers JSON de data/import)
+IMPORTS = [("data/import/jurassic_croa_vehicules.json", 1500)]  # (fichier, points ajoutés au déblocage)
+for fichier, decalage in IMPORTS:
+    with open(os.path.join(ROOT, "games/traversee", fichier), encoding="utf-8") as fh:
+        for v in json.load(fh)["vehicules"]:
+            v["points_deblocage"] += decalage
+            for q in v["pieces"]:
+                if "nom" in q:
+                    q["id"] = q.pop("nom")
+            v["parties_mobiles"] = [dict(piece=m["piece"], type=m.get("type", m.get("animation"))) for m in v.get("parties_mobiles", [])]
+            V.append(v)
+
 # ---------------------------------------------------------------------------
 doc = {
     "convention": {
@@ -1012,7 +1024,7 @@ with open(os.path.join(ROOT, "games/traversee/data/vehicules.json"), "w", encodi
 SHAPE_RS = {"cube": "Shape::Cube", "cylindre": "Shape::Cyl", "cone": "Shape::Cone", "sphere": "Shape::Sphere"}
 MAT_RS = {"peinture": "Mat::Peinture", "vitre": "Mat::Vitre", "sombre": "Mat::Sombre", "pneu": "Mat::Pneu", "enjoliveur": "Mat::Enjoliveur",
           "phare": "Mat::Phare", "feu_arriere": "Mat::FeuArriere", "lumiere_rouge": "Mat::LumiereRouge", "lumiere_bleue": "Mat::LumiereBleue",
-          "blanc": "Mat::Blanc", "noir": "Mat::Noir"}
+          "blanc": "Mat::Blanc", "noir": "Mat::Noir", "couleur_2": "Mat::C2", "couleur_3": "Mat::C3"}
 ANIM_RS = {"clignote": ("Blink", 0.0), "clignote_alterne": ("BlinkAlt", 0.0), "clignote_clin_doeil": ("Wink", 0.0), "pulse": ("Pulse", 0.0),
            "longueur_pulse": ("LengthPulse", 0.0), "vibre": ("Vibrate", 0.012), "tremble": ("Tremble", 0.0), "oscille": ("Sway", 0.0),
            "oscille_vertical": ("Bob", 0.04), "flotte_verticale": ("Float", 0.03), "translation_z_ping_pong": ("PingPongZ", 0.22),
@@ -1043,6 +1055,11 @@ def f(x):
     return s
 
 
+def rgb(h):
+    h = h.lstrip("#")
+    return "[" + ", ".join(str(int(h[i:i + 2], 16)) for i in (0, 2, 4)) + "]"
+
+
 rs = ["// Généré par tools/gen-vehicules.py à partir de data/vehicules.json : ne pas modifier à la main.",
       "//! Véhicules décrits en pièces simples (cube, cylindre, cône, sphère).",
       "use game_common::tx;",
@@ -1063,7 +1080,7 @@ for i, v in enumerate(V):
     rs.append("")
 rs.append(f"pub const GEN: [Gen; {len(V)}] = [")
 for i, v in enumerate(V):
-    rs.append(f'    Gen {{ len: {f(v["longueur"])}, points: {v["points_deblocage"]}, class: "{v["classe"]}", pieces: PIECES_{i}, anims: ANIMS_{i} }},')
+    rs.append(f'    Gen {{ len: {f(v["longueur"])}, points: {v["points_deblocage"]}, class: "{v["classe"]}", c2: {rgb(v.get("couleur_2", "#888888"))}, c3: {rgb(v.get("couleur_3", "#888888"))}, pieces: PIECES_{i}, anims: ANIMS_{i} }},')
 rs.append("];")
 rs.append("")
 rs.append("/// Le nom du véhicule dans la langue en cours.")

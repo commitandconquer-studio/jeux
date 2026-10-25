@@ -214,6 +214,7 @@ fn music_world(
         Some(crate::extra::Biome::Desert) => sounds.worlds[1].clone(),
         Some(crate::extra::Biome::Snow) => sounds.worlds[2].clone(),
         Some(crate::extra::Biome::Autumn) => sounds.worlds[3].clone(),
+        Some(crate::extra::Biome::Jurassic) => sounds.worlds[0].clone(),
     };
     commands.spawn((AudioPlayer::new(track), PlaybackSettings::LOOP.with_volume(Volume::Linear(0.35)), Musique, Mutable));
 }

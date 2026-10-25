@@ -12,7 +12,7 @@ pub fn merge_lanes(
     mut commands: Commands,
     mut meshes: ResMut<Assets<Mesh>>,
     new: Query<(Entity, &Children, Option<&RailLane>), Added<Lane>>,
-    parts: Query<(&Mesh3d, &MeshMaterial3d<StandardMaterial>, &Transform)>,
+    parts: Query<(&Mesh3d, &MeshMaterial3d<StandardMaterial>, &Transform), Without<crate::extra::GenAnim>>,
 ) {
     for (lane, children, rail) in &new {
         let keep = rail.map(|r| r.light());

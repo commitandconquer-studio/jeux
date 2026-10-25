@@ -48,6 +48,7 @@ const BASE_UNLOCKS: &[(u32, Item)] = &[
     (640, Item::Costume(Costume::Pirate)),
     (720, Item::Vehicle(Vehicle::Police)),
     (800, Item::World(Biome::Autumn)),
+    (crate::gen_worlds::JURA_POINTS, Item::World(Biome::Jurassic)),
     (900, Item::Character(Character::Hedgehog)),
     (1000, Item::Vehicle(Vehicle::Tractor)),
     (1100, Item::Costume(Costume::Crown)),

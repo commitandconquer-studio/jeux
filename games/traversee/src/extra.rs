@@ -30,16 +30,36 @@ pub struct Extra {
     fly_wing: Handle<StandardMaterial>,
     fly_eye: Handle<StandardMaterial>,
     biome: BiomeMats,
+    /// Une matière par couleur utilisée par les modèles décrits en pièces.
+    colors: Vec<([u8; 3], Handle<StandardMaterial>)>,
     /// Index de la peinture blanche dans la palette des voitures.
     white_car: usize,
     /// Index de la peinture jaune (taxi).
     yellow_car: usize,
 }
 
+impl Extra {
+    /// La matière unie de cette couleur (toutes celles des modèles sont créées au départ).
+    fn color(&self, rgb: [u8; 3]) -> &Handle<StandardMaterial> {
+        self.colors.iter().find(|(c, _)| *c == rgb).map_or(&self.white, |(_, h)| h)
+    }
+}
+
 impl FromWorld for Extra {
     fn from_world(world: &mut World) -> Self {
         let mut mats = world.resource_mut::<Assets<StandardMaterial>>();
         let biome = BiomeMats::new(&mut mats);
+        // Toutes les couleurs des modèles décrits en pièces (véhicules et décors).
+        let mut colors: Vec<([u8; 3], Handle<StandardMaterial>)> = Vec::new();
+        let models = crate::gen_vehicles::GEN.iter().map(|g| (g.c2, g.c3)).chain(
+            [&crate::gen_worlds::JURA_BLOCKS[..], &crate::gen_worlds::JURA_SIDES[..], &crate::gen_worlds::JURA_DECO[..]].into_iter().flatten().map(|m| (m.c2, m.c3)),
+        );
+        for rgb in models.flat_map(|(a, b)| [a, b]) {
+            if !colors.iter().any(|(c, _)| *c == rgb) {
+                let col = Color::srgb(rgb[0] as f32 / 255.0, rgb[1] as f32 / 255.0, rgb[2] as f32 / 255.0);
+                colors.push((rgb, mats.add(flat_material(col))));
+            }
+        }
         let mut f = |r: f32, g: f32, b: f32| mats.add(flat_material(Color::srgb(r, g, b)));
         let flowers = vec![f(0.98, 0.45, 0.62), f(1.0, 0.85, 0.25), f(0.97, 0.97, 0.97), f(0.92, 0.25, 0.25), f(0.65, 0.45, 0.92), f(1.0, 0.6, 0.2)];
         let bus = vec![f(0.98, 0.78, 0.15), f(0.25, 0.65, 0.40), f(0.85, 0.25, 0.25), f(0.30, 0.50, 0.85)];
@@ -51,6 +71,7 @@ impl FromWorld for Extra {
         let mut f = |r: f32, g: f32, b: f32| mats.add(flat_material(Color::srgb(r, g, b)));
         Extra {
             biome,
+            colors,
             flowers,
             petal_center: f(1.0, 0.8, 0.2),
             stem: f(0.30, 0.58, 0.26),
@@ -432,6 +453,8 @@ pub enum Biome {
     Desert,
     Snow,
     Autumn,
+    /// Le Parc Jurassic'Croa (décor décrit en pièces, `gen_worlds.rs`).
+    Jurassic,
 }
 
 pub const BIOME_LEN: i32 = 60;
@@ -442,11 +465,12 @@ impl Biome {
         // TRAVERSEE_BIOME=1..3 : voir un monde tout de suite (essais et captures).
         static START: std::sync::OnceLock<i32> = std::sync::OnceLock::new();
         let start = *START.get_or_init(|| std::env::var("TRAVERSEE_BIOME").ok().and_then(|s| s.parse().ok()).unwrap_or(0));
-        let biome = match (row.max(0) / BIOME_LEN + start) % 4 {
+        let biome = match (row.max(0) / BIOME_LEN + start) % 5 {
             0 => Biome::Prairie,
             1 => Biome::Desert,
             2 => Biome::Snow,
-            _ => Biome::Autumn,
+            3 => Biome::Autumn,
+            _ => Biome::Jurassic,
         };
         if biome != Biome::Prairie && !crate::progress::unlocked(points, crate::progress::Item::World(biome)) {
             Biome::Prairie
@@ -462,6 +486,7 @@ impl Biome {
             Biome::Desert => tx!("Le désert", "The desert", "Die Wüste", "Il deserto", "El desierto"),
             Biome::Snow => tx!("La neige", "The snow", "Der Schnee", "La neve", "La nieve"),
             Biome::Autumn => tx!("L'automne", "Autumn", "Der Herbst", "L'autunno", "El otoño"),
+            Biome::Jurassic => return crate::gen_worlds::jura_name(),
         }
         .t()
     }
@@ -489,12 +514,26 @@ struct BiomeMats {
     scarf: Handle<StandardMaterial>,
     leaves: [Handle<StandardMaterial>; 3],
     pumpkin: Handle<StandardMaterial>,
+    jura: [Handle<StandardMaterial>; 2],
+    jura_side: Handle<StandardMaterial>,
+    jura_water: Handle<StandardMaterial>,
+    jura_water_side: Handle<StandardMaterial>,
 }
 
 impl BiomeMats {
     fn new(mats: &mut Assets<StandardMaterial>) -> Self {
         let mut f = |r: f32, g: f32, b: f32| mats.add(flat_material(Color::srgb(r, g, b)));
+        let jc = &crate::gen_worlds::JURA_COLORS;
+        let mut c = |rgb: [u8; 3], k: f32| f(rgb[0] as f32 / 255.0 * k, rgb[1] as f32 / 255.0 * k, rgb[2] as f32 / 255.0 * k);
+        let jura = [c(jc.grass_a, 1.0), c(jc.grass_b, 1.0)];
+        let jura_side = c(jc.grass_a, 0.8);
+        let jura_water = c(jc.water, 1.0);
+        let jura_water_side = c(jc.water, 0.8);
         Self {
+            jura,
+            jura_side,
+            jura_water,
+            jura_water_side,
             sand: [f(0.94, 0.83, 0.56), f(0.90, 0.79, 0.51)],
             sand_side: f(0.82, 0.69, 0.43),
             snow: [f(0.97, 0.98, 1.0), f(0.92, 0.95, 0.98)],
@@ -528,6 +567,7 @@ impl Extra {
             Biome::Desert => (&self.biome.sand[i], &self.biome.sand_side),
             Biome::Snow => (&self.biome.snow[i], &self.biome.snow_side),
             Biome::Autumn => (&self.biome.autumn[i], &self.biome.autumn_side),
+            Biome::Jurassic => (&self.biome.jura[i], &self.biome.jura_side),
         }
     }
 
@@ -535,6 +575,7 @@ impl Extra {
     pub fn water<'a>(&'a self, kit: &'a Kit, biome: Biome) -> (&'a Handle<StandardMaterial>, &'a Handle<StandardMaterial>) {
         match biome {
             Biome::Snow => (&self.biome.ice, &self.biome.ice_side),
+            Biome::Jurassic => (&self.biome.jura_water, &self.biome.jura_water_side),
             _ => (&kit.m.water, &kit.m.water_side),
         }
     }
@@ -634,6 +675,17 @@ pub fn spawn_scenery(c: &mut Commands, k: &Kit, x: &Extra, parent: Entity, biome
                 part(c, parent, &k.cone, &b.ice_rock, pos + Vec3::new(0.13, 0.12, 0.05), Vec3::new(0.09, 0.24, 0.09));
             }
         }
+        // ---- Parc Jurassic'Croa : modèles décrits en pièces
+        (Biome::Jurassic, Scenery::Block) => spawn_model(c, k, x, parent, &crate::gen_worlds::JURA_BLOCKS[roll as usize % crate::gen_worlds::JURA_BLOCKS.len()], pos, roll as usize),
+        (Biome::Jurassic, Scenery::Side) => {
+            // Surtout de grands décors (palmiers, volcan…), parfois un obstacle.
+            if roll < 7 {
+                spawn_model(c, k, x, parent, &crate::gen_worlds::JURA_SIDES[roll as usize % crate::gen_worlds::JURA_SIDES.len()], pos, roll as usize);
+            } else {
+                spawn_model(c, k, x, parent, &crate::gen_worlds::JURA_BLOCKS[variant % crate::gen_worlds::JURA_BLOCKS.len()], pos, variant);
+            }
+        }
+        (Biome::Jurassic, Scenery::Deco) => spawn_model(c, k, x, parent, &crate::gen_worlds::JURA_DECO[variant % crate::gen_worlds::JURA_DECO.len()], pos, variant),
         // ---- Automne
         (Biome::Autumn, Scenery::Block) | (Biome::Autumn, Scenery::Side) if roll < 5 => {
             part(c, parent, &k.cyl, &m.trunk, pos + Vec3::Y * 0.25, Vec3::new(0.18, 0.5, 0.18));
@@ -682,6 +734,9 @@ pub enum Mat {
     LumiereBleue,
     Blanc,
     Noir,
+    /// Couleurs propres au modèle (`c2`, `c3`).
+    C2,
+    C3,
 }
 
 pub struct Piece {
@@ -730,10 +785,64 @@ pub struct Anim {
     pub amp: f32,
 }
 
+/// Un décor décrit en pièces, avec ses deux couleurs.
+pub struct Model {
+    pub c2: [u8; 3],
+    pub c3: [u8; 3],
+    pub pieces: &'static [Piece],
+    pub anims: &'static [Anim],
+}
+
+/// Pose un décor décrit en pièces ; les pièces animées gardent leur forme de départ (voir `animate_gen`).
+pub fn spawn_model(c: &mut Commands, k: &Kit, x: &Extra, parent: Entity, m: &Model, pos: Vec3, seed: usize) {
+    for (n, p) in m.pieces.iter().enumerate() {
+        let tf = piece_transform(p, pos);
+        let e = c.spawn((Mesh3d(piece_mesh(k, p.shape).clone()), MeshMaterial3d(piece_material(k, x, p.mat, m.c2, m.c3, 0).clone()), tf, ChildOf(parent))).id();
+        let kinds: Vec<(AnimKind, f32)> = m.anims.iter().filter(|a| matches_target(a.target, p.id)).map(|a| (a.kind, a.amp)).collect();
+        if !kinds.is_empty() {
+            c.entity(e).insert(GenAnim { kinds, base: tf, phase: (seed * 31 + n) as f32 * 0.37 });
+        }
+    }
+}
+
+fn piece_transform(p: &Piece, pos: Vec3) -> Transform {
+    let rot = Quat::from_euler(EulerRot::ZYX, p.rot[2].to_radians(), p.rot[1].to_radians(), p.rot[0].to_radians());
+    Transform { translation: pos + Vec3::from(p.pos), rotation: rot, scale: Vec3::from(p.size) }
+}
+
+fn piece_mesh(k: &Kit, s: Shape) -> &Handle<Mesh> {
+    match s {
+        Shape::Cube => &k.cube,
+        Shape::Cyl => &k.cyl,
+        Shape::Cone => &k.cone,
+        Shape::Sphere => &k.ball,
+    }
+}
+
+fn piece_material<'a>(k: &'a Kit, x: &'a Extra, mat: Mat, c2: [u8; 3], c3: [u8; 3], color: usize) -> &'a Handle<StandardMaterial> {
+    match mat {
+        Mat::Peinture => &k.m.car[color % k.m.car.len()],
+        Mat::Vitre => &k.m.glass,
+        Mat::Sombre => &k.m.dark,
+        Mat::Pneu => &k.m.tire,
+        Mat::Enjoliveur => &k.m.hub,
+        Mat::Phare => &k.m.headlight,
+        Mat::FeuArriere => &k.m.taillight,
+        Mat::LumiereRouge => &x.red_light,
+        Mat::LumiereBleue => &x.blue_light,
+        Mat::Blanc => &x.white,
+        Mat::Noir => &x.black_stripe,
+        Mat::C2 => x.color(c2),
+        Mat::C3 => x.color(c3),
+    }
+}
+
 pub struct Gen {
     pub len: f32,
     pub points: u32,
     pub class: &'static str,
+    pub c2: [u8; 3],
+    pub c3: [u8; 3],
     pub pieces: &'static [Piece],
     pub anims: &'static [Anim],
 }
@@ -770,28 +879,8 @@ pub fn spawn_gen(c: &mut Commands, k: &Kit, x: &Extra, parent: Entity, i: usize,
         c.entity(body).insert(GenAnim { kinds: whole, base: Transform::default(), phase: i as f32 * 1.7 });
     }
     for (n, p) in g.pieces.iter().enumerate() {
-        let mesh = match p.shape {
-            Shape::Cube => &k.cube,
-            Shape::Cyl => &k.cyl,
-            Shape::Cone => &k.cone,
-            Shape::Sphere => &k.ball,
-        };
-        let mat = match p.mat {
-            Mat::Peinture => &k.m.car[color % k.m.car.len()],
-            Mat::Vitre => &k.m.glass,
-            Mat::Sombre => &k.m.dark,
-            Mat::Pneu => &k.m.tire,
-            Mat::Enjoliveur => &k.m.hub,
-            Mat::Phare => &k.m.headlight,
-            Mat::FeuArriere => &k.m.taillight,
-            Mat::LumiereRouge => &x.red_light,
-            Mat::LumiereBleue => &x.blue_light,
-            Mat::Blanc => &x.white,
-            Mat::Noir => &x.black_stripe,
-        };
-        let rot = Quat::from_euler(EulerRot::ZYX, p.rot[2].to_radians(), p.rot[1].to_radians(), p.rot[0].to_radians());
-        let tf = Transform { translation: Vec3::from(p.pos), rotation: rot, scale: Vec3::from(p.size) };
-        let e = c.spawn((Mesh3d(mesh.clone()), MeshMaterial3d(mat.clone()), tf, ChildOf(body))).id();
+        let tf = piece_transform(p, Vec3::ZERO);
+        let e = c.spawn((Mesh3d(piece_mesh(k, p.shape).clone()), MeshMaterial3d(piece_material(k, x, p.mat, g.c2, g.c3, color).clone()), tf, ChildOf(body))).id();
         let kinds: Vec<(AnimKind, f32)> = g.anims.iter().filter(|a| a.target != "*" && matches_target(a.target, p.id)).map(|a| (a.kind, a.amp)).collect();
         if !kinds.is_empty() {
             c.entity(e).insert(GenAnim { kinds, base: tf, phase: (i * 31 + n) as f32 * 0.37 });
