@@ -464,12 +464,23 @@ pub enum Biome {
 
 pub const BIOME_LEN: i32 = 60;
 
+/// Le monde où commence la partie (choisi au garage, pour jouer ou tester un univers précis).
+pub static START_WORLD: std::sync::atomic::AtomicI32 = std::sync::atomic::AtomicI32::new(0);
+
+impl Biome {
+    pub const ALL: [Biome; 5] = [Biome::Prairie, Biome::Desert, Biome::Snow, Biome::Autumn, Biome::Jurassic];
+
+    pub fn index(self) -> i32 {
+        Biome::ALL.iter().position(|b| *b == self).unwrap_or(0) as i32
+    }
+}
+
 impl Biome {
     /// Le monde de ce rang ; un monde pas encore débloqué reste de la prairie.
     pub fn of(row: i32, points: u32) -> Self {
         // TRAVERSEE_BIOME=1..3 : voir un monde tout de suite (essais et captures).
-        static START: std::sync::OnceLock<i32> = std::sync::OnceLock::new();
-        let start = *START.get_or_init(|| std::env::var("TRAVERSEE_BIOME").ok().and_then(|s| s.parse().ok()).unwrap_or(0));
+        static ENV: std::sync::OnceLock<i32> = std::sync::OnceLock::new();
+        let start = *ENV.get_or_init(|| std::env::var("TRAVERSEE_BIOME").ok().and_then(|s| s.parse().ok()).unwrap_or(0)) + START_WORLD.load(std::sync::atomic::Ordering::Relaxed);
         let biome = match (row.max(0) / BIOME_LEN + start) % 5 {
             0 => Biome::Prairie,
             1 => Biome::Desert,

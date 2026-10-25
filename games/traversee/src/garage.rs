@@ -75,6 +75,7 @@ enum Act {
     Char(Character),
     Costume(Costume),
     Page(i32),
+    World(Biome),
 }
 
 fn scope() -> impl Bundle {
@@ -213,8 +214,15 @@ fn build(
                 if !open {
                     commands.entity(slot).insert(Locked);
                 }
-                let sub = if open { String::new() } else { pts(threshold(Item::World(*b))) };
-                label(&mut commands, center + Vec3::new(0.0, 0.0, 2.6), if open { b.name() } else { "???" }, sub, open, false, None, false);
+                let chosen = open && crate::extra::START_WORLD.load(std::sync::atomic::Ordering::Relaxed) == b.index();
+                let sub = if !open {
+                    pts(threshold(Item::World(*b)))
+                } else if chosen {
+                    tx!("— départ ici —", "— start here —", "— Start hier —", "— si parte qui —", "— se empieza aquí —").t().to_string()
+                } else {
+                    String::new()
+                };
+                label(&mut commands, center + Vec3::new(0.0, 0.0, 2.6), if open { b.name() } else { "???" }, sub, open, chosen, open.then_some(Act::World(*b)), false);
             }
         }
     }
@@ -391,6 +399,12 @@ fn on_click(
                 selection.save();
                 // Personnage choisi : place à l'accessoire.
                 view.tab = Tab::Costumes;
+                view.dirty = true;
+            }
+        }
+        Act::World(b) => {
+            if progress.has(Item::World(b)) {
+                crate::extra::START_WORLD.store(b.index(), std::sync::atomic::Ordering::Relaxed);
                 view.dirty = true;
             }
         }
