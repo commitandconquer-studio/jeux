@@ -207,9 +207,7 @@ pub fn spawn_game_over(mut commands: Commands, score: Res<Score>, death: Res<Dea
         spawn_chip(&mut commands, panel, item.kind(), item.name(), item.color(), 0.7 + i as f32 * 0.3);
     }
     spawn_next_goal(&mut commands, panel, &progress, 18.0, 400.0);
-    if progress.new_record || !progress.fresh.is_empty() {
-        sfx.write(Sfx::Win);
-    }
+    sfx.write(if progress.new_record || !progress.fresh.is_empty() { Sfx::Win } else { Sfx::GameOver });
     spawn_gap(&mut commands, panel, 6.0);
     let (again, _) = spawn_button_sized(&mut commands, panel, tx!("Rejouer", "Play again", "Nochmal", "Rigioca", "Volver a jugar").t(), 320.0, 64.0, 30.0);
     commands.entity(again).insert((

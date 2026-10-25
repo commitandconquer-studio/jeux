@@ -50,6 +50,10 @@ struct Hop {
 
 impl Frog {
     /// Où se trouve le crapaud à l'écran (au sol, en plein saut compris).
+    pub fn max_row_i(&self) -> i32 {
+        self.max_row
+    }
+
     /// Rangée la plus lointaine atteinte (pour régler la difficulté).
     pub fn max_row_f(&self) -> f32 {
         self.max_row as f32
@@ -265,6 +269,7 @@ pub fn update_frog(
                 let points = progress.total + frog.max_row as u32 + frog.bonus;
                 let world = crate::extra::Biome::of(to_row, points);
                 if world != crate::extra::Biome::Prairie {
+                    sfx.write(Sfx::Start);
                     fx.write(Fx::World(world));
                 }
             }
@@ -274,7 +279,7 @@ pub fn update_frog(
         if let Some((e, fly)) = flies.iter().find(|(_, f)| f.row == to_row && f.col == col) {
             commands.entity(e).despawn();
             frog.bonus += fly.points();
-            sfx.write(Sfx::Eat);
+            sfx.write(if fly.gold { Sfx::Power } else { Sfx::Eat });
             fx.write(Fx::Gulp(Vec3::new(to.x, to.y + 0.5, to.z), fly.points()));
         }
         score.current = frog.max_row as u32 + frog.bonus;
