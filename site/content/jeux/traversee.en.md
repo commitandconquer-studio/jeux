@@ -10,10 +10,10 @@ code = "games/traversee"
 dossier = "traversee"
 commandes = ["Arrow keys or WASD, Space or click: hop", "Touch: swipe", "M: sound · Esc: menu"]
 chiffres = [
-  { n = "61", t = "vehicles to unlock" },
+  { n = "65", t = "vehicles to unlock" },
   { n = "8", t = "characters" },
   { n = "7", t = "accessories" },
-  { n = "9", t = "worlds" },
+  { n = "11", t = "worlds" },
   { n = "5", t = "ways to lose" },
 ]
 captures = [
@@ -22,15 +22,17 @@ captures = [
   { img = "ecrase", t = "Every death has its own effect, with zoom and slow-mo" },
   { img = "noye", t = "Splash!" },
   { img = "mouche", t = "Catch a fly for bonus points" },
-  { img = "garage", t = "The garage: 61 vehicles to unlock" },
+  { img = "garage", t = "The garage: 65 vehicles to unlock" },
   { img = "personnages", t = "8 characters" },
   { img = "accessoires", t = "7 accessories" },
-  { img = "mondes", t = "9 worlds" },
+  { img = "mondes", t = "11 worlds" },
   { img = "parc", t = "Jura-Croak Park: dinosaurs cross the road" },
   { img = "japon", t = "Nippon Kaboom: cherry trees, petals and a blue-crested T-rex" },
   { img = "espace", t = "Croak Cosmos: the void, asteroids and spaceships" },
   { img = "farwest", t = "Wild West Croak: horses, stagecoaches and bison" },
   { img = "halloween", t = "Croak-o-ween: graveyard, pumpkins and creatures" },
+  { img = "cyber", t = "Neo-Croak: futuristic city, monorail and robots" },
+  { img = "moyenage", t = "Kingdom of Croak: knights, ogres and a dragon" },
   { img = "costume", t = "Looking sharp in a costume" },
 ]
 +++
@@ -40,10 +42,10 @@ captures = [
 ## A world you uncover
 At first the road is quiet: a few cars, some grass. As your **points add up from game to game**, the game grows: trucks, taxis, motorbikes, buses, trains, golden flies, then an **eagle** sweeping a whole column. Everything unlocks: vehicles, worlds, characters, accessories.
 
-## Nine worlds
-**Meadow**, **desert**, **snow** (ice floes and blocks), **autumn**, **Jura-Croak Park**, **Nippon Kaboom**, the **Croak Cosmos**, the **Wild West Croak** and **Croak-o-ween**. Each has its own scenery and obstacles; the first four have their **own music**, which speeds up with the difficulty and winds down like a stopping record when you die.
+## Eleven worlds
+**Meadow**, **desert**, **snow** (ice floes and blocks), **autumn**, **Jura-Croak Park**, **Nippon Kaboom**, the **Croak Cosmos**, the **Wild West Croak**, **Croak-o-ween**, **Neo-Croak** and the **Kingdom of Croak**. Each has its own scenery and obstacles; the first four have their **own music**, which speeds up with the difficulty and winds down like a stopping record when you die.
 
-## A garage of 61 vehicles
+## A garage of 65 vehicles
 From monster trucks to mopeds, with nods to your favourite films: a car that heads back to the future, a talking patrol car, a bat on wheels, a pair of Blues brothers… Each has its **own name** and shows as a silhouette until you earn it. Beware the **Speed-Bus 2552**: it races along and blows up as it leaves the screen!
 
 ## Jura-Croak Park
@@ -60,6 +62,12 @@ Dirt tracks, cacti and red mesas: no cars here, but **galloping horses**, **stag
 
 ## Croak-o-ween
 A graveyard path, grinning pumpkins, a swamp where **coffins** and **pumpkins** float, a **ghost train**… Skeletons, witches on brooms, zombies, black cats and giant spiders cross the road, and a **colossal bat** replaces the eagle. Your frog becomes the **Witch Frog**.
+
+## Neo-Croak
+A futuristic city at night: dark highway, **holographic canals** with translucent platforms, a magnetic **monorail**, neon skyscrapers and signs. Robots, cyborgs, robot dogs, hoverbikes and a **colossal mech** cross the road; a **giant drone** replaces the eagle. Your frog becomes the **Cyber Frog**, neon visor and all.
+
+## Kingdom of Croak
+The Middle Ages, with a cobbled path, moats, windmills and a castle. **Knights** on foot and on horseback, a club-wielding **ogre**, a rolling **catapult** and **cart convoys** instead of the train; a **fire-breathing dragon** swoops down on you. Your frog becomes the **Knight Frog**, plumed helmet and all.
 
 ## Characters and accessories
 Toad, rabbit, badger, raccoon, hedgehog, fox, panda, duck: **8 characters** to unlock, then **7 accessories** (cap, shades, top hat, pirate hat, crown, party hat, wizard hat) to dress them up.
