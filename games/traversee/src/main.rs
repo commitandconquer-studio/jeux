@@ -9,6 +9,7 @@ mod fx;
 mod lanes;
 mod merge;
 mod models;
+mod progress;
 mod ui;
 
 use bevy::prelude::*;
@@ -55,7 +56,7 @@ fn main() {
     )
     .init_state::<GameState>()
     .add_plugins(StudioPlugin::new(Universe::Croa, game_common::ambiance::AmbiancePlugin::exterieur()))
-    .add_plugins((ui::UiPlugin, audio::AudioPlugin, capture::CapturePlugin, fx::FxPlugin))
+    .add_plugins((ui::UiPlugin, audio::AudioPlugin, capture::CapturePlugin, fx::FxPlugin, progress::ProgressPlugin))
     // Après le style commun : Traversée garde son ciel à elle.
     .insert_resource(ClearColor(Color::srgb(0.80, 0.90, 0.95)))
     // Carte d'ombres plus légère que le réglage commun (4096) : bien assez
@@ -84,6 +85,7 @@ fn main() {
                 merge::merge_lanes,
                 lanes::move_movers,
                 extra::animate_flies,
+                extra::animate_scanner,
                 lanes::run_rails,
                 (frog::read_input, frog::update_frog, frog::collide)
                     .chain()
@@ -134,8 +136,9 @@ fn follow_camera(
     frog: Res<Frog>,
     mut cam: ResMut<CamZ>,
     mut cam_x: Local<f32>,
+    mut zoom_now: Local<f32>,
     mut shake: ResMut<fx::Shake>,
-    mut punch: ResMut<fx::Punch>,
+    punch: Res<fx::Punch>,
     real: Res<Time<Real>>,
     mut death: ResMut<Death>,
     mut next: ResMut<NextState<GameState>>,
@@ -156,7 +159,11 @@ fn follow_camera(
     *cam_x += (frog.pos.x * 0.4 - *cam_x) * (dt * 4.0).min(1.0);
     let mut target = Vec3::new(*cam_x, 0.0, cam.0 - LOOK_AHEAD);
     // Gros zoom à l'impact : la caméra se recentre sur le crapaud.
-    let zoom = punch.0.clamp(0.0, 1.0);
+    // Le zoom avance pendant la mort (il part de la vue normale), puis se relâche.
+    let goal = if *state.get() == GameState::Dying { punch.0 } else { 0.0 };
+    let rate = if goal > *zoom_now { 1.6 } else { 3.0 };
+    *zoom_now += (goal - *zoom_now).clamp(-rate * real.delta_secs(), rate * real.delta_secs());
+    let zoom = zoom_now.clamp(0.0, 1.0);
     let zoom = zoom * zoom * (3.0 - 2.0 * zoom);
     target = target.lerp(frog.visual_pos(), 0.85 * zoom);
     // Tremblement : quelques oscillations rapides qui s'éteignent.
@@ -164,8 +171,6 @@ fn follow_camera(
     let t = time.elapsed_secs();
     let k = shake.0 * shake.0 * 0.5;
     let jolt = Vec3::new((t * 53.0).sin(), (t * 71.0).sin() * 0.6, (t * 47.0).cos()) * k;
-    // Coup de zoom à l'impact, qui retombe vite.
-    punch.0 = (punch.0 - real.delta_secs() * 0.9).max(0.0);
     for (mut tf, mut proj) in &mut q {
         *tf = Transform::from_translation(target + CAM_OFFSET + jolt).looking_at(target + jolt, Vec3::Y);
         if let Projection::Orthographic(o) = &mut *proj {

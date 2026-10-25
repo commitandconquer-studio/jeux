@@ -109,7 +109,7 @@ impl LaneGen {
         self.rng.below(10_000) as f32 / 10_000.0
     }
 
-    fn next_kind(&mut self, row: i32) -> LaneKind {
+    fn next_kind(&mut self, row: i32, points: u32) -> LaneKind {
         if row < 3 {
             return LaneKind::Grass;
         }
@@ -122,8 +122,10 @@ impl LaneGen {
                 (LaneKind::Road, 2 + (d * 3.0) as u32)
             } else if r < 0.88 {
                 (LaneKind::River, 2 + (d * 2.0) as u32)
-            } else {
+            } else if crate::progress::unlocked(points, crate::progress::Item::Trains) {
                 (LaneKind::Rail, 1)
+            } else {
+                (LaneKind::Road, 2)
             };
             let n = 1 + self.rng.below(max);
             self.queue.extend(std::iter::repeat_n(kind, n as usize));
@@ -142,6 +144,8 @@ pub fn ensure_lanes(
     mut commands: Commands,
     kit: Res<Kit>,
     extra: Res<Extra>,
+    progress: Res<crate::progress::Progress>,
+    score: Res<game_common::Score>,
     mut generator: ResMut<LaneGen>,
     cam: Res<crate::CamZ>,
     lanes: Query<(Entity, &Lane)>,
@@ -155,7 +159,7 @@ pub fn ensure_lanes(
     }
     let cam_row = (-cam.0).round() as i32;
     while generator.next_row <= cam_row + AHEAD {
-        spawn_lane(&mut commands, &kit, &extra, &mut generator);
+        spawn_lane(&mut commands, &kit, &extra, &mut generator, progress.total + score.current);
     }
     for (e, lane) in &lanes {
         if lane.row < cam_row - BEHIND {
@@ -164,10 +168,10 @@ pub fn ensure_lanes(
     }
 }
 
-fn spawn_lane(c: &mut Commands, kit: &Kit, x: &Extra, g: &mut LaneGen) {
+fn spawn_lane(c: &mut Commands, kit: &Kit, x: &Extra, g: &mut LaneGen, points: u32) {
     let row = g.next_row;
     g.next_row += 1;
-    let kind = g.next_kind(row);
+    let kind = g.next_kind(row, points);
     let after_road = g.prev == LaneKind::Road;
     g.prev = kind;
 
@@ -279,7 +283,7 @@ fn spawn_lane(c: &mut Commands, kit: &Kit, x: &Extra, g: &mut LaneGen) {
             let speed = (1.8 + g.rand() * 1.6 + d * 3.0) * dir;
             let mut x_pos = -WRAP + g.rand() * 3.0;
             loop {
-                let vehicle = pick_vehicle(g.rng.below(100));
+                let vehicle = pick_vehicle(g.rng.below(1000), points);
                 let len = vehicle.len();
                 if x_pos + len > WRAP - 2.0 {
                     break;

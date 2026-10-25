@@ -7,6 +7,7 @@ use game_common::ui::{GameHelp, pied_de_menu, spawn_button, spawn_gap, spawn_hud
 use crate::GameState;
 use crate::audio::Sfx;
 use crate::frog::Death;
+use crate::progress::Progress;
 
 pub struct UiPlugin;
 
@@ -95,9 +96,13 @@ fn button(commands: &mut Commands, parent: Entity, label: &str, action: UiAction
     text
 }
 
-fn spawn_menu(mut commands: Commands) {
+fn spawn_menu(mut commands: Commands, progress: Res<Progress>) {
     let panel = spawn_panel(&mut commands, DespawnOnExit(GameState::Menu));
     spawn_text(&mut commands, panel, tx!("TRAVERSÉE", "CROSSING", "ÜBERQUERUNG", "TRAVERSATA", "TRAVESÍA").t(), 64.0);
+    let total = crate::progress::UNLOCKS.len() + 1;
+    let line = tx!("Véhicules débloqués : {} / {}", "Vehicles unlocked: {} / {}", "Fahrzeuge freigeschaltet: {} / {}", "Veicoli sbloccati: {} / {}", "Vehículos desbloqueados: {} / {}")
+        .avec(&[&progress.count(), &total]);
+    spawn_text(&mut commands, panel, line, 20.0);
     spawn_gap(&mut commands, panel, 8.0);
     button(&mut commands, panel, tx!("Jouer", "Play", "Spielen", "Gioca", "Jugar").t(), UiAction::Play);
     pied_de_menu(&mut commands, panel);
@@ -115,11 +120,27 @@ fn score_line(score: &Score) -> String {
     .avec(&[&score.current, &score.best])
 }
 
-fn spawn_game_over(mut commands: Commands, score: Res<Score>, death: Res<Death>) {
+pub fn spawn_game_over(mut commands: Commands, score: Res<Score>, death: Res<Death>, progress: Res<Progress>) {
     let panel = spawn_panel(&mut commands, DespawnOnExit(GameState::GameOver));
     let title = death.cause.map(|c| c.message()).unwrap_or(tx!("Perdu !", "Game over!", "Verloren!", "Hai perso!", "¡Has perdido!").t());
     spawn_text(&mut commands, panel, title, 48.0);
     spawn_text(&mut commands, panel, score_line(&score), 24.0);
+    // Ce que cette partie vient de débloquer, puis le prochain objectif.
+    for item in &progress.fresh {
+        let line = tx!("Débloqué : {} !", "Unlocked: {}!", "Freigeschaltet: {}!", "Sbloccato: {}!", "¡Desbloqueado: {}!").avec(&[&item.name()]);
+        spawn_text(&mut commands, panel, line, 26.0);
+    }
+    if let Some((at, item)) = progress.next() {
+        let line = tx!(
+            "Total {} pts — prochain : {} à {} pts",
+            "Total {} pts — next: {} at {} pts",
+            "Gesamt {} Pkt. — nächstes: {} bei {} Pkt.",
+            "Totale {} pt — prossimo: {} a {} pt",
+            "Total {} pts — siguiente: {} a {} pts"
+        )
+        .avec(&[&progress.total, &item.name(), &at]);
+        spawn_text(&mut commands, panel, line, 18.0);
+    }
     spawn_gap(&mut commands, panel, 6.0);
     button(&mut commands, panel, tx!("Rejouer", "Play again", "Nochmal", "Rigioca", "Volver a jugar").t(), UiAction::Play);
     button(&mut commands, panel, tx!("Menu", "Menu", "Menü", "Menu", "Menú").t(), UiAction::Menu);

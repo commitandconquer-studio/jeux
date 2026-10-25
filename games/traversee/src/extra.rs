@@ -29,6 +29,9 @@ pub struct Extra {
     fly_gold: Handle<StandardMaterial>,
     fly_wing: Handle<StandardMaterial>,
     fly_eye: Handle<StandardMaterial>,
+    silver: Handle<StandardMaterial>,
+    glow_blue: Handle<StandardMaterial>,
+    glow_orange: Handle<StandardMaterial>,
     /// Index de la peinture blanche dans la palette des voitures.
     white_car: usize,
     /// Index de la peinture jaune (taxi).
@@ -45,6 +48,8 @@ impl FromWorld for Extra {
         let mut glow = |c: Color, e: LinearRgba| mats.add(StandardMaterial { emissive: e, ..flat_material(c) });
         let fly_gold = glow(Color::srgb(1.0, 0.82, 0.2), LinearRgba::rgb(2.5, 1.7, 0.2));
         let red_light = glow(Color::srgb(1.0, 0.2, 0.2), LinearRgba::rgb(3.0, 0.2, 0.2));
+        let glow_blue = glow(Color::srgb(0.6, 0.9, 1.0), LinearRgba::rgb(0.8, 2.5, 4.0));
+        let glow_orange = glow(Color::srgb(1.0, 0.6, 0.2), LinearRgba::rgb(4.0, 1.6, 0.2));
         let blue_light = glow(Color::srgb(0.2, 0.4, 1.0), LinearRgba::rgb(0.2, 0.5, 3.0));
         let mut f = |r: f32, g: f32, b: f32| mats.add(flat_material(Color::srgb(r, g, b)));
         Extra {
@@ -67,6 +72,9 @@ impl FromWorld for Extra {
             fly_gold,
             fly_wing: f(0.85, 0.93, 1.0),
             fly_eye: f(0.9, 0.15, 0.15),
+            silver: f(0.78, 0.80, 0.84),
+            glow_blue,
+            glow_orange,
             white_car: 0,
             yellow_car: 0,
         }
@@ -104,6 +112,9 @@ pub enum Vehicle {
     Police,
     Taxi,
     Tractor,
+    Future,
+    Sheriff,
+    Fantastic,
 }
 
 impl Vehicle {
@@ -111,6 +122,8 @@ impl Vehicle {
     pub fn len(self) -> f32 {
         match self {
             Vehicle::Car | Vehicle::Police | Vehicle::Taxi => 1.6,
+            Vehicle::Future => 1.8,
+            Vehicle::Sheriff | Vehicle::Fantastic => 1.7,
             Vehicle::Truck => 2.9,
             Vehicle::Bus => 3.6,
             Vehicle::Sport => 1.7,
@@ -121,19 +134,33 @@ impl Vehicle {
     }
 }
 
-/// Un véhicule tiré au sort, selon la difficulté (0 à 1).
-pub fn pick_vehicle(roll: u32) -> Vehicle {
-    match roll % 100 {
-        0..=37 => Vehicle::Car,
-        38..=51 => Vehicle::Truck,
-        52..=59 => Vehicle::Bus,
-        60..=69 => Vehicle::Sport,
-        70..=77 => Vehicle::Pickup,
-        78..=83 => Vehicle::Moto,
-        84..=89 => Vehicle::Police,
-        90..=95 => Vehicle::Taxi,
-        _ => Vehicle::Tractor,
+/// Un véhicule tiré au sort parmi ceux déjà débloqués (selon les points cumulés).
+pub fn pick_vehicle(roll: u32, points: u32) -> Vehicle {
+    const WEIGHTS: [(Vehicle, u32); 12] = [
+        (Vehicle::Car, 38),
+        (Vehicle::Truck, 14),
+        (Vehicle::Taxi, 6),
+        (Vehicle::Moto, 6),
+        (Vehicle::Bus, 8),
+        (Vehicle::Pickup, 8),
+        (Vehicle::Sport, 10),
+        (Vehicle::Police, 6),
+        (Vehicle::Tractor, 4),
+        (Vehicle::Future, 3),
+        (Vehicle::Sheriff, 3),
+        (Vehicle::Fantastic, 3),
+    ];
+    let open: Vec<(Vehicle, u32)> =
+        WEIGHTS.iter().copied().filter(|(v, _)| crate::progress::unlocked(points, crate::progress::Item::Vehicle(*v))).collect();
+    let total: u32 = open.iter().map(|(_, w)| w).sum();
+    let mut r = roll % total;
+    for (v, w) in &open {
+        if r < *w {
+            return *v;
+        }
+        r -= w;
     }
+    Vehicle::Car
 }
 
 fn wheel(c: &mut Commands, k: &Kit, parent: Entity, pos: Vec3, radius: f32, width: f32) {
@@ -226,6 +253,44 @@ pub fn spawn_vehicle(c: &mut Commands, k: &Kit, x: &Extra, parent: Entity, v: Ve
                 part(c, parent, &k.cube, &x.black_stripe, Vec3::new(0.2, 0.4, dz), Vec3::new(0.16, 0.06, 0.8));
                 part(c, parent, &k.cube, &x.black_stripe, Vec3::new(0.2 - 0.32, 0.4, -dz), Vec3::new(0.16, 0.06, 0.8));
             }
+        }
+        Vehicle::Future => {
+            // Bolide argenté, en coin, avec des lignes lumineuses à l'arrière.
+            part(c, parent, &k.cube, &m.dark, Vec3::new(0.0, 0.2, 0.0), Vec3::new(1.78, 0.1, 0.78));
+            part(c, parent, &k.cube, &x.silver, Vec3::new(-0.05, 0.36, 0.0), Vec3::new(1.8, 0.24, 0.84));
+            part_rot(c, parent, &k.cube, &x.silver, Vec3::new(0.62, 0.5, 0.0), Vec3::new(0.7, 0.04, 0.82), Quat::from_rotation_z(-0.12));
+            part(c, parent, &k.cube, &m.glass, Vec3::new(-0.2, 0.56, 0.0), Vec3::new(0.72, 0.2, 0.72));
+            part(c, parent, &k.cube, &x.silver, Vec3::new(-0.2, 0.67, 0.0), Vec3::new(0.66, 0.03, 0.68));
+            part(c, parent, &k.cube, &x.black_stripe, Vec3::new(-0.91, 0.45, 0.0), Vec3::new(0.04, 0.12, 0.72));
+            part(c, parent, &k.cube, &x.glow_blue, Vec3::new(-0.915, 0.38, 0.0), Vec3::new(0.02, 0.035, 0.72));
+            for s in [-1.0, 1.0] {
+                part(c, parent, &k.cube, &x.glow_orange, Vec3::new(-0.92, 0.5, 0.28 * s), Vec3::new(0.03, 0.05, 0.14));
+                part(c, parent, &k.cube, &x.glow_blue, Vec3::new(-0.2, 0.37, 0.426 * s), Vec3::new(1.1, 0.02, 0.01));
+                part(c, parent, &k.cube, &m.headlight, Vec3::new(0.9, 0.38, 0.28 * s), Vec3::new(0.03, 0.06, 0.16));
+                for wx in [-0.55, 0.58] {
+                    wheel(c, k, parent, Vec3::new(wx, 0.17, 0.4 * s), 0.17, 0.16);
+                }
+            }
+        }
+        Vehicle::Sheriff => {
+            spawn_car(c, k, parent, 4); // orange
+            part(c, parent, &k.cube, &x.white, Vec3::new(-0.12, 0.915, 0.0), Vec3::new(0.84, 0.03, 0.72));
+            part(c, parent, &k.cube, &x.white, Vec3::new(0.0, 0.445, 0.0), Vec3::new(1.56, 0.04, 0.8));
+            for s in [-1.0, 1.0] {
+                part(c, parent, &k.cyl, &x.white, Vec3::new(-0.05, 0.43, 0.395 * s), Vec3::new(0.3, 0.02, 0.3));
+                part(c, parent, &k.cube, &x.black_stripe, Vec3::new(-0.05, 0.43, 0.406 * s), Vec3::new(0.05, 0.2, 0.01));
+                part(c, parent, &k.cube, &x.white, Vec3::new(0.84, 0.3, 0.25 * s), Vec3::new(0.04, 0.22, 0.04));
+            }
+            part(c, parent, &k.cube, &x.white, Vec3::new(0.86, 0.3, 0.0), Vec3::new(0.04, 0.04, 0.5));
+            part(c, parent, &k.cube, &x.red_light, Vec3::new(-0.12, 0.97, 0.0), Vec3::new(0.14, 0.08, 0.3));
+        }
+        Vehicle::Fantastic => {
+            spawn_car(c, k, parent, x.white_car + 3); // presque noir
+            part(c, parent, &k.cube, &x.black_stripe, Vec3::new(0.8, 0.46, 0.0), Vec3::new(0.03, 0.08, 0.62));
+            let eye = part(c, parent, &k.cube, &x.red_light, Vec3::new(0.83, 0.46, 0.0), Vec3::new(0.02, 0.04, 0.1));
+            c.entity(eye).insert(Scanner);
+            part(c, parent, &k.cube, &x.black_stripe, Vec3::new(-0.76, 0.6, 0.0), Vec3::new(0.06, 0.03, 0.74));
+            part(c, parent, &k.cube, &x.red_light, Vec3::new(-0.12, 0.915, 0.0), Vec3::new(0.84, 0.01, 0.01));
         }
         Vehicle::Tractor => {
             part(c, parent, &k.cube, &x.green, Vec3::new(0.62, 0.52, 0.0), Vec3::new(0.85, 0.46, 0.52));
@@ -374,5 +439,18 @@ pub fn animate_flies(time: Res<Time>, mut flies: Query<(&Fly, &mut Transform), W
     }
     for (wing, mut tf) in &mut wings {
         tf.rotation = Quat::from_rotation_z(wing.side * (t * 70.0).sin() * 0.6);
+    }
+}
+
+/// Le voyant rouge qui balaie le museau de la voiture fantastique.
+#[derive(Component)]
+pub struct Scanner;
+
+pub fn animate_scanner(time: Res<Time>, mut q: Query<&mut Transform, With<Scanner>>) {
+    let t = time.elapsed_secs() * 3.2;
+    // Va-et-vient régulier (triangle), de bord à bord du museau.
+    let tri = (t % 2.0 - 1.0).abs() * 2.0 - 1.0;
+    for mut tf in &mut q {
+        tf.translation.z = tri * 0.26;
     }
 }
