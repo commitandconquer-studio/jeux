@@ -37,6 +37,15 @@ def tx(n):
 
 def anim(m):
     t = m.get("animation", m.get("type"))
+    # Pattes et ailes pivotent autour d'un point (voir AnimKind::Swing*), la queue frétille.
+    if t == "pendule" and m.get("axe") == "z":
+        return "SwingZ", m.get("phase", 0.0)
+    if t == "pendule" and m.get("axe") == "x":
+        return "SwingXBase", m.get("phase", 0.0)
+    if t == "balance" and m.get("axe") == "y":
+        return "TailY", 0.0
+    if t == "balance" and m.get("axe") == "z":
+        return "TailZ", 0.0
     amp = None
     parts = t.rsplit("_", 1)
     if len(parts) == 2:
@@ -53,7 +62,7 @@ rs = ["// Généré par tools/gen-mondes.py à partir de data/import/*.json : ne
       "#![allow(dead_code)]",
       "use game_common::tx;",
       "",
-      "use crate::extra::{Anim, AnimKind, Mat, Model, Piece, Shape};",
+      "use crate::extra::{Anim, AnimKind, Animal, Mat, Model, Piece, Shape};",
       ""]
 n = 0
 
@@ -94,6 +103,21 @@ for tag, fichier in WORLDS:
     idx = [ids.index(v) for v in w["vehicules_du_monde"]]
     rs.append(f"/// Numéros (dans `gen_vehicles::GEN`) des véhicules qui roulent dans ce monde.")
     rs.append(f"pub const {tag}_VEHICLES: [usize; {len(idx)}] = [{', '.join(str(i) for i in idx)}];")
+    names = []
+    for a in d.get("animaux", []):
+        names.append(a)
+    items = [model(a) for a in names]
+    rs.append(f"pub const {tag}_ANIMALS: [Animal; {len(items)}] = [")
+    for a, m in zip(names, items):
+        rs.append(f"    Animal {{ model: {m}, len: {f(a['longueur'])}, width: {f(a['largeur'])}, points: {a['points_deblocage']}, dangerous: {str(a['dangereux']).lower()}, flying: {str(a['classe'] == 'volant').lower()} }},")
+    rs.append("];")
+    rs.append(f"pub fn {tag.lower()}_animal_name(i: usize) -> &'static str {{")
+    rs.append("    match i {")
+    for i, a in enumerate(names):
+        rs.append(f"        {i} => {tx(a['noms'])}.t(),")
+    rs.append('        _ => "?",')
+    rs.append("    }")
+    rs.append("}")
 rs.append("""
 pub struct WorldColors {
     pub grass_a: [u8; 3],

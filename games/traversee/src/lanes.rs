@@ -43,6 +43,8 @@ pub enum MoverKind {
     Log,
     Pad,
     Train,
+    /// Animal inoffensif : il traverse sans faire de mal.
+    Critter,
 }
 
 /// Tout ce qui se déplace sur une voie (ou flotte, pour les nénuphars).
@@ -326,18 +328,36 @@ fn spawn_lane(c: &mut Commands, kit: &Kit, x: &Extra, g: &mut LaneGen, points: u
             loop {
                 let mut vehicle = pick_vehicle(g.rng.below(1000), points);
                 // Dans le parc, surtout les véhicules du parc (ceux déjà gagnés).
-                if biome == Biome::Jurassic && g.rng.below(100) < 65 {
-                    let open: Vec<usize> = crate::gen_worlds::JURA_VEHICLES.iter().copied().filter(|i| crate::progress::unlocked(points, crate::progress::Item::Vehicle(Vehicle::Gen(*i)))).collect();
-                    if !open.is_empty() {
-                        vehicle = Vehicle::Gen(open[g.rng.below(open.len() as u32) as usize]);
+                if biome == Biome::Jurassic {
+                    let r = g.rng.below(100);
+                    if r < 55 {
+                        // Des dinosaures qui traversent (ceux déjà gagnés ; le ptéro vole, il ne traverse pas).
+                        let open: Vec<usize> = (0..crate::gen_worlds::JURA_ANIMALS.len())
+                            .filter(|i| {
+                                let a = &crate::gen_worlds::JURA_ANIMALS[*i];
+                                !a.flying && points >= a.points.max(crate::gen_worlds::JURA_POINTS)
+                            })
+                            .collect();
+                        if !open.is_empty() {
+                            vehicle = Vehicle::Beast(open[g.rng.below(open.len() as u32) as usize]);
+                        }
+                    } else if r < 75 {
+                        let open: Vec<usize> = crate::gen_worlds::JURA_VEHICLES.iter().copied().filter(|i| crate::progress::unlocked(points, crate::progress::Item::Vehicle(Vehicle::Gen(*i)))).collect();
+                        if !open.is_empty() {
+                            vehicle = Vehicle::Gen(open[g.rng.below(open.len() as u32) as usize]);
+                        }
                     }
                 }
+                let kind = match vehicle {
+                    Vehicle::Beast(i) if !crate::gen_worlds::JURA_ANIMALS[i].dangerous => MoverKind::Critter,
+                    _ => MoverKind::Car,
+                };
                 let len = vehicle.len();
                 if x_pos + len > WRAP - 2.0 {
                     break;
                 }
                 let color = g.rng.below(24) as usize;
-                let mover = spawn_mover(c, root, row, x_pos + len / 2.0, speed, len, MoverKind::Car, dir);
+                let mover = spawn_mover(c, root, row, x_pos + len / 2.0, speed, len, kind, dir);
                 match vehicle {
                     Vehicle::Car => spawn_car(c, kit, mover, color),
                     Vehicle::Truck => spawn_truck(c, kit, mover, color),

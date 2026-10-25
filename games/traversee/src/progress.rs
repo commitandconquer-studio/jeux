@@ -103,6 +103,7 @@ impl Item {
             Item::Vehicle(Vehicle::Gen(i)) => return crate::gen_vehicles::name(i),
             Item::Vehicle(v) => match v {
                 Vehicle::Gen(_) => unreachable!(),
+                Vehicle::Beast(i) => return crate::gen_worlds::jura_animal_name(i),
                 Vehicle::Car => tx!("Pépette", "Penny", "Püppi", "Pepetta", "Pepita"),
                 Vehicle::Truck => tx!("Gros Bidon", "Big Barrel", "Dicker Brummer", "Gran Botte", "Gran Bidón"),
                 Vehicle::Taxi => tx!("Taxi Citron", "Lemon Cab", "Zitronen-Taxi", "Taxi Limone", "Taxi Limón"),

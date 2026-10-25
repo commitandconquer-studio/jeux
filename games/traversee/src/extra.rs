@@ -53,7 +53,8 @@ impl FromWorld for Extra {
         let mut colors: Vec<([u8; 3], Handle<StandardMaterial>)> = Vec::new();
         let models = crate::gen_vehicles::GEN.iter().map(|g| (g.c2, g.c3)).chain(
             [&crate::gen_worlds::JURA_BLOCKS[..], &crate::gen_worlds::JURA_SIDES[..], &crate::gen_worlds::JURA_DECO[..]].into_iter().flatten().map(|m| (m.c2, m.c3)),
-        );
+        )
+        .chain(crate::gen_worlds::JURA_ANIMALS.iter().map(|a| (a.model.c2, a.model.c3)));
         for rgb in models.flat_map(|(a, b)| [a, b]) {
             if !colors.iter().any(|(c, _)| *c == rgb) {
                 let col = Color::srgb(rgb[0] as f32 / 255.0, rgb[1] as f32 / 255.0, rgb[2] as f32 / 255.0);
@@ -131,6 +132,8 @@ pub enum Vehicle {
     Sheriff,
     /// Un véhicule décrit en pièces (`gen_vehicles.rs`), par son numéro.
     Gen(usize),
+    /// Un animal du parc (`gen_worlds::JURA_ANIMALS`) qui traverse la route.
+    Beast(usize),
 }
 
 impl Vehicle {
@@ -140,6 +143,7 @@ impl Vehicle {
             Vehicle::Car | Vehicle::Police | Vehicle::Taxi => 1.6,
             Vehicle::Sheriff => 1.7,
             Vehicle::Gen(i) => crate::gen_vehicles::GEN[i].len,
+            Vehicle::Beast(i) => crate::gen_worlds::JURA_ANIMALS[i].len,
             Vehicle::Truck => 2.9,
             Vehicle::Bus => 3.6,
             Vehicle::Sport => 1.7,
@@ -203,6 +207,7 @@ pub fn spawn_vehicle(c: &mut Commands, k: &Kit, x: &Extra, parent: Entity, v: Ve
     let paint = &m.car[color % m.car.len()];
     match v {
         Vehicle::Gen(i) => spawn_gen(c, k, x, parent, i, color),
+        Vehicle::Beast(i) => spawn_animal(c, k, x, parent, i),
         Vehicle::Car | Vehicle::Truck => unreachable!("voitures et camions viennent de decor3d"),
         Vehicle::Bus => {
             let body = &x.bus[color % x.bus.len()];
@@ -776,6 +781,21 @@ pub enum AnimKind {
     Flap,
     Fall,
     SpinLocal,
+    /// Patte : pivote d'avant en arrière autour du haut ; l'ampleur porte la phase (0 ou 0,5).
+    SwingZ,
+    /// Aile : bat de haut en bas autour de son attache ; les deux côtés en miroir.
+    SwingXBase,
+    /// Queue qui frétille (de gauche à droite, ou de haut en bas).
+    TailY,
+    #[allow(dead_code)]
+    TailZ,
+}
+
+impl AnimKind {
+    /// Les animations qui font tourner un groupe de pièces autour d'un point.
+    fn pivoted(self) -> bool {
+        matches!(self, AnimKind::SwingZ | AnimKind::SwingXBase | AnimKind::TailY | AnimKind::TailZ)
+    }
 }
 
 /// Une animation : quelle pièce (`*` = tout le véhicule, `préfixe_*`, `*contient`), laquelle, et son ampleur.
@@ -801,6 +821,64 @@ pub fn spawn_model(c: &mut Commands, k: &Kit, x: &Extra, parent: Entity, m: &Mod
         let kinds: Vec<(AnimKind, f32)> = m.anims.iter().filter(|a| matches_target(a.target, p.id)).map(|a| (a.kind, a.amp)).collect();
         if !kinds.is_empty() {
             c.entity(e).insert(GenAnim { kinds, base: tf, phase: (seed * 31 + n) as f32 * 0.37 });
+        }
+    }
+}
+
+/// Un animal décrit en pièces : pattes, ailes et queue pivotent autour de leur attache.
+pub struct Animal {
+    pub model: Model,
+    pub len: f32,
+    #[allow(dead_code)]
+    pub width: f32,
+    pub points: u32,
+    pub dangerous: bool,
+    pub flying: bool,
+}
+
+/// Pose un animal (avant = +X) ; les groupes de pièces animés par rotation sont rangés sous un pivot.
+pub fn spawn_animal(c: &mut Commands, k: &Kit, x: &Extra, parent: Entity, i: usize) {
+    let a = &crate::gen_worlds::JURA_ANIMALS[i];
+    let m = &a.model;
+    let body = c.spawn((Transform::default(), Visibility::default(), ChildOf(parent))).id();
+    let mut pivots: Vec<(&'static str, Entity, Vec3)> = Vec::new();
+    for (n, p) in m.pieces.iter().enumerate() {
+        let id = p.id;
+        let swing = id.and_then(|id| m.anims.iter().find(|an| an.kind.pivoted() && matches_target(an.target, Some(id))).map(|an| (id, an.kind)));
+        let (mut tf, owner) = (piece_transform(p, Vec3::ZERO), body);
+        let mut owner = owner;
+        if let Some((id, kind)) = swing {
+            let at = match pivots.iter().find(|(pid, ..)| *pid == id) {
+                Some((_, e, at)) => (*e, *at),
+                None => {
+                    // Le pivot dépend du groupe entier : on regarde toutes ses pièces.
+                    let (mut lo, mut hi) = (Vec3::splat(f32::MAX), Vec3::splat(f32::MIN));
+                    for q in m.pieces.iter().filter(|q| q.id == Some(id)) {
+                        let (c0, h) = (Vec3::from(q.pos), Vec3::from(q.size) / 2.0);
+                        lo = lo.min(c0 - h);
+                        hi = hi.max(c0 + h);
+                    }
+                    let mid = (lo + hi) / 2.0;
+                    let pivot = match kind {
+                        AnimKind::SwingZ => Vec3::new(mid.x, hi.y, mid.z),
+                        AnimKind::SwingXBase => Vec3::new(mid.x, mid.y, if mid.z > 0.0 { lo.z } else { hi.z }),
+                        _ => Vec3::new(hi.x, mid.y, mid.z),
+                    };
+                    let kinds: Vec<(AnimKind, f32)> = m.anims.iter().filter(|an| matches_target(an.target, Some(id))).map(|an| (an.kind, an.amp)).collect();
+                    let e = c.spawn((Transform::from_translation(pivot), Visibility::default(), GenAnim { kinds, base: Transform::from_translation(pivot), phase: 0.0 }, ChildOf(body))).id();
+                    pivots.push((id, e, pivot));
+                    (e, pivot)
+                }
+            };
+            tf.translation -= at.1;
+            owner = at.0;
+        }
+        let e = c.spawn((Mesh3d(piece_mesh(k, p.shape).clone()), MeshMaterial3d(piece_material(k, x, p.mat, m.c2, m.c3, 0).clone()), tf, ChildOf(owner))).id();
+        if swing.is_none() {
+            let kinds: Vec<(AnimKind, f32)> = m.anims.iter().filter(|an| matches_target(an.target, p.id)).map(|an| (an.kind, an.amp)).collect();
+            if !kinds.is_empty() {
+                c.entity(e).insert(GenAnim { kinds, base: tf, phase: (i * 31 + n) as f32 * 0.37 });
+            }
         }
     }
 }
@@ -937,6 +1015,10 @@ pub fn animate_gen(time: Res<Time>, mut q: Query<(&GenAnim, &mut Transform, &mut
                     out.translation.y += (tt * 9.0).sin() * 0.03;
                 }
                 AnimKind::Flap => out.rotation *= Quat::from_rotation_z((tt * 16.0).sin() * 0.4),
+                AnimKind::SwingZ => out.rotation *= Quat::from_rotation_z((tt * 8.0 + *amp * std::f32::consts::TAU).sin() * 0.6),
+                AnimKind::SwingXBase => out.rotation *= Quat::from_rotation_x(-a.base.translation.z.signum() * (tt * 7.0 + *amp * std::f32::consts::TAU).sin() * 0.6),
+                AnimKind::TailY => out.rotation *= Quat::from_rotation_y((tt * 5.0).sin() * 0.35),
+                AnimKind::TailZ => out.rotation *= Quat::from_rotation_z((tt * 5.0).sin() * 0.2),
                 AnimKind::Fall => {
                     // La portière se détache de temps en temps, puis revient d'un coup.
                     let f = ((tt % 4.0 - 3.0) / 0.6).clamp(0.0, 1.0);

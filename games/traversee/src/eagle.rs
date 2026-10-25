@@ -35,11 +35,13 @@ pub struct Eagle {
     timer: f32,
     /// Position de l'aigle quand il tient le crapaud.
     grip: Option<Vec3>,
+    /// Dernière case du crapaud et depuis combien de temps il n'a pas bougé.
+    idle: (i32, i32, f32),
 }
 
 impl Default for Eagle {
     fn default() -> Self {
-        Self { phase: Phase::Idle, timer: 25.0, grip: None }
+        Self { phase: Phase::Idle, timer: 25.0, grip: None, idle: (0, 0, 0.0) }
     }
 }
 
@@ -138,7 +140,7 @@ fn run_eagle(
     progress: Res<Progress>,
     score: Res<Score>,
     cam: Res<crate::CamZ>,
-    mut idle: Local<(i32, i32, f32)>,
+    extra: Res<crate::extra::Extra>,
     mut death: ResMut<Death>,
     mut next: ResMut<NextState<GameState>>,
     mut sfx: MessageWriter<Sfx>,
@@ -156,17 +158,17 @@ fn run_eagle(
             }
             // Immobile trop longtemps : il arrive tout de suite, sur sa colonne.
             let here = (frog.row, frog.pos.x.round() as i32);
-            if here != (idle.0, idle.1) {
-                *idle = (here.0, here.1, 0.0);
+            if here != (eagle.idle.0, eagle.idle.1) {
+                eagle.idle = (here.0, here.1, 0.0);
             } else {
-                idle.2 += dt;
+                eagle.idle.2 += dt;
             }
-            let punish = frog.started && idle.2 >= IDLE_LIMIT;
+            let punish = frog.started && eagle.idle.2 >= IDLE_LIMIT;
             eagle.timer -= dt;
             if eagle.timer > 0.0 && !punish {
                 return;
             }
-            idle.2 = 0.0;
+            eagle.idle.2 = 0.0;
             // Le plus souvent sur la colonne du crapaud, parfois ailleurs.
             let col = if punish || unit(&mut rng) < 0.7 { frog.pos.x.round() as i32 } else { rng.below((COLS * 2 + 1) as u32) as i32 - COLS };
             let dir = if unit(&mut rng) < 0.5 { 1.0 } else { -1.0 };
@@ -193,7 +195,8 @@ fn run_eagle(
             }
             // L'aigle arrive par le haut ou le bas de l'écran.
             let z = if dir > 0.0 { cam.0 - 15.0 } else { cam.0 + 13.0 };
-            spawn_eagle(&mut commands, &kit, &ek, col, dir, z);
+            let park = crate::extra::Biome::of(frog.max_row_i(), progress.total + score.current) == crate::extra::Biome::Jurassic;
+            spawn_eagle(&mut commands, &kit, &extra, &ek, col, dir, z, park);
             for (e, _, _, strip) in &visuals {
                 if strip {
                     commands.entity(e).despawn();
@@ -239,7 +242,7 @@ fn run_eagle(
     }
 }
 
-fn spawn_eagle(c: &mut Commands, k: &Kit, e: &EagleKit, col: i32, dir: f32, z: f32) {
+fn spawn_eagle(c: &mut Commands, k: &Kit, x: &crate::extra::Extra, e: &EagleKit, col: i32, dir: f32, z: f32, pterodactyl: bool) {
     // Modèle tourné vers -Z, puis pivoté selon le sens du vol.
     let root = c
         .spawn((
@@ -248,6 +251,15 @@ fn spawn_eagle(c: &mut Commands, k: &Kit, e: &EagleKit, col: i32, dir: f32, z: f
             EagleVisual,
         ))
         .id();
+    if pterodactyl {
+        // Dans le parc, c'est le ptéro du JSON qui fond sur le crapaud (modèle tourné vers +X).
+        if let Some(i) = crate::gen_worlds::JURA_ANIMALS.iter().position(|a| a.flying) {
+            let holder = c.spawn((Transform::from_xyz(0.0, -0.6, 0.0).with_rotation(Quat::from_rotation_y(PI / 2.0)), Visibility::default(), ChildOf(root))).id();
+            crate::extra::spawn_animal(c, k, x, holder, i);
+            shadow(c, k, e, col, z);
+            return;
+        }
+    }
     part(c, root, &k.ball, &e.body, Vec3::new(0.0, 0.0, 0.0), Vec3::new(0.5, 0.42, 1.1));
     part(c, root, &k.ball, &e.white, Vec3::new(0.0, 0.1, -0.55), Vec3::splat(0.34));
     part_rot(c, root, &k.cone, &e.beak, Vec3::new(0.0, 0.07, -0.78), Vec3::new(0.12, 0.2, 0.12), Quat::from_rotation_x(-std::f32::consts::FRAC_PI_2));
@@ -264,6 +276,10 @@ fn spawn_eagle(c: &mut Commands, k: &Kit, e: &EagleKit, col: i32, dir: f32, z: f
         part(c, wing, &k.cube, &e.body, Vec3::new(0.85 * s, 0.0, 0.1), Vec3::new(1.7, 0.06, 0.62));
         part(c, wing, &k.cube, &e.dark, Vec3::new(1.55 * s, 0.0, 0.18), Vec3::new(0.6, 0.05, 0.5));
     }
+    shadow(c, k, e, col, z);
+}
+
+fn shadow(c: &mut Commands, k: &Kit, e: &EagleKit, col: i32, z: f32) {
     // Son ombre sur la route
     c.spawn((
         Mesh3d(k.cyl.clone()),
