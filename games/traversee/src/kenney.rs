@@ -413,3 +413,25 @@ pub fn medieval_raft(c: &mut Commands, server: &AssetServer, parent: Entity, len
         }
     }
 }
+
+/// Une cavalerie au galop à la place du train du Moyen Âge : une file de chevaliers (cheval du Prototype Kit,
+/// soldat du Mini Arena assis dessus). Renvoie la longueur de la file.
+pub fn cavalerie(c: &mut Commands, server: &AssetServer, graphs: &mut Assets<AnimationGraph>, parent: Entity, wagons: usize) -> f32 {
+    const PAS: f32 = 1.5;
+    let n = wagons * 2 + 2;
+    let len = n as f32 * PAS;
+    for i in 0..n {
+        let x = len / 2.0 - PAS / 2.0 - i as f32 * PAS;
+        // Le cheval regarde vers +X ; le soldat (qui regarde vers +Z) est tourné de même et assis sur le dos.
+        anime(c, server, graphs, parent, "kenney/prototype-kit/animal-horse.glb", 1, Transform::from_xyz(x, 0.3, 0.0).with_scale(Vec3::splat(2.0)));
+        anime(c, server, graphs, parent, "kenney/mini-arena/character-soldier.glb", 7, Transform::from_xyz(x, 0.55, 0.0).with_rotation(Quat::from_rotation_y(std::f32::consts::FRAC_PI_2)).with_scale(Vec3::splat(0.7)));
+    }
+    len
+}
+
+/// Un modèle animé en boucle (`anim` : numéro de l'animation dans le GLB).
+fn anime(c: &mut Commands, server: &AssetServer, graphs: &mut Assets<AnimationGraph>, parent: Entity, fichier: &str, anim: usize, tf: Transform) {
+    let scene = server.load(GltfAssetLabel::Scene(0).from_asset(fichier.to_string()));
+    let (graph, node) = AnimationGraph::from_clip(server.load(GltfAssetLabel::Animation(anim).from_asset(fichier.to_string())));
+    c.spawn((WorldAssetRoot(scene), tf, Marcheur { graph: graphs.add(graph), node }, ChildOf(parent)));
+}
