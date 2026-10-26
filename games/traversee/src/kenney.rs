@@ -871,7 +871,7 @@ pub struct PorteurLampe;
 // ---- Far West (Prototype Kit, Survival Kit, Fantasy Town Kit, Nature Kit) ----
 
 /// Les animaux qui traversent la piste : (modèle du Prototype Kit, échelle, longueur).
-pub const FARWEST_ANIMAUX: [(&str, f32, f32); 3] = [("animal-horse", 2.2, 1.5), ("animal-bison", 2.4, 1.5), ("animal-dog", 2.4, 1.1)];
+pub const FARWEST_ANIMAUX: [(&str, f32, f32); 3] = [("animal-horse", 1.5, 1.05), ("animal-bison", 1.6, 1.05), ("animal-dog", 1.6, 0.8)];
 
 /// Un animal animé du Prototype Kit : le cheval et le chien galopent (animation « run »), le bison marche.
 fn animal_ouest(c: &mut Commands, server: &AssetServer, graphs: &mut Assets<AnimationGraph>, parent: Entity, i: usize) -> bool {
