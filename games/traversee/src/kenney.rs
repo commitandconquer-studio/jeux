@@ -620,3 +620,31 @@ pub fn faire_briller(
         }
     }
 }
+
+// ---- Trains (Train Kit) ----
+
+/// Un train Kenney à la place du train en pièces : locomotive + `wagons` + 1 wagons, la tête vers +X. Renvoie la longueur.
+/// Les modèles du Train Kit sont longs de 2,6 le long de Z et regardent vers +Z (hauteur des roues : -0,36) ; on les réduit à 0,7.
+pub fn train(c: &mut Commands, server: &AssetServer, parent: Entity, wagons: usize, biome: crate::extra::Biome) -> f32 {
+    use crate::extra::Biome;
+    const ECHELLE: f32 = 0.7;
+    const PAS: f32 = 1.95;
+    let (loco, wagon): (&str, &[&str]) = match biome {
+        Biome::Pirate => ("train-locomotive-b", &["train-carriage-lumber", "train-carriage-flatbed-wood", "train-carriage-dirt", "train-carriage-wood"]),
+        Biome::Halloween => ("train-locomotive-c", &["train-carriage-box", "train-carriage-dirt", "train-carriage-tank"]),
+        _ => ("train-locomotive-a", &["train-carriage-coal", "train-carriage-box", "train-carriage-wood", "train-carriage-lumber", "train-carriage-tank", "train-carriage-flatbed", "train-carriage-container-red", "train-carriage-container-blue"]),
+    };
+    let n = wagons + 1;
+    let len = n as f32 * PAS;
+    for i in 0..n {
+        let nom = if i == 0 { loco } else { wagon[(i - 1 + wagons) % wagon.len()] };
+        let x = len / 2.0 - PAS / 2.0 - i as f32 * PAS;
+        let scene: Handle<WorldAsset> = server.load(GltfAssetLabel::Scene(0).from_asset(format!("kenney/train-kit/{nom}.glb")));
+        c.spawn((
+            WorldAssetRoot(scene),
+            Transform::from_xyz(x, 0.34, 0.0).with_rotation(Quat::from_rotation_y(std::f32::consts::FRAC_PI_2)).with_scale(Vec3::splat(ECHELLE)),
+            ChildOf(parent),
+        ));
+    }
+    len
+}

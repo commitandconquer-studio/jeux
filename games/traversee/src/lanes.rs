@@ -632,6 +632,7 @@ fn spawn_lane(c: &mut Commands, kit: &Kit, x: &Extra, server: &AssetServer, grap
             let wagons = 2 + g.rng.below(3) as usize;
             let len = match biome.theme() {
                 Some(_) if biome == Biome::Medieval && crate::space::kenney() => crate::kenney::cavalerie(c, server, graphs, train, wagons),
+                _ if crate::space::kenney() && biome != Biome::Space => crate::kenney::train(c, server, train, wagons, biome),
                 Some(t) if !t.train.is_empty() => crate::extra::spawn_old_train(c, kit, x, train, t, wagons),
                 _ => spawn_train(c, kit, train, wagons),
             };
