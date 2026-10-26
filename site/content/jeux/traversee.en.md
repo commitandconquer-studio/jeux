@@ -37,7 +37,7 @@ captures = [
 At first the road is quiet: a few cars, some grass. As your **points add up from game to game**, the game grows: trucks, taxis, motorbikes, buses, trains, golden gifts, then an **eagle** sweeping a whole column. Everything unlocks: enemies, worlds, characters.
 
 ## A collection to fill
-Three showcases: the **enemies** (from the lemon cab to the zombie, via the catapult and the spaceship), the **scenery** (meadow, pirate bay, Halloween, Middle Ages, space) and the **characters**: Leo, Lola, Gaston, Zoe, Hugo, Jade, Theo and Mila. Each shows as a silhouette until you win it.
+Three showcases: the **enemies** (from the lemon cab to the zombie, via the catapult and the spaceship), the **scenery** (meadow, pirate bay, Halloween, Middle Ages, space, Wild West) and the **characters**: Leo, Lola, Gaston, Zoe, Hugo, Jade, Theo and Mila. Each shows as a silhouette until you win it.
 
 ## Spectacular deaths
 Squashed, drowned, swept away, too slow, snatched by the eagle: every ending has its own effect, with **zoom-in, slow motion, screen shake** and bits of scenery flying.
@@ -46,4 +46,4 @@ Squashed, drowned, swept away, too slow, snatched by the eagle: every ending has
 **Glowing gifts** to collect for bonus points (golden ones are worth far more), logs, rafts and lily pads, rivers that can always be crossed, an announcement for every unlock and an end screen that counts up your points and your record.
 
 ## New look
-The game is being rebuilt with Kenney's lovely **CC0 models** (cars, trees, animated characters). The meadow, the **pirate bay**, **Halloween**, the **Middle Ages** and **space** are done; the other worlds will return one by one.
+The game is being rebuilt with Kenney's lovely **CC0 models** (cars, trees, animated characters). The meadow, the **pirate bay**, **Halloween**, the **Middle Ages**, **space** and the **Wild West** are done; the other worlds will return one by one.
