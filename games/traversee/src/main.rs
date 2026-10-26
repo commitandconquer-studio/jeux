@@ -101,6 +101,7 @@ fn main() {
                 lanes::move_movers,
                 characters::rebuild_player,
                 kenney::animer_humains,
+                kenney::rouler,
                 extra::animate_flies,
                 extra::speed_bus,
                 extra::animate_gen,

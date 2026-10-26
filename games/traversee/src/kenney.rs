@@ -132,23 +132,45 @@ pub fn animer_humains(
     }
 }
 
-/// Les bateaux qui roulent sur le ponton de la baie des pirates : (modèle, échelle, longueur).
-pub const PIRATE_VEHICLES: [(&str, f32, f32); 6] = [
-    ("boat-row-small", 0.45, 1.2),
-    ("boat-row-large", 0.45, 1.4),
+/// Ce qui roule sur le ponton de la baie des pirates : (modèle, échelle, longueur).
+pub const PIRATE_VEHICLES: [(&str, f32, f32); 5] = [
     ("cannon-mobile", 0.45, 1.2),
-    ("ship-pirate-small", 0.28, 2.6),
-    ("ship-small", 0.28, 2.6),
-    ("ship-pirate-medium", 0.28, 3.1),
+    ("barrel", 0.5, 0.8),
+    ("barrel", 0.5, 0.8),
+    ("cannon-mobile", 0.45, 1.2),
+    ("barrel", 0.6, 0.9),
 ];
 
-/// Pose le bateau n° `i` à la place du véhicule du monde.
+/// Un tonneau qui roule : tourne autour de l'axe en travers de la route selon la vitesse de son véhicule.
+#[derive(Component)]
+pub struct Rouler {
+    rayon: f32,
+}
+
+/// Pose le véhicule n° `i` du ponton : canon sur roues, ou tonneau couché qui roule.
 pub fn pirate_vehicle(c: &mut Commands, server: &AssetServer, parent: Entity, i: usize) -> bool {
     let (nom, echelle, _) = PIRATE_VEHICLES[i];
     let scene = server.load(GltfAssetLabel::Scene(0).from_asset(format!("kenney/pirate-kit/{nom}.glb")));
-    // Comme les voitures : les modèles Kenney regardent vers +Z, le jeu avance vers +X.
-    c.spawn((WorldAssetRoot(scene), Transform::from_rotation(Quat::from_rotation_y(std::f32::consts::FRAC_PI_2)).with_scale(Vec3::splat(echelle)), ChildOf(parent)));
+    if nom == "barrel" {
+        // Le tonneau (debout, origine au pied, hauteur 1,23, rayon 0,67) est couché sur le côté et centré sur l'axe de roulement.
+        let rayon = 0.67 * echelle;
+        let tenant = c.spawn((Transform::from_xyz(0.0, rayon, 0.0), Visibility::default(), Rouler { rayon }, ChildOf(parent))).id();
+        let couche = Quat::from_rotation_x(std::f32::consts::FRAC_PI_2);
+        c.spawn((WorldAssetRoot(scene), Transform::from_translation(couche * Vec3::new(0.0, -0.615 * echelle, 0.0)).with_rotation(couche).with_scale(Vec3::splat(echelle)), ChildOf(tenant)));
+    } else {
+        // Comme les voitures : les modèles Kenney regardent vers +Z, le jeu avance vers +X.
+        c.spawn((WorldAssetRoot(scene), Transform::from_rotation(Quat::from_rotation_y(std::f32::consts::FRAC_PI_2)).with_scale(Vec3::splat(echelle)), ChildOf(parent)));
+    }
     true
+}
+
+/// Fait tourner les tonneaux selon la vitesse du véhicule qui les porte (le véhicule est retourné quand il va vers -X : le sens de rotation suit).
+pub fn rouler(time: Res<Time>, mut q: Query<(&mut Transform, &Rouler, &ChildOf)>, movers: Query<&crate::lanes::Mover>) {
+    for (mut tf, r, parent) in &mut q {
+        if let Ok(m) = movers.get(parent.parent()) {
+            tf.rotate_z(-m.speed.abs() * time.delta_secs() / r.rayon);
+        }
+    }
 }
 
 /// Décor de la baie : palmiers, rochers de sable, caisses, tonneaux, canons… `roll` : 0 à 9.

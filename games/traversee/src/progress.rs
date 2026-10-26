@@ -80,7 +80,7 @@ pub static UNLOCKS: LazyLock<Vec<(u32, Item)>> = LazyLock::new(|| {
 
 /// Les véhicules, dans l'ordre d'affichage au garage.
 pub static ALL: LazyLock<Vec<Item>> = LazyLock::new(|| {
-    let mut all = vec![
+    let all = vec![
         Item::Vehicle(Vehicle::Car),
         Item::Vehicle(Vehicle::Truck),
         Item::Vehicle(Vehicle::Taxi),
