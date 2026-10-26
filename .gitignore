@@ -9,3 +9,4 @@ site/public/
 site/static/jouer/
 # Réglages locaux du serveur de développement (adresse du réseau local)
 .claude/launch.json
+/reserve/

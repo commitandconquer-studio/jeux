@@ -69,9 +69,6 @@ const BASE_UNLOCKS: &[(u32, Item)] = &[
 /// Tous les déblocages, par ordre de points : ceux ci-dessus et les véhicules décrits en pièces.
 pub static UNLOCKS: LazyLock<Vec<(u32, Item)>> = LazyLock::new(|| {
     let mut all: Vec<(u32, Item)> = BASE_UNLOCKS.iter().map(|(t, i)| (rescale(*t), *i)).collect();
-    for (i, g) in crate::gen_vehicles::GEN.iter().enumerate() {
-        all.push((rescale(g.points), Item::Vehicle(Vehicle::Gen(i))));
-    }
     for b in Biome::ALL {
         if let Some(t) = b.theme() {
             all.push((rescale(t.points), Item::World(b)));
@@ -96,7 +93,6 @@ pub static ALL: LazyLock<Vec<Item>> = LazyLock::new(|| {
         Item::Vehicle(Vehicle::Tractor),
         Item::Vehicle(Vehicle::Sheriff),
     ];
-    all.extend((0..crate::gen_vehicles::GEN.len()).map(|i| Item::Vehicle(Vehicle::Gen(i))));
     all
 });
 
