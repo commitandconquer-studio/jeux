@@ -86,6 +86,7 @@ fn main() {
     app.insert_resource(Rng::new(seed))
         .insert_resource(LaneGen::new(seed))
         .add_systems(Startup, (extra::extend_palette, setup))
+        .add_systems(PostStartup, kenney_look)
         .add_systems(OnEnter(GameState::Menu), reset_if_needed)
         .add_systems(OnEnter(GameState::Playing), reset_if_needed)
         // Le menu fait défiler le décor : au départ du jeu, on repart de zéro.
@@ -112,6 +113,20 @@ fn main() {
                 .chain(),
         )
         .run();
+}
+
+/// Essai d'ambiance « Kenney » (`TRAVERSEE_KENNEY=1`) : fond gris-bleu clair, lumière ambiante lavande,
+/// tonalité douce « filmique ». Les réglages viennent du projet Basic Scene de Kenney (MIT).
+fn kenney_look(mut commands: Commands, cams: Query<Entity, With<Camera3d>>, mut clear: ResMut<ClearColor>, mut amb: ResMut<GlobalAmbientLight>) {
+    if !space::kenney() {
+        return;
+    }
+    clear.0 = Color::srgb(0.662, 0.692, 0.757);
+    amb.color = Color::srgb(0.495, 0.482, 0.565);
+    amb.brightness = 1000.0;
+    for e in &cams {
+        commands.entity(e).insert(bevy::core_pipeline::tonemapping::Tonemapping::AcesFitted);
+    }
 }
 
 fn setup(mut commands: Commands, kit: Res<Kit>, mut mats: ResMut<Assets<StandardMaterial>>) {

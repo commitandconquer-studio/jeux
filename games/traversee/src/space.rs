@@ -12,6 +12,12 @@ use crate::progress::Progress;
 /// Le joueur est-il dans Cosmos Croâ ? (mis à jour à chaque image)
 static IN_SPACE: std::sync::atomic::AtomicBool = std::sync::atomic::AtomicBool::new(false);
 
+/// Essai d'ambiance Kenney demandé ? (`TRAVERSEE_KENNEY=1`)
+pub fn kenney() -> bool {
+    static K: std::sync::OnceLock<bool> = std::sync::OnceLock::new();
+    *K.get_or_init(|| std::env::var_os("TRAVERSEE_KENNEY").is_some())
+}
+
 pub fn in_space() -> bool {
     IN_SPACE.load(std::sync::atomic::Ordering::Relaxed)
 }
@@ -101,7 +107,7 @@ fn update_sky(
     IN_SPACE.store(space, std::sync::atomic::Ordering::Relaxed);
     // Dans le vide et au garage : pas de coucher de soleil ni de pluie, une lumière neutre.
     // À Halloween : toujours le crépuscule orangé.
-    let forced = if space || *state.get() == crate::GameState::Garage {
+    let forced = if space || kenney() || *state.get() == crate::GameState::Garage {
         Some(game_common::ambiance::Moment::Jour)
     } else if biome == Biome::Halloween {
         Some(game_common::ambiance::Moment::Soir)
