@@ -33,7 +33,7 @@ pub fn prop(c: &mut Commands, server: &AssetServer, parent: Entity, p: crate::mo
     let nom = match p {
         Prop::Tree => "tree",
         Prop::Pine => "tree-high",
-        // Les rochers Kenney sortent noirs dans Bevy : on garde ceux du jeu (gris).
+        // Les rochers du Mini Forest sortent noirs et ceux du Nature Kit turquoise et orange dans Bevy : on garde ceux du jeu (gris).
         Prop::Rock => return false,
         Prop::Bush => "plant",
     };
@@ -667,5 +667,59 @@ pub fn rails(c: &mut Commands, server: &AssetServer, parent: Entity, reach: f32)
             .id();
         // Le modèle va de z = 0 à z = 4 : on le centre.
         c.spawn((WorldAssetRoot(scene.clone()), Transform::from_xyz(0.0, 0.0, -2.0), ChildOf(porteur)));
+    }
+}
+
+// ---- Prairie (Nature Kit) ----
+
+/// Un modèle du Nature Kit, posé en `at` (ses modèles sont décalés de -0,05 en hauteur dans leur fichier).
+fn nature(c: &mut Commands, server: &AssetServer, parent: Entity, nom: &str, at: Vec3, tour: f32, echelle: f32) {
+    let scene: Handle<WorldAsset> = server.load(GltfAssetLabel::Scene(0).from_asset(format!("kenney/nature-kit/{nom}.glb")));
+    c.spawn((WorldAssetRoot(scene), Transform::from_translation(at + Vec3::Y * 0.05 * echelle).with_rotation(Quat::from_rotation_y(tour)).with_scale(Vec3::splat(echelle)), ChildOf(parent)));
+}
+
+const FLEURS: [&str; 9] = ["flower_redA", "flower_yellowA", "flower_purpleA", "flower_redB", "flower_yellowB", "flower_purpleB", "flower_redC", "flower_yellowC", "flower_purpleC"];
+
+/// Fleurs, champignons, touffes d'herbe et souches de la prairie.
+pub fn prairie_deco(c: &mut Commands, server: &AssetServer, parent: Entity, d: crate::extra::Deco, at: Vec3, variant: usize) -> bool {
+    use crate::extra::Deco;
+    let tour = variant as f32 * 0.9;
+    match d {
+        Deco::Flower => nature(c, server, parent, FLEURS[variant % 9], at, tour, 2.2),
+        Deco::Flowers => {
+            for (i, (dx, dz)) in [(-0.14, -0.08), (0.12, -0.1), (0.0, 0.14)].into_iter().enumerate() {
+                nature(c, server, parent, FLEURS[(variant + i * 4) % 9], at + Vec3::new(dx, 0.0, dz), tour + i as f32, 1.8);
+            }
+        }
+        Deco::Mushroom => nature(c, server, parent, ["mushroom_red", "mushroom_redGroup", "mushroom_tan", "mushroom_tanGroup", "mushroom_redTall", "mushroom_tanTall"][variant % 6], at, tour, 2.2),
+        // Les touffes d'herbe du Nature Kit sortent turquoise : on garde celles du jeu.
+        Deco::Tuft => return false,
+        Deco::Stump => nature(c, server, parent, ["stump_round", "stump_old", "stump_square", "stump_roundDetailed", "stump_oldTall", "stump_squareDetailed"][variant % 6], at, tour, 2.0),
+    }
+    true
+}
+
+/// Nénuphar sur lequel on saute (dessus à ≈ 0,16), parfois avec sa petite fleur.
+pub fn prairie_pad(c: &mut Commands, server: &AssetServer, parent: Entity, fleur: bool) {
+    let echelle = 2.6;
+    nature(c, server, parent, "lily_large", Vec3::new(0.0, 0.16 - 0.1 * echelle, 0.0), 0.0, echelle);
+    if fleur {
+        nature(c, server, parent, "flower_redA", Vec3::new(0.05, 0.16, 0.0), 0.5, 1.4);
+    }
+}
+
+/// Rondin de `len` cases : des `log_large` (1 de long le long de X) mis bout à bout.
+pub fn prairie_log(c: &mut Commands, server: &AssetServer, parent: Entity, len: f32) {
+    const ECHELLE: f32 = 1.3;
+    let n = (len / ECHELLE).round().max(1.0) as usize;
+    let pas = len / n as f32;
+    let scene: Handle<WorldAsset> = server.load(GltfAssetLabel::Scene(0).from_asset("kenney/nature-kit/log_large.glb"));
+    for i in 0..n {
+        let x = -len / 2.0 + pas * (i as f32 + 0.5);
+        c.spawn((
+            WorldAssetRoot(scene.clone()),
+            Transform::from_xyz(x, 0.06 - 0.42 * ECHELLE + 0.05, 0.0).with_scale(Vec3::new(pas, ECHELLE, ECHELLE)),
+            ChildOf(parent),
+        ));
     }
 }

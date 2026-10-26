@@ -249,6 +249,31 @@ fn space_cargo(c: &mut Commands, kit: &Kit, x: &Extra, server: &AssetServer, par
     }
 }
 
+/// Petit décor de la prairie : fleurs, champignons, touffes, souches (Nature Kit de Kenney), sinon celles du jeu.
+fn petit_decor(c: &mut Commands, kit: &Kit, x: &Extra, server: &AssetServer, parent: Entity, d: Deco, at: Vec3, variant: usize) {
+    if !(crate::space::kenney() && crate::kenney::prairie_deco(c, server, parent, d, at, variant)) {
+        spawn_deco(c, kit, x, parent, d, at, variant);
+    }
+}
+
+/// Nénuphar de la prairie : celui de Kenney, sinon celui du jeu.
+fn pad(c: &mut Commands, kit: &Kit, server: &AssetServer, parent: Entity, flower: bool) {
+    if crate::space::kenney() {
+        crate::kenney::prairie_pad(c, server, parent, flower);
+    } else {
+        spawn_pad(c, kit, parent, flower);
+    }
+}
+
+/// Rondin de la prairie : ceux de Kenney mis bout à bout, sinon celui du jeu.
+fn log(c: &mut Commands, kit: &Kit, server: &AssetServer, parent: Entity, len: f32) {
+    if crate::space::kenney() {
+        crate::kenney::prairie_log(c, server, parent, len);
+    } else {
+        spawn_log(c, kit, parent, len);
+    }
+}
+
 fn spawn_lane(c: &mut Commands, kit: &Kit, x: &Extra, server: &AssetServer, graphs: &mut Assets<AnimationGraph>, g: &mut LaneGen, points: u32) {
     let row = g.next_row;
     g.next_row += 1;
@@ -317,7 +342,7 @@ fn spawn_lane(c: &mut Commands, kit: &Kit, x: &Extra, server: &AssetServer, grap
                     0..=3 => prop(c, kit, server, root, Prop::Tree, at, variant),
                     4..=6 => prop(c, kit, server, root, Prop::Pine, at, variant),
                     7..=8 => prop(c, kit, server, root, Prop::Rock, at, variant),
-                    _ => spawn_deco(c, kit, x, root, Deco::Stump, at, variant),
+                    _ => petit_decor(c, kit, x, server, root, Deco::Stump, at, variant),
                 }
             }
             // Fleurs, champignons et touffes dans la zone jouable (on passe dessus)
@@ -341,7 +366,7 @@ fn spawn_lane(c: &mut Commands, kit: &Kit, x: &Extra, server: &AssetServer, grap
                     };
                     let variant = g.rng.below(12) as usize;
                     let jitter = Vec3::new(g.rand() * 0.3 - 0.15, 0.0, g.rand() * 0.3 - 0.15);
-                    spawn_deco(c, kit, x, root, deco, Vec3::new(col as f32, 0.0, 0.0) + jitter, variant);
+                    petit_decor(c, kit, x, server, root, deco, Vec3::new(col as f32, 0.0, 0.0) + jitter, variant);
                 }
                 // Une mouche à gober, parfois dorée
                 if row >= 3 && crate::progress::unlocked(points, crate::progress::Item::Flies) && g.rand() < 0.3 {
@@ -390,7 +415,7 @@ fn spawn_lane(c: &mut Commands, kit: &Kit, x: &Extra, server: &AssetServer, grap
                             2 => Deco::Mushroom,
                             _ => Deco::Tuft,
                         };
-                        spawn_deco(c, kit, x, root, deco, at, variant);
+                        petit_decor(c, kit, x, server, root, deco, at, variant);
                     }
                 }
             }
@@ -515,7 +540,7 @@ fn spawn_lane(c: &mut Commands, kit: &Kit, x: &Extra, server: &AssetServer, grap
                         } else if frozen {
                             spawn_ice_pad(c, kit, x, mover);
                         } else {
-                            spawn_pad(c, kit, mover, g.rng.below(3) == 0);
+                            pad(c, kit, server, mover, g.rng.below(3) == 0);
                         }
                         count += 1;
                     }
@@ -535,7 +560,7 @@ fn spawn_lane(c: &mut Commands, kit: &Kit, x: &Extra, server: &AssetServer, grap
                     } else if frozen {
                         spawn_ice_pad(c, kit, x, mover);
                     } else {
-                        spawn_pad(c, kit, mover, true);
+                        pad(c, kit, server, mover, true);
                     }
                 }
             } else {
@@ -563,7 +588,7 @@ fn spawn_lane(c: &mut Commands, kit: &Kit, x: &Extra, server: &AssetServer, grap
                     } else if frozen {
                         spawn_floe(c, kit, x, mover, len);
                     } else {
-                        spawn_log(c, kit, mover, len);
+                        log(c, kit, server, mover, len);
                     }
                     x_pos += len + 1.2 + g.rand() * (2.6 - d);
                 }
