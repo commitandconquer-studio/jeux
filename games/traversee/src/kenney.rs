@@ -226,6 +226,7 @@ pub fn trafic_modeles(biome: crate::extra::Biome) -> &'static [(&'static str, f3
     match biome {
         Biome::Pirate => &PIRATE_VEHICLES,
         Biome::Halloween => &HALLOWEEN_WALKERS,
+        Biome::Medieval => &MEDIEVAL_SIEGE,
         _ => &[],
     }
 }
@@ -236,6 +237,7 @@ pub fn trafic(c: &mut Commands, server: &AssetServer, graphs: &mut Assets<Animat
     match biome {
         Biome::Pirate => pirate_vehicle(c, server, parent, i),
         Biome::Halloween => marcheur(c, server, graphs, parent, i),
+        Biome::Medieval => engin(c, server, parent, i),
         _ => false,
     }
 }
@@ -247,6 +249,7 @@ pub fn decor(c: &mut Commands, server: &AssetServer, parent: Entity, biome: crat
     match biome {
         Biome::Pirate => pirate_scenery(c, server, parent, kind, at, roll, variant),
         Biome::Halloween => halloween_scenery(c, server, parent, kind, at, roll, variant),
+        Biome::Medieval => medieval_scenery(c, server, parent, kind, at, roll, variant),
         _ => false,
     }
 }
@@ -345,5 +348,68 @@ pub fn halloween_coffins(c: &mut Commands, server: &AssetServer, parent: Entity,
             Transform::from_xyz(x, 0.06 - 0.2 * ECHELLE, 0.0).with_rotation(Quat::from_rotation_y(std::f32::consts::FRAC_PI_2)).with_scale(Vec3::new(ECHELLE, ECHELLE, ECHELLE * pas / (0.84 * ECHELLE))),
             ChildOf(parent),
         ));
+    }
+}
+
+// ---- Moyen Âge (Castle Kit) ----
+
+/// Les machines de siège qui roulent sur le chemin : (modèle, échelle, longueur).
+pub const MEDIEVAL_SIEGE: [(&str, f32, f32); 5] = [
+    ("siege-ram", 0.9, 1.9),
+    ("siege-catapult", 0.85, 1.8),
+    ("siege-ballista", 1.0, 1.3),
+    ("siege-trebuchet", 0.75, 1.5),
+    ("siege-tower", 0.65, 1.3),
+];
+
+/// Une machine de siège ; ces modèles sont déjà tournés vers +X (arrière du côté -X), roues sous le sol de 0,2.
+fn engin(c: &mut Commands, server: &AssetServer, parent: Entity, i: usize) -> bool {
+    let (nom, echelle, _) = MEDIEVAL_SIEGE[i];
+    let scene = server.load(GltfAssetLabel::Scene(0).from_asset(format!("kenney/castle-kit/{nom}.glb")));
+    c.spawn((WorldAssetRoot(scene), Transform::from_xyz(0.0, 0.2 * echelle, 0.0).with_scale(Vec3::splat(echelle)), ChildOf(parent)));
+    true
+}
+
+fn medieval_scenery(c: &mut Commands, server: &AssetServer, parent: Entity, kind: crate::extra::Scenery, at: Vec3, roll: u32, variant: usize) -> bool {
+    use crate::extra::Scenery;
+    let (nom, echelle) = match kind {
+        Scenery::Block | Scenery::Side => match roll {
+            0..=3 => (["tree-large", "tree-small"][variant % 2], 1.0),
+            4 => (["rocks-large", "rocks-small"][variant % 2], 0.9),
+            5 => ("tower-square", 0.8),
+            6 => (["wall", "wall-pillar"][variant % 2], 0.9),
+            7 => (["flag-pennant", "flag", "flag-wide"][variant % 3], 1.3),
+            8 => (["tree-trunk", "tree-log"][variant % 2], 1.0),
+            _ => ("tower-hexagon-base", 0.8),
+        },
+        Scenery::Deco => (["tree-trunk", "rocks-small", "tree-log"][variant % 3], 0.5),
+    };
+    let scene = server.load(GltfAssetLabel::Scene(0).from_asset(format!("kenney/castle-kit/{nom}.glb")));
+    let tour = Quat::from_rotation_y(variant as f32 * 1.3);
+    c.spawn((WorldAssetRoot(scene), Transform::from_translation(at).with_rotation(tour).with_scale(Vec3::splat(echelle)), ChildOf(parent)));
+    true
+}
+
+/// Souche flottante sur laquelle on saute (dessus à ≈ 0,16).
+pub fn medieval_pad(c: &mut Commands, server: &AssetServer, parent: Entity) {
+    let scene = server.load(GltfAssetLabel::Scene(0).from_asset("kenney/castle-kit/tree-trunk.glb"));
+    let echelle = 1.6;
+    c.spawn((WorldAssetRoot(scene), Transform::from_xyz(0.0, 0.16 - 0.38 * echelle, 0.0).with_scale(Vec3::splat(echelle)), ChildOf(parent)));
+}
+
+/// Radeau de rondins : trois rangées de `tree-log` (1 de long, 0,25 de large) bout à bout sur `len` cases.
+pub fn medieval_raft(c: &mut Commands, server: &AssetServer, parent: Entity, len: f32) {
+    let n = len.round().max(1.0) as usize;
+    let pas = len / n as f32;
+    let scene: Handle<WorldAsset> = server.load(GltfAssetLabel::Scene(0).from_asset("kenney/castle-kit/tree-log.glb"));
+    for i in 0..n {
+        let x = -len / 2.0 + pas * (i as f32 + 0.5);
+        for z in [-0.26, 0.0, 0.26] {
+            c.spawn((
+                WorldAssetRoot(scene.clone()),
+                Transform::from_xyz(x, 0.06 - 0.17, z).with_rotation(Quat::from_rotation_y(std::f32::consts::FRAC_PI_2)).with_scale(Vec3::new(1.0, 1.0, pas)),
+                ChildOf(parent),
+            ));
+        }
     }
 }

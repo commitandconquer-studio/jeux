@@ -486,6 +486,8 @@ fn spawn_lane(c: &mut Commands, kit: &Kit, x: &Extra, server: &AssetServer, grap
                             pumpkin_pad(c, kit, x, server, mover);
                         } else if biome == Biome::Pirate {
                             barrel_pad(c, kit, x, server, mover);
+                        } else if biome == Biome::Medieval && crate::space::kenney() {
+                            crate::kenney::medieval_pad(c, server, mover);
                         } else if biome == Biome::Cyber {
                             spawn_hologram_pad(c, kit, x, mover);
                         } else if frozen {
@@ -504,6 +506,8 @@ fn spawn_lane(c: &mut Commands, kit: &Kit, x: &Extra, server: &AssetServer, grap
                         pumpkin_pad(c, kit, x, server, mover);
                     } else if biome == Biome::Pirate {
                         barrel_pad(c, kit, x, server, mover);
+                    } else if biome == Biome::Medieval && crate::space::kenney() {
+                        crate::kenney::medieval_pad(c, server, mover);
                     } else if biome == Biome::Cyber {
                         spawn_hologram_pad(c, kit, x, mover);
                     } else if frozen {
@@ -530,6 +534,8 @@ fn spawn_lane(c: &mut Commands, kit: &Kit, x: &Extra, server: &AssetServer, grap
                         coffin(c, kit, x, server, mover, len);
                     } else if biome == Biome::Pirate {
                         raft(c, kit, x, server, mover, len);
+                    } else if biome == Biome::Medieval && crate::space::kenney() {
+                        crate::kenney::medieval_raft(c, server, mover, len);
                     } else if biome == Biome::Cyber {
                         spawn_barge(c, kit, x, mover, len);
                     } else if frozen {
