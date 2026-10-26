@@ -526,14 +526,26 @@ pub fn monorail(c: &mut Commands, server: &AssetServer, parent: Entity, wagons: 
 
 // ---- Cadeaux (Holiday Kit) ----
 
-/// Le halo lumineux d'un cadeau : il pulse pour qu'on le repère de loin.
+/// Le cadeau brille : les matières de son modèle deviennent lumineuses (couleurs conservées) dès que le modèle est chargé.
 #[derive(Component)]
-pub struct Halo {
+pub struct Brille;
+
+/// Une étincelle qui scintille autour du cadeau.
+#[derive(Component)]
+pub struct Etincelle {
     phase: f32,
+    rayon: f32,
 }
 
-/// Un cadeau à ramasser à la place d'une mouche (le doré vaut plus) : modèle Kenney, halo et colonne de lumière.
-/// Il garde le composant `Fly` : la logique de ramassage et de points est celle des mouches.
+/// La lumière du cadeau, qui pulse doucement.
+#[derive(Component)]
+pub struct LueurCadeau {
+    phase: f32,
+    base: f32,
+}
+
+/// Un cadeau à ramasser à la place d'une mouche (le doré vaut plus) : modèle Kenney qui brille, vraie lumière
+/// chaude autour de lui et étincelles. Il garde le composant `Fly` : ramassage et points comme les mouches.
 #[allow(clippy::too_many_arguments)]
 pub fn cadeau(c: &mut Commands, k: &crate::models::Kit, x: &crate::extra::Extra, server: &AssetServer, lane: Entity, row: i32, col: i32, gold: bool, phase: f32) {
     let nom = ["present-a-cube", "present-a-round", "present-b-cube", "present-a-rectangle", "present-b-round", "present-b-rectangle"][(phase * 10.0) as usize % 6];
@@ -548,17 +560,63 @@ pub fn cadeau(c: &mut Commands, k: &crate::models::Kit, x: &crate::extra::Extra,
         .id();
     // Le modèle est décalé de 0,3 en hauteur dans son fichier ; on le centre.
     let echelle = if gold { 1.9 } else { 1.4 };
-    c.spawn((WorldAssetRoot(scene), Transform::from_xyz(0.0, -0.3 * echelle - 0.1, 0.0).with_scale(Vec3::splat(echelle)), ChildOf(fly)));
+    c.spawn((WorldAssetRoot(scene), Transform::from_xyz(0.0, -0.3 * echelle - 0.1, 0.0).with_scale(Vec3::splat(echelle)), Brille, ChildOf(fly)));
+    let couleur = if gold { Color::srgb(1.0, 0.8, 0.25) } else { Color::srgb(1.0, 0.93, 0.7) };
+    let base = if gold { 90_000.0 } else { 45_000.0 };
+    c.spawn((PointLight { color: couleur, intensity: base, range: 3.5, shadow_maps_enabled: false, ..default() }, Transform::from_xyz(0.0, 0.5, 0.0), LueurCadeau { phase, base }, ChildOf(fly)));
     let mat = if gold { &x.halo_gold } else { &x.halo };
-    c.spawn((Mesh3d(k.ball.clone()), MeshMaterial3d(mat.clone()), Transform::from_xyz(0.0, 0.0, 0.0).with_scale(Vec3::splat(0.9)), Halo { phase }, ChildOf(fly)));
-    // Colonne de lumière, du sol jusqu'au cadeau.
-    c.spawn((Mesh3d(k.cyl.clone()), MeshMaterial3d(mat.clone()), Transform::from_xyz(0.0, 0.2 - 0.6, 0.0).with_scale(Vec3::new(0.35, 1.0, 0.35)), ChildOf(fly)));
+    for i in 0..5 {
+        let a = i as f32 * 1.256 + phase;
+        c.spawn((
+            Mesh3d(k.ball.clone()),
+            MeshMaterial3d(mat.clone()),
+            Transform::from_xyz(a.cos() * 0.4, 0.0, a.sin() * 0.4).with_scale(Vec3::splat(0.05)),
+            Etincelle { phase: a, rayon: 0.35 + 0.08 * (i % 2) as f32 },
+            ChildOf(fly),
+        ));
+    }
 }
 
-/// Fait pulser les halos.
-pub fn pulser_halos(time: Res<Time>, mut q: Query<(&Halo, &mut Transform)>) {
+/// Fait scintiller : les étincelles tournent autour du cadeau en grossissant et rapetissant, la lumière pulse.
+pub fn scintiller(time: Res<Time>, mut etincelles: Query<(&Etincelle, &mut Transform), Without<LueurCadeau>>, mut lueurs: Query<(&LueurCadeau, &mut PointLight)>) {
     let t = time.elapsed_secs();
-    for (h, mut tf) in &mut q {
-        tf.scale = Vec3::splat(0.85 + (t * 3.0 + h.phase).sin() * 0.12);
+    for (e, mut tf) in &mut etincelles {
+        let a = t * 1.6 + e.phase;
+        tf.translation = Vec3::new(a.cos() * e.rayon, (t * 2.3 + e.phase * 3.0).sin() * 0.25, a.sin() * e.rayon);
+        tf.scale = Vec3::splat(0.03 + 0.05 * ((t * 5.0 + e.phase * 2.0).sin() * 0.5 + 0.5));
+    }
+    for (l, mut light) in &mut lueurs {
+        light.intensity = l.base * (0.8 + 0.25 * (t * 3.0 + l.phase).sin());
+    }
+}
+
+/// Rend lumineuses les matières des modèles marqués `Brille` : la couleur du modèle sert aussi d'émission.
+pub fn faire_briller(
+    mut commands: Commands,
+    racines: Query<Entity, With<Brille>>,
+    enfants: Query<&Children>,
+    mut meshes: Query<(Entity, &mut MeshMaterial3d<StandardMaterial>), Without<Brille>>,
+    mut mats: ResMut<Assets<StandardMaterial>>,
+    mut faites: Local<std::collections::HashMap<AssetId<StandardMaterial>, Handle<StandardMaterial>>>,
+) {
+    for racine in &racines {
+        for e in enfants.iter_descendants(racine) {
+            let Ok((id, mut m)) = meshes.get_mut(e) else { continue };
+            let origine = m.0.id();
+            if faites.values().any(|h| h.id() == origine) {
+                continue; // déjà une matière lumineuse
+            }
+            let lumineuse = match faites.get(&origine) {
+                Some(h) => h.clone(),
+                None => {
+                    let Some(base) = mats.get(&m.0).cloned() else { continue };
+                    let h = mats.add(StandardMaterial { emissive: LinearRgba::rgb(1.4, 1.4, 1.4), emissive_texture: base.base_color_texture.clone(), ..base });
+                    faites.insert(origine, h.clone());
+                    h
+                }
+            };
+            m.0 = lumineuse;
+            let _ = (id, &mut commands);
+        }
     }
 }

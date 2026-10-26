@@ -81,8 +81,8 @@ impl FromWorld for Extra {
         let bus = vec![f(0.98, 0.78, 0.15), f(0.25, 0.65, 0.40), f(0.85, 0.25, 0.25), f(0.30, 0.50, 0.85)];
         let tuft = f(0.40, 0.68, 0.30);
         let mut halo_mat = |c: Color, e: LinearRgba| mats.add(StandardMaterial { base_color: c, emissive: e, unlit: true, alpha_mode: AlphaMode::Blend, ..default() });
-        let halo = halo_mat(Color::srgba(1.0, 0.95, 0.6, 0.22), LinearRgba::rgb(1.0, 0.95, 0.6));
-        let halo_gold = halo_mat(Color::srgba(1.0, 0.8, 0.2, 0.32), LinearRgba::rgb(1.0, 0.8, 0.2));
+        let halo = halo_mat(Color::srgba(1.0, 0.95, 0.6, 1.0), LinearRgba::rgb(4.0, 3.6, 2.0));
+        let halo_gold = halo_mat(Color::srgba(1.0, 0.8, 0.2, 1.0), LinearRgba::rgb(5.0, 3.4, 0.6));
         let mut glow = |c: Color, e: LinearRgba| mats.add(StandardMaterial { emissive: e, ..flat_material(c) });
         let fly_gold = glow(Color::srgb(1.0, 0.82, 0.2), LinearRgba::rgb(2.5, 1.7, 0.2));
         let red_light = glow(Color::srgb(1.0, 0.2, 0.2), LinearRgba::rgb(3.0, 0.2, 0.2));
