@@ -100,6 +100,7 @@ fn main() {
                 merge::merge_lanes,
                 lanes::move_movers,
                 characters::rebuild_player,
+                kenney::animer_humains,
                 extra::animate_flies,
                 extra::speed_bus,
                 extra::animate_gen,

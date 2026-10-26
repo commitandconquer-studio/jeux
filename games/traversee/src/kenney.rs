@@ -39,3 +39,49 @@ pub fn prop(c: &mut Commands, server: &AssetServer, parent: Entity, p: crate::mo
     c.spawn((WorldAssetRoot(scene), Transform::from_translation(at).with_rotation(tour), ChildOf(parent)));
     true
 }
+
+/// Un personnage Mini Characters : l'animation « idle » à lancer quand son `AnimationPlayer` apparaît.
+#[derive(Component)]
+pub struct Humain {
+    graph: Handle<AnimationGraph>,
+    node: AnimationNodeIndex,
+}
+
+/// Le héros jouable Kenney (`character-male-a`…) ; regarde vers -Z comme les autres personnages du jeu.
+pub fn humain(c: &mut Commands, server: &AssetServer, graphs: &mut Assets<AnimationGraph>, parent: Entity, index: usize) {
+    let lettre = (b'a' + (index / 2 % 6) as u8) as char;
+    let sexe = if index % 2 == 0 { "male" } else { "female" };
+    let fichier = format!("kenney/mini-characters/character-{sexe}-{lettre}.glb");
+    let scene = server.load(GltfAssetLabel::Scene(0).from_asset(fichier.clone()));
+    let idle = server.load(GltfAssetLabel::Animation(1).from_asset(fichier));
+    let (graph, node) = AnimationGraph::from_clip(idle);
+    c.spawn((
+        WorldAssetRoot(scene),
+        Transform::from_rotation(Quat::from_rotation_y(std::f32::consts::PI)).with_scale(Vec3::splat(0.8)),
+        Humain { graph: graphs.add(graph), node },
+        ChildOf(parent),
+    ));
+}
+
+/// Lance l'animation du personnage dès que son squelette est chargé.
+pub fn animer_humains(
+    mut commands: Commands,
+    mut lecteurs: Query<(Entity, &mut AnimationPlayer), Added<AnimationPlayer>>,
+    parents: Query<&ChildOf>,
+    humains: Query<&Humain>,
+) {
+    for (e, mut lecteur) in &mut lecteurs {
+        let mut cur = e;
+        loop {
+            if let Ok(h) = humains.get(cur) {
+                commands.entity(e).insert(AnimationGraphHandle(h.graph.clone()));
+                lecteur.play(h.node).repeat();
+                break;
+            }
+            match parents.get(cur) {
+                Ok(p) => cur = p.parent(),
+                Err(_) => break,
+            }
+        }
+    }
+}

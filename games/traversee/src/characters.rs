@@ -465,6 +465,8 @@ pub fn rebuild_player(
     progress: Res<Progress>,
     score: Res<game_common::Score>,
     extra: Res<crate::extra::Extra>,
+    server: Res<AssetServer>,
+    mut graphs: ResMut<Assets<AnimationGraph>>,
     mut built: Local<Option<(Character, Costume, Option<usize>)>>,
 ) {
     // Dans un monde à thème, on joue le héros du monde (avec son chapeau).
@@ -484,6 +486,10 @@ pub fn rebuild_player(
         let th = crate::gen_worlds::THEMES[t];
         crate::extra::spawn_pivoted(&mut commands, &kit, &extra, holder, &th.hero, 7);
         crate::extra::spawn_pivoted(&mut commands, &kit, &extra, holder, &th.hat, 8);
+        return;
+    }
+    if crate::space::kenney() {
+        crate::kenney::humain(&mut commands, &server, &mut graphs, root, want.0.index());
         return;
     }
     spawn_character(&mut commands, want.0, want.1, &kit, &frog_kit, &cast, &mut mats, root);
