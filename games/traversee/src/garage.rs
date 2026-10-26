@@ -16,6 +16,11 @@ use crate::progress::{Item, Progress, threshold};
 pub const ORIGIN: Vec3 = Vec3::new(400.0, 0.0, 0.0);
 const PER_PAGE: usize = 28;
 
+/// Inclinaison de la caméra de la Collection (degrés au-dessus de l'horizontale) : presque de profil, avec un peu de plongée.
+pub const PITCH_DEG: f32 = 24.0;
+/// Hauteur du point regardé, pour centrer les modèles à l'écran.
+pub const LOOK_HEIGHT: f32 = 1.0;
+
 /// Un ennemi de la collection : un véhicule de la prairie, ou ce qui traverse la route d'un monde.
 #[derive(Clone, Copy)]
 enum Ennemi {
@@ -137,18 +142,18 @@ fn scope() -> impl Bundle {
 fn vehicle_slot(i: usize) -> Vec3 {
     const COLS: usize = 7;
     let (col, row) = ((i % COLS) as f32, (i / COLS) as f32);
-    ORIGIN + Vec3::new((col - 3.0) * 4.7, 0.0, (row - 1.5) * 3.9 - 0.45)
+    ORIGIN + Vec3::new((col - 3.0) * 5.1, 0.0, (row - 1.5) * 10.0 - 0.45)
 }
 
-/// Les mondes : deux rangées de quatre, plus espacées que les personnages (la ligne « départ ici » ne touche pas la rangée du dessous).
+/// Les mondes : une rangée (de profil, les rangées se recouvriraient).
 fn world_slot(i: usize) -> Vec3 {
-    let (col, row) = ((i % 6) as f32, (i / 6) as f32);
-    ORIGIN + Vec3::new((col - 2.5) * 4.4, 0.0, (row - 0.5) * 6.0 - 1.9)
+    ORIGIN + Vec3::new((i as f32 - 2.0) * 5.4, 0.0, -1.0)
 }
 
+/// Les personnages : deux rangées de six.
 fn character_slot(i: usize) -> Vec3 {
-    let (col, row) = ((i % 4) as f32, (i / 4) as f32);
-    ORIGIN + Vec3::new((col - 1.5) * 5.6, 0.0, (row - 0.5) * 5.1 - 1.9)
+    let (col, row) = ((i % 6) as f32, (i / 6) as f32);
+    ORIGIN + Vec3::new((col - 2.5) * 5.5, 0.0, (row - 0.5) * 11.0 - 1.0)
 }
 
 #[allow(clippy::too_many_arguments)]
@@ -170,7 +175,7 @@ fn build(
     let floor = mats.add(flat_material(Color::srgb(0.86, 0.88, 0.80)));
     let plate = mats.add(flat_material(Color::srgb(0.70, 0.74, 0.66)));
     let root = commands.spawn((Transform::from_translation(ORIGIN), Visibility::default(), scope())).id();
-    part(&mut commands, root, &kit.cube, &floor, Vec3::new(0.0, -0.3, 0.0), Vec3::new(46.0, 0.2, 34.0));
+    part(&mut commands, root, &kit.cube, &floor, Vec3::new(0.0, -0.3, 0.0), Vec3::new(120.0, 0.2, 90.0));
 
     let heading;
     match view.tab {
@@ -187,7 +192,7 @@ fn build(
                 let at = vehicle_slot(i) - ORIGIN;
                 part(&mut commands, root, &kit.cyl, &plate, at + Vec3::Y * -0.15, Vec3::new(3.1, 0.2, 2.5));
                 // Les longs modèles sont réduits pour tenir sur leur plateau.
-                let slot = slot_entity(&mut commands, root, at, (1.9 / en.len()).clamp(0.3, 2.4), i);
+                let slot = slot_entity(&mut commands, root, at, (1.9 / en.len()).clamp(0.3, 1.5), i);
                 match *en {
                     Ennemi::Veh(v) => {
                         crate::kenney::car(&mut commands, &server, slot, v, i * 5 + 1);
@@ -210,8 +215,8 @@ fn build(
                 .avec(&[&have, &CHARACTERS.len()]);
             for (i, ch) in CHARACTERS.iter().enumerate() {
                 let at = character_slot(i) - ORIGIN;
-                part(&mut commands, root, &kit.cyl, &plate, at + Vec3::Y * -0.15, Vec3::new(4.0, 0.2, 3.4));
-                let slot = slot_entity(&mut commands, root, at, 3.4, i);
+                part(&mut commands, root, &kit.cyl, &plate, at + Vec3::Y * -0.15, Vec3::new(4.6, 0.2, 3.6));
+                let slot = slot_entity(&mut commands, root, at, 4.4, i);
                 crate::kenney::humain(&mut commands, &server, &mut graphs, slot, ch.index());
                 let open = unlocked_character(&progress, *ch);
                 if !open {

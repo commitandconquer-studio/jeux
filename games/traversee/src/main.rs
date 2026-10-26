@@ -198,9 +198,11 @@ fn follow_camera(
     if *state.get() == GameState::Garage {
         for (mut tf, mut proj) in &mut q {
             let at = garage::ORIGIN;
-            *tf = Transform::from_translation(at + Vec3::new(0.0, 22.0, 11.0)).looking_at(at, Vec3::Y);
+            // Vue de profil, à peine inclinée (le jeu garde sa vue isométrique) : on voit les voitures et les personnages de côté.
+            let (s, c) = garage::PITCH_DEG.to_radians().sin_cos();
+            *tf = Transform::from_translation(at + Vec3::new(0.0, 30.0 * s, 30.0 * c)).looking_at(at + Vec3::Y * garage::LOOK_HEIGHT, Vec3::Y);
             if let Projection::Orthographic(o) = &mut *proj {
-                o.scale = 1.5;
+                o.scale = 1.7;
             }
         }
         return;

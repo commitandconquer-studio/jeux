@@ -197,6 +197,9 @@ fn honk_near_misses(
     }
 }
 
+/// Interrupteur général de la musique : coupée tant qu'on n'a pas trouvé mieux. Les bruitages restent.
+const MUSIQUE: bool = false;
+
 /// La musique change avec le monde (et revient à la prairie au menu).
 fn music_world(
     mut commands: Commands,
@@ -213,7 +216,8 @@ fn music_world(
         GameState::Menu | GameState::Garage => None,
         _ => Some(crate::extra::Biome::of(frog.max_row_i(), progress.total + score.current)),
     };
-    if silence_dev() {
+    // Musique coupée pour de bon, en attendant mieux (décision d'Olivier, 26 octobre 2026).
+    if !MUSIQUE || silence_dev() {
         return;
     }
     if *current == Some(want) {

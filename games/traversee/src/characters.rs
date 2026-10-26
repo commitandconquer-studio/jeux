@@ -21,10 +21,15 @@ pub enum Character {
     Fox,
     Panda,
     Duck,
+    // Les quatre derniers humains du Mini Characters de Kenney (les huit premiers portent encore des noms d'animaux hérités du premier jeu).
+    Noe,
+    Ines,
+    Sacha,
+    Maya,
 }
 
 /// Les personnages ; les points nécessaires sont dans `progress::UNLOCKS`.
-pub const CHARACTERS: [Character; 8] = [
+pub const CHARACTERS: [Character; 12] = [
     Character::Frog,
     Character::Rabbit,
     Character::Badger,
@@ -33,6 +38,10 @@ pub const CHARACTERS: [Character; 8] = [
     Character::Fox,
     Character::Panda,
     Character::Duck,
+    Character::Noe,
+    Character::Ines,
+    Character::Sacha,
+    Character::Maya,
 ];
 
 #[derive(Clone, Copy, PartialEq, Eq, Debug)]
@@ -70,6 +79,10 @@ impl Character {
             Character::Fox => tx!("Jade", "Jade", "Jade", "Jade", "Jade"),
             Character::Panda => tx!("Théo", "Théo", "Théo", "Théo", "Théo"),
             Character::Duck => tx!("Mila", "Mila", "Mila", "Mila", "Mila"),
+            Character::Noe => tx!("Noé", "Noé", "Noé", "Noé", "Noé"),
+            Character::Ines => tx!("Inès", "Inès", "Inès", "Inès", "Inès"),
+            Character::Sacha => tx!("Sacha", "Sacha", "Sacha", "Sacha", "Sacha"),
+            Character::Maya => tx!("Maya", "Maya", "Maya", "Maya", "Maya"),
         }
         .t()
     }
@@ -288,7 +301,7 @@ pub fn spawn_character(
     };
     let mut b = Brush { c, root, kit, cast };
     match ch {
-        Character::Frog => {}
+        Character::Frog | Character::Noe | Character::Ines | Character::Sacha | Character::Maya => {}
         Character::Rabbit => {
             b.cube(C::Rabbit, [0.0, 0.27, 0.05], [0.6, 0.34, 0.6]);
             b.cube(C::Rabbit, [0.0, 0.36, -0.3], [0.5, 0.3, 0.34]);
