@@ -617,7 +617,7 @@ pub fn run_rails(
                 if rail.timer <= 0.0 {
                     rail.phase = RailPhase::Warning;
                     rail.timer = 1.3;
-                    if sound_on.0 && volume > 0.0 {
+                    if sound_on.0 && !crate::audio::silence_dev() && volume > 0.0 {
                         let bell = commands
                             .spawn((
                                 AudioPlayer::new(sounds.bell.clone()),

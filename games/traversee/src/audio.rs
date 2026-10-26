@@ -9,6 +9,15 @@ use crate::GameState;
 use crate::frog::Frog;
 use crate::lanes::Mover;
 
+/// Pendant le développement (`cargo run`, compilation de test), le jeu démarre sans son :
+/// `TRAVERSEE_SON=1` le remet. Ne touche pas au réglage enregistré du joueur.
+pub fn silence_dev() -> bool {
+    static MUET: std::sync::OnceLock<bool> = std::sync::OnceLock::new();
+    *MUET.get_or_init(|| {
+        !cfg!(target_arch = "wasm32") && std::env::var_os("TRAVERSEE_SON").is_none() && (cfg!(debug_assertions) || std::env::var_os("CARGO_MANIFEST_DIR").is_some())
+    })
+}
+
 pub struct AudioPlugin;
 
 impl Plugin for AudioPlugin {
@@ -124,7 +133,7 @@ fn play_sfx(
     mut combo: Local<(f32, u32)>,
 ) {
     for sfx in reader.read() {
-        if !on.0 {
+        if !on.0 || silence_dev() {
             continue;
         }
         let (handle, volume) = match *sfx {
@@ -204,6 +213,9 @@ fn music_world(
         GameState::Menu | GameState::Garage => None,
         _ => Some(crate::extra::Biome::of(frog.max_row_i(), progress.total + score.current)),
     };
+    if silence_dev() {
+        return;
+    }
     if *current == Some(want) {
         return;
     }

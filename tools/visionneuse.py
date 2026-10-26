@@ -115,7 +115,7 @@ class Gestionnaire(SimpleHTTPRequestHandler):
         super().__init__(*a, directory=PAGE, **k)
 
     def log_message(self, fmt, *args):
-        if "/api/mtimes" not in (args[0] if args else ""):
+        if "/api/mtimes" not in str(args[0] if args else ""):
             super().log_message(fmt, *args)
 
     def reponse_json(self, objet, code=200):
