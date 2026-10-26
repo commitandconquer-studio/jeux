@@ -1,0 +1,85 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Visionneuse · Traversée</title>
+<style>
+  :root { --fond: #1b2130; --panneau: #232b3d; --bord: #38445e; --texte: #e8edf6; --doux: #9aa7c2; --accent: #ffb43c; --ok: #5fd08a; --mal: #ff6b6b; }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; height: 100%; background: var(--fond); color: var(--texte); font: 13px/1.35 system-ui, "Segoe UI", sans-serif; overflow: hidden; }
+  #appli { display: grid; grid-template-columns: 270px 1fr 340px; height: 100%; }
+  aside { background: var(--panneau); display: flex; flex-direction: column; min-height: 0; border-right: 1px solid var(--bord); }
+  #droite { border-right: 0; border-left: 1px solid var(--bord); overflow-y: auto; }
+  h2 { margin: 0; padding: 8px 10px; font-size: 12px; letter-spacing: .06em; text-transform: uppercase; color: var(--doux); border-bottom: 1px solid var(--bord); }
+  #filtres { display: flex; gap: 6px; padding: 8px; border-bottom: 1px solid var(--bord); }
+  input, select, button, textarea { font: inherit; color: var(--texte); background: #151b28; border: 1px solid var(--bord); border-radius: 6px; padding: 4px 6px; }
+  input[type=number] { width: 68px; }
+  input[type=color] { padding: 0; width: 34px; height: 24px; }
+  button { cursor: pointer; background: #2c3650; }
+  button:hover { background: #38456a; }
+  button.actif { background: var(--accent); color: #1b1b1b; border-color: var(--accent); }
+  button:disabled { opacity: .4; cursor: default; }
+  #liste { overflow-y: auto; flex: 1; }
+  .groupe { padding: 6px 10px 2px; font-size: 11px; color: var(--doux); text-transform: uppercase; letter-spacing: .05em; position: sticky; top: 0; background: var(--panneau); }
+  .modele { padding: 4px 10px; cursor: pointer; border-left: 3px solid transparent; display: flex; justify-content: space-between; gap: 6px; }
+  .modele:hover { background: #2a3550; }
+  .modele.courant { background: #33406a; border-left-color: var(--accent); }
+  .modele small { color: var(--doux); white-space: nowrap; }
+  #centre { position: relative; min-width: 0; }
+  #toile { width: 100%; height: 100%; display: block; }
+  #barre { position: absolute; left: 8px; right: 8px; top: 8px; display: flex; flex-wrap: wrap; gap: 6px; align-items: center; pointer-events: none; }
+  #barre > * { pointer-events: auto; }
+  #titre { font-weight: 600; margin-right: 8px; padding: 4px 8px; background: rgba(27,33,48,.85); border-radius: 6px; }
+  #statut { position: absolute; left: 8px; bottom: 8px; padding: 4px 8px; background: rgba(27,33,48,.85); border-radius: 6px; max-width: 70%; }
+  #statut.ok { color: var(--ok); } #statut.mal { color: var(--mal); }
+  .bloc { padding: 8px 10px; border-bottom: 1px solid var(--bord); }
+  .ligne { display: flex; align-items: center; gap: 6px; margin: 4px 0; flex-wrap: wrap; }
+  .ligne > label { width: 64px; color: var(--doux); }
+  #pieces { max-height: 220px; overflow-y: auto; border: 1px solid var(--bord); border-radius: 6px; }
+  .piece { padding: 2px 8px; cursor: pointer; display: grid; grid-template-columns: 26px 1fr 80px; gap: 4px; }
+  .piece:hover { background: #2a3550; } .piece.sel { background: var(--accent); color: #1b1b1b; }
+  textarea { width: 100%; height: 110px; font-family: ui-monospace, monospace; font-size: 11px; }
+  .aide { color: var(--doux); font-size: 11px; }
+  kbd { background: #151b28; border: 1px solid var(--bord); border-radius: 4px; padding: 0 4px; }
+</style>
+<script type="importmap">{ "imports": { "three": "./vendor/three.module.js" } }</script>
+</head>
+<body>
+<div id="appli">
+  <aside id="gauche">
+    <h2>Modèles</h2>
+    <div id="filtres"><input id="recherche" placeholder="Chercher…" style="flex:1"><select id="type"></select></div>
+    <div id="liste"></div>
+  </aside>
+  <main id="centre">
+    <canvas id="toile"></canvas>
+    <div id="barre">
+      <span id="titre">—</span>
+      <button data-vue="iso">Iso</button><button data-vue="profil">Profil</button><button data-vue="face">Face</button><button data-vue="dessus">Dessus</button><button data-vue="libre">Libre</button>
+      <button id="b-anim">Animer</button><button id="b-ortho">Ortho</button><button id="b-grille">Grille</button><button id="b-ref">Crapaud</button><button id="b-fond">Fond</button>
+      <button id="b-annuler">Annuler</button><button id="b-sauver">Enregistrer</button><button id="b-capture">Capture</button>
+    </div>
+    <div id="statut"></div>
+  </main>
+  <aside id="droite">
+    <h2>Modèle</h2>
+    <div class="bloc" id="infos"></div>
+    <h2>Pièces <span class="aide" id="nb"></span></h2>
+    <div class="bloc"><div id="pieces"></div>
+      <div class="ligne"><button id="b-ajouter">Ajouter</button><button id="b-dupliquer">Dupliquer</button><button id="b-miroir">Miroir Z</button><button id="b-supprimer">Supprimer</button></div>
+    </div>
+    <h2>Pièce choisie</h2>
+    <div class="bloc" id="form"><span class="aide">Cliquez une pièce dans la vue ou dans la liste.</span></div>
+    <h2>Animations (JSON)</h2>
+    <div class="bloc"><textarea id="anims" spellcheck="false"></textarea><div class="ligne"><button id="b-anims">Appliquer</button><span class="aide" id="anims-etat"></span></div></div>
+    <div class="bloc aide">
+      Souris : <kbd>glisser</kbd> tourner · <kbd>molette</kbd> zoom · <kbd>clic droit</kbd> déplacer.<br>
+      Pièce choisie : <kbd>←</kbd><kbd>→</kbd> axe X · <kbd>↑</kbd><kbd>↓</kbd> axe Z · <kbd>PgUp</kbd><kbd>PgDn</kbd> axe Y (<kbd>Maj</kbd> = plus fin). <kbd>Suppr</kbd> supprime. <kbd>Ctrl+Z</kbd> annule, <kbd>Ctrl+S</kbd> enregistre.<br>
+      Avant du modèle = axe <b>+X</b> (flèche rouge).
+    </div>
+  </aside>
+</div>
+<script type="module" src="visionneuse.js"></script>
+</body>
+</html>
