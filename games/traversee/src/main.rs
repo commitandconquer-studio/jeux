@@ -18,6 +18,7 @@ mod petals;
 mod progress;
 mod screens;
 mod space;
+mod kenney;
 mod ui;
 
 use bevy::prelude::*;
