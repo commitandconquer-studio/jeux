@@ -14,7 +14,7 @@ use crate::progress::{Item, Progress, threshold};
 
 /// Le garage est bâti loin de la route, hors de vue du jeu.
 pub const ORIGIN: Vec3 = Vec3::new(400.0, 0.0, 0.0);
-const PER_PAGE: usize = 28;
+const PER_PAGE: usize = 35;
 
 /// Inclinaison de la caméra de la Collection (degrés au-dessus de l'horizontale) : presque de profil, avec un peu de plongée.
 pub const PITCH_DEG: f32 = 24.0;
@@ -35,6 +35,7 @@ fn ennemis() -> Vec<Ennemi> {
     v.extend([0, 1, 2, 3].map(|i| Ennemi::Monde(Biome::Halloween, i)));
     v.extend([0, 1, 2, 3, 4].map(|i| Ennemi::Monde(Biome::Medieval, i)));
     v.extend([0, 2, 3, 5, 6, 7].map(|i| Ennemi::Monde(Biome::Space, i)));
+    v.extend([0, 1, 2].map(|i| Ennemi::Monde(Biome::FarWest, i)));
     v
 }
 
@@ -60,6 +61,9 @@ impl Ennemi {
             Ennemi::Monde(Biome::Medieval, 2) => tx!("Baliste Vive", "Quick Ballista", "Flinke Balliste", "Balista Vivace", "Balista Veloz"),
             Ennemi::Monde(Biome::Medieval, 3) => tx!("Trébuchet Géant", "Giant Trebuchet", "Riesen-Tribok", "Trabucco Gigante", "Trabuquete Gigante"),
             Ennemi::Monde(Biome::Medieval, _) => tx!("Tour de Siège", "Siege Tower", "Belagerungsturm", "Torre d'Assedio", "Torre de Asedio"),
+            Ennemi::Monde(Biome::FarWest, 0) => tx!("Cheval Fou", "Mad Horse", "Verrücktes Pferd", "Cavallo Pazzo", "Caballo Loco"),
+            Ennemi::Monde(Biome::FarWest, 1) => tx!("Bison Têtu", "Stubborn Bison", "Sturer Bison", "Bisonte Testardo", "Bisonte Terco"),
+            Ennemi::Monde(Biome::FarWest, 2) => tx!("Chien Pressé", "Hasty Dog", "Eiliger Hund", "Cane di Fretta", "Perro con Prisa"),
             Ennemi::Monde(Biome::Space, 0) => tx!("Speeder Éclair", "Lightning Speeder", "Blitz-Speeder", "Speeder Lampo", "Speeder Rayo"),
             Ennemi::Monde(Biome::Space, 2) => tx!("Racer Cosmique", "Cosmic Racer", "Kosmo-Racer", "Racer Cosmico", "Racer Cósmico"),
             Ennemi::Monde(Biome::Space, 3) => tx!("Cargo Lourd", "Heavy Cargo", "Schwerfrachter", "Cargo Pesante", "Carguero Pesado"),
@@ -142,7 +146,7 @@ fn scope() -> impl Bundle {
 fn vehicle_slot(i: usize) -> Vec3 {
     const COLS: usize = 7;
     let (col, row) = ((i % COLS) as f32, (i / COLS) as f32);
-    ORIGIN + Vec3::new((col - 3.0) * 5.1, 0.0, (row - 1.5) * 10.0 - 0.45)
+    ORIGIN + Vec3::new((col - 3.0) * 5.1, 0.0, (row - 2.0) * 8.8 - 0.45)
 }
 
 /// Les mondes : une rangée (de profil, les rangées se recouvriraient).

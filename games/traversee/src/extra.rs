@@ -584,8 +584,8 @@ pub struct Theme {
 pub static START_WORLD: std::sync::atomic::AtomicI32 = std::sync::atomic::AtomicI32::new(0);
 
 impl Biome {
-    /// On refait les mondes un à un avec les modèles Kenney : la prairie, la baie des pirates, Halloween, le Moyen Âge, l'espace.
-    pub const ALL: [Biome; 5] = [Biome::Prairie, Biome::Pirate, Biome::Halloween, Biome::Medieval, Biome::Space];
+    /// On refait les mondes un à un avec les modèles Kenney : la prairie, la baie des pirates, Halloween, le Moyen Âge, l'espace, le Far West.
+    pub const ALL: [Biome; 6] = [Biome::Prairie, Biome::Pirate, Biome::Halloween, Biome::Medieval, Biome::Space, Biome::FarWest];
 
     /// Le monde décrit en pièces, pour les mondes à thème.
     pub fn theme(self) -> Option<&'static Theme> {

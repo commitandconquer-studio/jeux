@@ -237,6 +237,7 @@ pub fn trafic_modeles(biome: crate::extra::Biome) -> &'static [(&'static str, f3
         Biome::Halloween => &HALLOWEEN_WALKERS,
         Biome::Medieval => &MEDIEVAL_SIEGE,
         Biome::Space => &SPACE_TRAFFIC,
+        Biome::FarWest => &FARWEST_ANIMAUX,
         _ => &[],
     }
 }
@@ -249,6 +250,7 @@ pub fn trafic(c: &mut Commands, server: &AssetServer, graphs: &mut Assets<Animat
         Biome::Halloween => marcheur(c, server, graphs, parent, i),
         Biome::Medieval => engin(c, server, parent, i),
         Biome::Space => vaisseau(c, server, parent, i),
+        Biome::FarWest => animal_ouest(c, server, graphs, parent, i),
         _ => false,
     }
 }
@@ -262,6 +264,7 @@ pub fn decor(c: &mut Commands, server: &AssetServer, parent: Entity, biome: crat
         Biome::Halloween => halloween_scenery(c, server, parent, kind, at, roll, variant),
         Biome::Medieval => medieval_scenery(c, server, parent, kind, at, roll, variant),
         Biome::Space => space_scenery(c, server, parent, kind, at, roll, variant),
+        Biome::FarWest => farwest_scenery(c, server, parent, kind, at, roll, variant),
         _ => false,
     }
 }
@@ -864,3 +867,56 @@ pub struct LampeFaisceau;
 
 #[derive(Component)]
 pub struct PorteurLampe;
+
+// ---- Far West (Prototype Kit, Survival Kit, Fantasy Town Kit, Nature Kit) ----
+
+/// Les animaux qui traversent la piste : (modèle du Prototype Kit, échelle, longueur).
+pub const FARWEST_ANIMAUX: [(&str, f32, f32); 3] = [("animal-horse", 2.2, 1.5), ("animal-bison", 2.4, 1.5), ("animal-dog", 2.4, 1.1)];
+
+/// Un animal animé du Prototype Kit : le cheval et le chien galopent (animation « run »), le bison marche.
+fn animal_ouest(c: &mut Commands, server: &AssetServer, graphs: &mut Assets<AnimationGraph>, parent: Entity, i: usize) -> bool {
+    let (nom, echelle, _) = FARWEST_ANIMAUX[i];
+    // (animation, rotation en Y pour qu'il regarde vers +X, hauteur du bas des pattes sous l'origine)
+    let (anim, tour, pattes) = match nom {
+        // Les animaux du Prototype Kit ont la tête vers -X : on les retourne tous.
+        "animal-horse" => (1, std::f32::consts::PI, 0.31),
+        "animal-bison" => (0, std::f32::consts::PI, 0.31),
+        _ => (1, std::f32::consts::PI, 0.21),
+    };
+    anime(c, server, graphs, parent, &format!("kenney/prototype-kit/{nom}.glb"), anim, Transform::from_xyz(0.0, pattes * echelle, 0.0).with_rotation(Quat::from_rotation_y(tour)).with_scale(Vec3::splat(echelle)));
+    true
+}
+
+fn farwest_scenery(c: &mut Commands, server: &AssetServer, parent: Entity, kind: crate::extra::Scenery, at: Vec3, roll: u32, variant: usize) -> bool {
+    use crate::extra::Scenery;
+    let tour = variant as f32 * 1.3;
+    let poser = |c: &mut Commands, kit: &str, nom: &str, echelle: f32| {
+        let scene: Handle<WorldAsset> = server.load(GltfAssetLabel::Scene(0).from_asset(format!("kenney/{kit}/{nom}.glb")));
+        c.spawn((WorldAssetRoot(scene), Transform::from_translation(at).with_rotation(Quat::from_rotation_y(tour)).with_scale(Vec3::splat(echelle)), ChildOf(parent)));
+    };
+    match kind {
+        Scenery::Block | Scenery::Side => match roll {
+            // Les cactus du Nature Kit sont décalés de -0,05 dans leur fichier.
+            0..=3 => nature(c, server, parent, ["cactus_tall", "cactus_short"][variant % 2], at, tour, 1.7),
+            4..=5 => poser(c, "survival-kit", ["rock-sand-a", "rock-sand-b", "rock-sand-c"][variant % 3], 1.6),
+            6 => poser(c, "survival-kit", "tent-canvas", 1.6),
+            7 => poser(c, "fantasy-town-kit", ["stall", "cart"][variant % 2], 1.3),
+            8 => poser(c, "survival-kit", ["barrel", "chest"][variant % 2], 1.7),
+            _ => poser(c, "survival-kit", "signpost", 1.8),
+        },
+        // Peu de détails : des petits cailloux, un feu de camp éteint de temps en temps.
+        Scenery::Deco => match variant % 6 {
+            0 => poser(c, "survival-kit", "campfire-pit", 1.5),
+            1 | 2 | 3 => poser(c, "survival-kit", ["rock-sand-a", "rock-sand-b", "rock-sand-c"][variant % 3], 0.5),
+            _ => nature(c, server, parent, "cactus_short", at, tour, 0.9),
+        },
+    }
+    true
+}
+
+/// Tonneau flottant sur lequel on saute (dessus à ≈ 0,16).
+pub fn farwest_pad(c: &mut Commands, server: &AssetServer, parent: Entity) {
+    let scene = server.load(GltfAssetLabel::Scene(0).from_asset("kenney/survival-kit/barrel.glb"));
+    let echelle = 1.7;
+    c.spawn((WorldAssetRoot(scene), Transform::from_xyz(0.0, 0.16 - 0.34 * echelle, 0.0).with_scale(Vec3::splat(echelle)), ChildOf(parent)));
+}
