@@ -194,6 +194,24 @@ fn scenery(c: &mut Commands, kit: &Kit, x: &Extra, server: &AssetServer, parent:
     }
 }
 
+/// Tonneau flottant de la baie : celui de Kenney, sinon celui du jeu.
+fn barrel_pad(c: &mut Commands, kit: &Kit, x: &Extra, server: &AssetServer, parent: Entity) {
+    if crate::space::kenney() {
+        crate::kenney::pirate_pad(c, server, parent);
+    } else {
+        spawn_barrel_pad(c, kit, x, parent);
+    }
+}
+
+/// Radeau de la baie : des planches de Kenney, sinon celles du jeu.
+fn raft(c: &mut Commands, kit: &Kit, x: &Extra, server: &AssetServer, parent: Entity, len: f32) {
+    if crate::space::kenney() {
+        crate::kenney::pirate_raft(c, server, parent, len);
+    } else {
+        spawn_raft(c, kit, x, parent, len);
+    }
+}
+
 fn spawn_lane(c: &mut Commands, kit: &Kit, x: &Extra, server: &AssetServer, g: &mut LaneGen, points: u32) {
     let row = g.next_row;
     g.next_row += 1;
@@ -447,7 +465,7 @@ fn spawn_lane(c: &mut Commands, kit: &Kit, x: &Extra, server: &AssetServer, g: &
                         } else if biome == Biome::Halloween {
                             spawn_pumpkin_pad(c, kit, x, mover);
                         } else if biome == Biome::Pirate {
-                            spawn_barrel_pad(c, kit, x, mover);
+                            barrel_pad(c, kit, x, server, mover);
                         } else if biome == Biome::Cyber {
                             spawn_hologram_pad(c, kit, x, mover);
                         } else if frozen {
@@ -465,7 +483,7 @@ fn spawn_lane(c: &mut Commands, kit: &Kit, x: &Extra, server: &AssetServer, g: &
                     } else if biome == Biome::Halloween {
                         spawn_pumpkin_pad(c, kit, x, mover);
                     } else if biome == Biome::Pirate {
-                        spawn_barrel_pad(c, kit, x, mover);
+                        barrel_pad(c, kit, x, server, mover);
                     } else if biome == Biome::Cyber {
                         spawn_hologram_pad(c, kit, x, mover);
                     } else if frozen {
@@ -491,7 +509,7 @@ fn spawn_lane(c: &mut Commands, kit: &Kit, x: &Extra, server: &AssetServer, g: &
                     } else if biome == Biome::Halloween {
                         spawn_coffin(c, kit, x, mover, len);
                     } else if biome == Biome::Pirate {
-                        spawn_raft(c, kit, x, mover, len);
+                        raft(c, kit, x, server, mover, len);
                     } else if biome == Biome::Cyber {
                         spawn_barge(c, kit, x, mover, len);
                     } else if frozen {

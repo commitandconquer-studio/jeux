@@ -192,3 +192,28 @@ pub fn pirate_scenery(c: &mut Commands, server: &AssetServer, parent: Entity, ki
     c.spawn((WorldAssetRoot(scene), Transform::from_translation(at).with_rotation(tour).with_scale(Vec3::splat(echelle)), ChildOf(parent)));
     true
 }
+
+/// Tonneau flottant sur lequel on saute (le dessus affleure à ≈ 0,16 comme les autres nénuphars).
+pub fn pirate_pad(c: &mut Commands, server: &AssetServer, parent: Entity) {
+    let scene = server.load(GltfAssetLabel::Scene(0).from_asset("kenney/pirate-kit/barrel.glb"));
+    let echelle = 0.45;
+    c.spawn((WorldAssetRoot(scene), Transform::from_xyz(0.0, 0.16 - 1.23 * echelle, 0.0).with_scale(Vec3::splat(echelle)), ChildOf(parent)));
+}
+
+/// Radeau de `len` cases : des plateformes à planches (`platform-planks`) mises bout à bout.
+pub fn pirate_raft(c: &mut Commands, server: &AssetServer, parent: Entity, len: f32) {
+    const LARGEUR: f32 = 0.4; // échelle : 1,9 de large -> 0,76 (une voie)
+    const MODULE: f32 = 2.7 * LARGEUR; // longueur d'une plateforme une fois mise à l'échelle
+    let n = (len / MODULE).round().max(1.0) as usize;
+    let pas = len / n as f32;
+    let scene: Handle<WorldAsset> = server.load(GltfAssetLabel::Scene(0).from_asset("kenney/pirate-kit/platform-planks.glb"));
+    for i in 0..n {
+        let x = -len / 2.0 + pas * (i as f32 + 0.5);
+        // Le dessus du radeau affleure à ≈ 0,06 ; les modèles Kenney regardent vers +Z, le jeu avance vers +X.
+        c.spawn((
+            WorldAssetRoot(scene.clone()),
+            Transform::from_xyz(x, 0.06 - 0.43 * LARGEUR, 0.0).with_rotation(Quat::from_rotation_y(std::f32::consts::FRAC_PI_2)).with_scale(Vec3::new(LARGEUR, LARGEUR, LARGEUR * pas / MODULE)),
+            ChildOf(parent),
+        ));
+    }
+}
