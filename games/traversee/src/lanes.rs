@@ -505,7 +505,7 @@ fn spawn_lane(c: &mut Commands, kit: &Kit, x: &Extra, server: &AssetServer, grap
                 let color = g.rng.below(24) as usize;
                 let mover = spawn_mover(c, root, row, x_pos + len / 2.0, speed, len, kind, dir);
                 match vehicle {
-                    _ if trafic.is_some_and(|i| crate::kenney::trafic(c, server, graphs, mover, biome, i)) => {}
+                    _ if trafic.is_some_and(|i| crate::kenney::trafic(c, server, graphs, Some(eclairage), mover, biome, i)) => {}
                     v if crate::space::kenney() && biome.theme().is_none() && crate::kenney::car(c, server, Some(eclairage), mover, v, color) => {}
                     Vehicle::Car => spawn_car(c, kit, mover, color),
                     Vehicle::Truck => spawn_truck(c, kit, mover, color),
@@ -538,6 +538,8 @@ fn spawn_lane(c: &mut Commands, kit: &Kit, x: &Extra, server: &AssetServer, grap
                             crate::kenney::medieval_pad(c, server, mover);
                         } else if biome == Biome::FarWest && crate::space::kenney() {
                             crate::kenney::farwest_pad(c, server, mover);
+                        } else if biome == Biome::Cyber && crate::space::kenney() {
+                            crate::kenney::space_pad(c, server, mover);
                         } else if biome == Biome::Cyber {
                             spawn_hologram_pad(c, kit, x, mover);
                         } else if frozen {
@@ -560,6 +562,8 @@ fn spawn_lane(c: &mut Commands, kit: &Kit, x: &Extra, server: &AssetServer, grap
                         crate::kenney::medieval_pad(c, server, mover);
                     } else if biome == Biome::FarWest && crate::space::kenney() {
                         crate::kenney::farwest_pad(c, server, mover);
+                    } else if biome == Biome::Cyber && crate::space::kenney() {
+                        crate::kenney::space_pad(c, server, mover);
                     } else if biome == Biome::Cyber {
                         spawn_hologram_pad(c, kit, x, mover);
                     } else if frozen {
@@ -590,6 +594,8 @@ fn spawn_lane(c: &mut Commands, kit: &Kit, x: &Extra, server: &AssetServer, grap
                         crate::kenney::medieval_raft(c, server, mover, len);
                     } else if biome == Biome::FarWest && crate::space::kenney() {
                         crate::kenney::prairie_log(c, server, mover, len);
+                    } else if biome == Biome::Cyber && crate::space::kenney() {
+                        crate::kenney::space_cargo(c, server, mover, len);
                     } else if biome == Biome::Cyber {
                         spawn_barge(c, kit, x, mover, len);
                     } else if frozen {
@@ -666,6 +672,7 @@ fn spawn_lane(c: &mut Commands, kit: &Kit, x: &Extra, server: &AssetServer, grap
             let wagons = 2 + g.rng.below(3) as usize;
             let len = match biome.theme() {
                 Some(_) if biome == Biome::Medieval && crate::space::kenney() => crate::kenney::cavalerie(c, server, graphs, train, wagons),
+                Some(_) if biome == Biome::Cyber && crate::space::kenney() => crate::kenney::monorail(c, server, train, wagons),
                 _ if crate::space::kenney() && biome != Biome::Space => crate::kenney::train(c, server, train, wagons, biome),
                 Some(t) if !t.train.is_empty() => crate::extra::spawn_old_train(c, kit, x, train, t, wagons),
                 _ => spawn_train(c, kit, train, wagons),

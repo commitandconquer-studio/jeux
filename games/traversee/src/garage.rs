@@ -36,6 +36,7 @@ fn ennemis() -> Vec<Ennemi> {
     v.extend([0, 1, 2, 3, 4].map(|i| Ennemi::Monde(Biome::Medieval, i)));
     v.extend([0, 2, 3, 5, 6, 7].map(|i| Ennemi::Monde(Biome::Space, i)));
     v.extend([0, 1, 2].map(|i| Ennemi::Monde(Biome::FarWest, i)));
+    v.extend([0, 1, 2, 3].map(|i| Ennemi::Monde(Biome::Cyber, i)));
     v
 }
 
@@ -61,6 +62,10 @@ impl Ennemi {
             Ennemi::Monde(Biome::Medieval, 2) => tx!("Baliste Vive", "Quick Ballista", "Flinke Balliste", "Balista Vivace", "Balista Veloz"),
             Ennemi::Monde(Biome::Medieval, 3) => tx!("Trébuchet Géant", "Giant Trebuchet", "Riesen-Tribok", "Trabucco Gigante", "Trabuquete Gigante"),
             Ennemi::Monde(Biome::Medieval, _) => tx!("Tour de Siège", "Siege Tower", "Belagerungsturm", "Torre d'Assedio", "Torre de Asedio"),
+            Ennemi::Monde(Biome::Cyber, 0) => tx!("Speeder Néon", "Neon Speeder", "Neon-Speeder", "Speeder al Neon", "Speeder de Neón"),
+            Ennemi::Monde(Biome::Cyber, 1) => tx!("Taxi Volant", "Flying Cab", "Flugtaxi", "Taxi Volante", "Taxi Volador"),
+            Ennemi::Monde(Biome::Cyber, 2) => tx!("Racer des Toits", "Rooftop Racer", "Dach-Racer", "Racer dei Tetti", "Racer de los Tejados"),
+            Ennemi::Monde(Biome::Cyber, _) => tx!("Bolide du Futur", "Future Bolide", "Zukunfts-Bolide", "Bolide del Futuro", "Bólido del Futuro"),
             Ennemi::Monde(Biome::FarWest, 0) => tx!("Cheval Fou", "Mad Horse", "Verrücktes Pferd", "Cavallo Pazzo", "Caballo Loco"),
             Ennemi::Monde(Biome::FarWest, 1) => tx!("Bison Têtu", "Stubborn Bison", "Sturer Bison", "Bisonte Testardo", "Bisonte Terco"),
             Ennemi::Monde(Biome::FarWest, 2) => tx!("Chien Pressé", "Hasty Dog", "Eiliger Hund", "Cane di Fretta", "Perro con Prisa"),
@@ -202,7 +207,7 @@ fn build(
                         crate::kenney::car(&mut commands, &server, None, slot, v, i * 5 + 1);
                     }
                     Ennemi::Monde(b, k) => {
-                        crate::kenney::trafic(&mut commands, &server, &mut graphs, slot, b, k);
+                        crate::kenney::trafic(&mut commands, &server, &mut graphs, None, slot, b, k);
                     }
                 }
                 let open = progress.has(en.item());

@@ -238,12 +238,13 @@ pub fn trafic_modeles(biome: crate::extra::Biome) -> &'static [(&'static str, f3
         Biome::Medieval => &MEDIEVAL_SIEGE,
         Biome::Space => &SPACE_TRAFFIC,
         Biome::FarWest => &FARWEST_ANIMAUX,
+        Biome::Cyber => &CYBER_TRAFIC,
         _ => &[],
     }
 }
 
 /// Pose le n° `i` du trafic du monde.
-pub fn trafic(c: &mut Commands, server: &AssetServer, graphs: &mut Assets<AnimationGraph>, parent: Entity, biome: crate::extra::Biome, i: usize) -> bool {
+pub fn trafic(c: &mut Commands, server: &AssetServer, graphs: &mut Assets<AnimationGraph>, e: Option<&Eclairage>, parent: Entity, biome: crate::extra::Biome, i: usize) -> bool {
     use crate::extra::Biome;
     match biome {
         Biome::Pirate => pirate_vehicle(c, server, parent, i),
@@ -251,6 +252,7 @@ pub fn trafic(c: &mut Commands, server: &AssetServer, graphs: &mut Assets<Animat
         Biome::Medieval => engin(c, server, parent, i),
         Biome::Space => vaisseau(c, server, parent, i),
         Biome::FarWest => animal_ouest(c, server, graphs, parent, i),
+        Biome::Cyber => voiture_neon(c, server, e, parent, i),
         _ => false,
     }
 }
@@ -265,6 +267,7 @@ pub fn decor(c: &mut Commands, server: &AssetServer, parent: Entity, biome: crat
         Biome::Medieval => medieval_scenery(c, server, parent, kind, at, roll, variant),
         Biome::Space => space_scenery(c, server, parent, kind, at, roll, variant),
         Biome::FarWest => farwest_scenery(c, server, parent, kind, at, roll, variant),
+        Biome::Cyber => cyber_scenery(c, server, parent, kind, at, roll, variant),
         _ => false,
     }
 }
@@ -556,7 +559,7 @@ pub fn monorail(c: &mut Commands, server: &AssetServer, parent: Entity, wagons: 
 
 /// Le cadeau brille : les matières de son modèle deviennent lumineuses (couleurs conservées) dès que le modèle est chargé.
 #[derive(Component)]
-pub struct Brille;
+pub struct Brille(pub f32);
 
 /// Une étincelle qui scintille autour du cadeau.
 #[derive(Component)]
@@ -588,7 +591,7 @@ pub fn cadeau(c: &mut Commands, k: &crate::models::Kit, x: &crate::extra::Extra,
         .id();
     // Le modèle est décalé de 0,3 en hauteur dans son fichier ; on le centre.
     let echelle = if gold { 1.9 } else { 1.4 };
-    c.spawn((WorldAssetRoot(scene), Transform::from_xyz(0.0, -0.3 * echelle - 0.1, 0.0).with_scale(Vec3::splat(echelle)), Brille, ChildOf(fly)));
+    c.spawn((WorldAssetRoot(scene), Transform::from_xyz(0.0, -0.3 * echelle - 0.1, 0.0).with_scale(Vec3::splat(echelle)), Brille(1.4), ChildOf(fly)));
     let couleur = if gold { Color::srgb(1.0, 0.8, 0.25) } else { Color::srgb(1.0, 0.93, 0.7) };
     let base = if gold { 90_000.0 } else { 45_000.0 };
     c.spawn((PointLight { color: couleur, intensity: base, range: 3.5, shadow_maps_enabled: false, ..default() }, Transform::from_xyz(0.0, 0.5, 0.0), LueurCadeau { phase, base }, ChildOf(fly)));
@@ -620,31 +623,30 @@ pub fn scintiller(time: Res<Time>, mut etincelles: Query<(&Etincelle, &mut Trans
 
 /// Rend lumineuses les matières des modèles marqués `Brille` : la couleur du modèle sert aussi d'émission.
 pub fn faire_briller(
-    mut commands: Commands,
-    racines: Query<Entity, With<Brille>>,
+    racines: Query<(Entity, &Brille)>,
     enfants: Query<&Children>,
-    mut meshes: Query<(Entity, &mut MeshMaterial3d<StandardMaterial>), Without<Brille>>,
+    mut meshes: Query<&mut MeshMaterial3d<StandardMaterial>, Without<Brille>>,
     mut mats: ResMut<Assets<StandardMaterial>>,
-    mut faites: Local<std::collections::HashMap<AssetId<StandardMaterial>, Handle<StandardMaterial>>>,
+    mut faites: Local<std::collections::HashMap<(AssetId<StandardMaterial>, u32), Handle<StandardMaterial>>>,
 ) {
-    for racine in &racines {
+    for (racine, force) in &racines {
         for e in enfants.iter_descendants(racine) {
-            let Ok((id, mut m)) = meshes.get_mut(e) else { continue };
+            let Ok(mut m) = meshes.get_mut(e) else { continue };
             let origine = m.0.id();
             if faites.values().any(|h| h.id() == origine) {
                 continue; // déjà une matière lumineuse
             }
-            let lumineuse = match faites.get(&origine) {
+            let cle = (origine, force.0.to_bits());
+            let lumineuse = match faites.get(&cle) {
                 Some(h) => h.clone(),
                 None => {
                     let Some(base) = mats.get(&m.0).cloned() else { continue };
-                    let h = mats.add(StandardMaterial { emissive: LinearRgba::rgb(1.4, 1.4, 1.4), emissive_texture: base.base_color_texture.clone(), ..base });
-                    faites.insert(origine, h.clone());
+                    let h = mats.add(StandardMaterial { emissive: LinearRgba::rgb(force.0, force.0, force.0), emissive_texture: base.base_color_texture.clone(), ..base });
+                    faites.insert(cle, h.clone());
                     h
                 }
             };
             m.0 = lumineuse;
-            let _ = (id, &mut commands);
         }
     }
 }
@@ -940,4 +942,48 @@ pub fn farwest_pad(c: &mut Commands, server: &AssetServer, parent: Entity) {
     let scene = server.load(GltfAssetLabel::Scene(0).from_asset("kenney/survival-kit/barrel.glb"));
     let echelle = 1.7;
     c.spawn((WorldAssetRoot(scene), Transform::from_xyz(0.0, 0.16 - 0.34 * echelle, 0.0).with_scale(Vec3::splat(echelle)), ChildOf(parent)));
+}
+
+// ---- Ville futuriste (City Kit, Space Kit, Car Kit) ----
+
+/// Ce qui roule ou plane sur l'autoroute : (modèle « kit/nom », échelle, longueur).
+pub const CYBER_TRAFIC: [(&str, f32, f32); 4] = [("space-kit/craft_speederA", 0.5, 1.2), ("space-kit/craft_speederB", 0.5, 1.2), ("space-kit/craft_racer", 0.5, 1.1), ("car-kit/race-future", 0.8, 1.6)];
+
+/// Une voiture du futur : speeder volant du Space Kit (légèrement au-dessus de la route) ou bolide du Car Kit, avec phares la nuit.
+fn voiture_neon(c: &mut Commands, server: &AssetServer, e: Option<&Eclairage>, parent: Entity, i: usize) -> bool {
+    let (nom, echelle, len) = CYBER_TRAFIC[i];
+    let scene = server.load(GltfAssetLabel::Scene(0).from_asset(format!("kenney/{nom}.glb")));
+    if nom.starts_with("space-kit/") {
+        space_modele(c, scene, parent, Transform::from_xyz(0.0, 0.12, 0.0).with_rotation(Quat::from_rotation_y(-std::f32::consts::FRAC_PI_2)).with_scale(Vec3::splat(echelle)));
+    } else {
+        c.spawn((WorldAssetRoot(scene), Transform::from_rotation(Quat::from_rotation_y(std::f32::consts::FRAC_PI_2)).with_scale(Vec3::splat(echelle)), ChildOf(parent)));
+    }
+    if let Some(e) = e {
+        phares(c, e, parent, len);
+    }
+    true
+}
+
+fn cyber_scenery(c: &mut Commands, server: &AssetServer, parent: Entity, kind: crate::extra::Scenery, at: Vec3, roll: u32, variant: usize) -> bool {
+    use crate::extra::Scenery;
+    let tour = (variant % 4) as f32 * std::f32::consts::FRAC_PI_2;
+    let poser = |c: &mut Commands, kit: &str, nom: &str, echelle: f32| {
+        let scene: Handle<WorldAsset> = server.load(GltfAssetLabel::Scene(0).from_asset(format!("kenney/{kit}/{nom}.glb")));
+        // La ville est éclairée : les modèles brillent doucement (leurs couleurs servent aussi d'émission).
+        c.spawn((WorldAssetRoot(scene), Transform::from_translation(at).with_rotation(Quat::from_rotation_y(tour)).with_scale(Vec3::splat(echelle)), Brille(0.45), ChildOf(parent)));
+    };
+    let immeubles = ["building-a", "building-b", "building-c", "building-d", "building-e", "building-f", "building-g", "building-h", "building-i", "building-j", "building-k", "building-l", "building-m", "building-n"];
+    let gratte_ciel = ["building-skyscraper-a", "building-skyscraper-b", "building-skyscraper-c", "building-skyscraper-d", "building-skyscraper-e"];
+    match kind {
+        Scenery::Block | Scenery::Side => match roll {
+            0..=3 => poser(&mut *c, "city-kit-commercial", immeubles[variant % immeubles.len()], 1.0),
+            4..=5 => poser(&mut *c, "city-kit-commercial", gratte_ciel[variant % gratte_ciel.len()], 0.75),
+            6 => poser(&mut *c, "city-kit-industrial", ["shipping-container-a", "shipping-container-b", "shipping-container-c"][variant % 3], 0.8),
+            7 => poser(&mut *c, "city-kit-industrial", ["detail-tank", "chimney-medium", "water-tower"][variant % 3], 0.8),
+            8 => poser(&mut *c, "city-kit-industrial", "solar-panel-landscape-group", 1.0),
+            _ => poser(&mut *c, "city-kit-roads", ["light-square-double", "sign-highway"][variant % 2], 1.6),
+        },
+        Scenery::Deco => poser(&mut *c, "city-kit-roads", ["construction-cone", "construction-barrier", "light-square"][variant % 3], if variant % 3 == 2 { 1.6 } else { 1.4 }),
+    }
+    true
 }
