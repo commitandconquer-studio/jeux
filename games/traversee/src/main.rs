@@ -106,7 +106,6 @@ fn main() {
                 kenney::scintiller,
                 kenney::eclairage_nuit,
                 kenney::lampe_heros,
-                kenney::suivre_lampe,
                 kenney::faire_briller,
                 kenney::animer_marcheurs,
                 extra::animate_flies,

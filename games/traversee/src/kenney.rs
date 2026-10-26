@@ -806,13 +806,17 @@ pub fn lampe_heros(
     amb: Res<game_common::ambiance::Ambiance>,
     frog: Res<crate::frog::Frog>,
     e: Res<Eclairage>,
+    time: Res<Time>,
     mut lampes: Query<(&mut Transform, &mut SpotLight), With<LampeHeros>>,
+    mut porteurs: Query<&mut Transform, (With<PorteurLampe>, Without<LampeHeros>)>,
     mut faisceaux: Query<&mut Visibility, (With<LampeFaisceau>, Without<Faisceau>)>,
     mut cree: Local<bool>,
+    mut cap: Local<f32>,
 ) {
     use game_common::ambiance::Moment;
     if !*cree {
         *cree = true;
+        *cap = std::f32::consts::FRAC_PI_2; // au départ il regarde vers le haut de l'écran
         // Le projecteur lui-même.
         commands.spawn((
             SpotLight { color: Color::srgb(1.0, 0.92, 0.72), intensity: 900_000.0, range: 10.0, outer_angle: 0.55, inner_angle: 0.2, shadow_maps_enabled: false, ..default() },
@@ -830,10 +834,21 @@ pub fn lampe_heros(
         Moment::Soir => 0.5,
         _ => 0.0,
     };
+    // La lumière suit le regard du personnage (haut, bas, gauche, droite) : le cap tourne vite mais sans à-coup, par le chemin le plus court.
+    let devant = Quat::from_rotation_y(frog.yaw) * Vec3::NEG_Z;
+    let voulu = (-devant.z).atan2(devant.x);
+    let mut ecart = (voulu - *cap + std::f32::consts::PI).rem_euclid(std::f32::consts::TAU) - std::f32::consts::PI;
+    ecart *= (time.delta_secs() * 14.0).min(1.0);
+    *cap += ecart;
+    let dir = Vec3::new(cap.cos(), 0.0, -cap.sin());
     for (mut tf, mut light) in &mut lampes {
         let p = frog.pos;
-        *tf = Transform::from_translation(p + Vec3::new(0.0, 1.2, 0.1)).looking_at(p + Vec3::new(0.0, 0.0, -3.5), Vec3::Y);
+        *tf = Transform::from_translation(p + Vec3::new(0.0, 1.2, 0.0) - dir * 0.1).looking_at(p + dir * 3.5, Vec3::Y);
         light.intensity = 900_000.0 * force;
+    }
+    for mut tf in &mut porteurs {
+        tf.translation = frog.pos + dir * 0.0;
+        tf.rotation = Quat::from_rotation_y(*cap);
     }
     let voulu = if sombre { Visibility::Inherited } else { Visibility::Hidden };
     for mut v in &mut faisceaux {
@@ -849,10 +864,3 @@ pub struct LampeFaisceau;
 
 #[derive(Component)]
 pub struct PorteurLampe;
-
-/// Le porteur suit le héros.
-pub fn suivre_lampe(frog: Res<crate::frog::Frog>, mut q: Query<&mut Transform, With<PorteurLampe>>) {
-    for mut tf in &mut q {
-        tf.translation = frog.pos + Vec3::new(0.0, 0.0, -0.3);
-    }
-}

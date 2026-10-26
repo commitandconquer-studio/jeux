@@ -24,7 +24,8 @@ pub struct Frog {
     pub queued: Option<IVec2>,
     /// Rondin ou nénuphar sur lequel il est posé, et décalage par rapport à lui.
     attached: Option<(Entity, f32)>,
-    yaw: f32,
+    /// Cap du personnage : 0 vers le haut de l'écran (-Z), puis ±π/2 et π pour les autres directions.
+    pub yaw: f32,
     /// Vrai dès le premier saut (la caméra commence alors à avancer).
     pub started: bool,
     hops: u32,
