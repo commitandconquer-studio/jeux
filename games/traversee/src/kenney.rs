@@ -227,6 +227,7 @@ pub fn trafic_modeles(biome: crate::extra::Biome) -> &'static [(&'static str, f3
         Biome::Pirate => &PIRATE_VEHICLES,
         Biome::Halloween => &HALLOWEEN_WALKERS,
         Biome::Medieval => &MEDIEVAL_SIEGE,
+        Biome::Space => &SPACE_TRAFFIC,
         _ => &[],
     }
 }
@@ -238,6 +239,7 @@ pub fn trafic(c: &mut Commands, server: &AssetServer, graphs: &mut Assets<Animat
         Biome::Pirate => pirate_vehicle(c, server, parent, i),
         Biome::Halloween => marcheur(c, server, graphs, parent, i),
         Biome::Medieval => engin(c, server, parent, i),
+        Biome::Space => vaisseau(c, server, parent, i),
         _ => false,
     }
 }
@@ -250,6 +252,7 @@ pub fn decor(c: &mut Commands, server: &AssetServer, parent: Entity, biome: crat
         Biome::Pirate => pirate_scenery(c, server, parent, kind, at, roll, variant),
         Biome::Halloween => halloween_scenery(c, server, parent, kind, at, roll, variant),
         Biome::Medieval => medieval_scenery(c, server, parent, kind, at, roll, variant),
+        Biome::Space => space_scenery(c, server, parent, kind, at, roll, variant),
         _ => false,
     }
 }
@@ -434,4 +437,91 @@ fn anime(c: &mut Commands, server: &AssetServer, graphs: &mut Assets<AnimationGr
     let scene = server.load(GltfAssetLabel::Scene(0).from_asset(fichier.to_string()));
     let (graph, node) = AnimationGraph::from_clip(server.load(GltfAssetLabel::Animation(anim).from_asset(fichier.to_string())));
     c.spawn((WorldAssetRoot(scene), tf, Marcheur { graph: graphs.add(graph), node }, ChildOf(parent)));
+}
+
+// ---- Espace (Space Kit) ----
+
+/// Ce qui file sur la voie de métal : (modèle, échelle, longueur).
+pub const SPACE_TRAFFIC: [(&str, f32, f32); 8] = [
+    ("craft_speederA", 0.5, 1.2),
+    ("craft_speederB", 0.5, 1.2),
+    ("craft_racer", 0.5, 1.1),
+    ("craft_cargoA", 0.5, 1.3),
+    ("craft_cargoB", 0.5, 1.3),
+    ("craft_miner", 0.45, 1.3),
+    ("alien", 0.5, 0.8),
+    ("rover", 2.5, 0.9),
+];
+
+/// Un vaisseau (ou un extraterrestre, un rover) : les modèles du Space Kit regardent vers -Z, le jeu avance vers +X.
+fn vaisseau(c: &mut Commands, server: &AssetServer, parent: Entity, i: usize) -> bool {
+    let (nom, echelle, _) = SPACE_TRAFFIC[i];
+    let scene = server.load(GltfAssetLabel::Scene(0).from_asset(format!("kenney/space-kit/{nom}.glb")));
+    c.spawn((
+        WorldAssetRoot(scene),
+        Transform::from_xyz(0.0, 0.1, 0.0).with_rotation(Quat::from_rotation_y(-std::f32::consts::FRAC_PI_2)).with_scale(Vec3::splat(echelle)),
+        ChildOf(parent),
+    ));
+    true
+}
+
+fn space_scenery(c: &mut Commands, server: &AssetServer, parent: Entity, kind: crate::extra::Scenery, at: Vec3, roll: u32, variant: usize) -> bool {
+    use crate::extra::Scenery;
+    let (nom, echelle) = match kind {
+        Scenery::Block | Scenery::Side => match roll {
+            0..=3 => (["meteor", "meteor_detailed", "rock_largeA", "rock_largeB"][variant % 4], 1.0),
+            4..=5 => (["rock_crystalsLargeA", "rock_crystalsLargeB"][variant % 2], 1.0),
+            6 => ("satelliteDish", 1.1),
+            7 => ("turret_single", 1.1),
+            8 => (["structure", "hangar_smallA"][variant % 2], 0.8),
+            _ => ("barrels", 1.4),
+        },
+        Scenery::Deco => (["rocks_smallA", "rocks_smallB", "crater"][variant % 3], 0.6),
+    };
+    let scene = server.load(GltfAssetLabel::Scene(0).from_asset(format!("kenney/space-kit/{nom}.glb")));
+    let tour = Quat::from_rotation_y(variant as f32 * 1.3);
+    c.spawn((WorldAssetRoot(scene), Transform::from_translation(at).with_rotation(tour).with_scale(Vec3::splat(echelle)), ChildOf(parent)));
+    true
+}
+
+/// Plateforme flottant dans le vide, sur laquelle on saute.
+pub fn space_pad(c: &mut Commands, server: &AssetServer, parent: Entity) {
+    let scene = server.load(GltfAssetLabel::Scene(0).from_asset("kenney/space-kit/platform_small.glb"));
+    c.spawn((WorldAssetRoot(scene), Transform::from_xyz(0.0, 0.06 - 0.1 * 0.8, 0.0).with_scale(Vec3::splat(0.8)), ChildOf(parent)));
+}
+
+/// Plateforme longue qui glisse dans le vide : des `platform_long` (2 de long, 1 de large) bout à bout.
+pub fn space_cargo(c: &mut Commands, server: &AssetServer, parent: Entity, len: f32) {
+    const LARGEUR: f32 = 0.75;
+    const MODULE: f32 = 2.0 * LARGEUR;
+    let n = (len / MODULE).round().max(1.0) as usize;
+    let pas = len / n as f32;
+    let scene: Handle<WorldAsset> = server.load(GltfAssetLabel::Scene(0).from_asset("kenney/space-kit/platform_long.glb"));
+    for i in 0..n {
+        let x = -len / 2.0 + pas * (i as f32 + 0.5);
+        c.spawn((
+            WorldAssetRoot(scene.clone()),
+            Transform::from_xyz(x, 0.06 - 0.1 * LARGEUR, 0.0).with_scale(Vec3::new(LARGEUR * pas / MODULE, LARGEUR, LARGEUR)),
+            ChildOf(parent),
+        ));
+    }
+}
+
+/// Un monorail à la place du train de l'espace : motrice, wagons, queue (1 de long chacun). Renvoie la longueur.
+pub fn monorail(c: &mut Commands, server: &AssetServer, parent: Entity, wagons: usize) -> f32 {
+    let n = wagons + 2;
+    let len = n as f32;
+    let wagon = ["monorail_trainPassenger", "monorail_trainCargo", "monorail_trainBox"];
+    for i in 0..n {
+        let nom = if i == 0 { "monorail_trainFront" } else if i == n - 1 { "monorail_trainEnd" } else { wagon[i % wagon.len()] };
+        let x = len / 2.0 - 0.5 - i as f32;
+        let scene: Handle<WorldAsset> = server.load(GltfAssetLabel::Scene(0).from_asset(format!("kenney/space-kit/{nom}.glb")));
+        // Comme les vaisseaux : -Z vers +X.
+        c.spawn((
+            WorldAssetRoot(scene),
+            Transform::from_xyz(x, 0.3, 0.0).with_rotation(Quat::from_rotation_y(-std::f32::consts::FRAC_PI_2)).with_scale(Vec3::splat(1.2)),
+            ChildOf(parent),
+        ));
+    }
+    len
 }

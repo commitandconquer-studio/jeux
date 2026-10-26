@@ -231,6 +231,24 @@ fn coffin(c: &mut Commands, kit: &Kit, x: &Extra, server: &AssetServer, parent: 
     }
 }
 
+/// Plateforme de l'espace : celle de Kenney, sinon celle du jeu.
+fn space_pad(c: &mut Commands, kit: &Kit, x: &Extra, server: &AssetServer, parent: Entity) {
+    if crate::space::kenney() {
+        crate::kenney::space_pad(c, server, parent);
+    } else {
+        spawn_platform(c, kit, x, parent);
+    }
+}
+
+/// Cargo de l'espace : des plateformes de Kenney mises bout à bout, sinon le cargo du jeu.
+fn space_cargo(c: &mut Commands, kit: &Kit, x: &Extra, server: &AssetServer, parent: Entity, len: f32) {
+    if crate::space::kenney() {
+        crate::kenney::space_cargo(c, server, parent, len);
+    } else {
+        spawn_cargo(c, kit, x, parent, len);
+    }
+}
+
 fn spawn_lane(c: &mut Commands, kit: &Kit, x: &Extra, server: &AssetServer, graphs: &mut Assets<AnimationGraph>, g: &mut LaneGen, points: u32) {
     let row = g.next_row;
     g.next_row += 1;
@@ -481,7 +499,7 @@ fn spawn_lane(c: &mut Commands, kit: &Kit, x: &Extra, server: &AssetServer, grap
                     if col == g.corridor || g.rng.below(10) < dense {
                         let mover = spawn_mover(c, root, row, col as f32, 0.0, 0.8, MoverKind::Pad, 1.0);
                         if biome == Biome::Space {
-                            spawn_platform(c, kit, x, mover);
+                            space_pad(c, kit, x, server, mover);
                         } else if biome == Biome::Halloween {
                             pumpkin_pad(c, kit, x, server, mover);
                         } else if biome == Biome::Pirate {
@@ -501,7 +519,7 @@ fn spawn_lane(c: &mut Commands, kit: &Kit, x: &Extra, server: &AssetServer, grap
                 if count == 0 {
                     let mover = spawn_mover(c, root, row, 0.0, 0.0, 0.8, MoverKind::Pad, 1.0);
                     if biome == Biome::Space {
-                        spawn_platform(c, kit, x, mover);
+                        space_pad(c, kit, x, server, mover);
                     } else if biome == Biome::Halloween {
                         pumpkin_pad(c, kit, x, server, mover);
                     } else if biome == Biome::Pirate {
@@ -529,7 +547,7 @@ fn spawn_lane(c: &mut Commands, kit: &Kit, x: &Extra, server: &AssetServer, grap
                     }
                     let mover = spawn_mover(c, root, row, x_pos + len / 2.0, speed, len, MoverKind::Log, 1.0);
                     if biome == Biome::Space {
-                        spawn_cargo(c, kit, x, mover, len);
+                        space_cargo(c, kit, x, server, mover, len);
                     } else if biome == Biome::Halloween {
                         coffin(c, kit, x, server, mover, len);
                     } else if biome == Biome::Pirate {
@@ -563,6 +581,7 @@ fn spawn_lane(c: &mut Commands, kit: &Kit, x: &Extra, server: &AssetServer, grap
             let train = spawn_mover(c, root, row, 0.0, 0.0, 1.0, MoverKind::Train, dir);
             let wagons = 2 + g.rng.below(3) as usize;
             let len = match biome.theme() {
+                Some(_) if biome == Biome::Space && crate::space::kenney() => crate::kenney::monorail(c, server, train, wagons),
                 Some(_) if biome == Biome::Medieval && crate::space::kenney() => crate::kenney::cavalerie(c, server, graphs, train, wagons),
                 Some(t) if !t.train.is_empty() => crate::extra::spawn_old_train(c, kit, x, train, t, wagons),
                 _ => spawn_train(c, kit, train, wagons),
