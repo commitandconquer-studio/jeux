@@ -186,6 +186,14 @@ fn prop(c: &mut Commands, kit: &Kit, server: &AssetServer, parent: Entity, p: Pr
     }
 }
 
+/// Décor d'un monde à thème ; dans la baie des pirates, les modèles Kenney quand ils existent.
+#[allow(clippy::too_many_arguments)]
+fn scenery(c: &mut Commands, kit: &Kit, x: &Extra, server: &AssetServer, parent: Entity, biome: Biome, kind: Scenery, at: Vec3, roll: u32, variant: usize) {
+    if !(crate::space::kenney() && biome == Biome::Pirate && crate::kenney::pirate_scenery(c, server, parent, kind, at, roll, variant)) {
+        spawn_scenery(c, kit, x, parent, biome, kind, at, roll, variant);
+    }
+}
+
 fn spawn_lane(c: &mut Commands, kit: &Kit, x: &Extra, server: &AssetServer, g: &mut LaneGen, points: u32) {
     let row = g.next_row;
     g.next_row += 1;
@@ -247,7 +255,7 @@ fn spawn_lane(c: &mut Commands, kit: &Kit, x: &Extra, server: &AssetServer, g: &
                 let at = Vec3::new(col as f32, 0.0, 0.0);
                 if biome != Biome::Prairie {
                     let roll = g.rng.below(10);
-                    spawn_scenery(c, kit, x, root, biome, Scenery::Block, at, roll, variant);
+                    scenery(c, kit, x, server, root, biome, Scenery::Block, at, roll, variant);
                     continue;
                 }
                 match g.rng.below(10) {
@@ -267,7 +275,7 @@ fn spawn_lane(c: &mut Commands, kit: &Kit, x: &Extra, server: &AssetServer, g: &
                     if biome != Biome::Prairie {
                         let variant = g.rng.below(12) as usize;
                         let jitter = Vec3::new(g.rand() * 0.3 - 0.15, 0.0, g.rand() * 0.3 - 0.15);
-                        spawn_scenery(c, kit, x, root, biome, Scenery::Deco, Vec3::new(col as f32, 0.0, 0.0) + jitter, 0, variant);
+                        scenery(c, kit, x, server, root, biome, Scenery::Deco, Vec3::new(col as f32, 0.0, 0.0) + jitter, 0, variant);
                         continue;
                     }
                     let deco = match g.rng.below(10) {
@@ -302,9 +310,9 @@ fn spawn_lane(c: &mut Commands, kit: &Kit, x: &Extra, server: &AssetServer, g: &
                         let side_pct = biome.theme().map_or(40, |t| t.side_pct);
                         if g.rng.below(100) < side_pct {
                             let roll = g.rng.below(10);
-                            spawn_scenery(c, kit, x, root, biome, Scenery::Side, at, roll, variant);
+                            scenery(c, kit, x, server, root, biome, Scenery::Side, at, roll, variant);
                         } else if g.rng.below(10) < 3 {
-                            spawn_scenery(c, kit, x, root, biome, Scenery::Deco, at, 0, variant);
+                            scenery(c, kit, x, server, root, biome, Scenery::Deco, at, 0, variant);
                         }
                         continue;
                     }
@@ -397,17 +405,21 @@ fn spawn_lane(c: &mut Commands, kit: &Kit, x: &Extra, server: &AssetServer, g: &
                         vehicle = Vehicle::Beast(ti, i.min(crate::gen_worlds::THEMES[ti].animals.len() - 1));
                     }
                 }
+                // Baie des pirates : des bateaux Kenney sur le ponton.
+                let bateau = (crate::space::kenney() && biome == Biome::Pirate).then(|| g.rng.below(crate::kenney::PIRATE_VEHICLES.len() as u32) as usize);
                 let kind = match vehicle {
+                    _ if bateau.is_some() => MoverKind::Car,
                     Vehicle::Beast(t, i) if !crate::gen_worlds::THEMES[t].animals[i].dangerous => MoverKind::Critter,
                     _ => MoverKind::Car,
                 };
-                let len = vehicle.len();
+                let len = bateau.map_or_else(|| vehicle.len(), |i| crate::kenney::PIRATE_VEHICLES[i].2);
                 if x_pos + len > WRAP - 2.0 {
                     break;
                 }
                 let color = g.rng.below(24) as usize;
                 let mover = spawn_mover(c, root, row, x_pos + len / 2.0, speed, len, kind, dir);
                 match vehicle {
+                    _ if bateau.is_some_and(|i| crate::kenney::pirate_vehicle(c, server, mover, i)) => {}
                     v if crate::space::kenney() && biome.theme().is_none() && crate::kenney::car(c, server, mover, v, color) => {}
                     Vehicle::Car => spawn_car(c, kit, mover, color),
                     Vehicle::Truck => spawn_truck(c, kit, mover, color),

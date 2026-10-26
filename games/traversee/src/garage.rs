@@ -247,6 +247,7 @@ fn build(
         (Tab::Vehicles, tx!("Véhicules", "Vehicles", "Fahrzeuge", "Veicoli", "Vehículos").t()),
         (Tab::Characters, tx!("Personnages", "Characters", "Figuren", "Personaggi", "Personajes").t()),
         (Tab::Costumes, tx!("Accessoires", "Accessories", "Zubehör", "Accessori", "Accesorios").t()),
+        (Tab::Worlds, tx!("Mondes", "Worlds", "Welten", "Mondi", "Mundos").t()),
     ] {
         let (b, _) = spawn_button_sized(&mut commands, tabs, name, 190.0, 44.0, 20.0);
         commands.entity(b).insert(Act::Tab(tab));

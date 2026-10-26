@@ -480,7 +480,7 @@ pub fn rebuild_player(
     };
     *built = Some(want);
     commands.entity(root).despawn_related::<Children>();
-    if let Some(t) = theme {
+    if let Some(t) = theme.filter(|_| !crate::space::kenney()) {
         // Les héros du monde regardent vers +X ; les personnages vers -Z.
         let holder = commands.spawn((Transform::from_rotation(Quat::from_rotation_y(std::f32::consts::FRAC_PI_2)), Visibility::default(), ChildOf(root))).id();
         let th = crate::gen_worlds::THEMES[t];

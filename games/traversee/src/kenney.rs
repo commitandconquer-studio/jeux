@@ -131,3 +131,42 @@ pub fn animer_humains(
         }
     }
 }
+
+/// Les bateaux qui roulent sur le ponton de la baie des pirates : (modèle, échelle, longueur).
+pub const PIRATE_VEHICLES: [(&str, f32, f32); 6] = [
+    ("boat-row-small", 0.45, 1.2),
+    ("boat-row-large", 0.45, 1.4),
+    ("cannon-mobile", 0.45, 1.2),
+    ("ship-pirate-small", 0.28, 2.6),
+    ("ship-small", 0.28, 2.6),
+    ("ship-pirate-medium", 0.28, 3.1),
+];
+
+/// Pose le bateau n° `i` à la place du véhicule du monde.
+pub fn pirate_vehicle(c: &mut Commands, server: &AssetServer, parent: Entity, i: usize) -> bool {
+    let (nom, echelle, _) = PIRATE_VEHICLES[i];
+    let scene = server.load(GltfAssetLabel::Scene(0).from_asset(format!("kenney/pirate-kit/{nom}.glb")));
+    // Comme les voitures : les modèles Kenney regardent vers +Z, le jeu avance vers +X.
+    c.spawn((WorldAssetRoot(scene), Transform::from_rotation(Quat::from_rotation_y(std::f32::consts::FRAC_PI_2)).with_scale(Vec3::splat(echelle)), ChildOf(parent)));
+    true
+}
+
+/// Décor de la baie : palmiers, rochers de sable, caisses, tonneaux, canons… `roll` : 0 à 9.
+pub fn pirate_scenery(c: &mut Commands, server: &AssetServer, parent: Entity, kind: crate::extra::Scenery, at: Vec3, roll: u32, variant: usize) -> bool {
+    use crate::extra::Scenery;
+    let (nom, echelle) = match kind {
+        Scenery::Block | Scenery::Side => match roll {
+            0..=3 => (["palm-straight", "palm-bend", "palm-detailed-straight", "palm-detailed-bend"][variant % 4], 0.3),
+            4..=5 => (["rocks-sand-a", "rocks-sand-b", "rocks-sand-c"][variant % 3], 0.22),
+            6 => (["crate", "crate-bottles"][variant % 2], 0.5),
+            7 => ("barrel", 0.45),
+            8 => (["cannon", "chest"][variant % 2], 0.45),
+            _ => ("flag-pirate-high", 0.3),
+        },
+        Scenery::Deco => (["grass-plant", "bottle", "cannon-ball"][variant % 3], 0.4),
+    };
+    let scene = server.load(GltfAssetLabel::Scene(0).from_asset(format!("kenney/pirate-kit/{nom}.glb")));
+    let tour = Quat::from_rotation_y(variant as f32 * 1.3);
+    c.spawn((WorldAssetRoot(scene), Transform::from_translation(at).with_rotation(tour).with_scale(Vec3::splat(echelle)), ChildOf(parent)));
+    true
+}
