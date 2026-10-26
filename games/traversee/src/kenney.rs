@@ -648,3 +648,24 @@ pub fn train(c: &mut Commands, server: &AssetServer, parent: Entity, wagons: usi
     }
     len
 }
+
+/// Les rails du Train Kit (`railroad-straight`, 1 de large, 4 de long le long de Z, posé à y = -1 dans son fichier) mis bout à bout
+/// sur toute la voie, de -`reach` à `reach`.
+pub fn rails(c: &mut Commands, server: &AssetServer, parent: Entity, reach: f32) {
+    const ECHELLE: f32 = 0.7; // comme les trains : les roues tombent sur les rails
+    const MODULE: f32 = 4.0 * ECHELLE;
+    let n = (2.0 * reach / MODULE).ceil() as usize;
+    let scene: Handle<WorldAsset> = server.load(GltfAssetLabel::Scene(0).from_asset("kenney/train-kit/railroad-straight.glb"));
+    for i in 0..n {
+        let x = -reach + MODULE * (i as f32 + 0.5);
+        let porteur = c
+            .spawn((
+                Transform::from_xyz(x, ECHELLE * 1.0, 0.0).with_rotation(Quat::from_rotation_y(std::f32::consts::FRAC_PI_2)).with_scale(Vec3::splat(ECHELLE)),
+                Visibility::default(),
+                ChildOf(parent),
+            ))
+            .id();
+        // Le modèle va de z = 0 à z = 4 : on le centre.
+        c.spawn((WorldAssetRoot(scene.clone()), Transform::from_xyz(0.0, 0.0, -2.0), ChildOf(porteur)));
+    }
+}

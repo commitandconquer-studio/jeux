@@ -613,6 +613,8 @@ fn spawn_lane(c: &mut Commands, kit: &Kit, x: &Extra, server: &AssetServer, grap
                 for z in [-0.34, 0.34] {
                     part(c, root, &kit.cube, &x.blue_light, Vec3::new(0.0, 0.11, z), Vec3::new(reach * 2.0, 0.03, 0.04));
                 }
+            } else if crate::space::kenney() {
+                crate::kenney::rails(c, server, root, reach);
             } else {
                 let mut sx = -reach;
                 while sx < reach {
