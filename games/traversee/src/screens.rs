@@ -159,17 +159,15 @@ struct Hero;
 
 fn spawn_hero(mut commands: Commands, selection: Res<Selection>, server: Res<AssetServer>, mut graphs: ResMut<Assets<AnimationGraph>>) {
     let root = commands.spawn((Transform::default(), Visibility::default(), Hero, DespawnOnExit(GameState::Menu))).id();
-    crate::kenney::humain(&mut commands, &server, &mut graphs, root, selection.character.index(), selection.chair);
+    crate::kenney::humain(&mut commands, &server, &mut graphs, root, selection.character.index());
 }
 
-fn hero(time: Res<Time>, cam: Res<crate::CamZ>, selection: Res<Selection>, mut q: Query<&mut Transform, With<Hero>>) {
+fn hero(time: Res<Time>, cam: Res<crate::CamZ>, mut q: Query<&mut Transform, With<Hero>>) {
     let t = time.elapsed_secs();
     let phase = (t * 2.4).fract();
     // Petit saut régulier, avec écrasement à l'atterrissage et regard vers l'écran.
-    // En fauteuil roulant : pas de saut, il reste au sol.
-    let roule = selection.chair > 0;
-    let air = if roule { 0.0 } else { (phase * std::f32::consts::PI).sin() };
-    let squash = if phase < 0.12 && !roule { 1.0 - phase / 0.12 } else { 0.0 };
+    let air = (phase * std::f32::consts::PI).sin();
+    let squash = if phase < 0.12 { 1.0 - phase / 0.12 } else { 0.0 };
     for mut tf in &mut q {
         tf.translation = Vec3::new(4.6, air * 1.1, cam.0 - 2.5 + 2.2);
         tf.rotation = Quat::from_rotation_y(std::f32::consts::PI + (t * 0.8).sin() * 0.5);
