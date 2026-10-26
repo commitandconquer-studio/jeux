@@ -302,7 +302,7 @@ fn run_collection(
         return;
     }
     // La fenêtre cesse de s'afficher après quelques secondes : une photo par lancement, TRAVERSEE_TAB = 0, 1 ou 2.
-    let tabs = [(crate::garage::Tab::Vehicles, "ennemis"), (crate::garage::Tab::Worlds, "decors"), (crate::garage::Tab::Characters, "personnages")];
+    let tabs = [(crate::garage::Tab::Vehicles, "ennemis"), (crate::garage::Tab::Worlds, "decors"), (crate::garage::Tab::Characters, "personnages"), (crate::garage::Tab::Costumes, "fauteuils")];
     let which: usize = std::env::var("TRAVERSEE_TAB").ok().and_then(|s| s.parse().ok()).unwrap_or(0);
     if view.tab != tabs[which].0 {
         view.tab = tabs[which].0;

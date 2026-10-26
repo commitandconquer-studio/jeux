@@ -126,6 +126,7 @@ enum Act {
     Back,
     Tab(Tab),
     Char(Character),
+    Chair(usize),
     Page(i32),
     World(Biome),
 }
@@ -204,7 +205,32 @@ fn build(
                 label(&mut commands, vehicle_slot(i) + Vec3::new(0.0, 0.0, 1.25), if open { en.name() } else { "???" }, sub, open, false, None, true);
             }
         }
-        Tab::Characters | Tab::Costumes => {
+        Tab::Costumes => {
+            // Fauteuils roulants : un simple habillage pour le personnage choisi (aucun avantage). Case 0 : à pied.
+            let have = (1..=4).filter(|i| progress.has(Item::Chair(*i))).count();
+            heading = tx!("Fauteuils : {} / 4", "Wheelchairs: {} / 4", "Rollstühle: {} / 4", "Sedie a rotelle: {} / 4", "Sillas de ruedas: {} / 4").avec(&[&have]);
+            for i in 0..5usize {
+                let at = character_slot(i) - ORIGIN;
+                part(&mut commands, root, &kit.cyl, &plate, at + Vec3::Y * -0.15, Vec3::new(4.0, 0.2, 3.4));
+                let slot = slot_entity(&mut commands, root, at, 3.4, i);
+                crate::kenney::humain(&mut commands, &server, &mut graphs, slot, selection.character.index(), i);
+                let open = i == 0 || progress.has(Item::Chair(i));
+                if !open {
+                    commands.entity(slot).insert(Locked);
+                }
+                let chosen = open && selection.chair == i;
+                let sub = if !open {
+                    pts(threshold(Item::Chair(i)))
+                } else if chosen {
+                    tx!("— choisi —", "— chosen —", "— gewählt —", "— scelto —", "— elegido —").t().to_string()
+                } else {
+                    String::new()
+                };
+                let nom = if i == 0 { tx!("À pied", "On foot", "Zu Fuß", "A piedi", "A pie").t() } else { Item::Chair(i).name() };
+                label(&mut commands, character_slot(i) + Vec3::new(0.0, 0.0, 2.1), if open { nom } else { "???" }, sub, open, chosen, open.then_some(Act::Chair(i)), false);
+            }
+        }
+        Tab::Characters => {
             let have = CHARACTERS.iter().filter(|c| unlocked_character(&progress, **c)).count();
             heading = tx!("Choisis ton personnage : {} / {}", "Choose your character: {} / {}", "Wähle deine Figur: {} / {}", "Scegli il personaggio: {} / {}", "Elige tu personaje: {} / {}")
                 .avec(&[&have, &CHARACTERS.len()]);
@@ -212,7 +238,7 @@ fn build(
                 let at = character_slot(i) - ORIGIN;
                 part(&mut commands, root, &kit.cyl, &plate, at + Vec3::Y * -0.15, Vec3::new(4.0, 0.2, 3.4));
                 let slot = slot_entity(&mut commands, root, at, 3.4, i);
-                crate::kenney::humain(&mut commands, &server, &mut graphs, slot, ch.index());
+                crate::kenney::humain(&mut commands, &server, &mut graphs, slot, ch.index(), 0);
                 let open = unlocked_character(&progress, *ch);
                 if !open {
                     commands.entity(slot).insert(Locked);
@@ -269,6 +295,7 @@ fn build(
         (Tab::Vehicles, tx!("Ennemis", "Enemies", "Gegner", "Nemici", "Enemigos").t()),
         (Tab::Worlds, tx!("Décors", "Scenery", "Kulissen", "Scenari", "Escenarios").t()),
         (Tab::Characters, tx!("Personnages", "Characters", "Figuren", "Personaggi", "Personajes").t()),
+        (Tab::Costumes, tx!("Fauteuils", "Wheelchairs", "Rollstühle", "Sedie a rotelle", "Sillas de ruedas").t()),
     ] {
         let (b, _) = spawn_button_sized(&mut commands, tabs, name, 190.0, 44.0, 20.0);
         commands.entity(b).insert(Act::Tab(tab));
@@ -418,6 +445,13 @@ fn on_click(
         Act::Char(c) => {
             if unlocked_character(&progress, c) {
                 selection.character = c;
+                selection.save();
+                view.dirty = true;
+            }
+        }
+        Act::Chair(i) => {
+            if i == 0 || progress.has(Item::Chair(i)) {
+                selection.chair = i;
                 selection.save();
                 view.dirty = true;
             }

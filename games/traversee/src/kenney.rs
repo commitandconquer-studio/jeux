@@ -50,6 +50,8 @@ pub struct Humain {
     idle: AnimationNodeIndex,
     saut: AnimationNodeIndex,
     mort: AnimationNodeIndex,
+    /// Vitesse de lecture de l'animation « saut » : 4 (le saut du jeu est très court) ; 1 pour le roulage d'un fauteuil.
+    vitesse_saut: f32,
 }
 
 /// Animation en cours sur un squelette Kenney (pour ne la relancer que quand elle change).
@@ -60,24 +62,29 @@ pub enum Etat {
     Mort,
 }
 
+/// Les fauteuils roulants du Mini Characters (1 à 4 ; 0 : aucun).
+const FAUTEUILS: [&str; 5] = ["", "wheelchair", "wheelchair-deluxe", "wheelchair-power", "wheelchair-power-deluxe"];
+
 /// Le héros jouable Kenney (`character-male-a`…) ; regarde vers -Z comme les autres personnages du jeu.
-pub fn humain(c: &mut Commands, server: &AssetServer, graphs: &mut Assets<AnimationGraph>, parent: Entity, index: usize) {
+/// `fauteuil` : 0 pour aucun, 1 à 4 pour un fauteuil roulant ; assis dedans il ne saute pas, il roule.
+pub fn humain(c: &mut Commands, server: &AssetServer, graphs: &mut Assets<AnimationGraph>, parent: Entity, index: usize, fauteuil: usize) {
     let lettre = (b'a' + (index / 2 % 6) as u8) as char;
     let sexe = if index % 2 == 0 { "male" } else { "female" };
     let fichier = format!("kenney/mini-characters/character-{sexe}-{lettre}.glb");
     let scene = server.load(GltfAssetLabel::Scene(0).from_asset(fichier.clone()));
     let clip = |i: usize| server.load(GltfAssetLabel::Animation(i).from_asset(fichier.clone()));
-    // Dans les GLB : 1 = idle, 4 = jump, 9 = die.
+    // Dans les GLB : 1 = idle, 4 = jump, 9 = die, 25 = wheelchair-sit, 28 = wheelchair-move-forward.
+    let en_fauteuil = fauteuil > 0;
     let mut graph = AnimationGraph::new();
-    let idle = graph.add_clip(clip(1), 1.0, graph.root);
-    let saut = graph.add_clip(clip(4), 1.0, graph.root);
-    let mort = graph.add_clip(clip(9), 1.0, graph.root);
-    c.spawn((
-        WorldAssetRoot(scene),
-        Transform::from_rotation(Quat::from_rotation_y(std::f32::consts::PI)).with_scale(Vec3::splat(0.8)),
-        Humain { graph: graphs.add(graph), idle, saut, mort },
-        ChildOf(parent),
-    ));
+    let idle = graph.add_clip(clip(if en_fauteuil { 25 } else { 1 }), 1.0, graph.root);
+    let saut = graph.add_clip(clip(if en_fauteuil { 28 } else { 4 }), 1.0, graph.root);
+    let mort = graph.add_clip(clip(if en_fauteuil { 25 } else { 9 }), 1.0, graph.root);
+    let tf = Transform::from_rotation(Quat::from_rotation_y(std::f32::consts::PI)).with_scale(Vec3::splat(0.8));
+    c.spawn((WorldAssetRoot(scene), tf, Humain { graph: graphs.add(graph), idle, saut, mort, vitesse_saut: if en_fauteuil { 1.0 } else { 4.0 } }, ChildOf(parent)));
+    if en_fauteuil {
+        let chaise = server.load(GltfAssetLabel::Scene(0).from_asset(format!("kenney/mini-characters/{}.glb", FAUTEUILS[fauteuil.min(4)])));
+        c.spawn((WorldAssetRoot(chaise), tf, ChildOf(parent)));
+    }
 }
 
 /// Pose le graphe d'animation dès que le squelette est chargé, puis choisit l'animation selon le crapaud :
@@ -126,7 +133,7 @@ pub fn animer_humains(
             }
             // Le saut du jeu ne dure que 0,14 s : on accélère le clip.
             Etat::Saut => {
-                lecteur.play(h.saut).set_speed(4.0);
+                lecteur.play(h.saut).repeat().set_speed(h.vitesse_saut);
             }
             Etat::Mort => {
                 lecteur.play(h.mort);

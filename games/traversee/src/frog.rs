@@ -435,7 +435,10 @@ pub fn sync_model(
     mut q: Query<&mut Transform, With<FrogModel>>,
     mut shadows: Query<(&mut Transform, &FrogShadow), Without<FrogModel>>,
     eagle: Res<crate::eagle::Eagle>,
+    selection: Res<crate::characters::Selection>,
 ) {
+    // En fauteuil roulant : on avance sans sauter (ni arc, ni étirement, ni écrasement).
+    let roule = selection.chair > 0;
     let mut pos = frog.pos;
     let mut ground = frog.pos;
     let mut scale = Vec3::ONE;
@@ -446,16 +449,22 @@ pub fn sync_model(
         let t = h.t.min(1.0);
         let s = (t * PI).sin();
         ground = h.from.lerp(h.to, t);
-        lift = s;
-        pos = ground + Vec3::Y * s * HOP_HEIGHT;
-        scale = Vec3::new(1.0 - 0.12 * s, 1.0 + 0.3 * s, 1.0 - 0.12 * s);
-    } else if frog.land > 0.0 {
+        if roule {
+            pos = ground;
+        } else {
+            lift = s;
+            pos = ground + Vec3::Y * s * HOP_HEIGHT;
+            scale = Vec3::new(1.0 - 0.12 * s, 1.0 + 0.3 * s, 1.0 - 0.12 * s);
+        }
+    } else if frog.land > 0.0 && !roule {
         // Petit écrasement à l'arrivée : le crapaud « pèse ».
         let k = (frog.land / LAND_TIME * PI).sin();
         scale = Vec3::new(1.0 + 0.16 * k, 1.0 - 0.22 * k, 1.0 + 0.16 * k);
     } else {
         // Respiration
-        scale.y = 1.0 + (time.elapsed_secs() * 3.0).sin() * 0.03;
+        if !roule {
+            scale.y = 1.0 + (time.elapsed_secs() * 3.0).sin() * 0.03;
+        }
     }
     let mut shadow_on = true;
     match death.cause {

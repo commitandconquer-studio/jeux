@@ -141,12 +141,14 @@ impl Costume {
 pub struct Selection {
     pub character: Character,
     pub costume: Costume,
+    /// Fauteuil roulant choisi (0 : aucun, 1 à 4) : un simple habillage ; en fauteuil, on avance sans sauter.
+    pub chair: usize,
 }
 
 impl Default for Selection {
     fn default() -> Self {
         let idx = |key: &str| game_common::save::load(SAVE, key).and_then(|s| s.parse::<usize>().ok()).unwrap_or(0);
-        Self { character: Character::from_index(idx("perso")), costume: Costume::from_index(idx("costume")) }
+        Self { character: Character::from_index(idx("perso")), costume: Costume::from_index(idx("costume")), chair: std::env::var("TRAVERSEE_FAUTEUIL").ok().and_then(|s| s.parse().ok()).unwrap_or_else(|| idx("fauteuil")).min(4) }
     }
 }
 
@@ -157,6 +159,7 @@ impl Selection {
         }
         game_common::save::store(SAVE, "perso", &self.character.index().to_string());
         game_common::save::store(SAVE, "costume", &self.costume.index().to_string());
+        game_common::save::store(SAVE, "fauteuil", &self.chair.to_string());
     }
 }
 
@@ -467,7 +470,7 @@ pub fn rebuild_player(
     mut graphs: ResMut<Assets<AnimationGraph>>,
     death: Res<crate::frog::Death>,
     mut was_dead: Local<bool>,
-    mut built: Local<Option<(Character, Costume, Option<usize>)>>,
+    mut built: Local<Option<(Character, Costume, Option<usize>, usize)>>,
 ) {
     // Le héros Kenney meurt en s'allongeant (animation « die ») : à la partie suivante on refait le modèle, il repart debout.
     if *was_dead && death.cause.is_none() {
@@ -476,7 +479,7 @@ pub fn rebuild_player(
     *was_dead = death.cause.is_some();
     // Dans un monde à thème, on joue le héros du monde (avec son chapeau).
     let theme = crate::extra::Biome::of(frog.max_row_i(), progress.total + score.current).theme_index();
-    let want = (selection.character, selection.costume, theme);
+    let want = (selection.character, selection.costume, theme, selection.chair);
     if *built == Some(want) {
         return;
     }
@@ -494,7 +497,7 @@ pub fn rebuild_player(
         return;
     }
     if crate::space::kenney() {
-        crate::kenney::humain(&mut commands, &server, &mut graphs, root, want.0.index());
+        crate::kenney::humain(&mut commands, &server, &mut graphs, root, want.0.index(), want.3);
         return;
     }
     spawn_character(&mut commands, want.0, want.1, &kit, &frog_kit, &cast, &mut mats, root);
