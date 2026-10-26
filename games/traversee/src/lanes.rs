@@ -257,9 +257,9 @@ fn petit_decor(c: &mut Commands, kit: &Kit, x: &Extra, server: &AssetServer, par
 }
 
 /// Nénuphar de la prairie : celui de Kenney, sinon celui du jeu.
-fn pad(c: &mut Commands, kit: &Kit, server: &AssetServer, parent: Entity, flower: bool) {
+fn pad(c: &mut Commands, kit: &Kit, x: &Extra, server: &AssetServer, parent: Entity, flower: bool) {
     if crate::space::kenney() {
-        crate::kenney::prairie_pad(c, server, parent, flower);
+        crate::kenney::prairie_pad(c, server, x, parent, flower);
     } else {
         spawn_pad(c, kit, parent, flower);
     }
@@ -540,7 +540,7 @@ fn spawn_lane(c: &mut Commands, kit: &Kit, x: &Extra, server: &AssetServer, grap
                         } else if frozen {
                             spawn_ice_pad(c, kit, x, mover);
                         } else {
-                            pad(c, kit, server, mover, g.rng.below(3) == 0);
+                            pad(c, kit, x, server, mover, g.rng.below(3) == 0);
                         }
                         count += 1;
                     }
@@ -560,7 +560,7 @@ fn spawn_lane(c: &mut Commands, kit: &Kit, x: &Extra, server: &AssetServer, grap
                     } else if frozen {
                         spawn_ice_pad(c, kit, x, mover);
                     } else {
-                        pad(c, kit, server, mover, true);
+                        pad(c, kit, x, server, mover, true);
                     }
                 }
             } else {

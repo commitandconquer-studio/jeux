@@ -699,12 +699,13 @@ pub fn prairie_deco(c: &mut Commands, server: &AssetServer, parent: Entity, d: c
     true
 }
 
-/// Nénuphar sur lequel on saute (dessus à ≈ 0,16), parfois avec sa petite fleur.
-pub fn prairie_pad(c: &mut Commands, server: &AssetServer, parent: Entity, fleur: bool) {
-    let echelle = 2.6;
-    nature(c, server, parent, "lily_large", Vec3::new(0.0, 0.16 - 0.1 * echelle, 0.0), 0.0, echelle);
+/// Nénuphar bien rond sur lequel on saute (dessus à ≈ 0,16), parfois avec sa petite fleur de Kenney.
+pub fn prairie_pad(c: &mut Commands, server: &AssetServer, x: &crate::extra::Extra, parent: Entity, fleur: bool) {
+    // Feuille : un disque vert (0,78 de large) avec un disque plus clair dessus.
+    c.spawn((Mesh3d(x.rond.clone()), MeshMaterial3d(x.pad_vert.clone()), Transform::from_xyz(0.0, 0.1, 0.0).with_scale(Vec3::new(0.78, 0.12, 0.78)), ChildOf(parent)));
+    c.spawn((Mesh3d(x.rond.clone()), MeshMaterial3d(x.pad_vert_clair.clone()), Transform::from_xyz(0.0, 0.165, 0.0).with_scale(Vec3::new(0.62, 0.02, 0.62)), ChildOf(parent)));
     if fleur {
-        nature(c, server, parent, "flower_redA", Vec3::new(0.05, 0.16, 0.0), 0.5, 1.4);
+        nature(c, server, parent, "flower_redA", Vec3::new(0.05, 0.17, 0.0), 0.5, 1.4);
     }
 }
 

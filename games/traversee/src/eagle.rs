@@ -251,7 +251,7 @@ fn spawn_eagle(c: &mut Commands, k: &Kit, x: &crate::extra::Extra, e: &EagleKit,
             EagleVisual,
         ))
         .id();
-    if let Some(t) = theme {
+    if let Some(t) = theme.filter(|_| !crate::space::kenney()) {
         // Dans un monde à thème, c'est son animal volant (ptéro, carpe…) qui fond sur le crapaud (modèle tourné vers +X).
         if let Some(i) = crate::gen_worlds::THEMES[t].animals.iter().position(|a| a.flying) {
             let holder = c.spawn((Transform::from_xyz(0.0, -0.6, 0.0).with_rotation(Quat::from_rotation_y(PI / 2.0)), Visibility::default(), ChildOf(root))).id();
@@ -260,21 +260,26 @@ fn spawn_eagle(c: &mut Commands, k: &Kit, x: &crate::extra::Extra, e: &EagleKit,
             return;
         }
     }
-    part(c, root, &k.ball, &e.body, Vec3::new(0.0, 0.0, 0.0), Vec3::new(0.5, 0.42, 1.1));
-    part(c, root, &k.ball, &e.white, Vec3::new(0.0, 0.1, -0.55), Vec3::splat(0.34));
-    part_rot(c, root, &k.cone, &e.beak, Vec3::new(0.0, 0.07, -0.78), Vec3::new(0.12, 0.2, 0.12), Quat::from_rotation_x(-std::f32::consts::FRAC_PI_2));
+    // Un aigle dans le style des animaux de Kenney : formes rondes et trapues, grosse tête, gros yeux, ailes en trois boules.
+    part(c, root, &k.ball, &e.body, Vec3::new(0.0, 0.0, 0.05), Vec3::new(0.62, 0.5, 0.95));
+    part(c, root, &k.ball, &e.white, Vec3::new(0.0, -0.1, -0.05), Vec3::new(0.46, 0.3, 0.7));
+    part(c, root, &k.ball, &e.white, Vec3::new(0.0, 0.2, -0.62), Vec3::splat(0.5));
     for s in [-1.0, 1.0] {
-        part(c, root, &k.ball, &e.dark, Vec3::new(0.08 * s, 0.17, -0.65), Vec3::splat(0.07));
+        part(c, root, &k.ball, &e.white, Vec3::new(0.15 * s, 0.29, -0.84), Vec3::splat(0.19));
+        part(c, root, &k.ball, &e.dark, Vec3::new(0.16 * s, 0.3, -0.94), Vec3::splat(0.1));
     }
-    part(c, root, &k.cube, &e.white, Vec3::new(0.0, 0.02, 0.62), Vec3::new(0.34, 0.06, 0.4));
-    part(c, root, &k.cube, &e.dark, Vec3::new(0.0, 0.02, 0.86), Vec3::new(0.3, 0.05, 0.1));
+    part_rot(c, root, &k.cone, &e.beak, Vec3::new(0.0, 0.13, -0.99), Vec3::new(0.2, 0.34, 0.2), Quat::from_rotation_x(-std::f32::consts::FRAC_PI_2));
+    part(c, root, &k.ball, &e.white, Vec3::new(0.0, 0.0, 0.95), Vec3::new(0.5, 0.07, 0.55));
+    part(c, root, &k.ball, &e.dark, Vec3::new(0.0, 0.0, 1.2), Vec3::new(0.46, 0.06, 0.22));
     for s in [-1.0, 1.0] {
-        part(c, root, &k.cube, &e.beak, Vec3::new(0.12 * s, -0.28, -0.1), Vec3::new(0.06, 0.1, 0.18));
+        part(c, root, &k.cyl, &e.beak, Vec3::new(0.15 * s, -0.4, -0.12), Vec3::new(0.08, 0.2, 0.08));
+        part(c, root, &k.ball, &e.beak, Vec3::new(0.15 * s, -0.5, -0.2), Vec3::new(0.14, 0.07, 0.2));
         let wing = c
-            .spawn((Transform::from_xyz(0.18 * s, 0.08, 0.0), Visibility::default(), Wing(s), ChildOf(root)))
+            .spawn((Transform::from_xyz(0.28 * s, 0.1, 0.0), Visibility::default(), Wing(s), ChildOf(root)))
             .id();
-        part(c, wing, &k.cube, &e.body, Vec3::new(0.85 * s, 0.0, 0.1), Vec3::new(1.7, 0.06, 0.62));
-        part(c, wing, &k.cube, &e.dark, Vec3::new(1.55 * s, 0.0, 0.18), Vec3::new(0.6, 0.05, 0.5));
+        part(c, wing, &k.ball, &e.body, Vec3::new(0.55 * s, 0.0, 0.1), Vec3::new(1.1, 0.1, 0.72));
+        part(c, wing, &k.ball, &e.body, Vec3::new(1.3 * s, 0.0, 0.2), Vec3::new(0.9, 0.08, 0.56));
+        part(c, wing, &k.ball, &e.dark, Vec3::new(1.85 * s, 0.0, 0.3), Vec3::new(0.6, 0.07, 0.38));
     }
     shadow(c, k, e, col, z);
 }

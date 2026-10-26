@@ -27,6 +27,10 @@ pub struct Extra {
     pub metal: Handle<StandardMaterial>,
     pub metal_top: Handle<StandardMaterial>,
     octagon: Handle<Mesh>,
+    /// Disque bien rond (32 côtés) : les nénuphars de la prairie.
+    pub rond: Handle<Mesh>,
+    pub pad_vert: Handle<StandardMaterial>,
+    pub pad_vert_clair: Handle<StandardMaterial>,
     bus: Vec<Handle<StandardMaterial>>,
     green: Handle<StandardMaterial>,
     taxi: Handle<StandardMaterial>,
@@ -55,6 +59,7 @@ impl Extra {
 
 impl FromWorld for Extra {
     fn from_world(world: &mut World) -> Self {
+        let rond = world.resource_mut::<Assets<Mesh>>().add(Cylinder::new(0.5, 1.0).mesh().resolution(32).build());
         let octagon = world.resource_mut::<Assets<Mesh>>().add(Cylinder::new(0.5, 1.0).mesh().resolution(8).build().with_duplicated_vertices().with_computed_flat_normals());
         let mut mats = world.resource_mut::<Assets<StandardMaterial>>();
         let biome = BiomeMats::new(&mut mats);
@@ -92,6 +97,9 @@ impl FromWorld for Extra {
             metal,
             metal_top,
             octagon,
+            rond,
+            pad_vert: f(0.36, 0.68, 0.30),
+            pad_vert_clair: f(0.52, 0.80, 0.38),
             bubble,
             biome,
             colors,
