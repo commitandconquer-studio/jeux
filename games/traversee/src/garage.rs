@@ -195,7 +195,7 @@ fn build(
                 let slot = slot_entity(&mut commands, root, at, (1.9 / en.len()).clamp(0.3, 1.5), i);
                 match *en {
                     Ennemi::Veh(v) => {
-                        crate::kenney::car(&mut commands, &server, slot, v, i * 5 + 1);
+                        crate::kenney::car(&mut commands, &server, None, slot, v, i * 5 + 1);
                     }
                     Ennemi::Monde(b, k) => {
                         crate::kenney::trafic(&mut commands, &server, &mut graphs, slot, b, k);

@@ -1,13 +1,15 @@
 //! Essai « Kenney » (`TRAVERSEE_KENNEY=1`) : les voitures du Car Kit de Kenney (CC0, `assets/kenney/car-kit`)
 //! remplacent les voitures en pièces sur les routes des mondes sans thème.
 use crate::extra::Vehicle;
+use bevy::asset::RenderAssetUsages;
 use bevy::prelude::*;
+use bevy::render::render_resource::{Extent3d, TextureDimension, TextureFormat};
 
 const CARS: [&str; 6] = ["sedan", "hatchback-sports", "suv", "sedan-sports", "van", "suv-luxury"];
 const TRUCKS: [&str; 4] = ["truck", "delivery", "garbage-truck", "firetruck"];
 
 /// Pose un modèle Kenney à la place du véhicule ; renvoie `false` s'il n'y en a pas pour ce véhicule.
-pub fn car(c: &mut Commands, server: &AssetServer, parent: Entity, v: Vehicle, color: usize) -> bool {
+pub fn car(c: &mut Commands, server: &AssetServer, e: Option<&Eclairage>, parent: Entity, v: Vehicle, color: usize) -> bool {
     let (nom, echelle) = match v {
         Vehicle::Car => (CARS[color % CARS.len()], 0.8),
         Vehicle::Truck => (TRUCKS[color % TRUCKS.len()], 0.8),
@@ -24,6 +26,10 @@ pub fn car(c: &mut Commands, server: &AssetServer, parent: Entity, v: Vehicle, c
     let scene = server.load(GltfAssetLabel::Scene(0).from_asset(format!("kenney/car-kit/{nom}.glb")));
     // Les modèles Kenney regardent vers +Z ; le jeu avance vers +X.
     c.spawn((WorldAssetRoot(scene), Transform::from_rotation(Quat::from_rotation_y(std::f32::consts::FRAC_PI_2)).with_scale(Vec3::splat(echelle)), ChildOf(parent)));
+    // Les phares ne s'allument que la nuit (invisibles le jour) ; pas dans la Collection.
+    if let Some(e) = e {
+        phares(c, e, parent, v.len());
+    }
     true
 }
 
@@ -722,5 +728,131 @@ pub fn prairie_log(c: &mut Commands, server: &AssetServer, parent: Entity, len: 
             Transform::from_xyz(x, 0.06 - 0.42 * ECHELLE + 0.05, 0.0).with_scale(Vec3::new(pas, ECHELLE, ECHELLE)),
             ChildOf(parent),
         ));
+    }
+}
+
+// ---- La nuit : lampe du héros et phares ----
+
+/// Les faisceaux de lumière (quadrilatère + dégradé) pour les phares des voitures et la lampe du héros.
+#[derive(Resource)]
+pub struct Eclairage {
+    quad: Handle<Mesh>,
+    jaune: Handle<StandardMaterial>,
+    rouge: Handle<StandardMaterial>,
+    lampe: Handle<StandardMaterial>,
+}
+
+/// Un faisceau : n'est visible que le soir et la nuit.
+#[derive(Component)]
+pub struct Faisceau;
+
+/// La lampe que porte le héros, qui éclaire devant lui la nuit.
+#[derive(Component)]
+pub struct LampeHeros;
+
+/// Dégradé d'un faisceau : opaque près de la source (côté x = 0), transparent au bout et sur les bords.
+fn degrade(r: u8, g: u8, b: u8, force: f32) -> Image {
+    let (w, h) = (64usize, 32usize);
+    let mut data = Vec::with_capacity(w * h * 4);
+    for j in 0..h {
+        let v = (j as f32 + 0.5) / h as f32 * 2.0 - 1.0; // -1..1 en travers
+        for i in 0..w {
+            let u = (i as f32 + 0.5) / w as f32; // 0..1 le long
+            let long = (1.0 - u).powf(1.6);
+            // En cône : étroit près de la source, large au bout.
+            let demi = 0.3 + 0.7 * u;
+            let bord = (1.0 - (v / demi) * (v / demi)).clamp(0.0, 1.0).powf(0.7);
+            data.extend_from_slice(&[r, g, b, (255.0 * force * long * bord) as u8]);
+        }
+    }
+    Image::new(Extent3d { width: w as u32, height: h as u32, depth_or_array_layers: 1 }, TextureDimension::D2, data, TextureFormat::Rgba8UnormSrgb, RenderAssetUsages::default())
+}
+
+impl FromWorld for Eclairage {
+    fn from_world(world: &mut World) -> Self {
+        let quad = world.resource_mut::<Assets<Mesh>>().add(Plane3d::default().mesh().size(1.0, 1.0));
+        let mut images = world.resource_mut::<Assets<Image>>();
+        let (img_j, img_r, img_l) = (images.add(degrade(255, 232, 110, 0.55)), images.add(degrade(255, 40, 30, 0.28)), images.add(degrade(255, 244, 205, 0.4)));
+        let mut mats = world.resource_mut::<Assets<StandardMaterial>>();
+        let mut faisceau = |img: Handle<Image>| mats.add(StandardMaterial { base_color_texture: Some(img), unlit: true, alpha_mode: AlphaMode::Blend, cull_mode: None, ..default() });
+        Self { quad, jaune: faisceau(img_j), rouge: faisceau(img_r), lampe: faisceau(img_l) }
+    }
+}
+
+/// Les phares d'une voiture de longueur `len` (tournée vers +X) : faisceau jaune devant, léger feu rouge derrière.
+pub fn phares(c: &mut Commands, e: &Eclairage, parent: Entity, len: f32) {
+    let devant = len / 2.0;
+    // Devant : 2,6 de long, 1,5 de large, posé juste au-dessus de la route.
+    c.spawn((Mesh3d(e.quad.clone()), MeshMaterial3d(e.jaune.clone()), Transform::from_xyz(devant + 1.3, 0.045, 0.0).with_scale(Vec3::new(2.6, 1.0, 1.5)), Visibility::Hidden, Faisceau, ChildOf(parent)));
+    // Derrière : petit et léger (le dégradé s'éloigne de la voiture : on le retourne).
+    c.spawn((Mesh3d(e.quad.clone()), MeshMaterial3d(e.rouge.clone()), Transform::from_xyz(-devant - 0.4, 0.045, 0.0).with_scale(Vec3::new(-0.8, 1.0, 1.0)), Visibility::Hidden, Faisceau, ChildOf(parent)));
+}
+
+/// Les faisceaux apparaissent le soir et la nuit.
+pub fn eclairage_nuit(amb: Res<game_common::ambiance::Ambiance>, mut q: Query<&mut Visibility, With<Faisceau>>) {
+    use game_common::ambiance::Moment;
+    let sombre = matches!(amb.moment, Moment::Soir | Moment::Nuit);
+    let voulu = if sombre { Visibility::Inherited } else { Visibility::Hidden };
+    for mut v in &mut q {
+        if *v != voulu {
+            *v = voulu;
+        }
+    }
+}
+
+/// La lampe du héros : un projecteur chaud qui suit le personnage et regarde devant lui (vers -Z), plus son faisceau visible au sol.
+pub fn lampe_heros(
+    mut commands: Commands,
+    amb: Res<game_common::ambiance::Ambiance>,
+    frog: Res<crate::frog::Frog>,
+    e: Res<Eclairage>,
+    mut lampes: Query<(&mut Transform, &mut SpotLight), With<LampeHeros>>,
+    mut faisceaux: Query<&mut Visibility, (With<LampeFaisceau>, Without<Faisceau>)>,
+    mut cree: Local<bool>,
+) {
+    use game_common::ambiance::Moment;
+    if !*cree {
+        *cree = true;
+        // Le projecteur lui-même.
+        commands.spawn((
+            SpotLight { color: Color::srgb(1.0, 0.92, 0.72), intensity: 900_000.0, range: 10.0, outer_angle: 0.55, inner_angle: 0.2, shadow_maps_enabled: false, ..default() },
+            Transform::default(),
+            LampeHeros,
+        ));
+        // Son faisceau visible : un porteur qui suit le héros, tourné pour que +X de ses enfants aille vers -Z.
+        let porteur = commands.spawn((Transform::from_rotation(Quat::from_rotation_y(std::f32::consts::FRAC_PI_2)), Visibility::default(), PorteurLampe)).id();
+        commands.spawn((Mesh3d(e.quad.clone()), MeshMaterial3d(e.lampe.clone()), Transform::from_xyz(1.9, 0.05, 0.0).with_scale(Vec3::new(3.8, 1.0, 2.4)), Visibility::Hidden, LampeFaisceau, ChildOf(porteur)));
+        return;
+    }
+    let sombre = matches!(amb.moment, Moment::Soir | Moment::Nuit);
+    let force = match amb.moment {
+        Moment::Nuit => 1.0,
+        Moment::Soir => 0.5,
+        _ => 0.0,
+    };
+    for (mut tf, mut light) in &mut lampes {
+        let p = frog.pos;
+        *tf = Transform::from_translation(p + Vec3::new(0.0, 1.2, 0.1)).looking_at(p + Vec3::new(0.0, 0.0, -3.5), Vec3::Y);
+        light.intensity = 900_000.0 * force;
+    }
+    let voulu = if sombre { Visibility::Inherited } else { Visibility::Hidden };
+    for mut v in &mut faisceaux {
+        if *v != voulu {
+            *v = voulu;
+        }
+    }
+}
+
+/// Le faisceau visible de la lampe du héros, et le porteur qui le suit.
+#[derive(Component)]
+pub struct LampeFaisceau;
+
+#[derive(Component)]
+pub struct PorteurLampe;
+
+/// Le porteur suit le héros.
+pub fn suivre_lampe(frog: Res<crate::frog::Frog>, mut q: Query<&mut Transform, With<PorteurLampe>>) {
+    for mut tf in &mut q {
+        tf.translation = frog.pos + Vec3::new(0.0, 0.0, -0.3);
     }
 }

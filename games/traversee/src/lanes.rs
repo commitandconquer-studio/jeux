@@ -160,6 +160,7 @@ pub fn ensure_lanes(
     cam: Res<crate::CamZ>,
     server: Res<AssetServer>,
     mut graphs: ResMut<Assets<AnimationGraph>>,
+    eclairage: Res<crate::kenney::Eclairage>,
     lanes: Query<(Entity, &Lane)>,
 ) {
     if generator.reset {
@@ -171,7 +172,7 @@ pub fn ensure_lanes(
     }
     let cam_row = (-cam.0).round() as i32;
     while generator.next_row <= cam_row + AHEAD {
-        spawn_lane(&mut commands, &kit, &extra, &server, &mut graphs, &mut generator, progress.total + score.current);
+        spawn_lane(&mut commands, &kit, &extra, &server, &mut graphs, &eclairage, &mut generator, progress.total + score.current);
     }
     for (e, lane) in &lanes {
         if lane.row < cam_row - BEHIND {
@@ -274,7 +275,7 @@ fn log(c: &mut Commands, kit: &Kit, server: &AssetServer, parent: Entity, len: f
     }
 }
 
-fn spawn_lane(c: &mut Commands, kit: &Kit, x: &Extra, server: &AssetServer, graphs: &mut Assets<AnimationGraph>, g: &mut LaneGen, points: u32) {
+fn spawn_lane(c: &mut Commands, kit: &Kit, x: &Extra, server: &AssetServer, graphs: &mut Assets<AnimationGraph>, eclairage: &crate::kenney::Eclairage, g: &mut LaneGen, points: u32) {
     let row = g.next_row;
     g.next_row += 1;
     let kind = g.next_kind(row, points);
@@ -505,7 +506,7 @@ fn spawn_lane(c: &mut Commands, kit: &Kit, x: &Extra, server: &AssetServer, grap
                 let mover = spawn_mover(c, root, row, x_pos + len / 2.0, speed, len, kind, dir);
                 match vehicle {
                     _ if trafic.is_some_and(|i| crate::kenney::trafic(c, server, graphs, mover, biome, i)) => {}
-                    v if crate::space::kenney() && biome.theme().is_none() && crate::kenney::car(c, server, mover, v, color) => {}
+                    v if crate::space::kenney() && biome.theme().is_none() && crate::kenney::car(c, server, Some(eclairage), mover, v, color) => {}
                     Vehicle::Car => spawn_car(c, kit, mover, color),
                     Vehicle::Truck => spawn_truck(c, kit, mover, color),
                     v => spawn_vehicle(c, kit, x, mover, v, color),

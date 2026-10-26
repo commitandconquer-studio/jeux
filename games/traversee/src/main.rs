@@ -77,6 +77,7 @@ fn main() {
     .add_systems(Update, game_common::langue::rebatir_menu(GameState::Menu))
     .init_resource::<Kit>()
     .init_resource::<extra::Extra>()
+    .init_resource::<kenney::Eclairage>()
     .init_resource::<FrogKit>()
     .init_resource::<Score>()
     .init_resource::<Frog>()
@@ -103,6 +104,9 @@ fn main() {
                 kenney::animer_humains,
                 kenney::rouler,
                 kenney::scintiller,
+                kenney::eclairage_nuit,
+                kenney::lampe_heros,
+                kenney::suivre_lampe,
                 kenney::faire_briller,
                 kenney::animer_marcheurs,
                 extra::animate_flies,
