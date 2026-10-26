@@ -23,3 +23,18 @@ pub fn car(c: &mut Commands, server: &AssetServer, parent: Entity, v: Vehicle, c
     c.spawn((WorldAssetRoot(scene), Transform::from_rotation(Quat::from_rotation_y(std::f32::consts::FRAC_PI_2)).with_scale(Vec3::splat(echelle)), ChildOf(parent)));
     true
 }
+
+/// Arbres, rochers et buissons du Mini Forest (`assets/kenney/mini-forest`) ; `false` s'il n'y en a pas.
+pub fn prop(c: &mut Commands, server: &AssetServer, parent: Entity, p: crate::models::Prop, at: Vec3, variant: usize) -> bool {
+    use crate::models::Prop;
+    let nom = match p {
+        Prop::Tree => "tree",
+        Prop::Pine => "tree-high",
+        Prop::Rock => ["rocks-low", "stones", "rocks-low"][variant % 3],
+        Prop::Bush => "plant",
+    };
+    let scene = server.load(GltfAssetLabel::Scene(0).from_asset(format!("kenney/mini-forest/{nom}.glb")));
+    let tour = Quat::from_rotation_y(variant as f32 * 1.57);
+    c.spawn((WorldAssetRoot(scene), Transform::from_translation(at).with_rotation(tour), ChildOf(parent)));
+    true
+}

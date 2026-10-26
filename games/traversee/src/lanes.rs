@@ -179,6 +179,13 @@ pub fn ensure_lanes(
     }
 }
 
+/// Arbre, rocher ou buisson : ceux de Kenney (Mini Forest) avec `TRAVERSEE_KENNEY=1`, sinon ceux du jeu.
+fn prop(c: &mut Commands, kit: &Kit, server: &AssetServer, parent: Entity, p: Prop, at: Vec3, variant: usize) {
+    if !(crate::space::kenney() && crate::kenney::prop(c, server, parent, p, at, variant)) {
+        spawn_prop(c, kit, parent, p, at, variant);
+    }
+}
+
 fn spawn_lane(c: &mut Commands, kit: &Kit, x: &Extra, server: &AssetServer, g: &mut LaneGen, points: u32) {
     let row = g.next_row;
     g.next_row += 1;
@@ -244,9 +251,9 @@ fn spawn_lane(c: &mut Commands, kit: &Kit, x: &Extra, server: &AssetServer, g: &
                     continue;
                 }
                 match g.rng.below(10) {
-                    0..=3 => spawn_prop(c, kit, root, Prop::Tree, at, variant),
-                    4..=6 => spawn_prop(c, kit, root, Prop::Pine, at, variant),
-                    7..=8 => spawn_prop(c, kit, root, Prop::Rock, at, variant),
+                    0..=3 => prop(c, kit, server, root, Prop::Tree, at, variant),
+                    4..=6 => prop(c, kit, server, root, Prop::Pine, at, variant),
+                    7..=8 => prop(c, kit, server, root, Prop::Rock, at, variant),
                     _ => spawn_deco(c, kit, x, root, Deco::Stump, at, variant),
                 }
             }
@@ -302,13 +309,13 @@ fn spawn_lane(c: &mut Commands, kit: &Kit, x: &Extra, server: &AssetServer, g: &
                         continue;
                     }
                     if g.rng.below(10) < 4 {
-                        let prop = match g.rng.below(10) {
+                        let kind = match g.rng.below(10) {
                             0..=3 => Prop::Tree,
                             4..=6 => Prop::Pine,
                             7 => Prop::Rock,
                             _ => Prop::Bush,
                         };
-                        spawn_prop(c, kit, root, prop, at, variant);
+                        prop(c, kit, server, root, kind, at, variant);
                     } else if g.rng.below(10) < 2 {
                         let deco = match g.rng.below(4) {
                             0 => Deco::Flower,
