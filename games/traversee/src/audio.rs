@@ -248,7 +248,9 @@ fn music_speed(
     }
     let rate = if goal < *speed { 1.6 } else { 0.8 };
     *speed += (goal - *speed).clamp(-rate * time.delta_secs(), rate * time.delta_secs());
-    if game_common::url_flag("nospeed") {
+    // Dans le navigateur, changer la vitesse de la musique à chaque image fige la page
+    // (le lecteur recrée son rééchantillonneur) : la musique garde sa vitesse normale.
+    if cfg!(target_arch = "wasm32") {
         return;
     }
     for sink in &mut sinks {

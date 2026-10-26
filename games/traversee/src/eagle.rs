@@ -173,7 +173,6 @@ fn run_eagle(
             let col = if punish || unit(&mut rng) < 0.7 { frog.pos.x.round() as i32 } else { rng.below((COLS * 2 + 1) as u32) as i32 - COLS };
             let dir = if unit(&mut rng) < 0.5 { 1.0 } else { -1.0 };
             eagle.phase = Phase::Warning { col, dir, t: 0.0 };
-            if !game_common::url_flag("nostrip") {
             commands.spawn((
                 Mesh3d(kit.cube.clone()),
                 MeshMaterial3d(ek.warn_on.clone()),
@@ -181,10 +180,7 @@ fn run_eagle(
                 Strip,
                 NotShadowCaster,
             ));
-            }
-            if !game_common::url_flag("noalarm") {
-                sfx.write(Sfx::Alarm);
-            }
+            sfx.write(Sfx::Alarm);
         }
         Phase::Warning { col, dir, t } => {
             let t = t + dt;
@@ -200,18 +196,14 @@ fn run_eagle(
             // L'aigle arrive par le haut ou le bas de l'écran.
             let z = if dir > 0.0 { cam.0 - 15.0 } else { cam.0 + 13.0 };
             let park = crate::extra::Biome::of(frog.max_row_i(), progress.total + score.current).theme_index();
-            if !game_common::url_flag("nobird") {
-                spawn_eagle(&mut commands, &kit, &extra, &ek, col, dir, z, park);
-            }
+            spawn_eagle(&mut commands, &kit, &extra, &ek, col, dir, z, park);
             for (e, _, _, strip) in &visuals {
                 if strip {
                     commands.entity(e).despawn();
                 }
             }
             eagle.phase = Phase::Flying { col, dir, z };
-            if !game_common::url_flag("noscreech") {
-                sfx.write(Sfx::Screech);
-            }
+            sfx.write(Sfx::Screech);
         }
         Phase::Flying { col, dir, z } => {
             let z = z + dir * SPEED * dt;
@@ -308,9 +300,6 @@ fn flap(time: Res<Time>, mut q: Query<(&Wing, &mut Transform)>) {
 
 /// La bande d'avertissement clignote.
 fn blink(time: Res<Time>, ek: Res<EagleKit>, mut q: Query<&mut MeshMaterial3d<StandardMaterial>, With<Strip>>) {
-    if game_common::url_flag("noblink") {
-        return;
-    }
     let on = (time.elapsed_secs() * 7.0) as i32 % 2 == 0;
     for mut m in &mut q {
         m.0 = if on { ek.warn_on.clone() } else { ek.warn_off.clone() };
