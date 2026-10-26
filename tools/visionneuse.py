@@ -22,6 +22,7 @@ from urllib.parse import urlparse
 RACINE = os.path.abspath(os.path.join(os.path.dirname(os.path.abspath(__file__)), ".."))
 DATA = os.path.join(RACINE, "games/traversee/data")
 PAGE = os.path.join(os.path.dirname(os.path.abspath(__file__)), "visionneuse")
+KENNEY = os.path.join(RACINE, "assets/kenney")
 LECTURE_SEULE = {"vehicules.json"}
 
 
@@ -86,6 +87,18 @@ def tous_les_modeles():
     return sortie
 
 
+def modeles_glb():
+    """Les modèles GLB de assets/kenney (packs de Kenney, CC0)."""
+    sortie = []
+    for dossier, _, noms in sorted(os.walk(KENNEY)):
+        for nom in sorted(noms):
+            if nom.endswith(".glb"):
+                rel = os.path.relpath(os.path.join(dossier, nom), KENNEY).replace(os.sep, "/")
+                pack = rel.split("/")[0]
+                sortie.append(dict(cle="glb::" + rel, fichier="kenney/" + pack, type="glb", id=nom[:-4], nom=nom[:-4], url="/kenney/" + rel, editable=False))
+    return sortie
+
+
 def sauver(corps):
     rel = corps["fichier"]
     if os.path.basename(rel) in LECTURE_SEULE or rel not in fichiers():
@@ -114,6 +127,16 @@ class Gestionnaire(SimpleHTTPRequestHandler):
     def __init__(self, *a, **k):
         super().__init__(*a, directory=PAGE, **k)
 
+    def translate_path(self, path):
+        # /kenney/... : les modèles de assets/kenney ; le reste vient de tools/visionneuse
+        chemin = urlparse(path).path
+        if chemin.startswith("/kenney/"):
+            cible = os.path.normpath(os.path.join(KENNEY, chemin[len("/kenney/"):]))
+            if cible.startswith(KENNEY + os.sep):
+                return cible
+            return os.path.join(PAGE, "inexistant")
+        return super().translate_path(path)
+
     def log_message(self, fmt, *args):
         if "/api/mtimes" not in str(args[0] if args else ""):
             super().log_message(fmt, *args)
@@ -131,6 +154,8 @@ class Gestionnaire(SimpleHTTPRequestHandler):
         chemin = urlparse(self.path).path
         if chemin == "/api/modeles":
             return self.reponse_json(tous_les_modeles())
+        if chemin == "/api/glb":
+            return self.reponse_json(modeles_glb())
         if chemin == "/api/mtimes":
             return self.reponse_json({rel: os.path.getmtime(os.path.join(DATA, rel)) for rel in fichiers()})
         self.send_header_no_cache = True

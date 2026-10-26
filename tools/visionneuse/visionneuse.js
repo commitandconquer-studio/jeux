@@ -2,6 +2,7 @@
 // Visionneuse / éditeur 3D des modèles de Traversée (voir tools/visionneuse.py).
 import * as THREE from 'three';
 import { OrbitControls } from './vendor/OrbitControls.js';
+import { GLTFLoader } from './vendor/GLTFLoader.js';
 
 const $ = (s) => document.querySelector(s);
 const FORMES = ['cube', 'cylindre', 'cone', 'sphere'];
@@ -10,7 +11,7 @@ const COULEURS = { vitre: '#42617f', sombre: '#33363d', pneu: '#1d1d20', enjoliv
 const LUMINEUSES = new Set(['phare', 'lumiere_rouge', 'lumiere_bleue']);
 const VERT_HEROS = '#5aaa46', PEINTURE_VEHICULE = '#3b82d6';
 
-let modeles = [], courant = null, travail = null, selection = -1, sale = false, pile = [], mtimes = {}, parUrl = new URLSearchParams(location.search);
+let glbs = [], mixer = null, actionCourante = null, glbCourant = null, modeles = [], courant = null, travail = null, selection = -1, sale = false, pile = [], mtimes = {}, parUrl = new URLSearchParams(location.search);
 let anime = parUrl.get('anim') !== '0', ortho = parUrl.get('ortho') === '1', grille = true, ref = parUrl.get('ref') === '1', fondSombre = false, vueActuelle = 'iso';
 
 // ---------------------------------------------------------------- scène
@@ -135,7 +136,9 @@ function construire() {
   const mobiles = m.mobiles || [];
   // groupes pivotés : un par nom de pièce concerné
   const pivots = new Map();
-  for (const a of mobiles) {
+  // les groupes imbriqués (mollet dans cuisse…) : le parent d'abord
+  const ordre = [...mobiles].sort((x, y) => (x.parent ? 1 : 0) - (y.parent ? 1 : 0));
+  for (const a of ordre) {
     const sorte = sorteDePivot(a);
     if (!sorte || a.piece.includes('*')) continue;
     const membres = m.pieces.map((p, i) => ({ p, i })).filter(({ p }) => p.nom === a.piece);
@@ -149,8 +152,9 @@ function construire() {
     if (!pivots.has(a.piece)) {
       const pt = pointPivot({ lo, hi }, sorte);
       const g = new THREE.Group();
-      g.position.copy(pt);
-      groupeModele.add(g);
+      const parent = a.parent ? pivots.get(a.parent) : null;
+      g.position.copy(parent ? pt.clone().sub(parent.pt) : pt);
+      (parent ? parent.g : groupeModele).add(g);
       pivots.set(a.piece, { g, pt });
     }
   }
@@ -211,7 +215,8 @@ function mettreAJour(t) {
       const phase = (a.phase || 0) * Math.PI * 2;
       const amp = a.amplitude ?? (parseFloat(n.split('_').pop()) || null);
       if (n === 'pendule') {
-        if (a.axe === 'z') e.obj.rotation.z = (a.pivot === 'base' ? Math.sin(tt * 3 + phase) * 0.5 : Math.sin(tt * 8 + phase) * 0.6);
+        if (a.axe === 'z' && a.plie) e.obj.rotation.z = -Math.max(0, Math.sin(tt * 8 + phase + 1.2)) * 0.9;
+        else if (a.axe === 'z') e.obj.rotation.z = (a.pivot === 'base' ? Math.sin(tt * 3 + phase) * 0.5 : Math.sin(tt * 8 + phase) * 0.6);
         else if (a.axe === 'x') e.obj.rotation.x = -Math.sign(e.pivotZ || 1) * Math.sin(tt * 7 + phase) * 0.6;
         else if (a.axe === 'y') e.obj.rotation.y = Math.sin(tt * 3 + phase) * 0.6;
       } else if (n === 'balance') {
@@ -268,7 +273,7 @@ function remplirListe() {
   const liste = $('#liste');
   liste.innerHTML = '';
   let dernier = '';
-  for (const m of modeles) {
+  for (const m of [...modeles, ...glbs]) {
     if (type && m.type !== type) continue;
     if (q && !(m.nom + ' ' + m.id + ' ' + m.fichier).toLowerCase().includes(q)) continue;
     if (m.fichier !== dernier) {
@@ -279,7 +284,7 @@ function remplirListe() {
       liste.appendChild(g);
     }
     const d = document.createElement('div');
-    d.className = 'modele' + (courant && courant.cle === m.cle ? ' courant' : '');
+    d.className = 'modele' + (((courant && courant.cle === m.cle) || (glbCourant && glbCourant.cle === m.cle)) ? ' courant' : '');
     d.innerHTML = `<span></span><small></small>`;
     d.children[0].textContent = m.nom || m.id;
     d.children[1].textContent = m.type + (m.editable ? '' : ' 🔒');
@@ -288,7 +293,7 @@ function remplirListe() {
   }
 }
 function remplirTypes() {
-  const types = [...new Set(modeles.map((m) => m.type))];
+  const types = [...new Set([...modeles, ...glbs].map((m) => m.type))];
   const sel = $('#type');
   sel.innerHTML = '<option value="">Tous les types</option>' + types.map((t) => `<option>${t}</option>`).join('');
 }
@@ -388,9 +393,42 @@ async function sauverModele() {
   } else statut('Échec : ' + r.erreur, 'mal');
 }
 
+function chargerGlb(g) {
+  courant = null; travail = null; selection = -1; sale = false; pile = [];
+  glbCourant = g;
+  groupeModele.clear(); animes = []; maillages = []; mixer = null; actionCourante = null;
+  $('#titre').textContent = `${g.nom} — GLB (Kenney, CC0)`;
+  $('#b-sauver').disabled = true; $('#b-annuler').disabled = true;
+  $('#infos').textContent = 'Chargement…';
+  $('#pieces').innerHTML = ''; $('#nb').textContent = ''; $('#form').innerHTML = '<span class="aide">Modèle GLB : lecture seule.</span>'; $('#anims').value = '';
+  new GLTFLoader().load(g.url, (gltf) => {
+    const racine = gltf.scene;
+    racine.traverse((o) => { if (o.isMesh) { o.castShadow = true; o.receiveShadow = true; if (o.material) o.material.roughness = 1; } });
+    groupeModele.add(racine);
+    const clips = gltf.animations || [];
+    let html = `<div class="ligne"><label>fichier</label><span>${g.url.replace('/kenney/', '')}</span></div><div class="ligne"><label>animations</label><span>${clips.length}</span></div>`;
+    if (clips.length) html += `<div class="ligne"><label>lecture</label><select id="clip" style="flex:1">${clips.map((c) => `<option>${c.name}</option>`).join('')}</select></div>`;
+    $('#infos').innerHTML = html;
+    if (clips.length) {
+      mixer = new THREE.AnimationMixer(racine);
+      const jouer = (nom) => { if (actionCourante) actionCourante.fadeOut(0.15); actionCourante = mixer.clipAction(clips.find((c) => c.name === nom)); actionCourante.reset().fadeIn(0.15).play(); };
+      const defaut = ['walk', 'idle'].find((n) => clips.some((c) => c.name === n)) || clips[0].name;
+      $('#clip').value = defaut;
+      jouer(defaut);
+      $('#clip').addEventListener('change', (e) => jouer(e.target.value));
+    }
+    cadrer(vueActuelle === 'libre' ? 'iso' : vueActuelle);
+  }, undefined, (e) => { $('#infos').textContent = 'Échec du chargement : ' + (e.message || e); });
+  remplirListe();
+  history.replaceState(null, '', `?modele=${encodeURIComponent(g.cle)}`);
+}
+
 function charger(cle, garderVue = false) {
+  const g = glbs.find((x) => x.cle === cle);
+  if (g) { chargerGlb(g); return; }
   const m = modeles.find((x) => x.cle === cle || x.id === cle);
   if (!m) return;
+  glbCourant = null; mixer = null; actionCourante = null;
   if (sale && !garderVue && !confirm('Des modifications ne sont pas enregistrées. Les abandonner ?')) return;
   courant = m;
   travail = copie(m);
@@ -454,8 +492,9 @@ toile.addEventListener('pointerup', (e) => {
 
 // ---------------------------------------------------------------- chargement et rechargement automatique
 async function recharger(garder) {
-  const [liste, mt] = await Promise.all([fetch('/api/modeles').then((r) => r.json()), fetch('/api/mtimes').then((r) => r.json())]);
+  const [liste, mt, lg] = await Promise.all([fetch('/api/modeles').then((r) => r.json()), fetch('/api/mtimes').then((r) => r.json()), fetch('/api/glb').then((r) => r.json())]);
   modeles = liste;
+  glbs = lg;
   mtimes = mt;
   remplirTypes();
   if (!garder) return;
@@ -474,8 +513,12 @@ setInterval(async () => {
 }, 1500);
 
 const horloge = new THREE.Clock();
+let dernierTemps = performance.now();
 function boucle() {
   requestAnimationFrame(boucle);
+  const maintenant = performance.now(), dt = (maintenant - dernierTemps) / 1000;
+  dernierTemps = maintenant;
+  if (mixer && anime) mixer.update(dt);
   if (anime) mettreAJour(horloge.getElapsedTime());
   controles.update();
   rendu.render(scene, camera);
@@ -494,5 +537,5 @@ function boucle() {
   charger(voulu || (modeles[0] && modeles[0].cle));
   boucle();
   // petite interface pour piloter la visionneuse depuis la console ou un script
-  window.visionneuse = { charger, cadrer, choisir, modeles: () => modeles, travail: () => travail, mettreAJour, rendu, scene, camera: () => camera };
+  window.visionneuse = { glbs: () => glbs, charger, cadrer, choisir, modeles: () => modeles, travail: () => travail, mettreAJour, rendu, scene, camera: () => camera };
 })();
