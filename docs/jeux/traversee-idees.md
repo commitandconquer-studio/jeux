@@ -14,12 +14,15 @@ Notes du 26 octobre 2026, à reprendre une par une. Rien ici n'est développé.
 - Le Mini Characters de Kenney en contient **12** (`character-male-a` à `-f`, `character-female-a` à `-f`). Le jeu n'en utilise que **8** (Léo, Lola, Gaston, Zoé, Hugo, Jade, Théo, Mila).
 - Objectif : **les 12**. Il faut 4 personnages de plus (enum `Character`, seuils de déblocage dans `progress.rs`, noms).
 
-## 3. Les chaises roulantes
+## 3. Les chaises roulantes — ABANDONNÉ (26 octobre 2026)
+
+Essayé puis retiré à la demande d'Olivier ("c'est une mauvaise idée"). Le code reste dans l'historique git (commit fc8f367, annulé par e1e93a1). Ne pas relancer sans demande.
+
 
 - Le kit propose **4 modèles** de fauteuils : `wheelchair`, `wheelchair-deluxe`, `wheelchair-power`, `wheelchair-power-deluxe`. Les personnages ont déjà des animations « assis en fauteuil » (`wheelchair-sit`, `wheelchair-move-forward/back/left/right`, `wheelchair-look-left/right`).
 - Souhait : pouvoir jouer **chacun des 12 personnages en fauteuil**, avec un fauteuil « différent » pour chacun. Remarque : il n'y a que 4 modèles ; pour 12 variantes différentes, il faudra varier la couleur (teinte) ou combiner modèle de fauteuil et personnage.
 
-## 4. Mobilité qui évolue (idée à réfléchir)
+## 4. Mobilité qui évolue — plus d'actualité (liée aux fauteuils, abandonnés)
 
 L'idée : des personnages âgés qui **marchent difficilement** au début, puis on gagne une **canne** (un peu plus rapide), puis un **fauteuil roulant** (encore un peu plus rapide).
 
