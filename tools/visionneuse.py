@@ -156,8 +156,16 @@ def main():
     p.add_argument("--port", type=int, default=8800)
     p.add_argument("--ouvrir", action="store_true", help="ouvre le navigateur")
     a = p.parse_args()
-    serveur = ThreadingHTTPServer(("127.0.0.1", a.port), Gestionnaire)
-    url = f"http://localhost:{a.port}/"
+    serveur = None
+    for port in range(a.port, a.port + 10):  # si le port est pris (une autre visionneuse ?), on essaie le suivant
+        try:
+            serveur = ThreadingHTTPServer(("127.0.0.1", port), Gestionnaire)
+            break
+        except OSError:
+            continue
+    if serveur is None:
+        sys.exit(f"Aucun port libre entre {a.port} et {a.port + 9}.")
+    url = f"http://localhost:{serveur.server_address[1]}/"
     print(f"Visionneuse : {url}  (Ctrl+C pour arrêter)")
     if a.ouvrir:
         threading.Timer(0.5, lambda: webbrowser.open(url)).start()
