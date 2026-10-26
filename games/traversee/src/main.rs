@@ -102,6 +102,7 @@ fn main() {
                 characters::rebuild_player,
                 kenney::animer_humains,
                 kenney::rouler,
+                kenney::pulser_halos,
                 kenney::animer_marcheurs,
                 extra::animate_flies,
                 extra::speed_bus,

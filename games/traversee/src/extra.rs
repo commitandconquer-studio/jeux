@@ -34,6 +34,9 @@ pub struct Extra {
     fly_gold: Handle<StandardMaterial>,
     fly_wing: Handle<StandardMaterial>,
     fly_eye: Handle<StandardMaterial>,
+    /// Halo lumineux des cadeaux (Kenney) : normal et doré.
+    pub halo: Handle<StandardMaterial>,
+    pub halo_gold: Handle<StandardMaterial>,
     biome: BiomeMats,
     /// Une matière par couleur utilisée par les modèles décrits en pièces.
     colors: Vec<([u8; 3], Handle<StandardMaterial>)>,
@@ -77,6 +80,9 @@ impl FromWorld for Extra {
         let flowers = vec![f(0.98, 0.45, 0.62), f(1.0, 0.85, 0.25), f(0.97, 0.97, 0.97), f(0.92, 0.25, 0.25), f(0.65, 0.45, 0.92), f(1.0, 0.6, 0.2)];
         let bus = vec![f(0.98, 0.78, 0.15), f(0.25, 0.65, 0.40), f(0.85, 0.25, 0.25), f(0.30, 0.50, 0.85)];
         let tuft = f(0.40, 0.68, 0.30);
+        let mut halo_mat = |c: Color, e: LinearRgba| mats.add(StandardMaterial { base_color: c, emissive: e, unlit: true, alpha_mode: AlphaMode::Blend, ..default() });
+        let halo = halo_mat(Color::srgba(1.0, 0.95, 0.6, 0.22), LinearRgba::rgb(1.0, 0.95, 0.6));
+        let halo_gold = halo_mat(Color::srgba(1.0, 0.8, 0.2, 0.32), LinearRgba::rgb(1.0, 0.8, 0.2));
         let mut glow = |c: Color, e: LinearRgba| mats.add(StandardMaterial { emissive: e, ..flat_material(c) });
         let fly_gold = glow(Color::srgb(1.0, 0.82, 0.2), LinearRgba::rgb(2.5, 1.7, 0.2));
         let red_light = glow(Color::srgb(1.0, 0.2, 0.2), LinearRgba::rgb(3.0, 0.2, 0.2));
@@ -108,6 +114,8 @@ impl FromWorld for Extra {
             fly_gold,
             fly_wing: f(0.85, 0.93, 1.0),
             fly_eye: f(0.9, 0.15, 0.15),
+            halo,
+            halo_gold,
             white_car: 0,
             yellow_car: 0,
         }
@@ -193,12 +201,7 @@ pub fn pick_vehicle(roll: u32, points: u32) -> Vehicle {
     if unlocked(points, Item::Vehicle(Vehicle::Sheriff)) {
         open.push((Vehicle::Sheriff, 3));
     }
-    // Les véhicules décrits en pièces, plus rares que les classiques
-    for (i, g) in crate::gen_vehicles::GEN.iter().enumerate() {
-        if unlocked(points, Item::Vehicle(Vehicle::Gen(i))) {
-            open.push((Vehicle::Gen(i), if g.class == "bus" { 3 } else { 4 }));
-        }
-    }
+    // Les véhicules décrits en pièces (Gen) ne sont plus tirés : les mondes les remplaceront un à un par des modèles Kenney.
     let total: u32 = open.iter().map(|(_, w)| w).sum();
     let mut r = roll % total;
     for (v, w) in &open {

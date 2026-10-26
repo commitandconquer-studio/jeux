@@ -16,6 +16,9 @@ pub fn car(c: &mut Commands, server: &AssetServer, parent: Entity, v: Vehicle, c
         Vehicle::Sport => ("race", 0.8),
         Vehicle::Tractor => ("tractor", 0.8),
         Vehicle::Pickup => ("truck-flat", 0.8),
+        Vehicle::Bus => ("ambulance", 0.8),
+        Vehicle::Moto => ("kart-oobi", 0.7),
+        Vehicle::Sheriff => ("police", 0.8),
         _ => return false,
     };
     let scene = server.load(GltfAssetLabel::Scene(0).from_asset(format!("kenney/car-kit/{nom}.glb")));
@@ -519,4 +522,43 @@ pub fn monorail(c: &mut Commands, server: &AssetServer, parent: Entity, wagons: 
         space_modele(c, scene, parent, Transform::from_xyz(x, 0.3, 0.0).with_rotation(Quat::from_rotation_y(-std::f32::consts::FRAC_PI_2)).with_scale(Vec3::splat(1.2)));
     }
     len
+}
+
+// ---- Cadeaux (Holiday Kit) ----
+
+/// Le halo lumineux d'un cadeau : il pulse pour qu'on le repère de loin.
+#[derive(Component)]
+pub struct Halo {
+    phase: f32,
+}
+
+/// Un cadeau à ramasser à la place d'une mouche (le doré vaut plus) : modèle Kenney, halo et colonne de lumière.
+/// Il garde le composant `Fly` : la logique de ramassage et de points est celle des mouches.
+#[allow(clippy::too_many_arguments)]
+pub fn cadeau(c: &mut Commands, k: &crate::models::Kit, x: &crate::extra::Extra, server: &AssetServer, lane: Entity, row: i32, col: i32, gold: bool, phase: f32) {
+    let nom = ["present-a-cube", "present-a-round", "present-b-cube", "present-a-rectangle", "present-b-round", "present-b-rectangle"][(phase * 10.0) as usize % 6];
+    let scene = server.load(GltfAssetLabel::Scene(0).from_asset(format!("kenney/holiday-kit/{nom}.glb")));
+    let fly = c
+        .spawn((
+            Transform::from_xyz(col as f32, 0.6, 0.0),
+            Visibility::default(),
+            crate::extra::Fly { row, col, gold, phase },
+            ChildOf(lane),
+        ))
+        .id();
+    // Le modèle est décalé de 0,3 en hauteur dans son fichier ; on le centre.
+    let echelle = if gold { 1.9 } else { 1.4 };
+    c.spawn((WorldAssetRoot(scene), Transform::from_xyz(0.0, -0.3 * echelle - 0.1, 0.0).with_scale(Vec3::splat(echelle)), ChildOf(fly)));
+    let mat = if gold { &x.halo_gold } else { &x.halo };
+    c.spawn((Mesh3d(k.ball.clone()), MeshMaterial3d(mat.clone()), Transform::from_xyz(0.0, 0.0, 0.0).with_scale(Vec3::splat(0.9)), Halo { phase }, ChildOf(fly)));
+    // Colonne de lumière, du sol jusqu'au cadeau.
+    c.spawn((Mesh3d(k.cyl.clone()), MeshMaterial3d(mat.clone()), Transform::from_xyz(0.0, 0.2 - 0.6, 0.0).with_scale(Vec3::new(0.35, 1.0, 0.35)), ChildOf(fly)));
+}
+
+/// Fait pulser les halos.
+pub fn pulser_halos(time: Res<Time>, mut q: Query<(&Halo, &mut Transform)>) {
+    let t = time.elapsed_secs();
+    for (h, mut tf) in &mut q {
+        tf.scale = Vec3::splat(0.85 + (t * 3.0 + h.phase).sin() * 0.12);
+    }
 }

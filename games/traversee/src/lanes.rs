@@ -349,7 +349,11 @@ fn spawn_lane(c: &mut Commands, kit: &Kit, x: &Extra, server: &AssetServer, grap
                     if !blocked.contains(&col) {
                         let gold = crate::progress::unlocked(points, crate::progress::Item::GoldFlies) && g.rand() < 0.12;
                         let phase = g.rand() * 6.28;
-                        spawn_fly(c, kit, x, root, row, col, gold, phase);
+                        if crate::space::kenney() {
+                            crate::kenney::cadeau(c, kit, x, server, root, row, col, gold, phase);
+                        } else {
+                            spawn_fly(c, kit, x, root, row, col, gold, phase);
+                        }
                     }
                 }
             }
