@@ -122,18 +122,22 @@ fn spawn_next_goal(commands: &mut Commands, parent: Entity, progress: &Progress,
 fn spawn_menu(mut commands: Commands, progress: Res<Progress>, score: Res<Score>) {
     let panel = spawn_panel_left(&mut commands, DespawnOnExit(GameState::Menu));
     commands.entity(panel).insert(UiTransform::from_scale(Vec2::ZERO)).insert(Pop::after(0.05));
-    // Titre : une lettre par texte, pour les faire onduler
-    let row = commands.spawn((Node { flex_direction: FlexDirection::Row, column_gap: px(1), ..default() }, ChildOf(panel))).id();
-    for (i, ch) in tx!("TRAVERSÉE", "CROSSING", "ÜBERQUERUNG", "TRAVERSATA", "TRAVESÍA").t().chars().enumerate() {
-        commands.spawn((
-            Text::new(ch.to_string()),
-            TextFont::from_font_size(78.0),
-            TextColor(TITLE_COLORS[i % TITLE_COLORS.len()]),
-            ThemedText,
-            UiTransform::default(),
-            Wave(i),
-            ChildOf(row),
-        ));
+    // Titre « Marche ou Crève », le même dans toutes les langues (c'est le nom du jeu) : sur deux lignes, une lettre par texte pour les faire onduler.
+    let mut i = 0;
+    for ligne in ["MARCHE OU", "CRÈVE"] {
+        let row = commands.spawn((Node { flex_direction: FlexDirection::Row, column_gap: px(1), ..default() }, ChildOf(panel))).id();
+        for ch in ligne.chars() {
+            commands.spawn((
+                Text::new(ch.to_string()),
+                TextFont::from_font_size(62.0),
+                TextColor(TITLE_COLORS[i % TITLE_COLORS.len()]),
+                ThemedText,
+                UiTransform::default(),
+                Wave(i),
+                ChildOf(row),
+            ));
+            i += 1;
+        }
     }
     if score.best > 0 {
         spawn_text(&mut commands, panel, tx!("Record : {}", "Best: {}", "Rekord: {}", "Record: {}", "Récord: {}").avec(&[&score.best]), 24.0);

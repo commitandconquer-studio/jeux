@@ -59,7 +59,7 @@ fn main() {
     app.add_plugins(
         DefaultPlugins
             .set(WindowPlugin {
-                primary_window: Some(game_common::fenetre("Traversée — Commit & Conquer")),
+                primary_window: Some(game_common::fenetre("Marche ou Crève — Commit & Conquer")),
                 ..default()
             })
             .set(game_common::shared_assets()),

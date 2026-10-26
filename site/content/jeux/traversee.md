@@ -1,5 +1,5 @@
 +++
-title = "Traversée"
+title = "Marche ou Crève"
 weight = 2
 description = "Aidez votre personnage à traverser routes, rivières et voies ferrées… et remplissez votre collection."
 [extra]
@@ -31,7 +31,7 @@ captures = [
 ]
 +++
 
-**Traversée** est un jeu de franchissement en 3D low-poly : un personnage, des routes, des rivières, des voies ferrées, et une caméra qui avance toute seule. Allez le plus loin possible… sans traîner !
+**Marche ou Crève** est un jeu de franchissement en 3D low-poly : un personnage, des routes, des rivières, des voies ferrées, et une caméra qui avance toute seule. Allez le plus loin possible… sans traîner !
 
 ## Un monde qui se découvre
 Au début, la route est calme : quelques voitures, un peu d'herbe. À mesure que vos **points s'accumulent d'une partie à l'autre**, le jeu s'enrichit : camions, taxis, motos, bus, trains, cadeaux dorés, puis un **aigle** qui balaie une colonne entière. Tout se débloque : ennemis, mondes, personnages.
