@@ -40,11 +40,21 @@ pub fn prop(c: &mut Commands, server: &AssetServer, parent: Entity, p: crate::mo
     true
 }
 
-/// Un personnage Mini Characters : l'animation « idle » à lancer quand son `AnimationPlayer` apparaît.
+/// Un personnage Mini Characters : le graphe d'animation (idle, saut, mort) à poser quand son `AnimationPlayer` apparaît.
 #[derive(Component)]
 pub struct Humain {
     graph: Handle<AnimationGraph>,
-    node: AnimationNodeIndex,
+    idle: AnimationNodeIndex,
+    saut: AnimationNodeIndex,
+    mort: AnimationNodeIndex,
+}
+
+/// Animation en cours sur un squelette Kenney (pour ne la relancer que quand elle change).
+#[derive(Component, PartialEq, Clone, Copy)]
+pub enum Etat {
+    Idle,
+    Saut,
+    Mort,
 }
 
 /// Le héros jouable Kenney (`character-male-a`…) ; regarde vers -Z comme les autres personnages du jeu.
@@ -53,34 +63,70 @@ pub fn humain(c: &mut Commands, server: &AssetServer, graphs: &mut Assets<Animat
     let sexe = if index % 2 == 0 { "male" } else { "female" };
     let fichier = format!("kenney/mini-characters/character-{sexe}-{lettre}.glb");
     let scene = server.load(GltfAssetLabel::Scene(0).from_asset(fichier.clone()));
-    let idle = server.load(GltfAssetLabel::Animation(1).from_asset(fichier));
-    let (graph, node) = AnimationGraph::from_clip(idle);
+    let clip = |i: usize| server.load(GltfAssetLabel::Animation(i).from_asset(fichier.clone()));
+    // Dans les GLB : 1 = idle, 4 = jump, 9 = die.
+    let mut graph = AnimationGraph::new();
+    let idle = graph.add_clip(clip(1), 1.0, graph.root);
+    let saut = graph.add_clip(clip(4), 1.0, graph.root);
+    let mort = graph.add_clip(clip(9), 1.0, graph.root);
     c.spawn((
         WorldAssetRoot(scene),
         Transform::from_rotation(Quat::from_rotation_y(std::f32::consts::PI)).with_scale(Vec3::splat(0.8)),
-        Humain { graph: graphs.add(graph), node },
+        Humain { graph: graphs.add(graph), idle, saut, mort },
         ChildOf(parent),
     ));
 }
 
-/// Lance l'animation du personnage dès que son squelette est chargé.
+/// Pose le graphe d'animation dès que le squelette est chargé, puis choisit l'animation selon le crapaud :
+/// mort, saut en cours, ou repos.
 pub fn animer_humains(
     mut commands: Commands,
-    mut lecteurs: Query<(Entity, &mut AnimationPlayer), Added<AnimationPlayer>>,
+    mut lecteurs: Query<(Entity, &mut AnimationPlayer, Option<&mut Etat>)>,
     parents: Query<&ChildOf>,
     humains: Query<&Humain>,
+    frog: Res<crate::frog::Frog>,
+    death: Res<crate::frog::Death>,
 ) {
-    for (e, mut lecteur) in &mut lecteurs {
+    let voulu = if death.cause.is_some() {
+        Etat::Mort
+    } else if frog.hop.is_some() {
+        Etat::Saut
+    } else {
+        Etat::Idle
+    };
+    for (e, mut lecteur, etat) in &mut lecteurs {
         let mut cur = e;
-        loop {
+        let humain = loop {
             if let Ok(h) = humains.get(cur) {
-                commands.entity(e).insert(AnimationGraphHandle(h.graph.clone()));
-                lecteur.play(h.node).repeat();
-                break;
+                break Some(h);
             }
             match parents.get(cur) {
                 Ok(p) => cur = p.parent(),
-                Err(_) => break,
+                Err(_) => break None,
+            }
+        };
+        let Some(h) = humain else { continue };
+        if etat.is_none() {
+            commands.entity(e).insert((AnimationGraphHandle(h.graph.clone()), Etat::Idle));
+            lecteur.play(h.idle).repeat();
+            continue;
+        }
+        let mut etat = etat.unwrap();
+        if *etat == voulu {
+            continue;
+        }
+        *etat = voulu;
+        lecteur.stop_all();
+        match voulu {
+            Etat::Idle => {
+                lecteur.play(h.idle).repeat();
+            }
+            // Le saut du jeu ne dure que 0,14 s : on accélère le clip.
+            Etat::Saut => {
+                lecteur.play(h.saut).set_speed(4.0);
+            }
+            Etat::Mort => {
+                lecteur.play(h.mort);
             }
         }
     }

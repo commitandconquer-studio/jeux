@@ -20,7 +20,7 @@ const FROG_SCALE: f32 = 1.15;
 pub struct Frog {
     pub pos: Vec3,
     pub row: i32,
-    hop: Option<Hop>,
+    pub hop: Option<Hop>,
     pub queued: Option<IVec2>,
     /// Rondin ou nénuphar sur lequel il est posé, et décalage par rapport à lui.
     attached: Option<(Entity, f32)>,
@@ -41,7 +41,7 @@ const IMPACT_FREEZE: f32 = 0.12;
 /// Durée du vol du crapaud projeté.
 const FLIGHT_TIME: f32 = 0.8;
 
-struct Hop {
+pub struct Hop {
     from: Vec3,
     to: Vec3,
     to_row: i32,
