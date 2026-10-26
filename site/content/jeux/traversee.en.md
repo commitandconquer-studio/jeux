@@ -46,4 +46,4 @@ Squashed, drowned, swept away, too slow, snatched by the eagle: every ending has
 Flies to catch for bonus points (golden ones are worth far more), flowers, logs and lily pads, rivers that can always be crossed, an announcement for every unlock and an end screen that counts up your points and your record.
 
 ## New look
-The game is being rebuilt with Kenney's lovely **CC0 models** (cars, trees, animated characters). The meadow and the **pirate bay** are done; the other worlds will return one by one.
+The game is being rebuilt with Kenney's lovely **CC0 models** (cars, trees, animated characters). The meadow, the **pirate bay** and **Halloween** are done; the other worlds will return one by one.
