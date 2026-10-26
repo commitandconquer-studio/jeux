@@ -283,6 +283,9 @@ pub const HALLOWEEN_WALKERS: [(&str, f32, f32); 5] = [
 pub struct Marcheur {
     graph: Handle<AnimationGraph>,
     node: AnimationNodeIndex,
+    /// Vitesse au sol (cases par seconde) pour laquelle l'animation est à vitesse normale ; 0 : toujours à vitesse normale.
+    /// Au-dessus ou en dessous, l'animation est accélérée ou ralentie pour que les pas suivent le déplacement.
+    v_ref: f32,
 }
 
 fn marcheur(c: &mut Commands, server: &AssetServer, graphs: &mut Assets<AnimationGraph>, parent: Entity, i: usize) -> bool {
@@ -294,7 +297,7 @@ fn marcheur(c: &mut Commands, server: &AssetServer, graphs: &mut Assets<Animatio
     c.spawn((
         WorldAssetRoot(scene),
         Transform::from_rotation(Quat::from_rotation_y(std::f32::consts::FRAC_PI_2)).with_scale(Vec3::splat(echelle)),
-        Marcheur { graph: graphs.add(graph), node },
+        Marcheur { graph: graphs.add(graph), node, v_ref: 0.0 },
         ChildOf(parent),
     ));
     true
@@ -306,13 +309,29 @@ pub fn animer_marcheurs(
     mut lecteurs: Query<(Entity, &mut AnimationPlayer), Added<AnimationPlayer>>,
     parents: Query<&ChildOf>,
     marcheurs: Query<&Marcheur>,
+    movers: Query<&crate::lanes::Mover>,
 ) {
     for (e, mut lecteur) in &mut lecteurs {
         let mut cur = e;
         loop {
             if let Ok(m) = marcheurs.get(cur) {
                 commands.entity(e).insert(AnimationGraphHandle(m.graph.clone()));
-                lecteur.play(m.node).repeat();
+                // Vitesse de l'animation proportionnelle à celle du déplacement (celle du véhicule qui porte l'animal).
+                let mut vitesse = 1.0;
+                if m.v_ref > 0.0 {
+                    let mut haut = cur;
+                    loop {
+                        if let Ok(mv) = movers.get(haut) {
+                            vitesse = (mv.speed.abs() / m.v_ref).clamp(0.25, 1.6);
+                            break;
+                        }
+                        match parents.get(haut) {
+                            Ok(p) => haut = p.parent(),
+                            Err(_) => break,
+                        }
+                    }
+                }
+                lecteur.play(m.node).repeat().set_speed(vitesse);
                 break;
             }
             match parents.get(cur) {
@@ -438,17 +457,17 @@ pub fn cavalerie(c: &mut Commands, server: &AssetServer, graphs: &mut Assets<Ani
     for i in 0..n {
         let x = len / 2.0 - PAS / 2.0 - i as f32 * PAS;
         // Le cheval regarde vers +X ; le soldat (qui regarde vers +Z) est tourné de même et assis sur le dos.
-        anime(c, server, graphs, parent, "kenney/prototype-kit/animal-horse.glb", 1, Transform::from_xyz(x, 0.3, 0.0).with_scale(Vec3::splat(2.0)));
-        anime(c, server, graphs, parent, "kenney/mini-arena/character-soldier.glb", 7, Transform::from_xyz(x, 0.55, 0.0).with_rotation(Quat::from_rotation_y(std::f32::consts::FRAC_PI_2)).with_scale(Vec3::splat(0.7)));
+        anime(c, server, graphs, parent, "kenney/prototype-kit/animal-horse.glb", 1, Transform::from_xyz(x, 0.3, 0.0).with_scale(Vec3::splat(2.0)), 0.0);
+        anime(c, server, graphs, parent, "kenney/mini-arena/character-soldier.glb", 7, Transform::from_xyz(x, 0.55, 0.0).with_rotation(Quat::from_rotation_y(std::f32::consts::FRAC_PI_2)).with_scale(Vec3::splat(0.7)), 0.0);
     }
     len
 }
 
 /// Un modèle animé en boucle (`anim` : numéro de l'animation dans le GLB).
-fn anime(c: &mut Commands, server: &AssetServer, graphs: &mut Assets<AnimationGraph>, parent: Entity, fichier: &str, anim: usize, tf: Transform) {
+fn anime(c: &mut Commands, server: &AssetServer, graphs: &mut Assets<AnimationGraph>, parent: Entity, fichier: &str, anim: usize, tf: Transform, v_ref: f32) {
     let scene = server.load(GltfAssetLabel::Scene(0).from_asset(fichier.to_string()));
     let (graph, node) = AnimationGraph::from_clip(server.load(GltfAssetLabel::Animation(anim).from_asset(fichier.to_string())));
-    c.spawn((WorldAssetRoot(scene), tf, Marcheur { graph: graphs.add(graph), node }, ChildOf(parent)));
+    c.spawn((WorldAssetRoot(scene), tf, Marcheur { graph: graphs.add(graph), node, v_ref }, ChildOf(parent)));
 }
 
 // ---- Espace (Space Kit) ----
@@ -883,7 +902,9 @@ fn animal_ouest(c: &mut Commands, server: &AssetServer, graphs: &mut Assets<Anim
         "animal-bison" => (0, std::f32::consts::PI, 0.31),
         _ => (1, std::f32::consts::PI, 0.21),
     };
-    anime(c, server, graphs, parent, &format!("kenney/prototype-kit/{nom}.glb"), anim, Transform::from_xyz(0.0, pattes * echelle, 0.0).with_rotation(Quat::from_rotation_y(tour)).with_scale(Vec3::splat(echelle)));
+    // Vitesse à laquelle le pas de l'animation colle au sol : le cheval et le chien galopent vite, le bison marche.
+    let v_ref = if anim == 1 { 4.5 } else { 2.0 };
+    anime(c, server, graphs, parent, &format!("kenney/prototype-kit/{nom}.glb"), anim, Transform::from_xyz(0.0, pattes * echelle, 0.0).with_rotation(Quat::from_rotation_y(tour)).with_scale(Vec3::splat(echelle)), v_ref);
     true
 }
 
