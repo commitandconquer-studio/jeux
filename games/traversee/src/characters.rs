@@ -111,6 +111,7 @@ impl Character {
 }
 
 impl Costume {
+    #[allow(dead_code)] // les accessoires reviendront avec les nouveaux personnages
     pub fn name(self) -> &'static str {
         match self {
             Costume::None => tx!("Sans costume", "No costume", "Ohne Kostüm", "Nessun costume", "Sin disfraz"),
@@ -133,9 +134,6 @@ impl Costume {
         COSTUMES.iter().position(|c| *c == self).unwrap_or(0)
     }
 
-    pub fn threshold(self) -> u32 {
-        crate::progress::threshold(crate::progress::Item::Costume(self))
-    }
 }
 
 /// Le personnage et le costume choisis (sauvegardés).
@@ -506,6 +504,3 @@ pub fn unlocked_character(p: &Progress, ch: Character) -> bool {
     p.has(crate::progress::Item::Character(ch))
 }
 
-pub fn unlocked_costume(p: &Progress, co: Costume) -> bool {
-    p.has(crate::progress::Item::Costume(co))
-}

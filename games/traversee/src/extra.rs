@@ -510,6 +510,7 @@ pub const SPACE_CARGO: [[u8; 3]; 4] = [[232, 67, 58], [255, 138, 42], [55, 163, 
 pub const FROG_GREEN: [u8; 3] = [90, 170, 70];
 
 /// Les couleurs d'un monde à thème (sol, eau, route…).
+#[allow(dead_code)] // champs produits par tools/gen-mondes.py
 pub struct WorldColors {
     pub grass_a: [u8; 3],
     pub grass_b: [u8; 3],
@@ -543,6 +544,7 @@ pub fn spawn_old_train(c: &mut Commands, k: &Kit, x: &Extra, parent: Entity, t: 
 }
 
 /// Un monde décrit en pièces (`gen_worlds.rs`) : décors, animaux, véhicules, héros et son chapeau.
+#[allow(dead_code)] // champs produits par tools/gen-mondes.py
 pub struct Theme {
     /// Le vieux train du monde (vide : le train habituel).
     pub train: &'static [TrainCar],
@@ -962,6 +964,7 @@ pub enum AnimKind {
     SpinGroup,
     /// Pivote autour du bas du groupe (autour de Z ou de Y).
     SwingZBase,
+    #[allow(dead_code)]
     SwingYBase,
 }
 
@@ -1187,6 +1190,7 @@ fn piece_material<'a>(k: &'a Kit, x: &'a Extra, mat: Mat, c2: [u8; 3], c3: [u8; 
     }
 }
 
+#[allow(dead_code)] // champs produits par tools/gen-vehicules.py
 pub struct Gen {
     pub len: f32,
     pub points: u32,

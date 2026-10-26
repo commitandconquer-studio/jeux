@@ -7,7 +7,7 @@ use bevy::prelude::*;
 use game_common::{Score, tx};
 
 use crate::GameState;
-use crate::characters::{Character, Costume};
+use crate::characters::Character;
 use crate::extra::{Biome, Vehicle};
 
 const SAVE: &str = "traversee";
@@ -19,7 +19,6 @@ pub enum Item {
     Trains,
     World(Biome),
     Character(Character),
-    Costume(Costume),
     Flies,
     GoldFlies,
     Eagle,
@@ -68,23 +67,6 @@ pub static UNLOCKS: LazyLock<Vec<(u32, Item)>> = LazyLock::new(|| {
     all
 });
 
-/// Les véhicules, dans l'ordre d'affichage au garage.
-pub static ALL: LazyLock<Vec<Item>> = LazyLock::new(|| {
-    let all = vec![
-        Item::Vehicle(Vehicle::Car),
-        Item::Vehicle(Vehicle::Truck),
-        Item::Vehicle(Vehicle::Taxi),
-        Item::Trains,
-        Item::Vehicle(Vehicle::Moto),
-        Item::Vehicle(Vehicle::Bus),
-        Item::Vehicle(Vehicle::Pickup),
-        Item::Vehicle(Vehicle::Sport),
-        Item::Vehicle(Vehicle::Police),
-        Item::Vehicle(Vehicle::Tractor),
-        Item::Vehicle(Vehicle::Sheriff),
-    ];
-    all
-});
 
 impl Item {
     /// Le nom à afficher (petit nom des véhicules, nom des mondes, des personnages…).
@@ -93,7 +75,6 @@ impl Item {
             Item::Trains => tx!("Le Rapide Rouge", "The Red Rocket", "Der Rote Blitz", "Il Rapido Rosso", "El Rayo Rojo"),
             Item::World(b) => return b.name(),
             Item::Character(c) => return c.name(),
-            Item::Costume(c) => return c.name(),
             Item::Flies => tx!("Les cadeaux", "The gifts", "Die Geschenke", "I regali", "Los regalos"),
             Item::Eagle => tx!("L'aigle (attention !)", "The eagle (watch out!)", "Der Adler (Vorsicht!)", "L'aquila (attenzione!)", "El águila (¡cuidado!)"),
             Item::GoldFlies => tx!("Les cadeaux dorés", "The golden gifts", "Die goldenen Geschenke", "I regali dorati", "Los regalos dorados"),
@@ -244,7 +225,6 @@ impl Item {
             Item::Vehicle(_) | Item::Trains => tx!("VÉHICULE", "VEHICLE", "FAHRZEUG", "VEICOLO", "VEHÍCULO"),
             Item::World(_) => tx!("MONDE", "WORLD", "WELT", "MONDO", "MUNDO"),
             Item::Character(_) => tx!("PERSONNAGE", "CHARACTER", "FIGUR", "PERSONAGGIO", "PERSONAJE"),
-            Item::Costume(_) => tx!("ACCESSOIRE", "ACCESSORY", "ZUBEHÖR", "ACCESSORIO", "ACCESORIO"),
             Item::Flies | Item::GoldFlies | Item::Eagle => tx!("NOUVEAUTÉ", "NEW", "NEU", "NOVITÀ", "NOVEDAD"),
         }
         .t()
@@ -255,7 +235,6 @@ impl Item {
             Item::Vehicle(_) | Item::Trains => Color::srgb(0.25, 0.5, 0.9),
             Item::World(_) => Color::srgb(0.3, 0.7, 0.35),
             Item::Character(_) => Color::srgb(0.95, 0.55, 0.15),
-            Item::Costume(_) => Color::srgb(0.6, 0.4, 0.85),
             Item::Flies | Item::GoldFlies | Item::Eagle => Color::srgb(0.2, 0.7, 0.7),
         }
     }

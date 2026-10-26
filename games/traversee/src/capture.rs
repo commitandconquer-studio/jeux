@@ -136,7 +136,7 @@ fn run_capture(
     let elapsed = now - cap.since;
     if !cap.started {
         cap.started = true;
-        if cap.index == 1 {
+        if cap.index == 1 && std::env::var("TRAVERSEE_UNLOCK").is_ok() {
             // Pour photographier l'annonce d'un déblocage en jeu.
             fx.write(crate::fx::Fx::Unlock(crate::progress::Item::Character(crate::characters::Character::Rabbit)));
         }

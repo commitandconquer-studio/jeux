@@ -7,7 +7,7 @@ use game_common::{flat_material, tx};
 
 use crate::GameState;
 use crate::audio::Sfx;
-use crate::characters::{CHARACTERS, Character, Costume, Selection, unlocked_character, unlocked_costume};
+use crate::characters::{CHARACTERS, Character, Selection, unlocked_character};
 use crate::extra::{Biome, Scenery, Vehicle};
 use crate::models::{Kit, Prop, part};
 use crate::progress::{Item, Progress, threshold};
@@ -116,9 +116,6 @@ struct Spin(f32);
 #[derive(Component)]
 struct Locked;
 
-#[derive(Component)]
-struct Shaded;
-
 /// Texte accroché sous un modèle (position dans le monde).
 #[derive(Component)]
 struct Label(Vec3);
@@ -129,7 +126,6 @@ enum Act {
     Back,
     Tab(Tab),
     Char(Character),
-    Costume(Costume),
     Page(i32),
     World(Biome),
 }
@@ -430,13 +426,6 @@ fn on_click(
             if progress.has(Item::World(b)) {
                 crate::extra::START_WORLD.store(b.index(), std::sync::atomic::Ordering::Relaxed);
                 info!("monde de départ choisi : {:?}", b);
-                view.dirty = true;
-            }
-        }
-        Act::Costume(c) => {
-            if unlocked_costume(&progress, c) {
-                selection.costume = c;
-                selection.save();
                 view.dirty = true;
             }
         }
