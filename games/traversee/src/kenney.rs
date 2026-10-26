@@ -441,6 +441,13 @@ fn anime(c: &mut Commands, server: &AssetServer, graphs: &mut Assets<AnimationGr
 
 // ---- Espace (Space Kit) ----
 
+/// Les GLB du Space Kit ont leur modèle décalé de (2, 0, 1,5) dans la scène : on le recentre dans un porteur,
+/// qui reçoit la vraie position, rotation et échelle.
+fn space_modele(c: &mut Commands, scene: Handle<WorldAsset>, parent: Entity, tf: Transform) {
+    let porteur = c.spawn((tf, Visibility::default(), ChildOf(parent))).id();
+    c.spawn((WorldAssetRoot(scene), Transform::from_xyz(-2.0, 0.0, -1.5), ChildOf(porteur)));
+}
+
 /// Ce qui file sur la voie de métal : (modèle, échelle, longueur).
 pub const SPACE_TRAFFIC: [(&str, f32, f32); 8] = [
     ("craft_speederA", 0.5, 1.2),
@@ -457,11 +464,7 @@ pub const SPACE_TRAFFIC: [(&str, f32, f32); 8] = [
 fn vaisseau(c: &mut Commands, server: &AssetServer, parent: Entity, i: usize) -> bool {
     let (nom, echelle, _) = SPACE_TRAFFIC[i];
     let scene = server.load(GltfAssetLabel::Scene(0).from_asset(format!("kenney/space-kit/{nom}.glb")));
-    c.spawn((
-        WorldAssetRoot(scene),
-        Transform::from_xyz(0.0, 0.1, 0.0).with_rotation(Quat::from_rotation_y(-std::f32::consts::FRAC_PI_2)).with_scale(Vec3::splat(echelle)),
-        ChildOf(parent),
-    ));
+    space_modele(c, scene, parent, Transform::from_xyz(0.0, 0.1, 0.0).with_rotation(Quat::from_rotation_y(-std::f32::consts::FRAC_PI_2)).with_scale(Vec3::splat(echelle)));
     true
 }
 
@@ -480,14 +483,14 @@ fn space_scenery(c: &mut Commands, server: &AssetServer, parent: Entity, kind: c
     };
     let scene = server.load(GltfAssetLabel::Scene(0).from_asset(format!("kenney/space-kit/{nom}.glb")));
     let tour = Quat::from_rotation_y(variant as f32 * 1.3);
-    c.spawn((WorldAssetRoot(scene), Transform::from_translation(at).with_rotation(tour).with_scale(Vec3::splat(echelle)), ChildOf(parent)));
+    space_modele(c, scene, parent, Transform::from_translation(at).with_rotation(tour).with_scale(Vec3::splat(echelle)));
     true
 }
 
 /// Plateforme flottant dans le vide, sur laquelle on saute.
 pub fn space_pad(c: &mut Commands, server: &AssetServer, parent: Entity) {
     let scene = server.load(GltfAssetLabel::Scene(0).from_asset("kenney/space-kit/platform_small.glb"));
-    c.spawn((WorldAssetRoot(scene), Transform::from_xyz(0.0, 0.06 - 0.1 * 0.8, 0.0).with_scale(Vec3::splat(0.8)), ChildOf(parent)));
+    space_modele(c, scene, parent, Transform::from_xyz(0.0, 0.06 - 0.1 * 0.8, 0.0).with_scale(Vec3::splat(0.8)));
 }
 
 /// Plateforme longue qui glisse dans le vide : des `platform_long` (2 de long, 1 de large) bout à bout.
@@ -499,11 +502,7 @@ pub fn space_cargo(c: &mut Commands, server: &AssetServer, parent: Entity, len: 
     let scene: Handle<WorldAsset> = server.load(GltfAssetLabel::Scene(0).from_asset("kenney/space-kit/platform_long.glb"));
     for i in 0..n {
         let x = -len / 2.0 + pas * (i as f32 + 0.5);
-        c.spawn((
-            WorldAssetRoot(scene.clone()),
-            Transform::from_xyz(x, 0.06 - 0.1 * LARGEUR, 0.0).with_scale(Vec3::new(LARGEUR * pas / MODULE, LARGEUR, LARGEUR)),
-            ChildOf(parent),
-        ));
+        space_modele(c, scene.clone(), parent, Transform::from_xyz(x, 0.06 - 0.1 * LARGEUR, 0.0).with_scale(Vec3::new(LARGEUR * pas / MODULE, LARGEUR, LARGEUR)));
     }
 }
 
@@ -517,11 +516,7 @@ pub fn monorail(c: &mut Commands, server: &AssetServer, parent: Entity, wagons: 
         let x = len / 2.0 - 0.5 - i as f32;
         let scene: Handle<WorldAsset> = server.load(GltfAssetLabel::Scene(0).from_asset(format!("kenney/space-kit/{nom}.glb")));
         // Comme les vaisseaux : -Z vers +X.
-        c.spawn((
-            WorldAssetRoot(scene),
-            Transform::from_xyz(x, 0.3, 0.0).with_rotation(Quat::from_rotation_y(-std::f32::consts::FRAC_PI_2)).with_scale(Vec3::splat(1.2)),
-            ChildOf(parent),
-        ));
+        space_modele(c, scene, parent, Transform::from_xyz(x, 0.3, 0.0).with_rotation(Quat::from_rotation_y(-std::f32::consts::FRAC_PI_2)).with_scale(Vec3::splat(1.2)));
     }
     len
 }
