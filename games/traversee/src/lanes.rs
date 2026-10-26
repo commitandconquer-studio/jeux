@@ -159,6 +159,7 @@ pub fn ensure_lanes(
     mut generator: ResMut<LaneGen>,
     cam: Res<crate::CamZ>,
     server: Res<AssetServer>,
+    mut graphs: ResMut<Assets<AnimationGraph>>,
     lanes: Query<(Entity, &Lane)>,
 ) {
     if generator.reset {
@@ -170,7 +171,7 @@ pub fn ensure_lanes(
     }
     let cam_row = (-cam.0).round() as i32;
     while generator.next_row <= cam_row + AHEAD {
-        spawn_lane(&mut commands, &kit, &extra, &server, &mut generator, progress.total + score.current);
+        spawn_lane(&mut commands, &kit, &extra, &server, &mut graphs, &mut generator, progress.total + score.current);
     }
     for (e, lane) in &lanes {
         if lane.row < cam_row - BEHIND {
@@ -189,7 +190,7 @@ fn prop(c: &mut Commands, kit: &Kit, server: &AssetServer, parent: Entity, p: Pr
 /// Décor d'un monde à thème ; dans la baie des pirates, les modèles Kenney quand ils existent.
 #[allow(clippy::too_many_arguments)]
 fn scenery(c: &mut Commands, kit: &Kit, x: &Extra, server: &AssetServer, parent: Entity, biome: Biome, kind: Scenery, at: Vec3, roll: u32, variant: usize) {
-    if !(crate::space::kenney() && biome == Biome::Pirate && crate::kenney::pirate_scenery(c, server, parent, kind, at, roll, variant)) {
+    if !(crate::space::kenney() && crate::kenney::decor(c, server, parent, biome, kind, at, roll, variant)) {
         spawn_scenery(c, kit, x, parent, biome, kind, at, roll, variant);
     }
 }
@@ -212,7 +213,25 @@ fn raft(c: &mut Commands, kit: &Kit, x: &Extra, server: &AssetServer, parent: En
     }
 }
 
-fn spawn_lane(c: &mut Commands, kit: &Kit, x: &Extra, server: &AssetServer, g: &mut LaneGen, points: u32) {
+/// Citrouille flottante d'Halloween : celle de Kenney, sinon celle du jeu.
+fn pumpkin_pad(c: &mut Commands, kit: &Kit, x: &Extra, server: &AssetServer, parent: Entity) {
+    if crate::space::kenney() {
+        crate::kenney::halloween_pad(c, server, parent);
+    } else {
+        spawn_pumpkin_pad(c, kit, x, parent);
+    }
+}
+
+/// Cercueil flottant d'Halloween : ceux de Kenney mis bout à bout, sinon celui du jeu.
+fn coffin(c: &mut Commands, kit: &Kit, x: &Extra, server: &AssetServer, parent: Entity, len: f32) {
+    if crate::space::kenney() {
+        crate::kenney::halloween_coffins(c, server, parent, len);
+    } else {
+        spawn_coffin(c, kit, x, parent, len);
+    }
+}
+
+fn spawn_lane(c: &mut Commands, kit: &Kit, x: &Extra, server: &AssetServer, graphs: &mut Assets<AnimationGraph>, g: &mut LaneGen, points: u32) {
     let row = g.next_row;
     g.next_row += 1;
     let kind = g.next_kind(row, points);
@@ -423,21 +442,22 @@ fn spawn_lane(c: &mut Commands, kit: &Kit, x: &Extra, server: &AssetServer, g: &
                         vehicle = Vehicle::Beast(ti, i.min(crate::gen_worlds::THEMES[ti].animals.len() - 1));
                     }
                 }
-                // Baie des pirates : des bateaux Kenney sur le ponton.
-                let bateau = (crate::space::kenney() && biome == Biome::Pirate).then(|| g.rng.below(crate::kenney::PIRATE_VEHICLES.len() as u32) as usize);
+                // Baie des pirates, Halloween : le trafic Kenney du monde (canons, tonneaux, morts-vivants).
+                let modeles = crate::kenney::trafic_modeles(biome);
+                let trafic = (crate::space::kenney() && !modeles.is_empty()).then(|| g.rng.below(modeles.len() as u32) as usize);
                 let kind = match vehicle {
-                    _ if bateau.is_some() => MoverKind::Car,
+                    _ if trafic.is_some() => MoverKind::Car,
                     Vehicle::Beast(t, i) if !crate::gen_worlds::THEMES[t].animals[i].dangerous => MoverKind::Critter,
                     _ => MoverKind::Car,
                 };
-                let len = bateau.map_or_else(|| vehicle.len(), |i| crate::kenney::PIRATE_VEHICLES[i].2);
+                let len = trafic.map_or_else(|| vehicle.len(), |i| modeles[i].2);
                 if x_pos + len > WRAP - 2.0 {
                     break;
                 }
                 let color = g.rng.below(24) as usize;
                 let mover = spawn_mover(c, root, row, x_pos + len / 2.0, speed, len, kind, dir);
                 match vehicle {
-                    _ if bateau.is_some_and(|i| crate::kenney::pirate_vehicle(c, server, mover, i)) => {}
+                    _ if trafic.is_some_and(|i| crate::kenney::trafic(c, server, graphs, mover, biome, i)) => {}
                     v if crate::space::kenney() && biome.theme().is_none() && crate::kenney::car(c, server, mover, v, color) => {}
                     Vehicle::Car => spawn_car(c, kit, mover, color),
                     Vehicle::Truck => spawn_truck(c, kit, mover, color),
@@ -463,7 +483,7 @@ fn spawn_lane(c: &mut Commands, kit: &Kit, x: &Extra, server: &AssetServer, g: &
                         if biome == Biome::Space {
                             spawn_platform(c, kit, x, mover);
                         } else if biome == Biome::Halloween {
-                            spawn_pumpkin_pad(c, kit, x, mover);
+                            pumpkin_pad(c, kit, x, server, mover);
                         } else if biome == Biome::Pirate {
                             barrel_pad(c, kit, x, server, mover);
                         } else if biome == Biome::Cyber {
@@ -481,7 +501,7 @@ fn spawn_lane(c: &mut Commands, kit: &Kit, x: &Extra, server: &AssetServer, g: &
                     if biome == Biome::Space {
                         spawn_platform(c, kit, x, mover);
                     } else if biome == Biome::Halloween {
-                        spawn_pumpkin_pad(c, kit, x, mover);
+                        pumpkin_pad(c, kit, x, server, mover);
                     } else if biome == Biome::Pirate {
                         barrel_pad(c, kit, x, server, mover);
                     } else if biome == Biome::Cyber {
@@ -507,7 +527,7 @@ fn spawn_lane(c: &mut Commands, kit: &Kit, x: &Extra, server: &AssetServer, g: &
                     if biome == Biome::Space {
                         spawn_cargo(c, kit, x, mover, len);
                     } else if biome == Biome::Halloween {
-                        spawn_coffin(c, kit, x, mover, len);
+                        coffin(c, kit, x, server, mover, len);
                     } else if biome == Biome::Pirate {
                         raft(c, kit, x, server, mover, len);
                     } else if biome == Biome::Cyber {

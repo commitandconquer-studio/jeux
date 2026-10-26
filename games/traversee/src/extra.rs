@@ -571,8 +571,8 @@ pub struct Theme {
 pub static START_WORLD: std::sync::atomic::AtomicI32 = std::sync::atomic::AtomicI32::new(0);
 
 impl Biome {
-    /// On refait les mondes un à un avec les modèles Kenney : la prairie, puis la baie des pirates.
-    pub const ALL: [Biome; 2] = [Biome::Prairie, Biome::Pirate];
+    /// On refait les mondes un à un avec les modèles Kenney : la prairie, la baie des pirates, Halloween.
+    pub const ALL: [Biome; 3] = [Biome::Prairie, Biome::Pirate, Biome::Halloween];
 
     /// Le monde décrit en pièces, pour les mondes à thème.
     pub fn theme(self) -> Option<&'static Theme> {
@@ -619,7 +619,7 @@ impl Biome {
             _ => Biome::Pirate,
         };
         let _ = biome;
-        let biome = if (row.max(0) / BIOME_LEN + start) % 2 == 0 { Biome::Prairie } else { Biome::Pirate };
+        let biome = Biome::ALL[((row.max(0) / BIOME_LEN + start) as usize) % Biome::ALL.len()];
         if biome != Biome::Prairie && !crate::progress::unlocked(points, crate::progress::Item::World(biome)) {
             Biome::Prairie
         } else {
