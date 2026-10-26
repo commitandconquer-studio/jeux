@@ -467,8 +467,15 @@ pub fn rebuild_player(
     extra: Res<crate::extra::Extra>,
     server: Res<AssetServer>,
     mut graphs: ResMut<Assets<AnimationGraph>>,
+    death: Res<crate::frog::Death>,
+    mut was_dead: Local<bool>,
     mut built: Local<Option<(Character, Costume, Option<usize>)>>,
 ) {
+    // Le héros Kenney meurt en s'allongeant (animation « die ») : à la partie suivante on refait le modèle, il repart debout.
+    if *was_dead && death.cause.is_none() {
+        *built = None;
+    }
+    *was_dead = death.cause.is_some();
     // Dans un monde à thème, on joue le héros du monde (avec son chapeau).
     let theme = crate::extra::Biome::of(frog.max_row_i(), progress.total + score.current).theme_index();
     let want = (selection.character, selection.costume, theme);
