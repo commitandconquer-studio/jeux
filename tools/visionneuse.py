@@ -24,6 +24,7 @@ DATA = os.path.join(RACINE, "games/traversee/data")
 PAGE = os.path.join(os.path.dirname(os.path.abspath(__file__)), "visionneuse")
 KENNEY = os.path.join(RACINE, "assets/kenney")
 LECTURE_SEULE = {"vehicules.json"}
+PERSOS = os.path.join(DATA, "personnages")  # personnages dessinés dans personnages.html (un JSON chacun)
 
 
 def fichiers():
@@ -123,6 +124,29 @@ def sauver(corps):
     os.replace(tmp.name, chemin)
 
 
+def liste_personnages():
+    """Les personnages enregistrés (data/personnages/*.json)."""
+    sortie = []
+    if os.path.isdir(PERSOS):
+        for nom in sorted(os.listdir(PERSOS)):
+            if nom.endswith(".json"):
+                with open(os.path.join(PERSOS, nom), encoding="utf-8") as f:
+                    sortie.append(json.load(f))
+    return sortie
+
+
+def sauver_personnage(d):
+    ident = "".join(c for c in str(d.get("id", "")) if c.isalnum() or c in "-_")
+    if not ident:
+        raise ValueError("identifiant vide")
+    os.makedirs(PERSOS, exist_ok=True)
+    chemin = os.path.join(PERSOS, ident + ".json")
+    tmp = tempfile.NamedTemporaryFile("w", delete=False, dir=PERSOS, encoding="utf-8", suffix=".tmp")
+    json.dump(d, tmp, ensure_ascii=False, indent=1)
+    tmp.close()
+    os.replace(tmp.name, chemin)
+
+
 class Gestionnaire(SimpleHTTPRequestHandler):
     def __init__(self, *a, **k):
         super().__init__(*a, directory=PAGE, **k)
@@ -156,6 +180,8 @@ class Gestionnaire(SimpleHTTPRequestHandler):
             return self.reponse_json(tous_les_modeles())
         if chemin == "/api/glb":
             return self.reponse_json(modeles_glb())
+        if chemin == "/api/personnages":
+            return self.reponse_json(liste_personnages())
         if chemin == "/api/mtimes":
             return self.reponse_json({rel: os.path.getmtime(os.path.join(DATA, rel)) for rel in fichiers()})
         self.send_header_no_cache = True
@@ -166,6 +192,22 @@ class Gestionnaire(SimpleHTTPRequestHandler):
         super().end_headers()
 
     def do_POST(self):
+        if urlparse(self.path).path == "/api/personnage-cartes":
+            try:
+                n = int(self.headers.get("Content-Length", "0"))
+                cartes = json.loads(self.rfile.read(n).decode("utf-8"))
+                with open(os.path.join(PAGE, "personnages-cartes.json"), "w", encoding="utf-8") as f:
+                    json.dump(cartes, f, ensure_ascii=False, indent=1, sort_keys=True)
+                return self.reponse_json({"ok": True})
+            except Exception as e:
+                return self.reponse_json({"erreur": str(e)}, 400)
+        if urlparse(self.path).path == "/api/personnage-sauver":
+            try:
+                n = int(self.headers.get("Content-Length", "0"))
+                sauver_personnage(json.loads(self.rfile.read(n).decode("utf-8")))
+                return self.reponse_json({"ok": True})
+            except Exception as e:
+                return self.reponse_json({"erreur": str(e)}, 400)
         if urlparse(self.path).path != "/api/sauver":
             return self.reponse_json({"erreur": "inconnu"}, 404)
         try:

@@ -1,0 +1,391 @@
+{
+ "id": "samourai",
+ "nom": "Samouraï blond",
+ "base": "character-male-d",
+ "parties": {
+  "cheveux": "#f7dc6a",
+  "peau": "#fdeee4",
+  "yeux": "#2f7bff",
+  "costume": "#ff8a1f"
+ },
+ "cellules": {},
+ "pieces": [
+  {
+   "nom": "pointe centrale",
+   "os": "head",
+   "forme": "cone",
+   "pos": [
+    0,
+    0.48,
+    0
+   ],
+   "taille": [
+    0.12,
+    0.26,
+    0.12
+   ],
+   "rot": [
+    0,
+    0,
+    0
+   ],
+   "couleur": "#f7dc6a"
+  },
+  {
+   "nom": "pointe 1",
+   "os": "head",
+   "forme": "cone",
+   "pos": [
+    0.097,
+    0.43,
+    0.026
+   ],
+   "taille": [
+    0.1,
+    0.22,
+    0.1
+   ],
+   "rot": [
+    6.2,
+    0,
+    -23.2
+   ],
+   "couleur": "#f7dc6a"
+  },
+  {
+   "nom": "pointe 2",
+   "os": "head",
+   "forme": "cone",
+   "pos": [
+    0.026,
+    0.43,
+    0.097
+   ],
+   "taille": [
+    0.1,
+    0.22,
+    0.1
+   ],
+   "rot": [
+    23.2,
+    0,
+    -6.2
+   ],
+   "couleur": "#f7dc6a"
+  },
+  {
+   "nom": "pointe 3",
+   "os": "head",
+   "forme": "cone",
+   "pos": [
+    -0.071,
+    0.43,
+    0.071
+   ],
+   "taille": [
+    0.1,
+    0.22,
+    0.1
+   ],
+   "rot": [
+    17,
+    0,
+    17
+   ],
+   "couleur": "#f7dc6a"
+  },
+  {
+   "nom": "pointe 4",
+   "os": "head",
+   "forme": "cone",
+   "pos": [
+    -0.097,
+    0.43,
+    -0.026
+   ],
+   "taille": [
+    0.1,
+    0.22,
+    0.1
+   ],
+   "rot": [
+    -6.2,
+    0,
+    23.2
+   ],
+   "couleur": "#f7dc6a"
+  },
+  {
+   "nom": "pointe 5",
+   "os": "head",
+   "forme": "cone",
+   "pos": [
+    -0.026,
+    0.43,
+    -0.097
+   ],
+   "taille": [
+    0.1,
+    0.22,
+    0.1
+   ],
+   "rot": [
+    -23.2,
+    0,
+    6.2
+   ],
+   "couleur": "#f7dc6a"
+  },
+  {
+   "nom": "pointe 6",
+   "os": "head",
+   "forme": "cone",
+   "pos": [
+    0.071,
+    0.43,
+    -0.071
+   ],
+   "taille": [
+    0.1,
+    0.22,
+    0.1
+   ],
+   "rot": [
+    -17,
+    0,
+    -17
+   ],
+   "couleur": "#f7dc6a"
+  },
+  {
+   "nom": "mèche",
+   "os": "head",
+   "forme": "cone",
+   "pos": [
+    -0.08,
+    0.41,
+    0.13
+   ],
+   "taille": [
+    0.07,
+    0.16,
+    0.07
+   ],
+   "rot": [
+    38,
+    0,
+    12
+   ],
+   "couleur": "#f7dc6a"
+  },
+  {
+   "nom": "mèche",
+   "os": "head",
+   "forme": "cone",
+   "pos": [
+    0,
+    0.41,
+    0.13
+   ],
+   "taille": [
+    0.07,
+    0.16,
+    0.07
+   ],
+   "rot": [
+    38,
+    0,
+    0
+   ],
+   "couleur": "#f7dc6a"
+  },
+  {
+   "nom": "mèche",
+   "os": "head",
+   "forme": "cone",
+   "pos": [
+    0.08,
+    0.41,
+    0.13
+   ],
+   "taille": [
+    0.07,
+    0.16,
+    0.07
+   ],
+   "rot": [
+    38,
+    0,
+    -12
+   ],
+   "couleur": "#f7dc6a"
+  },
+  {
+   "nom": "kimono haut",
+   "os": "torso",
+   "forme": "cube",
+   "pos": [
+    0,
+    0.06,
+    0
+   ],
+   "taille": [
+    0.35,
+    0.31,
+    0.27
+   ],
+   "rot": [
+    0,
+    0,
+    0
+   ],
+   "couleur": "#ff8a1f"
+  },
+  {
+   "nom": "col gauche",
+   "os": "torso",
+   "forme": "cube",
+   "pos": [
+    -0.045,
+    0.115,
+    0.14
+   ],
+   "taille": [
+    0.045,
+    0.12,
+    0.02
+   ],
+   "rot": [
+    0,
+    0,
+    28
+   ],
+   "couleur": "#f6f2ea"
+  },
+  {
+   "nom": "col droit",
+   "os": "torso",
+   "forme": "cube",
+   "pos": [
+    0.045,
+    0.115,
+    0.14
+   ],
+   "taille": [
+    0.045,
+    0.12,
+    0.02
+   ],
+   "rot": [
+    0,
+    0,
+    -28
+   ],
+   "couleur": "#f6f2ea"
+  },
+  {
+   "nom": "obi",
+   "os": "torso",
+   "forme": "cube",
+   "pos": [
+    0,
+    -0.03,
+    0
+   ],
+   "taille": [
+    0.37,
+    0.075,
+    0.29
+   ],
+   "rot": [
+    0,
+    0,
+    0
+   ],
+   "couleur": "#2b2d42"
+  },
+  {
+   "nom": "kimono bas",
+   "os": "torso",
+   "forme": "cube",
+   "pos": [
+    0,
+    -0.14,
+    0
+   ],
+   "taille": [
+    0.35,
+    0.16,
+    0.28
+   ],
+   "rot": [
+    0,
+    0,
+    0
+   ],
+   "couleur": "#ff8a1f"
+  },
+  {
+   "nom": "manche gauche",
+   "os": "arm-left",
+   "forme": "cube",
+   "pos": [
+    0.07,
+    -0.03,
+    0
+   ],
+   "taille": [
+    0.15,
+    0.27,
+    0.22
+   ],
+   "rot": [
+    0,
+    0,
+    0
+   ],
+   "couleur": "#ff8a1f"
+  },
+  {
+   "nom": "manche droite",
+   "os": "arm-right",
+   "forme": "cube",
+   "pos": [
+    -0.07,
+    -0.03,
+    0
+   ],
+   "taille": [
+    0.15,
+    0.27,
+    0.22
+   ],
+   "rot": [
+    0,
+    0,
+    0
+   ],
+   "couleur": "#ff8a1f"
+  }
+ ],
+ "couleurs": {
+  "23,24": "#f7dc6a",
+  "23,25": "#f2d868",
+  "23,26": "#edd366",
+  "31,30": "#e4d7ce",
+  "23,27": "#ebd165",
+  "23,28": "#e5cc62",
+  "23,29": "#e1c961",
+  "31,29": "#e9dbd2",
+  "31,26": "#f4e6dc",
+  "31,24": "#fdeee4",
+  "23,31": "#d7bf5c",
+  "3,25": "#2f7bff",
+  "31,31": "#e0d3ca",
+  "31,25": "#f9eae0",
+  "3,30": "#ef811d",
+  "3,31": "#e97e1c",
+  "3,26": "#ff8a1f",
+  "3,29": "#f4841e"
+ }
+}

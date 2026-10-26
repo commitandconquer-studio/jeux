@@ -32,3 +32,23 @@ visionneuse, **le JSON devient la référence : ne relancez plus le script de ce
 `data/vehicules.json` est produit par `gen-vehicules.py` : il est en lecture seule dans la visionneuse.
 
 Three.js (r160, licence MIT) est fourni dans `vendor/` : aucun accès réseau nécessaire.
+
+## Personnages (couleurs et objets)
+
+Page à part pour dessiner des personnages à partir des 12 humains de Kenney (Mini Characters, CC0) :
+
+```bash
+python3 tools/visionneuse.py            # puis http://localhost:8800/personnages.html (le port peut changer : voir la console)
+```
+
+- **Parties** (peau, cheveux, yeux, costume…) : une couleur par partie. La palette de Kenney est découpée en
+  cases de 16 px ; chaque colonne est une matière (peau, cheveux, costume…) avec des nuances en lignes.
+  Les cases sont rangées dans une partie par personnage de base (liste « Cases de la palette » : survoler une
+  case l'allume en rose sur le modèle, puis choisir sa partie). Le rangement est gardé dans `personnages-cartes.json`.
+  Pour l'instant seul `character-male-d` est rangé ; les autres se rangent de la même façon.
+- **Pièces** : cubes, sphères, cônes et cylindres accrochés à un os (`head`, `torso`, `arm-left`, `arm-right`,
+  `leg-left`, `leg-right`), qui suivent l'animation (cheveux dressés, kimono, chapeau…).
+- **Enregistrer** écrit `games/traversee/data/personnages/<identifiant>.json` (parties, couleurs finales de chaque
+  case, pièces). Le jeu ne les lit pas encore.
+- Adresse utile : `?perso=<id>&vue=face|profil|dos|haut&rot=<degrés>&anim=<nom>`.
+- Le panneau du navigateur doit être visible : une page cachée ne charge pas ses images.
