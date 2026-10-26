@@ -4,8 +4,7 @@ use bevy::prelude::*;
 use game_common::ui::ThemedText;
 
 use crate::GameState;
-use crate::characters::{Cast, Selection, spawn_character};
-use crate::models::Kit;
+use crate::characters::Selection;
 
 pub struct ScreensPlugin;
 
@@ -158,16 +157,9 @@ pub fn spawn_chip(commands: &mut Commands, parent: Entity, label: &str, text: &s
 #[derive(Component)]
 struct Hero;
 
-fn spawn_hero(
-    mut commands: Commands,
-    selection: Res<Selection>,
-    kit: Res<Kit>,
-    frog_kit: Res<game_common::models::FrogKit>,
-    cast: Res<Cast>,
-    mut mats: ResMut<Assets<StandardMaterial>>,
-) {
+fn spawn_hero(mut commands: Commands, selection: Res<Selection>, server: Res<AssetServer>, mut graphs: ResMut<Assets<AnimationGraph>>) {
     let root = commands.spawn((Transform::default(), Visibility::default(), Hero, DespawnOnExit(GameState::Menu))).id();
-    spawn_character(&mut commands, selection.character, selection.costume, &kit, &frog_kit, &cast, &mut mats, root);
+    crate::kenney::humain(&mut commands, &server, &mut graphs, root, selection.character.index());
 }
 
 fn hero(time: Res<Time>, cam: Res<crate::CamZ>, mut q: Query<&mut Transform, With<Hero>>) {
