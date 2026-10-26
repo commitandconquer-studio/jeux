@@ -417,7 +417,7 @@ pub fn medieval_raft(c: &mut Commands, server: &AssetServer, parent: Entity, len
 /// Une cavalerie au galop à la place du train du Moyen Âge : une file de chevaliers (cheval du Prototype Kit,
 /// soldat du Mini Arena assis dessus). Renvoie la longueur de la file.
 pub fn cavalerie(c: &mut Commands, server: &AssetServer, graphs: &mut Assets<AnimationGraph>, parent: Entity, wagons: usize) -> f32 {
-    const PAS: f32 = 1.5;
+    const PAS: f32 = 2.5;
     let n = wagons * 2 + 2;
     let len = n as f32 * PAS;
     for i in 0..n {

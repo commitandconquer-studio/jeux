@@ -46,4 +46,4 @@ Crapaud, lapin, blaireau, raton laveur, hérisson, renard, panda, canard : **8 p
 Des mouches à gober pour des points bonus (les dorées valent bien plus), des fleurs, des rondins et des nénuphars, des rivières toujours franchissables, une annonce à chaque déblocage et un écran de fin qui compte vos points et votre record.
 
 ## Nouveau look
-Le jeu se refait avec les superbes modèles **CC0 de Kenney** (voitures, arbres, personnages animés). La prairie, la **baie des pirates** et **Halloween** sont déjà refaits ; les autres mondes reviendront un par un.
+Le jeu se refait avec les superbes modèles **CC0 de Kenney** (voitures, arbres, personnages animés). La prairie, la **baie des pirates**, **Halloween** et le **Moyen Âge** sont déjà refaits ; les autres mondes reviendront un par un.
