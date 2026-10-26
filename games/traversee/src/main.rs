@@ -19,6 +19,7 @@ mod progress;
 mod screens;
 mod space;
 mod kenney;
+mod miniature;
 mod ui;
 
 use bevy::prelude::*;
@@ -59,13 +60,14 @@ fn main() {
     app.add_plugins(
         DefaultPlugins
             .set(WindowPlugin {
-                primary_window: Some(game_common::fenetre("Marche ou Crève — Commit & Conquer")),
+                primary_window: Some(game_common::fenetre("Cross or Die — Commit & Conquer")),
                 ..default()
             })
             .set(game_common::shared_assets()),
     )
     .init_state::<GameState>()
     .add_plugins(StudioPlugin::new(Universe::Croa, game_common::ambiance::AmbiancePlugin::exterieur()))
+    .add_plugins(miniature::MiniaturePlugin)
     .add_plugins((ui::UiPlugin, audio::AudioPlugin, capture::CapturePlugin, fx::FxPlugin, progress::ProgressPlugin, garage::GaragePlugin, eagle::EaglePlugin, screens::ScreensPlugin, petals::PetalsPlugin, space::SpacePlugin))
     .init_resource::<characters::Selection>()
     .init_resource::<characters::Cast>()
@@ -135,6 +137,9 @@ fn kenney_look(mut commands: Commands, cams: Query<Entity, With<Camera3d>>, mut 
     amb.brightness = 1000.0;
     for e in &cams {
         commands.entity(e).insert(bevy::core_pipeline::tonemapping::Tonemapping::AcesFitted);
+        if miniature::actif() {
+            commands.entity(e).insert(miniature::Miniature::default());
+        }
     }
 }
 

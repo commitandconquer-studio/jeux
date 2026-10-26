@@ -1,8 +1,9 @@
 +++
-title = "Marche ou Crève"
+title = "Cross or Die"
 weight = 2
 description = "Help your character cross roads, rivers and railways… and fill your collection."
 [extra]
+logo = "traversee/logo"
 web = true
 univers = "croa"
 icone = "traversee"
@@ -31,7 +32,7 @@ captures = [
 ]
 +++
 
-**Marche ou Crève** is a low-poly 3D crossing game: a character, roads, rivers, railways, and a camera that moves on its own. Go as far as you can… and don't dawdle!
+**Cross or Die** is a low-poly 3D crossing game: a character, roads, rivers, railways, and a camera that moves on its own. Go as far as you can… and don't dawdle!
 
 ## A world you uncover
 At first the road is quiet: a few cars, some grass. As your **points add up from game to game**, the game grows: trucks, taxis, motorbikes, buses, trains, golden gifts, then an **eagle** sweeping a whole column. Everything unlocks: enemies, worlds, characters.

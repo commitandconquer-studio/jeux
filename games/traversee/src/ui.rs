@@ -4,7 +4,7 @@ use game_common::Score;
 use game_common::tx;
 use game_common::ui::{GameHelp, ThemedText, pied_de_menu, spawn_button, spawn_button_sized, spawn_gap, spawn_hud, spawn_panel, spawn_panel_left, spawn_text};
 
-use crate::screens::{CountUp, Pop, Pulse, Wave, spawn_bar, spawn_chip};
+use crate::screens::{CountUp, Pop, Pulse, spawn_bar, spawn_chip};
 
 use crate::GameState;
 use crate::audio::Sfx;
@@ -100,14 +100,6 @@ fn button(commands: &mut Commands, parent: Entity, label: &str, action: UiAction
 }
 
 /// Couleurs des lettres du titre.
-const TITLE_COLORS: [Color; 6] = [
-    Color::srgb(0.30, 0.68, 0.30),
-    Color::srgb(0.95, 0.55, 0.15),
-    Color::srgb(0.25, 0.50, 0.90),
-    Color::srgb(0.90, 0.30, 0.35),
-    Color::srgb(0.60, 0.40, 0.85),
-    Color::srgb(0.95, 0.75, 0.15),
-];
 
 /// Ligne « Prochain : … à N pts » suivie de sa barre de progression.
 fn spawn_next_goal(commands: &mut Commands, parent: Entity, progress: &Progress, size: f32, width: f32) {
@@ -119,26 +111,11 @@ fn spawn_next_goal(commands: &mut Commands, parent: Entity, progress: &Progress,
     spawn_bar(commands, parent, progress.next_fraction(), width, item.color());
 }
 
-fn spawn_menu(mut commands: Commands, progress: Res<Progress>, score: Res<Score>) {
+fn spawn_menu(mut commands: Commands, progress: Res<Progress>, score: Res<Score>, server: Res<AssetServer>) {
     let panel = spawn_panel_left(&mut commands, DespawnOnExit(GameState::Menu));
     commands.entity(panel).insert(UiTransform::from_scale(Vec2::ZERO)).insert(Pop::after(0.05));
-    // Titre « Marche ou Crève », le même dans toutes les langues (c'est le nom du jeu) : sur deux lignes, une lettre par texte pour les faire onduler.
-    let mut i = 0;
-    for ligne in ["MARCHE OU", "CRÈVE"] {
-        let row = commands.spawn((Node { flex_direction: FlexDirection::Row, column_gap: px(1), ..default() }, ChildOf(panel))).id();
-        for ch in ligne.chars() {
-            commands.spawn((
-                Text::new(ch.to_string()),
-                TextFont::from_font_size(62.0),
-                TextColor(TITLE_COLORS[i % TITLE_COLORS.len()]),
-                ThemedText,
-                UiTransform::default(),
-                Wave(i),
-                ChildOf(row),
-            ));
-            i += 1;
-        }
-    }
+    // Le logo « Cross or Die » (le même dans toutes les langues).
+    commands.spawn((ImageNode::new(server.load("branding/cross-or-die.png")), Node { width: px(460), height: px(153), ..default() }, ChildOf(panel)));
     if score.best > 0 {
         spawn_text(&mut commands, panel, tx!("Record : {}", "Best: {}", "Rekord: {}", "Record: {}", "Récord: {}").avec(&[&score.best]), 24.0);
     }

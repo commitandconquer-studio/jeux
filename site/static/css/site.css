@@ -366,3 +366,7 @@ html.moment-nuit .hero-fallback { filter: brightness(.42) saturate(.75) hue-rota
 .galerie figure { margin: 0; }
 .galerie img { width: 100%; height: auto; display: block; border-radius: 14px; box-shadow: 0 4px 16px rgba(0,0,0,.18); }
 .galerie figcaption { margin-top: 6px; font-size: .95rem; text-align: center; opacity: .85; }
+
+/* Logo d'un jeu (fiche) : l'image dit le titre, le h1 reste pour les lecteurs d'écran et les moteurs de recherche. */
+.jeu-logo { display: block; width: min(100%, 460px); height: auto; margin: 0 0 .6rem; }
+.jeu-hero h1.cache { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
