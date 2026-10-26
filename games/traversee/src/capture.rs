@@ -56,6 +56,11 @@ impl Plugin for CapturePlugin {
         }
         // TRAVERSEE_EAGLE=1 : scène de l'aigle (alerte, vol, enlèvement), crapaud immobile.
         // TRAVERSEE_LAPSE=dossier : une photo toutes les 0,35 s, crapaud immobile (pour voir une animation).
+        // TRAVERSEE_COLLECTION=1 (avec TRAVERSEE_CAPTURE) : ouvre la Collection et photographie chaque onglet.
+        if let (Ok(dir), Ok(_)) = (std::env::var("TRAVERSEE_CAPTURE"), std::env::var("TRAVERSEE_COLLECTION")) {
+            app.insert_resource(CollectionShots { dir, n: 0 }).add_systems(Update, run_collection);
+            return;
+        }
         if let Ok(dir) = std::env::var("TRAVERSEE_LAPSE") {
             app.insert_resource(Lapse { dir, n: 0 }).add_systems(Update, run_lapse);
             return;
@@ -269,6 +274,46 @@ fn run_lapse(
         commands.spawn(Screenshot::primary_window()).observe(save_to_disk(format!("{}/l{:02}.png", lapse.dir, lapse.n)));
         lapse.n += 1;
         if lapse.n >= 45 {
+            exit.write(AppExit::Success);
+        }
+    }
+}
+
+#[derive(Resource)]
+struct CollectionShots {
+    dir: String,
+    n: usize,
+}
+
+fn run_collection(
+    time: Res<Time<Real>>,
+    mut commands: Commands,
+    mut shots: ResMut<CollectionShots>,
+    mut view: ResMut<crate::garage::View>,
+    state: Res<State<GameState>>,
+    mut next: ResMut<NextState<GameState>>,
+    mut exit: MessageWriter<AppExit>,
+) {
+    let now = time.elapsed_secs();
+    if *state.get() == GameState::Menu && now > 1.0 {
+        next.set(GameState::Garage);
+    }
+    if *state.get() != GameState::Garage {
+        return;
+    }
+    // La fenêtre cesse de s'afficher après quelques secondes : une photo par lancement, TRAVERSEE_TAB = 0, 1 ou 2.
+    let tabs = [(crate::garage::Tab::Vehicles, "ennemis"), (crate::garage::Tab::Worlds, "decors"), (crate::garage::Tab::Characters, "personnages")];
+    let which: usize = std::env::var("TRAVERSEE_TAB").ok().and_then(|s| s.parse().ok()).unwrap_or(0);
+    if view.tab != tabs[which].0 {
+        view.tab = tabs[which].0;
+        view.dirty = true;
+    }
+    let due = 6.0;
+    if now >= due {
+        if shots.n == 0 {
+            commands.spawn(Screenshot::primary_window()).observe(save_to_disk(format!("{}/{}.png", shots.dir, tabs[which].1)));
+            shots.n = 1;
+        } else if now >= due + 2.0 {
             exit.write(AppExit::Success);
         }
     }

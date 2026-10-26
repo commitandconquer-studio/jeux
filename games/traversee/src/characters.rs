@@ -62,14 +62,14 @@ pub const COSTUMES: [Costume; 8] = [
 impl Character {
     pub fn name(self) -> &'static str {
         match self {
-            Character::Frog => tx!("Croâ le Crapaud", "Croa the Toad", "Croa die Kröte", "Croa il Rospo", "Croa el Sapo"),
-            Character::Rabbit => tx!("Pompon le Lapin", "Pompon the Rabbit", "Pompon der Hase", "Pompon il Coniglio", "Pompón el Conejo"),
-            Character::Badger => tx!("Gaston le Blaireau", "Gus the Badger", "Gustav der Dachs", "Gaston il Tasso", "Gastón el Tejón"),
-            Character::Raccoon => tx!("Bandit le Raton Laveur", "Bandit the Raccoon", "Bandit der Waschbär", "Bandito il Procione", "Bandido el Mapache"),
-            Character::Hedgehog => tx!("Piquette le Hérisson", "Prickles the Hedgehog", "Stachel der Igel", "Spillo il Riccio", "Pinchos el Erizo"),
-            Character::Fox => tx!("Roux le Renard", "Rusty the Fox", "Rudi der Fuchs", "Rosso la Volpe", "Rojo el Zorro"),
-            Character::Panda => tx!("Bambou le Panda", "Bamboo the Panda", "Bambus der Panda", "Bambù il Panda", "Bambú el Panda"),
-            Character::Duck => tx!("Coin-Coin le Canard", "Quackers the Duck", "Quaki die Ente", "Qua-Qua l'Anatra", "Cuac el Pato"),
+            Character::Frog => tx!("Léo", "Léo", "Léo", "Léo", "Léo"),
+            Character::Rabbit => tx!("Lola", "Lola", "Lola", "Lola", "Lola"),
+            Character::Badger => tx!("Gaston", "Gaston", "Gaston", "Gaston", "Gaston"),
+            Character::Raccoon => tx!("Zoé", "Zoé", "Zoé", "Zoé", "Zoé"),
+            Character::Hedgehog => tx!("Hugo", "Hugo", "Hugo", "Hugo", "Hugo"),
+            Character::Fox => tx!("Jade", "Jade", "Jade", "Jade", "Jade"),
+            Character::Panda => tx!("Théo", "Théo", "Théo", "Théo", "Théo"),
+            Character::Duck => tx!("Mila", "Mila", "Mila", "Mila", "Mila"),
         }
         .t()
     }

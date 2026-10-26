@@ -1,22 +1,78 @@
-//! Le garage : la vitrine des véhicules et celle des personnages. Ce qui est
-//! débloqué tourne avec son nom ; le reste reste une ombre, avec ce qu'il faut
-//! pour le débloquer (points pour les véhicules et les personnages, mouches
-//! gobées pour les costumes).
+//! La Collection : la vitrine des ennemis (ce qui traverse la route), des décors (les mondes) et des
+//! personnages. Ce qui est débloqué tourne avec son nom ; le reste reste une ombre, avec ce qu'il
+//! faut pour le débloquer (des points). Tout est montré avec les modèles Kenney.
 use bevy::prelude::*;
-use game_common::models::FrogKit;
 use game_common::ui::{spawn_button, spawn_button_sized, spawn_text};
 use game_common::{flat_material, tx};
 
 use crate::GameState;
 use crate::audio::Sfx;
-use crate::characters::{CHARACTERS, COSTUMES, Cast, Character, Costume, Selection, spawn_character, unlocked_character, unlocked_costume};
-use crate::extra::{Biome, Extra, Scenery, Vehicle, spawn_deco, spawn_scenery, spawn_vehicle};
-use crate::models::{Kit, Prop, part, spawn_car, spawn_prop, spawn_train_car, spawn_truck};
-use crate::progress::{ALL, Item, Progress, threshold};
+use crate::characters::{CHARACTERS, Character, Costume, Selection, unlocked_character, unlocked_costume};
+use crate::extra::{Biome, Scenery, Vehicle};
+use crate::models::{Kit, Prop, part};
+use crate::progress::{Item, Progress, threshold};
 
 /// Le garage est bâti loin de la route, hors de vue du jeu.
 pub const ORIGIN: Vec3 = Vec3::new(400.0, 0.0, 0.0);
 const PER_PAGE: usize = 28;
+
+/// Un ennemi de la collection : un véhicule de la prairie, ou ce qui traverse la route d'un monde.
+#[derive(Clone, Copy)]
+enum Ennemi {
+    Veh(Vehicle),
+    Monde(Biome, usize),
+}
+
+/// Tous les ennemis, dans l'ordre d'affichage (les mondes : l'index est celui de `kenney::trafic_modeles`).
+fn ennemis() -> Vec<Ennemi> {
+    let mut v: Vec<Ennemi> = [Vehicle::Car, Vehicle::Truck, Vehicle::Taxi, Vehicle::Moto, Vehicle::Bus, Vehicle::Pickup, Vehicle::Sport, Vehicle::Police, Vehicle::Tractor, Vehicle::Sheriff].into_iter().map(Ennemi::Veh).collect();
+    v.extend([0, 1].map(|i| Ennemi::Monde(Biome::Pirate, i)));
+    v.extend([0, 1, 2, 3].map(|i| Ennemi::Monde(Biome::Halloween, i)));
+    v.extend([0, 1, 2, 3, 4].map(|i| Ennemi::Monde(Biome::Medieval, i)));
+    v.extend([0, 2, 3, 5, 6, 7].map(|i| Ennemi::Monde(Biome::Space, i)));
+    v
+}
+
+impl Ennemi {
+    fn item(self) -> Item {
+        match self {
+            Ennemi::Veh(v) => Item::Vehicle(v),
+            Ennemi::Monde(b, _) => Item::World(b),
+        }
+    }
+
+    fn name(self) -> &'static str {
+        match self {
+            Ennemi::Veh(v) => return Item::Vehicle(v).name(),
+            Ennemi::Monde(Biome::Pirate, 0) => tx!("Canon Roulant", "Rolling Cannon", "Rollende Kanone", "Cannone Rotolante", "Cañón Rodante"),
+            Ennemi::Monde(Biome::Pirate, _) => tx!("Tonneau Fou", "Mad Barrel", "Irres Fass", "Botte Pazza", "Barril Loco"),
+            Ennemi::Monde(Biome::Halloween, 0) => tx!("Zombie Pas Frais", "Stale Zombie", "Müder Zombie", "Zombie Poco Fresco", "Zombi Rancio"),
+            Ennemi::Monde(Biome::Halloween, 1) => tx!("Squelette Pressé", "Hasty Skeleton", "Eiliges Skelett", "Scheletro di Fretta", "Esqueleto con Prisa"),
+            Ennemi::Monde(Biome::Halloween, 2) => tx!("Fantôme Farceur", "Prankster Ghost", "Spuk-Scherzbold", "Fantasma Burlone", "Fantasma Bromista"),
+            Ennemi::Monde(Biome::Halloween, _) => tx!("Comte Croc", "Count Fang", "Graf Zahn", "Conte Zanna", "Conde Colmillo"),
+            Ennemi::Monde(Biome::Medieval, 0) => tx!("Bélier Têtu", "Stubborn Ram", "Sturer Rammbock", "Ariete Testardo", "Ariete Terco"),
+            Ennemi::Monde(Biome::Medieval, 1) => tx!("Catapulte Folle", "Mad Catapult", "Wilde Katapult", "Catapulta Pazza", "Catapulta Loca"),
+            Ennemi::Monde(Biome::Medieval, 2) => tx!("Baliste Vive", "Quick Ballista", "Flinke Balliste", "Balista Vivace", "Balista Veloz"),
+            Ennemi::Monde(Biome::Medieval, 3) => tx!("Trébuchet Géant", "Giant Trebuchet", "Riesen-Tribok", "Trabucco Gigante", "Trabuquete Gigante"),
+            Ennemi::Monde(Biome::Medieval, _) => tx!("Tour de Siège", "Siege Tower", "Belagerungsturm", "Torre d'Assedio", "Torre de Asedio"),
+            Ennemi::Monde(Biome::Space, 0) => tx!("Speeder Éclair", "Lightning Speeder", "Blitz-Speeder", "Speeder Lampo", "Speeder Rayo"),
+            Ennemi::Monde(Biome::Space, 2) => tx!("Racer Cosmique", "Cosmic Racer", "Kosmo-Racer", "Racer Cosmico", "Racer Cósmico"),
+            Ennemi::Monde(Biome::Space, 3) => tx!("Cargo Lourd", "Heavy Cargo", "Schwerfrachter", "Cargo Pesante", "Carguero Pesado"),
+            Ennemi::Monde(Biome::Space, 5) => tx!("Mineur d'Astéroïdes", "Asteroid Miner", "Asteroidenbergmann", "Minatore di Asteroidi", "Minero de Asteroides"),
+            Ennemi::Monde(Biome::Space, 6) => tx!("Alien Curieux", "Curious Alien", "Neugieriger Alien", "Alieno Curioso", "Alien Curioso"),
+            Ennemi::Monde(_, _) => tx!("Petit Rover", "Little Rover", "Kleiner Rover", "Piccolo Rover", "Pequeño Rover"),
+        }
+        .t()
+    }
+
+    /// Longueur approximative (pour que les longs modèles tiennent sur leur plateau).
+    fn len(self) -> f32 {
+        match self {
+            Ennemi::Veh(v) => v.len(),
+            Ennemi::Monde(b, i) => crate::kenney::trafic_modeles(b)[i].2,
+        }
+    }
+}
 
 pub struct GaragePlugin;
 
@@ -105,11 +161,10 @@ fn build(
     old: Query<Entity, With<GarageItem>>,
     mut view: ResMut<View>,
     kit: Res<Kit>,
-    extra: Res<Extra>,
-    frog_kit: Res<FrogKit>,
-    cast: Res<Cast>,
     progress: Res<Progress>,
     selection: Res<Selection>,
+    server: Res<AssetServer>,
+    mut graphs: ResMut<Assets<AnimationGraph>>,
     mut mats: ResMut<Assets<StandardMaterial>>,
 ) {
     view.dirty = false;
@@ -124,48 +179,44 @@ fn build(
     let heading;
     match view.tab {
         Tab::Vehicles => {
-            let pages = ALL.len().div_ceil(PER_PAGE);
+            let liste = ennemis();
+            let pages = liste.len().div_ceil(PER_PAGE);
             view.page = view.page.min(pages - 1);
             let first = view.page * PER_PAGE;
-            let title = tx!("Garage : {} / {} véhicules", "Garage: {} / {} vehicles", "Garage: {} / {} Fahrzeuge", "Garage: {} / {} veicoli", "Garaje: {} / {} vehículos")
-                .avec(&[&ALL.iter().filter(|i| progress.has(**i)).count(), &ALL.len()]);
-            heading = format!("{title}  ({}/{})", view.page + 1, pages);
-            for (i, item) in ALL.iter().enumerate().skip(first).take(PER_PAGE) {
+            let title = tx!("Ennemis : {} / {}", "Enemies: {} / {}", "Gegner: {} / {}", "Nemici: {} / {}", "Enemigos: {} / {}")
+                .avec(&[&liste.iter().filter(|e| progress.has(e.item())).count(), &liste.len()]);
+            heading = if pages > 1 { format!("{title}  ({}/{})", view.page + 1, pages) } else { title };
+            for (i, en) in liste.iter().enumerate().skip(first).take(PER_PAGE) {
                 let i = i - first;
                 let at = vehicle_slot(i) - ORIGIN;
                 part(&mut commands, root, &kit.cyl, &plate, at + Vec3::Y * -0.15, Vec3::new(3.1, 0.2, 2.5));
-                // Les longs véhicules sont réduits pour tenir sur leur plateau.
-                let len = match *item {
-                    Item::Trains => 2.95,
-                    Item::Vehicle(v) => v.len(),
-                    _ => 2.0,
-                };
-                let slot = slot_entity(&mut commands, root, at, (1.9 / len).min(1.0), i);
-                let color = i * 5 + 1;
-                match *item {
-                    Item::Trains => spawn_train_car(&mut commands, &kit, slot, true),
-                    Item::Vehicle(Vehicle::Car) => spawn_car(&mut commands, &kit, slot, color),
-                    Item::Vehicle(Vehicle::Truck) => spawn_truck(&mut commands, &kit, slot, color),
-                    Item::Vehicle(v) => spawn_vehicle(&mut commands, &kit, &extra, slot, v, color),
-                    _ => {}
+                // Les longs modèles sont réduits pour tenir sur leur plateau.
+                let slot = slot_entity(&mut commands, root, at, (1.9 / en.len()).clamp(0.3, 2.4), i);
+                match *en {
+                    Ennemi::Veh(v) => {
+                        crate::kenney::car(&mut commands, &server, slot, v, i * 5 + 1);
+                    }
+                    Ennemi::Monde(b, k) => {
+                        crate::kenney::trafic(&mut commands, &server, &mut graphs, slot, b, k);
+                    }
                 }
-                let open = progress.has(*item);
+                let open = progress.has(en.item());
                 if !open {
                     commands.entity(slot).insert(Locked);
                 }
-                let sub = if open { String::new() } else { pts(threshold(*item)) };
-                label(&mut commands, vehicle_slot(i) + Vec3::new(0.0, 0.0, 1.25), if open { item.name() } else { "???" }, sub, open, false, None, true);
+                let sub = if open { String::new() } else { pts(threshold(en.item())) };
+                label(&mut commands, vehicle_slot(i) + Vec3::new(0.0, 0.0, 1.25), if open { en.name() } else { "???" }, sub, open, false, None, true);
             }
         }
-        Tab::Characters => {
+        Tab::Characters | Tab::Costumes => {
             let have = CHARACTERS.iter().filter(|c| unlocked_character(&progress, **c)).count();
             heading = tx!("Choisis ton personnage : {} / {}", "Choose your character: {} / {}", "Wähle deine Figur: {} / {}", "Scegli il personaggio: {} / {}", "Elige tu personaje: {} / {}")
                 .avec(&[&have, &CHARACTERS.len()]);
             for (i, ch) in CHARACTERS.iter().enumerate() {
                 let at = character_slot(i) - ORIGIN;
                 part(&mut commands, root, &kit.cyl, &plate, at + Vec3::Y * -0.15, Vec3::new(4.0, 0.2, 3.4));
-                let slot = slot_entity(&mut commands, root, at, 2.3, i);
-                spawn_character(&mut commands, *ch, Costume::None, &kit, &frog_kit, &cast, &mut mats, slot);
+                let slot = slot_entity(&mut commands, root, at, 3.4, i);
+                crate::kenney::humain(&mut commands, &server, &mut graphs, slot, ch.index());
                 let open = unlocked_character(&progress, *ch);
                 if !open {
                     commands.entity(slot).insert(Locked);
@@ -181,41 +232,16 @@ fn build(
                 label(&mut commands, character_slot(i) + Vec3::new(0.0, 0.0, 2.1), if open { ch.name() } else { "???" }, sub, open, chosen, open.then_some(Act::Char(*ch)), false);
             }
         }
-        Tab::Costumes => {
-            let have = COSTUMES.iter().filter(|c| unlocked_costume(&progress, **c)).count();
-            heading = tx!("Accessoires de {} : {} / {}", "{}'s accessories: {} / {}", "Zubehör von {}: {} / {}", "Accessori di {}: {} / {}", "Accesorios de {}: {} / {}")
-                .avec(&[&selection.character.name(), &have, &COSTUMES.len()]);
-            for (i, co) in COSTUMES.iter().enumerate() {
-                let at = character_slot(i) - ORIGIN;
-                part(&mut commands, root, &kit.cyl, &plate, at + Vec3::Y * -0.15, Vec3::new(4.0, 0.2, 3.4));
-                let slot = slot_entity(&mut commands, root, at, 2.3, i);
-                spawn_character(&mut commands, selection.character, *co, &kit, &frog_kit, &cast, &mut mats, slot);
-                let open = unlocked_costume(&progress, *co);
-                if !open {
-                    commands.entity(slot).insert(Locked);
-                }
-                let chosen = open && selection.costume == *co;
-                let sub = if !open {
-                    pts(co.threshold())
-                } else if chosen {
-                    tx!("— choisi —", "— chosen —", "— gewählt —", "— scelto —", "— elegido —").t().to_string()
-                } else {
-                    String::new()
-                };
-                label(&mut commands, character_slot(i) + Vec3::new(0.0, 0.0, 2.1), if open { co.name() } else { "???" }, sub, open, chosen, open.then_some(Act::Costume(*co)), false);
-            }
-        }
         Tab::Worlds => {
             let worlds = Biome::ALL;
             let have = worlds.iter().filter(|b| progress.has(Item::World(**b))).count();
-            heading = tx!("Les mondes : {} / {}", "The worlds: {} / {}", "Die Welten: {} / {}", "I mondi: {} / {}", "Los mundos: {} / {}").avec(&[&have, &worlds.len()]);
+            heading = tx!("Décors : {} / {}", "Scenery: {} / {}", "Kulissen: {} / {}", "Scenari: {} / {}", "Escenarios: {} / {}").avec(&[&have, &worlds.len()]);
             for (i, b) in worlds.iter().enumerate() {
                 let center = world_slot(i);
                 let at = center - ORIGIN;
-                let (top, _) = extra.ground(&kit, *b, 0);
-                part(&mut commands, root, &kit.cyl, top, at + Vec3::Y * -0.15, Vec3::new(3.6, 0.2, 3.0));
-                let slot = slot_entity(&mut commands, root, at, 1.4, i);
-                world_sample(&mut commands, &kit, &extra, slot, *b);
+                part(&mut commands, root, &kit.cyl, &plate, at + Vec3::Y * -0.15, Vec3::new(3.6, 0.2, 3.0));
+                let slot = slot_entity(&mut commands, root, at, 1.8, i);
+                world_sample(&mut commands, &server, slot, *b);
                 let open = progress.has(Item::World(*b));
                 if !open {
                     commands.entity(slot).insert(Locked);
@@ -244,10 +270,9 @@ fn build(
     spawn_text(&mut commands, top, heading, 32.0);
     let tabs = commands.spawn((Node { column_gap: px(10), ..default() }, ChildOf(top))).id();
     for (tab, name) in [
-        (Tab::Vehicles, tx!("Véhicules", "Vehicles", "Fahrzeuge", "Veicoli", "Vehículos").t()),
+        (Tab::Vehicles, tx!("Ennemis", "Enemies", "Gegner", "Nemici", "Enemigos").t()),
+        (Tab::Worlds, tx!("Décors", "Scenery", "Kulissen", "Scenari", "Escenarios").t()),
         (Tab::Characters, tx!("Personnages", "Characters", "Figuren", "Personaggi", "Personajes").t()),
-        (Tab::Costumes, tx!("Accessoires", "Accessories", "Zubehör", "Accessori", "Accesorios").t()),
-        (Tab::Worlds, tx!("Mondes", "Worlds", "Welten", "Mondi", "Mundos").t()),
     ] {
         let (b, _) = spawn_button_sized(&mut commands, tabs, name, 190.0, 44.0, 20.0);
         commands.entity(b).insert(Act::Tab(tab));
@@ -255,7 +280,7 @@ fn build(
             commands.entity(b).insert((BackgroundColor(Color::srgb(1.0, 0.88, 0.45)), game_common::ui::ButtonColor(Color::srgb(1.0, 0.88, 0.45))));
         }
     }
-    if view.tab == Tab::Vehicles && ALL.len() > PER_PAGE {
+    if view.tab == Tab::Vehicles && ennemis().len() > PER_PAGE {
         // Pages : précédent / suivant, en bas à droite.
         let nav = commands.spawn((Node { position_type: PositionType::Absolute, right: px(20), bottom: px(20), column_gap: px(10), ..default() }, scope())).id();
         for (label, d) in [(tx!("< Précédent", "< Previous", "< Zurück", "< Precedente", "< Anterior").t(), -1), (tx!("Suivant >", "Next >", "Weiter >", "Successivo >", "Siguiente >").t(), 1)] {
@@ -268,22 +293,16 @@ fn build(
     commands.entity(back).insert(Act::Back);
 }
 
-/// Un petit bout de monde sur son plateau : un arbre, un cactus, un bonhomme de neige…
-fn world_sample(c: &mut Commands, kit: &Kit, x: &Extra, slot: Entity, biome: Biome) {
+/// Un petit bout de monde sur son plateau : un arbre, un cactus, une tombe… (modèles Kenney).
+fn world_sample(c: &mut Commands, server: &AssetServer, slot: Entity, biome: Biome) {
     match biome {
         Biome::Prairie => {
-            spawn_prop(c, kit, slot, Prop::Tree, Vec3::new(-0.3, 0.0, 0.0), 1);
-            spawn_deco(c, kit, x, slot, crate::extra::Deco::Flowers, Vec3::new(0.7, 0.0, 0.4), 2);
+            crate::kenney::prop(c, server, slot, Prop::Tree, Vec3::new(-0.3, 0.0, 0.0), 1);
+            crate::kenney::prop(c, server, slot, Prop::Pine, Vec3::new(0.7, 0.0, 0.4), 2);
         }
-        Biome::Desert => spawn_scenery(c, kit, x, slot, biome, Scenery::Block, Vec3::new(-0.2, 0.0, 0.0), 0, 0),
-        Biome::Snow => spawn_scenery(c, kit, x, slot, biome, Scenery::Block, Vec3::new(-0.2, 0.0, 0.0), 4, 0),
-        Biome::Jurassic | Biome::Nippon | Biome::Space | Biome::FarWest | Biome::Halloween | Biome::Cyber | Biome::Medieval | Biome::Pirate => {
-            spawn_scenery(c, kit, x, slot, biome, Scenery::Block, Vec3::new(-0.3, 0.0, 0.0), 0, 0);
-            spawn_scenery(c, kit, x, slot, biome, Scenery::Block, Vec3::new(0.7, 0.0, 0.5), 3, 0);
-        }
-        Biome::Autumn => {
-            spawn_scenery(c, kit, x, slot, biome, Scenery::Block, Vec3::new(-0.3, 0.0, 0.0), 0, 0);
-            spawn_scenery(c, kit, x, slot, biome, Scenery::Block, Vec3::new(0.6, 0.0, 0.4), 6, 0);
+        _ => {
+            crate::kenney::decor(c, server, slot, biome, Scenery::Block, Vec3::new(-0.3, 0.0, 0.0), 0, 0);
+            crate::kenney::decor(c, server, slot, biome, Scenery::Block, Vec3::new(0.7, 0.0, 0.5), 3, 1);
         }
     }
 }
@@ -336,22 +355,23 @@ fn spin(time: Res<Time>, mut q: Query<(&Spin, &mut Transform), Without<Locked>>)
     }
 }
 
-/// Peint ce qui est verrouillé en ombre (une seule fois).
+/// Peint ce qui est verrouillé en ombre. Les modèles GLB se chargent après coup : on repasse à chaque image sur ce qui n'est pas encore une ombre.
 fn shade_locked(
-    mut commands: Commands,
     mut mats: ResMut<Assets<StandardMaterial>>,
-    locked: Query<Entity, (With<Locked>, Without<Shaded>)>,
+    locked: Query<Entity, With<Locked>>,
     children: Query<&Children>,
     mut parts: Query<&mut MeshMaterial3d<StandardMaterial>>,
+    mut shadow: Local<Option<Handle<StandardMaterial>>>,
 ) {
+    let shadow = shadow.get_or_insert_with(|| mats.add(StandardMaterial { unlit: true, ..flat_material(Color::srgb(0.30, 0.33, 0.38)) })).clone();
     for root in &locked {
-        let shadow = mats.add(StandardMaterial { unlit: true, ..flat_material(Color::srgb(0.30, 0.33, 0.38)) });
         for e in children.iter_descendants(root) {
             if let Ok(mut m) = parts.get_mut(e) {
-                m.0 = shadow.clone();
+                if m.0 != shadow {
+                    m.0 = shadow.clone();
+                }
             }
         }
-        commands.entity(root).insert(Shaded);
     }
 }
 
@@ -391,7 +411,7 @@ fn on_click(
     match *act {
         Act::Back => next.set(GameState::Menu),
         Act::Page(d) => {
-            let pages = ALL.len().div_ceil(PER_PAGE) as i32;
+            let pages = ennemis().len().div_ceil(PER_PAGE) as i32;
             view.page = (view.page as i32 + d).rem_euclid(pages) as usize;
             view.dirty = true;
         }
@@ -403,8 +423,6 @@ fn on_click(
             if unlocked_character(&progress, c) {
                 selection.character = c;
                 selection.save();
-                // Personnage choisi : place à l'accessoire.
-                view.tab = Tab::Costumes;
                 view.dirty = true;
             }
         }

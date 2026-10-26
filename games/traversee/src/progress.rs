@@ -104,9 +104,9 @@ impl Item {
             Item::World(b) => return b.name(),
             Item::Character(c) => return c.name(),
             Item::Costume(c) => return c.name(),
-            Item::Flies => tx!("Les mouches", "The flies", "Die Fliegen", "Le mosche", "Las moscas"),
+            Item::Flies => tx!("Les cadeaux", "The gifts", "Die Geschenke", "I regali", "Los regalos"),
             Item::Eagle => tx!("L'aigle (attention !)", "The eagle (watch out!)", "Der Adler (Vorsicht!)", "L'aquila (attenzione!)", "El águila (¡cuidado!)"),
-            Item::GoldFlies => tx!("Les mouches dorées", "The golden flies", "Die goldenen Fliegen", "Le mosche dorate", "Las moscas doradas"),
+            Item::GoldFlies => tx!("Les cadeaux dorés", "The golden gifts", "Die goldenen Geschenke", "I regali dorati", "Los regalos dorados"),
             Item::Vehicle(Vehicle::Gen(i)) => return crate::gen_vehicles::name(i),
             Item::Vehicle(v) => match v {
                 Vehicle::Gen(_) => unreachable!(),

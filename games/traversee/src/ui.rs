@@ -150,7 +150,7 @@ fn spawn_menu(mut commands: Commands, progress: Res<Progress>, score: Res<Score>
         UiTransform::default(),
         Pulse { speed: 3.0, amount: 0.03 },
     ));
-    button(&mut commands, panel, tx!("Garage", "Garage", "Garage", "Garage", "Garaje").t(), UiAction::Garage);
+    button(&mut commands, panel, tx!("Collection", "Collection", "Sammlung", "Collezione", "Colección").t(), UiAction::Garage);
     pied_de_menu(&mut commands, panel);
 }
 
