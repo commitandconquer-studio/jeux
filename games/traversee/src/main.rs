@@ -55,6 +55,13 @@ const LOOK_AHEAD: f32 = 2.5;
 /// presque horizontales et les véhicules ne masquent pas la voie suivante.
 const CAM_OFFSET: Vec3 = Vec3::new(3.0, 17.0, 9.0);
 
+/// Test : `TRAVERSEE_STYLE=0|1|2` force le style de mort (captures).
+fn style_pour_test(mut r: ResMut<game_common::audio::Reglages>) {
+    if let Some(n) = std::env::var("TRAVERSEE_STYLE").ok().and_then(|s| s.parse::<u8>().ok()) {
+        r.style_mort = n.min(2);
+    }
+}
+
 fn main() {
     let mut app = App::new();
     app.add_plugins(
@@ -67,6 +74,8 @@ fn main() {
     )
     .init_state::<GameState>()
     .add_plugins(StudioPlugin::new(Universe::Croa, game_common::ambiance::AmbiancePlugin::exterieur()))
+    .insert_resource(game_common::options::StyleMortOption)
+    .add_systems(Startup, style_pour_test)
     .add_plugins(miniature::MiniaturePlugin)
     .add_plugins((ui::UiPlugin, audio::AudioPlugin, capture::CapturePlugin, fx::FxPlugin, progress::ProgressPlugin, garage::GaragePlugin, eagle::EaglePlugin, screens::ScreensPlugin, petals::PetalsPlugin, space::SpacePlugin))
     .init_resource::<characters::Selection>()

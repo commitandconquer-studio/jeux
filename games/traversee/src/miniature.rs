@@ -1,6 +1,6 @@
 //! Effet « maquette » (tilt-shift) : un flou qui grandit vers les bords de l'écran, surtout à gauche et à droite
 //! (le personnage n'y va pas), un peu en haut et en bas. Passe plein écran après le rendu, sur le modèle de
-//! l'exemple `custom_post_processing` de Bevy. Activé avec `TRAVERSEE_FLOU=1` (essai).
+//! l'exemple `custom_post_processing` de Bevy. Actif sur ordinateur par défaut.
 use bevy::{
     core_pipeline::{schedule::Core3d, Core3dSystems, FullscreenShader},
     prelude::*,
@@ -18,10 +18,11 @@ use bevy::{
 
 const SHADER: &str = "shaders/miniature.wgsl";
 
-/// Le flou « maquette » est-il demandé ? (`TRAVERSEE_FLOU=1`)
+/// Le flou « maquette » est-il en route ? Oui sur ordinateur (`TRAVERSEE_FLOU=0` le coupe) ;
+/// sur le web il reste à essayer : `TRAVERSEE_FLOU=1` ne s'y lit pas, donc coupé.
 pub fn actif() -> bool {
     static A: std::sync::OnceLock<bool> = std::sync::OnceLock::new();
-    *A.get_or_init(|| std::env::var_os("TRAVERSEE_FLOU").is_some())
+    *A.get_or_init(|| !cfg!(target_arch = "wasm32") && std::env::var("TRAVERSEE_FLOU").map_or(true, |v| v != "0"))
 }
 
 /// Réglages du flou, posés sur la caméra. Tous en fraction de l'écran.

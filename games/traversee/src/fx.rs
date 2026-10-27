@@ -1,9 +1,11 @@
 //! Effets visuels : poussière, éclaboussures, éclats, tremblement d'écran.
 use bevy::prelude::*;
+use game_common::audio::Reglages;
 use game_common::ui::ThemedText;
 use game_common::{Rng, flat_material, tx};
 
 use crate::GameState;
+use crate::audio::Sfx;
 use crate::frog::{Cause, Death, Frog};
 use crate::models::Kit;
 
@@ -28,6 +30,10 @@ pub enum Fx {
     Feathers(Vec3),
     /// Un déblocage vient d'être gagné.
     Unlock(crate::progress::Item),
+    /// Style « choupi » : papillons et cœurs.
+    Choupi(Vec3),
+    /// Style « gore ridicule » : ketchup partout.
+    Gore(Vec3),
 }
 
 /// Éclair blanc plein écran qui s'éteint tout seul.
@@ -69,8 +75,36 @@ struct Particle {
     size: f32,
 }
 
+/// Papillon qui monte en battant des ailes.
+#[derive(Component)]
+struct Butterfly {
+    vel: Vec3,
+    life: f32,
+    max: f32,
+    phase: f32,
+}
+
+/// Rayon de lumière vertical qui s'amincit en s'éteignant.
+#[derive(Component)]
+struct Beam {
+    life: f32,
+    max: f32,
+    width: f32,
+}
+
+/// Une aile de papillon : `side` vaut -1 ou 1.
+#[derive(Component)]
+struct Wing {
+    side: f32,
+}
+
 #[derive(Resource)]
 struct FxMats {
+    pink: Handle<StandardMaterial>,
+    lilac: Handle<StandardMaterial>,
+    sun: Handle<StandardMaterial>,
+    red: Handle<StandardMaterial>,
+    dark_red: Handle<StandardMaterial>,
     dust: Handle<StandardMaterial>,
     water: Handle<StandardMaterial>,
     drop: Handle<StandardMaterial>,
@@ -93,13 +127,18 @@ impl Plugin for FxPlugin {
             .add_systems(Startup, setup)
             .add_systems(OnEnter(GameState::Dying), death_fx)
             .add_systems(OnExit(GameState::Dying), |mut t: ResMut<Time<Virtual>>| t.set_relative_speed(1.0))
-            .add_systems(Update, (spawn_fx, update_particles, update_rings, update_flash, update_pop, update_rise, update_toasts).chain());
+            .add_systems(Update, (spawn_fx, update_particles, update_butterflies, update_beams, update_rings, update_flash, update_pop, update_rise, update_toasts).chain());
     }
 }
 
 fn setup(mut commands: Commands, mut mats: ResMut<Assets<StandardMaterial>>, mut meshes: ResMut<Assets<Mesh>>) {
     let mut unlit = |c: Color| mats.add(StandardMaterial { unlit: true, ..flat_material(c) });
     commands.insert_resource(FxMats {
+        pink: unlit(Color::srgb(1.0, 0.55, 0.75)),
+        lilac: unlit(Color::srgb(0.75, 0.6, 1.0)),
+        sun: unlit(Color::srgb(1.0, 0.92, 0.45)),
+        red: unlit(Color::srgb(0.95, 0.1, 0.1)),
+        dark_red: unlit(Color::srgb(0.55, 0.03, 0.05)),
         dust: unlit(Color::srgb(0.96, 0.94, 0.86)),
         water: unlit(Color::srgb(0.75, 0.92, 1.0)),
         drop: unlit(Color::srgb(0.45, 0.75, 1.0)),
@@ -160,6 +199,7 @@ fn spawn_fx(
     mut rng: ResMut<Rng>,
     toasts: Query<&Toast>,
     mut sfx: MessageWriter<crate::audio::Sfx>,
+
 ) {
     let mut queued = toasts.iter().count();
     for fx in reader.read() {
@@ -187,15 +227,15 @@ fn spawn_fx(
                 ring(&mut commands, &meshes_h(&mats), &mats.star, p + Vec3::Y * 0.12, 2.4, 0.35);
                 for _ in 0..40 {
                     let v = Vec3::new(unit(&mut rng) * 4.0, 3.0 + 4.0 * unit(&mut rng).abs(), unit(&mut rng) * 4.0);
-                    puff(&mut commands, &kit, &mats.skin, p + Vec3::Y * 0.2, v, 0.22 + 0.16 * unit(&mut rng).abs(), 0.8, 10.0);
+                    puff(&mut commands, &kit, &mats.skin, p + Vec3::Y * 0.2, v, 0.14 + 0.1 * unit(&mut rng).abs(), 0.8, 10.0);
                 }
                 for _ in 0..18 {
                     let v = Vec3::new(unit(&mut rng) * 2.4, 1.5 + unit(&mut rng).abs(), unit(&mut rng) * 1.6);
-                    puff(&mut commands, &kit, &mats.feather, p + Vec3::Y * 0.3, v, 0.24, 1.1, 2.0);
+                    puff(&mut commands, &kit, &mats.feather, p + Vec3::Y * 0.3, v, 0.15, 1.1, 2.0);
                 }
                 for _ in 0..12 {
                     let v = Vec3::new(unit(&mut rng) * 3.0, 3.5 + unit(&mut rng).abs(), unit(&mut rng) * 2.0);
-                    puff(&mut commands, &kit, &mats.star, p + Vec3::Y * 0.4, v, 0.32, 0.9, 6.0);
+                    puff(&mut commands, &kit, &mats.star, p + Vec3::Y * 0.4, v, 0.2, 0.9, 6.0);
                 }
             }
             Fx::Gulp(p, points) => {
@@ -215,17 +255,84 @@ fn spawn_fx(
                 // Boule de feu, fumée noire, éclats jaunes et onde de choc.
                 for _ in 0..34 {
                     let v = Vec3::new(unit(&mut rng) * 4.5, 1.0 + 4.0 * unit(&mut rng).abs(), unit(&mut rng) * 3.0);
-                    puff(&mut commands, &kit, &mats.fire, p, v, 0.35 + 0.3 * unit(&mut rng).abs(), 0.9, 2.5);
+                    puff(&mut commands, &kit, &mats.fire, p, v, 0.22 + 0.2 * unit(&mut rng).abs(), 0.9, 2.5);
                 }
                 for _ in 0..16 {
                     let v = Vec3::new(unit(&mut rng) * 3.0, 1.5 + 3.0 * unit(&mut rng).abs(), unit(&mut rng) * 2.0);
-                    puff(&mut commands, &kit, &mats.smoke, p + Vec3::Y * 0.3, v, 0.5, 1.6, 0.6);
+                    puff(&mut commands, &kit, &mats.smoke, p + Vec3::Y * 0.3, v, 0.3, 1.6, 0.6);
                 }
                 for _ in 0..12 {
                     let v = Vec3::new(unit(&mut rng) * 6.0, 2.0 + 4.0 * unit(&mut rng).abs(), unit(&mut rng) * 4.0);
                     puff(&mut commands, &kit, &mats.star, p, v, 0.22, 0.8, 7.0);
                 }
                 ring(&mut commands, &kit_ring(&mats), &mats.fire, p - Vec3::Y * 0.4, 6.0, 0.55);
+            }
+            Fx::Choupi(p) => {
+                ring(&mut commands, &meshes_h(&mats), &mats.pink, p + Vec3::Y * 0.1, 3.0, 0.6);
+                let corps = kit.cube.clone();
+                for i in 0..14 {
+                    let couleur = [&mats.pink, &mats.lilac, &mats.sun, &mats.feather][i % 4].clone();
+                    let vel = Vec3::new(unit(&mut rng) * 1.2, 1.2 + unit(&mut rng).abs() * 1.2, unit(&mut rng) * 0.9);
+                    let life = 2.0 + unit(&mut rng).abs() * 0.8;
+                    commands
+                        .spawn((
+                            Transform::from_translation(p + Vec3::Y * 0.4),
+                            Visibility::default(),
+                            Butterfly { vel, life, max: life, phase: i as f32 * 1.7 },
+                        ))
+                        .with_children(|b| {
+                            b.spawn((Mesh3d(corps.clone()), MeshMaterial3d(mats.smoke.clone()), Transform::from_scale(Vec3::new(0.1, 0.1, 0.4)), bevy::light::NotShadowCaster));
+                            for side in [-1.0, 1.0] {
+                                b.spawn((
+                                    Mesh3d(corps.clone()),
+                                    MeshMaterial3d(couleur.clone()),
+                                    Transform::from_scale(Vec3::new(0.5, 0.03, 0.44)),
+                                    Wing { side },
+                                    bevy::light::NotShadowCaster,
+                                ));
+                            }
+                        });
+                }
+                // Gerbes de lumière : rayons qui montent et fines étincelles en fontaine.
+                for i in 0..9 {
+                    let a = i as f32 / 9.0 * std::f32::consts::TAU;
+                    let couleur = [&mats.sun, &mats.pink, &mats.feather][i % 3].clone();
+                    let haut = 2.2 + 1.6 * unit(&mut rng).abs();
+                    commands.spawn((
+                        Mesh3d(kit.cube.clone()),
+                        MeshMaterial3d(couleur),
+                        Transform::from_translation(p + Vec3::new(a.cos() * 0.45, haut * 0.5, a.sin() * 0.45)).with_scale(Vec3::new(0.14, haut, 0.14)),
+                        Beam { life: 0.9, max: 0.9, width: 0.14 },
+                        bevy::light::NotShadowCaster,
+                    ));
+                }
+                for i in 0..40 {
+                    let couleur = [&mats.sun, &mats.pink, &mats.feather, &mats.lilac][i % 4].clone();
+                    let a = unit(&mut rng) * std::f32::consts::PI;
+                    let v = Vec3::new(a.cos() * 1.4, 4.5 + 3.0 * unit(&mut rng).abs(), a.sin() * 1.4);
+                    puff(&mut commands, &kit, &couleur, p + Vec3::Y * 0.2, v, 0.07 + 0.05 * unit(&mut rng).abs(), 1.3, 6.0);
+                }
+            }
+            Fx::Gore(p) => {
+                // Ketchup dans tous les sens, gros morceaux, anneaux rouges.
+                ring(&mut commands, &meshes_h(&mats), &mats.red, p + Vec3::Y * 0.1, 7.0, 0.6);
+                ring(&mut commands, &meshes_h(&mats), &mats.dark_red, p + Vec3::Y * 0.08, 4.0, 0.9);
+                for _ in 0..110 {
+                    let v = Vec3::new(unit(&mut rng) * 7.0, 2.0 + 8.0 * unit(&mut rng).abs(), unit(&mut rng) * 5.0);
+                    puff(&mut commands, &kit, &mats.red, p + Vec3::Y * 0.3, v, 0.08 + 0.14 * unit(&mut rng).abs(), 1.3, 13.0);
+                }
+                for _ in 0..26 {
+                    let v = Vec3::new(unit(&mut rng) * 5.0, 4.0 + 6.0 * unit(&mut rng).abs(), unit(&mut rng) * 3.5);
+                    puff(&mut commands, &kit, &mats.dark_red, p + Vec3::Y * 0.3, v, 0.16 + 0.16 * unit(&mut rng).abs(), 1.7, 11.0);
+                }
+                for _ in 0..16 {
+                    let v = Vec3::new(unit(&mut rng) * 6.0, 3.0 + 5.0 * unit(&mut rng).abs(), unit(&mut rng) * 4.0);
+                    puff(&mut commands, &kit, &mats.skin, p + Vec3::Y * 0.3, v, 0.15, 1.4, 11.0);
+                }
+                for _ in 0..14 {
+                    let v = Vec3::new(unit(&mut rng) * 6.0, 3.0 + 4.0 * unit(&mut rng).abs(), unit(&mut rng) * 4.0);
+                    puff(&mut commands, &kit, &mats.star, p + Vec3::Y * 0.3, v, 0.14, 1.0, 7.0);
+                }
             }
             Fx::Feathers(p) => {
                 for _ in 0..22 {
@@ -242,6 +349,49 @@ fn spawn_fx(
                     let v = Vec3::new(unit(&mut rng), 0.0, unit(&mut rng)).normalize_or_zero() * 0.6;
                     puff(&mut commands, &kit, &mats.water, p + Vec3::Y * 0.05, v + Vec3::Y * 1.6, 0.14, 0.4, 7.0);
                 }
+            }
+        }
+    }
+}
+
+fn update_beams(mut commands: Commands, time: Res<Time>, mut q: Query<(Entity, &mut Beam, &mut Transform)>) {
+    let dt = time.delta_secs();
+    for (e, mut b, mut tf) in &mut q {
+        b.life -= dt;
+        if b.life <= 0.0 {
+            commands.entity(e).despawn();
+            continue;
+        }
+        let k = b.life / b.max;
+        tf.scale.x = b.width * k;
+        tf.scale.z = b.width * k;
+        tf.translation.y += dt * 1.2;
+    }
+}
+
+fn update_butterflies(
+    mut commands: Commands,
+    time: Res<Time>,
+    mut q: Query<(Entity, &mut Butterfly, &mut Transform, &Children)>,
+    mut wings: Query<(&Wing, &mut Transform), Without<Butterfly>>,
+) {
+    let dt = time.delta_secs();
+    let t = time.elapsed_secs();
+    for (e, mut b, mut tf, children) in &mut q {
+        b.life -= dt;
+        if b.life <= 0.0 {
+            commands.entity(e).despawn();
+            continue;
+        }
+        // Monte en zigzaguant, de plus en plus doucement.
+        let calme = (b.life / b.max).sqrt();
+        tf.translation += (b.vel * calme + Vec3::new((t * 3.0 + b.phase).sin() * 0.5, (t * 5.0 + b.phase).sin() * 0.3, 0.0)) * dt;
+        tf.scale = Vec3::splat(calme.min(1.0));
+        let flap = (t * 22.0 + b.phase).sin() * 0.9;
+        for child in children.iter() {
+            if let Ok((w, mut wt)) = wings.get_mut(child) {
+                wt.rotation = Quat::from_rotation_z(w.side * flap);
+                wt.translation = Vec3::new(w.side * 0.25 * flap.cos(), w.side * 0.25 * flap.sin(), 0.0);
             }
         }
     }
@@ -271,9 +421,32 @@ fn death_fx(
     mut flash: ResMut<Flash>,
     mut punch: ResMut<Punch>,
     mut virt: ResMut<Time<Virtual>>,
+    reglages: Res<Reglages>,
+    mut sfx: MessageWriter<Sfx>,
 ) {
     let p = frog.visual_pos();
+    let style = reglages.style_mort;
     match death.cause {
+        Some(Cause::Squashed) if style == 0 => {
+            fx.write(Fx::Choupi(p));
+            shake.0 = 0.1;
+            punch.0 = 0.3;
+            pop(&mut commands, tx!("OUPS !", "WHOOPS!", "HOPPLA!", "OPS!", "¡UY!").t(), Color::srgb(1.0, 0.6, 0.8), 110.0);
+        }
+        Some(Cause::Squashed) if style == 2 => {
+            fx.write(Fx::Gore(p));
+            if let Some((car, at)) = death.killer {
+                commands.entity(car).insert(Visibility::Hidden);
+                fx.write(Fx::Boom(at));
+                sfx.write(Sfx::Explosion);
+            }
+            sfx.write(Sfx::Fall);
+            shake.0 = 1.0;
+            flash.0 = 1.0;
+            punch.0 = 1.0;
+            virt.set_relative_speed(0.04);
+            pop(&mut commands, tx!("SPLATCHOUILLE !!!", "SPLATTERIFIC!!!", "KLATSCHBUMM!!!", "SPLATTATA!!!", "¡SPLATCHAZO!!!").t(), Color::srgb(1.0, 0.1, 0.1), 100.0);
+        }
         Some(Cause::Squashed) => {
             fx.write(Fx::Burst(p));
             shake.0 = 1.0;
@@ -289,12 +462,33 @@ fn death_fx(
         }
         Some(Cause::Drowned | Cause::CarriedAway) => {
             fx.write(Fx::Splash(Vec3::new(p.x, 0.0, p.z)));
+            match style {
+                0 => {
+                    fx.write(Fx::Choupi(Vec3::new(p.x, 0.2, p.z)));
+                }
+                2 => {
+                    fx.write(Fx::Splash(Vec3::new(p.x + 0.4, 0.0, p.z)));
+                    fx.write(Fx::Splash(Vec3::new(p.x - 0.4, 0.0, p.z)));
+                    sfx.write(Sfx::Fall);
+                }
+                _ => {}
+            }
             shake.0 = 0.5;
             punch.0 = 0.6;
             pop(&mut commands, tx!("PLOUF !", "SPLASH!", "PLATSCH!", "SPLASH!", "¡CHOF!").t(), Color::srgb(0.45, 0.8, 1.0), 120.0);
         }
         Some(Cause::Eagle) => {
             fx.write(Fx::Feathers(p + Vec3::Y * 0.4));
+            match style {
+                0 => {
+                    fx.write(Fx::Choupi(p + Vec3::Y * 0.4));
+                }
+                2 => {
+                    fx.write(Fx::Gore(p + Vec3::Y * 0.4));
+                    sfx.write(Sfx::Fall);
+                }
+                _ => {}
+            }
             shake.0 = 0.4;
             pop(&mut commands, tx!("ENLEVÉ !", "SNATCHED!", "GEKRALLT!", "RAPITO!", "¡RAPTADO!").t(), Color::srgb(1.0, 0.7, 0.3), 100.0);
         }

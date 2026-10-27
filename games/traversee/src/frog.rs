@@ -177,6 +177,8 @@ pub struct Death {
     pub fling: Vec3,
     /// Hauteur du vol.
     pub fling_height: f32,
+    /// La voiture qui a tué (pour la faire exploser en mode gore) et où.
+    pub killer: Option<(Entity, Vec3)>,
 }
 
 pub fn die(cause: Cause, death: &mut Death, next: &mut NextState<GameState>) {
@@ -371,10 +373,11 @@ pub fn update_frog(
 /// Collision avec une voiture, un camion ou un train.
 pub fn collide(
     frog: Res<Frog>,
-    movers: Query<(&Mover, &Transform)>,
+    movers: Query<(Entity, &Mover, &Transform)>,
     mut death: ResMut<Death>,
     mut next: ResMut<NextState<GameState>>,
     mut sfx: MessageWriter<Sfx>,
+    reglages: Res<game_common::audio::Reglages>,
 ) {
     let (x, row) = match &frog.hop {
         Some(h) if h.t > 0.5 => (h.from.x.lerp(h.to.x, h.t), h.to_row),
@@ -383,8 +386,8 @@ pub fn collide(
     };
     let hit = movers
         .iter()
-        .find(|(m, tf)| m.row == row && m.is_deadly() && (tf.translation.x - x).abs() < m.half_len + FROG_HALF);
-    if let Some((m, _)) = hit
+        .find(|(_, m, tf)| m.row == row && m.is_deadly() && (tf.translation.x - x).abs() < m.half_len + FROG_HALF);
+    if let Some((car, m, tf)) = hit
         && death.cause.is_none()
     {
         die(Cause::Squashed, &mut death, &mut next);
@@ -392,8 +395,16 @@ pub fn collide(
         let train = m.kind == MoverKind::Train;
         death.fling = Vec3::new(m.speed.signum() * if train { 9.0 } else { 3.6 }, 0.0, -0.8);
         death.fling_height = if train { 5.5 } else { 3.2 };
-        sfx.write(Sfx::Crash);
-        sfx.write(Sfx::Honk);
+        death.killer = Some((car, Vec3::new(tf.translation.x, 0.5, -(m.row as f32))));
+        match reglages.style_mort {
+            0 => {
+                sfx.write(Sfx::Chime);
+            }
+            _ => {
+                sfx.write(Sfx::Crash);
+                sfx.write(Sfx::Honk);
+            }
+        }
     }
 }
 

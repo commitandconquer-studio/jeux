@@ -18,6 +18,10 @@ pub fn spawn_options_button(commands: &mut Commands, parent: Entity) -> Entity {
     b
 }
 
+/// À insérer par un jeu qui veut la ligne « Style de mort » dans les Options.
+#[derive(Resource)]
+pub struct StyleMortOption;
+
 #[derive(Component)]
 struct Panneau;
 
@@ -30,6 +34,7 @@ enum Choix {
     MusiquePlus,
     EffetsMoins,
     EffetsPlus,
+    StyleMort,
     Ambiance,
     Fermer,
 }
@@ -50,10 +55,10 @@ impl Plugin for OptionsPlugin {
 }
 
 /// Test : `CC_OPEN_OPTIONS=1` ouvre les Options au bout de 2 secondes (captures).
-fn ouvrir_pour_test(time: Res<Time>, mut fait: Local<bool>, mut commands: Commands, l: Res<Langue>, son: Res<SoundOn>, r: Res<Reglages>) {
+fn ouvrir_pour_test(time: Res<Time>, mut fait: Local<bool>, mut commands: Commands, l: Res<Langue>, son: Res<SoundOn>, r: Res<Reglages>, style: Option<Res<StyleMortOption>>) {
     if !*fait && time.elapsed_secs() > 2.0 {
         *fait = true;
-        ouvrir(&mut commands, *l, son.0, &r);
+        ouvrir(&mut commands, *l, son.0, &r, style.is_some());
     }
 }
 
@@ -61,7 +66,7 @@ fn etat(oui: bool) -> &'static str {
     if oui { tx!("activée", "on", "an", "attiva", "activada").t() } else { tx!("désactivée", "off", "aus", "disattivata", "desactivada").t() }
 }
 
-fn ouvrir(commands: &mut Commands, l: Langue, son: bool, r: &Reglages) {
+fn ouvrir(commands: &mut Commands, l: Langue, son: bool, r: &Reglages, style_mort: bool) {
     let panel = spawn_panel(commands, (Panneau, BackgroundColor(Color::srgba(0.0, 0.0, 0.0, 0.35)), GlobalZIndex(50)));
     commands.entity(panel).insert(crate::ui::PanneauOpaque);
     commands.entity(panel).insert(Node {
@@ -84,6 +89,14 @@ fn ouvrir(commands: &mut Commands, l: Langue, son: bool, r: &Reglages) {
     ligne(commands, format!("{}{}{}", tx!("Musique", "Music", "Musik", "Musica", "Música").t(), crate::langue::deux_points(), etat(r.musique)), Choix::Musique);
     reglette(commands, panel, tx!("Volume de la musique", "Music volume", "Musiklautstärke", "Volume musica", "Volumen de la música").t(), r.volume_musique, Choix::MusiqueMoins, Choix::MusiquePlus);
     reglette(commands, panel, tx!("Volume des effets", "Effects volume", "Effektlautstärke", "Volume effetti", "Volumen de efectos").t(), r.volume_effets, Choix::EffetsMoins, Choix::EffetsPlus);
+    if style_mort {
+        let nom = match r.style_mort {
+            0 => tx!("Choupi", "Cute", "Niedlich", "Tenero", "Tierno"),
+            2 => tx!("Gore ridicule", "Silly gore", "Alberner Splatter", "Gore ridicolo", "Gore ridículo"),
+            _ => tx!("Normal", "Normal", "Normal", "Normale", "Normal"),
+        };
+        ligne(commands, format!("{}{}{}", tx!("Mort", "Death", "Tod", "Morte", "Muerte").t(), crate::langue::deux_points(), nom.t()), Choix::StyleMort);
+    }
     ligne(commands, format!("{}…", tx!("Ambiance", "Atmosphere", "Stimmung", "Atmosfera", "Ambiente").t()), Choix::Ambiance);
     spawn_gap(commands, panel, 2.0);
     let (b, _) = spawn_button(commands, panel, tx!("Fermer", "Close", "Schließen", "Chiudi", "Cerrar").t());
@@ -114,12 +127,13 @@ fn au_clic(
     mut r: ResMut<Reglages>,
     mut ouverture: ResMut<LangueOuverture>,
     mut changee: MessageWriter<LangueChangee>,
+    style: Option<Res<StyleMortOption>>,
 ) {
     let fermer = |commands: &mut Commands| panneaux.iter().for_each(|e| commands.entity(e).despawn());
     if boutons.contains(clic.entity) {
         if panneaux.is_empty() {
             ouverture.0 = *langue;
-            ouvrir(&mut commands, *langue, son.0, &r);
+            ouvrir(&mut commands, *langue, son.0, &r, style.is_some());
         }
         return;
     }
@@ -142,6 +156,7 @@ fn au_clic(
             crate::langue::definir_maintenant(*langue);
         }
         Choix::Son => son.0 = !son.0,
+        Choix::StyleMort => r.style_mort = (r.style_mort + 1) % 3,
         Choix::Musique => r.musique = !r.musique,
         Choix::MusiqueMoins => r.volume_musique = r.volume_musique.saturating_sub(1),
         Choix::MusiquePlus => r.volume_musique = (r.volume_musique + 1).min(10),
@@ -149,5 +164,5 @@ fn au_clic(
         Choix::EffetsPlus => r.volume_effets = (r.volume_effets + 1).min(10),
     }
     fermer(&mut commands);
-    ouvrir(&mut commands, *langue, son.0, &r);
+    ouvrir(&mut commands, *langue, son.0, &r, style.is_some());
 }

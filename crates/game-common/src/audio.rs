@@ -39,20 +39,22 @@ pub struct Reglages {
     /// Volumes de 0 à 10 (dixièmes).
     pub volume_musique: u8,
     pub volume_effets: u8,
+    /// Style des effets de mort (jeux qui le proposent) : 0 choupi, 1 normal, 2 gore ridicule.
+    pub style_mort: u8,
 }
 
 impl Reglages {
     fn charger() -> Reglages {
-        let d = Reglages { son: true, musique: true, volume_musique: 7, volume_effets: 10 };
+        let d = Reglages { son: true, musique: true, volume_musique: 7, volume_effets: 10, style_mort: 1 };
         let Some(t) = crate::save::load("studio", "son") else { return d };
         let m: Vec<&str> = t.split_whitespace().collect();
         let n = |i: usize, v: u8| m.get(i).and_then(|x| x.parse::<u8>().ok()).map_or(v, |x| x.min(10));
-        Reglages { son: m.first() != Some(&"0"), musique: m.get(1) != Some(&"0"), volume_musique: n(2, d.volume_musique), volume_effets: n(3, d.volume_effets) }
+        Reglages { son: m.first() != Some(&"0"), musique: m.get(1) != Some(&"0"), volume_musique: n(2, d.volume_musique), volume_effets: n(3, d.volume_effets), style_mort: m.get(4).and_then(|x| x.parse::<u8>().ok()).map_or(d.style_mort, |x| x.min(2)) }
     }
 
     fn enregistrer(&self) {
         let b = |v: bool| if v { 1 } else { 0 };
-        crate::save::store("studio", "son", &format!("{} {} {} {}", b(self.son), b(self.musique), self.volume_musique, self.volume_effets));
+        crate::save::store("studio", "son", &format!("{} {} {} {} {}", b(self.son), b(self.musique), self.volume_musique, self.volume_effets, self.style_mort));
     }
 }
 
