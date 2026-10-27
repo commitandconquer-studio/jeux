@@ -14,6 +14,7 @@ Les jeux ne sont pas reliés par une histoire, mais chacun appartient à un **un
 |---|---|---|---|
 | 🐸 **Croâ & Cie** | Enfantin et sympa : jouets en bois, pastels, animaux (le crapaud en mascotte) | Panneaux crème, police Noto Sans | Snake, Traversée, Tour de blocs, Pousse-caisses |
 | 🚀 **Nova** | Science-fiction : espace profond, néons, vaisseaux | Panneaux sombres à bordure cyan, police Space Grotesk, fond spatial commun (`game_common::space`) | NOVA — Le Dernier Rempart, 12 Parsecs |
+| 🌧️ **Cendres** | Survie sombre et réaliste : nuit, pluie, brouillard, lampe torche (textures et modèles CC0/CC-BY, voir `assets/lueur/CREDITS`) | Panneaux charbon à bordure rouille, police Barlow Condensed | Dernière Lueur |
 | 🔬 **Eurêka** | Sciences et maths : cahier quadrillé, feutres, laboratoire | Fiches bristol à bordure bleue, police Gelasio | 2048, Le Concile des Évêques |
 
 ## Structure
@@ -31,10 +32,12 @@ games/eureka-2048/    2048 (univers Eurêka) : fusionner les puissances de 2
 games/concile/        Le Concile des Évêques (univers Eurêka) : un évêque par diocèse
 games/parsecs/        12 Parsecs (univers Nova) : la traversée d'une ceinture d'astéroïdes
 games/observatoire/   L'Observatoire (univers Eurêka) : soleils et lunes sur la carte du ciel
+games/derniere-lueur/ Dernière Lueur (univers Cendres) : survie de nuit contre des zombies, rendu réaliste réglable
 games/berger/         Le Chien de berger : rassembler un troupeau dans l'enclos (boids, loups)
 games/modele/         le jeu modèle : point de départ de tout nouveau jeu
 crates/concile-core/  grilles, solveurs et générateur du Concile (sans Bevy)
 tools/concile-gen/    génère le Livre des Conciles (games/concile/puzzles.txt)
+crates/lueur-core/    règles de Dernière Lueur : nuits, zombies, lampe, générateur (sans Bevy)
 crates/berger-core/   moutons (boids), loups, cartes et chien automatique du Chien de berger (sans Bevy)
 crates/observatoire-core/ règles, solveurs et générateur de L'Observatoire (sans Bevy)
 tools/observatoire-gen/   génère le Livre des Constellations (games/observatoire/grilles.txt)
@@ -60,18 +63,20 @@ cargo run -p snake
 
 La première compilation de Bevy prend plusieurs minutes. Les suivantes ne recompilent que le jeu.
 
-### Snake
+### À la queue leu leu (dossier `games/snake`)
 
-- Écran d'accueil : Jouer, choix de l'univers, Options, Quitter.
-- Univers : Prairie, Désert, Banquise, Océan, Volcan.
-- Options : univers, vitesse (lente/normale/rapide), taille du plateau (petit/moyen/grand), bords (murs ou traversables).
-- Commandes : flèches ou ZQSD pour diriger, Échap pour revenir au menu, Entrée ou Espace pour valider.
-- Son : une musique par univers, croque (de plus en plus aigu), tic de virage, départ, défaite. Touche M ou bouton du menu pour couper.
+Une chenille comme dans un bal populaire : on mène une file de personnages (Kenney, CC0), on attrape les invités, ils s'accrochent derrière.
+
+- Écran d'accueil : Jouer, paysage, Réglages (chef de file, paysage, vitesse, plateau, bords), Quitter.
+- Paysages 100 % Kenney : prairie, désert, cimetière, île des pirates. Lumière, tonalité et flou « maquette » de Cross or Die.
+- Cases spéciales, qui arrivent tous les 5 invités : obstacles, trous, téléporteurs (par paires), accélérateurs, tapis roulants.
+- Progression : le total d'invités attrapés (sauvegardé) débloque personnages (dont zombie, squelette, vampire, fantôme), paysages et cases.
+- Commandes : flèches ou ZQSD, glisser du doigt, manette ; P ou Espace pour la pause.
 
 Captures d'écran automatiques de tous les univers (pour itch.io, les magasins d'applications…) :
 
 ```bash
-SNAKE_CAPTURE=captures cargo run -p snake
+SNAKE_CAPTURE=captures cargo run -p snake   # tout est débloqué
 ```
 
 ### Traversée
