@@ -22,6 +22,9 @@ pub enum Sfx {
     /// Bouchée : le son monte un peu avec la longueur du serpent.
     Eat(u32),
     Turn,
+    Teleport,
+    Boost,
+    Spawn,
     Start,
     GameOver,
     Click,
@@ -75,6 +78,9 @@ fn play_sfx(mut commands: Commands, mut reader: MessageReader<Sfx>, server: Res<
         let (path, volume, speed) = match *sfx {
             Sfx::Eat(score) => (lib::EAT, 0.7, 1.0 + score.min(30) as f32 * 0.02),
             Sfx::Turn => (lib::TURN, 0.25, 1.0),
+            Sfx::Teleport => (lib::BLIP, 0.6, 0.8),
+            Sfx::Boost => (lib::CHARGE, 0.5, 1.2),
+            Sfx::Spawn => (lib::CLUNK, 0.5, 1.0),
             Sfx::Start => (lib::START, 0.6, 1.0),
             Sfx::GameOver => (lib::GAME_OVER, 0.8, 1.0),
             Sfx::Click => (lib::CLICK, 0.6, 1.0),

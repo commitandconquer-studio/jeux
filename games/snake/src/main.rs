@@ -1,8 +1,10 @@
 // Snake — Commit & Conquer. Jeu libre sous licence GPL-3.0-or-later.
 mod audio;
+mod board;
 mod capture;
 mod game;
 mod people;
+mod progress;
 mod settings;
 mod ui;
 mod world;

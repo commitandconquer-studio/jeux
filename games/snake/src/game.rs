@@ -8,6 +8,7 @@ use game_common::{Rng, Score, flat_material, palette};
 
 use crate::GameState;
 use crate::audio::Sfx;
+use crate::board::{Board, Feature, Tile};
 use crate::people::{self, Pose};
 use crate::settings::Settings;
 use crate::world::cell_to_world;
@@ -19,6 +20,9 @@ impl Plugin for GamePlugin {
         app.insert_resource(Conga::new(14, 0))
             .insert_resource(Food { cell: IVec2::ZERO, kind: 1, spawned: true })
             .insert_resource(Paused(false))
+            .insert_resource(Boost(0))
+            .insert_resource(Banner::default())
+            .init_resource::<Board>()
             .insert_resource(StepTimer(Timer::from_seconds(0.16, TimerMode::Repeating)))
             .add_systems(Startup, (setup, load_best))
             .add_systems(OnEnter(GameState::Playing), new_game)
@@ -27,6 +31,7 @@ impl Plugin for GamePlugin {
             .add_systems(
                 Update,
                 (
+                    (crate::board::sync_tiles, crate::board::animate_tiles),
                     (read_input, step).chain().run_if(in_state(GameState::Playing)),
                     (sync_guest, sync_segments).run_if(|s: Res<State<GameState>>| {
                         matches!(s.get(), GameState::Playing | GameState::GameOver)
@@ -41,6 +46,60 @@ impl Plugin for GamePlugin {
 /// `true` quand la partie est en pause.
 #[derive(Resource)]
 pub struct Paused(pub bool);
+
+/// Pas restants d'élan donné par un accélérateur.
+#[derive(Resource)]
+struct Boost(u32);
+
+/// Annonce affichée à l'écran quelques secondes (nouvel élément sur le plateau).
+#[derive(Resource, Default)]
+pub struct Banner {
+    pub text: String,
+    pub left: f32,
+}
+
+/// Ordre dans lequel les éléments arrivent, tous les `LEVEL_EVERY` invités.
+const SEQUENCE: [Feature; 16] = [
+    Feature::Obstacle,
+    Feature::Speeder,
+    Feature::Hole,
+    Feature::Teleport,
+    Feature::Belt,
+    Feature::Obstacle,
+    Feature::Speeder,
+    Feature::Teleport,
+    Feature::Hole,
+    Feature::Obstacle,
+    Feature::Belt,
+    Feature::Obstacle,
+    Feature::Teleport,
+    Feature::Hole,
+    Feature::Speeder,
+    Feature::Obstacle,
+];
+const LEVEL_EVERY: u32 = 5;
+
+fn cap(f: Feature) -> usize {
+    match f {
+        Feature::Obstacle => 10,
+        Feature::Hole => 4,
+        Feature::Teleport => 6,
+        Feature::Speeder => 4,
+        Feature::Belt => 8,
+    }
+}
+
+pub fn feature_name(f: Feature) -> &'static str {
+    use game_common::tx;
+    match f {
+        Feature::Obstacle => tx!("Des obstacles !", "Obstacles!", "Hindernisse!", "Ostacoli!", "¡Obstáculos!"),
+        Feature::Hole => tx!("Attention aux trous !", "Mind the holes!", "Vorsicht, Löcher!", "Attenzione alle buche!", "¡Cuidado con los hoyos!"),
+        Feature::Teleport => tx!("Téléporteurs !", "Teleporters!", "Teleporter!", "Teletrasporti!", "¡Teletransportadores!"),
+        Feature::Speeder => tx!("Accélérateurs !", "Speed pads!", "Turbo-Felder!", "Acceleratori!", "¡Aceleradores!"),
+        Feature::Belt => tx!("Tapis roulants !", "Conveyor belts!", "Förderbänder!", "Nastri trasportatori!", "¡Cintas transportadoras!"),
+    }
+    .t()
+}
 
 /// La chenille : la tête en premier, puis les invités attrapés.
 #[derive(Resource)]
@@ -134,6 +193,8 @@ fn new_game(
     mut timer: ResMut<StepTimer>,
     mut score: ResMut<Score>,
     mut paused: ResMut<Paused>,
+    mut board: ResMut<Board>,
+    mut boost: ResMut<Boost>,
     mut rng: ResMut<Rng>,
     stuff: Query<Entity, Or<(With<Segment>, With<Guest>)>>,
     mut sfx: MessageWriter<Sfx>,
@@ -143,10 +204,19 @@ fn new_game(
         commands.entity(e).despawn();
     }
     paused.0 = false;
+    board.clear();
+    boost.0 = 0;
     *conga = Conga::new(settings.grid(), 0);
-    food.cell = free_cell(&conga.cells, settings.grid(), &mut rng);
+    food.cell = free_cell(&conga.cells, &board, settings.grid(), &mut rng);
     food.kind = guest_kind(&mut rng);
     food.spawned = false;
+    // Captures d'écran : tous les éléments sont déjà posés.
+    if std::env::var("SNAKE_CAPTURE").is_ok() {
+        let busy = conga.cells.clone();
+        for f in [Feature::Obstacle, Feature::Obstacle, Feature::Obstacle, Feature::Hole, Feature::Teleport, Feature::Teleport, Feature::Speeder, Feature::Belt, Feature::Belt] {
+            board.place(f, &busy, conga.cells[0], settings.grid(), settings.universe, &mut rng);
+        }
+    }
     timer.0 = Timer::from_seconds(settings.speed.step_times().0, TimerMode::Repeating);
     score.reset();
 }
@@ -220,14 +290,30 @@ fn step(
     mut food: ResMut<Food>,
     mut score: ResMut<Score>,
     mut rng: ResMut<Rng>,
+    mut board: ResMut<Board>,
+    mut boost: ResMut<Boost>,
+    mut banner: ResMut<Banner>,
     mut next: ResMut<NextState<GameState>>,
     mut sfx: MessageWriter<Sfx>,
 ) {
-    if paused.0 || !timer.0.tick(time.delta()).just_finished() {
+    banner.left = (banner.left - time.delta_secs()).max(0.0);
+    if paused.0 {
         return;
     }
+    // L'élan d'un accélérateur fait avancer le temps deux fois plus vite.
+    let dt = if boost.0 > 0 { time.delta() * 2 } else { time.delta() };
+    if !timer.0.tick(dt).just_finished() {
+        return;
+    }
+    boost.0 = boost.0.saturating_sub(1);
     let grid = settings.grid();
-    if let Some(d) = conga.queued.pop_front() {
+    // Un tapis roulant impose sa direction (sauf à contresens).
+    if let Some(Tile::Belt(d)) = board.tiles.get(&conga.cells[0])
+        && *d != -conga.dir
+    {
+        conga.dir = *d;
+        conga.queued.clear();
+    } else if let Some(d) = conga.queued.pop_front() {
         conga.dir = d;
     }
     let mut head = conga.cells[0] + conga.dir;
@@ -235,9 +321,16 @@ fn step(
     if outside && settings.wrap {
         head = head.rem_euclid(IVec2::splat(grid));
     }
+    let deadly = matches!(board.tiles.get(&head), Some(Tile::Obstacle(_) | Tile::Hole));
+    if let Some(Tile::Teleport(id)) = board.tiles.get(&head).copied()
+        && let Some(exit) = board.partner(head, id)
+    {
+        head = exit;
+        sfx.write(Sfx::Teleport);
+    }
     // La queue va bouger : on peut avancer sur sa case actuelle.
     let body = &conga.cells[..conga.cells.len() - 1];
-    if (outside && !settings.wrap) || body.contains(&head) {
+    if (outside && !settings.wrap) || deadly || body.contains(&head) {
         next.set(GameState::GameOver);
         sfx.write(Sfx::GameOver);
         return;
@@ -252,21 +345,47 @@ fn step(
         conga.prev.push(tail);
         let kind = food.kind;
         conga.kinds.push(kind);
-        food.cell = free_cell(&conga.cells, grid, &mut rng);
+        food.cell = free_cell(&conga.cells, &board, grid, &mut rng);
         food.kind = guest_kind(&mut rng);
         food.spawned = false;
+        if score.current % LEVEL_EVERY == 0 {
+            level_up(&mut board, &conga, food.cell, &settings, &mut banner, &mut sfx, &mut rng, score.current / LEVEL_EVERY);
+        }
         let min = settings.speed.step_times().1;
         let faster = (timer.0.duration().as_secs_f32() * 0.96).max(min);
         timer.0.set_duration(Duration::from_secs_f32(faster));
     } else {
         conga.cells.pop();
     }
+    if board.tiles.get(&head) == Some(&Tile::Speeder) {
+        boost.0 = 5;
+        sfx.write(Sfx::Boost);
+    }
 }
 
-fn free_cell(occupied: &[IVec2], grid: i32, rng: &mut Rng) -> IVec2 {
+/// Un nouvel élément arrive sur le plateau (le premier de la liste que le joueur a débloqué et qui a encore de la place).
+#[allow(clippy::too_many_arguments)]
+fn level_up(board: &mut Board, conga: &Conga, food: IVec2, settings: &Settings, banner: &mut Banner, sfx: &mut MessageWriter<Sfx>, rng: &mut Rng, level: u32) {
+    let mut busy = conga.cells.clone();
+    busy.push(food);
+    for k in 0..SEQUENCE.len() {
+        let f = SEQUENCE[(level as usize - 1 + k) % SEQUENCE.len()];
+        if !crate::progress::allows(f) || board.count(f) >= cap(f) {
+            continue;
+        }
+        if board.place(f, &busy, conga.cells[0], settings.grid(), settings.universe, rng) {
+            banner.text = format!("{} · {}", game_common::tx!("Niveau {}", "Level {}", "Level {}", "Livello {}", "Nivel {}").avec(&[&(level + 1)]), feature_name(f));
+            banner.left = 3.0;
+            sfx.write(Sfx::Spawn);
+            return;
+        }
+    }
+}
+
+fn free_cell(occupied: &[IVec2], board: &Board, grid: i32, rng: &mut Rng) -> IVec2 {
     loop {
         let c = IVec2::new(rng.below(grid as u32) as i32, rng.below(grid as u32) as i32);
-        if !occupied.contains(&c) {
+        if !occupied.contains(&c) && !board.tiles.contains_key(&c) {
             return c;
         }
     }
@@ -291,7 +410,7 @@ fn sync_guest(
     }
     let root = commands
         .spawn((
-            Transform::from_translation(cell_to_world(food.cell.as_vec2(), 0.0, settings.grid()))
+            Transform::from_translation(cell_to_world(food.cell.as_vec2(), 0.05, settings.grid()))
                 .with_rotation(Quat::from_rotation_y(PI * 0.75))
                 .with_scale(Vec3::splat(0.01)),
             Visibility::default(),
@@ -368,7 +487,7 @@ fn sync_segments(
             continue;
         }
         present[seg.index] = true;
-        tf.translation = cell_to_world(pos(seg.index), 0.0, grid);
+        tf.translation = cell_to_world(pos(seg.index), 0.05, grid);
         if let Some(d) = heading(seg.index) {
             let target = (d.x as f32).atan2(d.y as f32);
             let delta = (target - seg.yaw + PI).rem_euclid(TAU) - PI;
@@ -380,13 +499,13 @@ fn sync_segments(
         let yaw = heading(i).map_or(PI / 2.0, |d| (d.x as f32).atan2(d.y as f32));
         let size = if i == 0 { 1.12 } else { 1.0 };
         let mut root = commands.spawn((
-            Transform::from_translation(cell_to_world(pos(i), 0.0, grid)).with_rotation(Quat::from_rotation_y(yaw)),
+            Transform::from_translation(cell_to_world(pos(i), 0.05, grid)).with_rotation(Quat::from_rotation_y(yaw)),
             Visibility::default(),
             Segment { index: i, yaw },
         ));
         // Les trois membres de départ sont déjà là ; les suivants apparaissent en rebondissant.
         if i >= 3 {
-            root.insert((Pop(0.0), Transform::from_translation(cell_to_world(pos(i), 0.0, grid)).with_scale(Vec3::splat(0.01))));
+            root.insert((Pop(0.0), Transform::from_translation(cell_to_world(pos(i), 0.05, grid)).with_scale(Vec3::splat(0.01))));
         }
         let id = root.id();
         people::spawn_model(&mut commands, &server, &mut graphs, id, conga.kinds[i], Pose::Walk, size);
