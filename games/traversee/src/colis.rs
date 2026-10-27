@@ -1,6 +1,7 @@
 //! Les colis : on ramasse une caisse de couleur, puis on la livre au destinataire de la même couleur,
 //! posté sur le rebord de la zone de jeu. Un destinataire d'une autre couleur attend aussi : il se trompe de colis.
 use bevy::prelude::*;
+use game_common::ui::ThemedText;
 use game_common::{Rng, Score, flat_material, tx};
 
 use crate::GameState;
@@ -62,14 +63,39 @@ struct ColisMats {
     peau: Handle<StandardMaterial>,
 }
 
+const CARTE: Color = Color::srgb(0.99, 0.97, 0.92);
+const ENCRE: Color = Color::srgb(0.12, 0.14, 0.2);
+const DOUX: Color = Color::srgb(0.46, 0.46, 0.5);
+
+/// La carte « Livraison en cours » (en bas à droite) et ses morceaux à mettre à jour.
+#[derive(Component)]
+struct CarteColis;
+#[derive(Component)]
+struct CCaisse;
+#[derive(Component)]
+struct CPoint;
+#[derive(Component)]
+struct CDest;
+#[derive(Component)]
+struct CFleche;
+
+fn nom_teinte(i: usize) -> &'static str {
+    match i {
+        0 => tx!("rouge", "red", "rot", "rosso", "rojo").t(),
+        1 => tx!("bleu", "blue", "blau", "blu", "azul").t(),
+        2 => tx!("vert", "green", "grün", "verde", "verde").t(),
+        _ => tx!("jaune", "yellow", "gelb", "giallo", "amarillo").t(),
+    }
+}
+
 pub struct ColisPlugin;
 
 impl Plugin for ColisPlugin {
     fn build(&self, app: &mut App) {
         app.init_resource::<Porte>()
-            .add_systems(Startup, setup)
+            .add_systems(Startup, (setup, setup_carte))
             .add_systems(OnEnter(GameState::Dying), |mut porte: ResMut<Porte>| porte.0 = None)
-            .add_systems(Update, (habiller, flotter))
+            .add_systems(Update, (habiller, flotter, majeur_carte))
             .add_systems(Update, (logique, placer, porteur).chain().run_if(in_state(GameState::Playing)));
     }
 }
@@ -306,5 +332,95 @@ fn porteur(mut commands: Commands, porte: Res<Porte>, frog: Res<Frog>, kit: Res<
     for (_, mut tf) in &mut q {
         tf.translation = frog.visual_pos() + Vec3::Y * 1.5;
         tf.rotation = Quat::IDENTITY;
+    }
+}
+
+/// Carte « Livraison en cours » : la caisse portée, son destinataire et une flèche dans sa direction.
+fn setup_carte(mut commands: Commands, server: Res<AssetServer>) {
+    let carte = commands
+        .spawn((
+            Node { position_type: PositionType::Absolute, bottom: px(14), right: px(14), width: px(450), align_items: AlignItems::Center, column_gap: px(14), padding: UiRect::axes(px(14), px(12)), border_radius: BorderRadius::all(px(22)), ..default() },
+            BackgroundColor(CARTE),
+            BoxShadow::new(Color::srgba(0.0, 0.0, 0.0, 0.25), px(0), px(4), px(0), px(10)),
+            GlobalZIndex(10),
+            Pickable::IGNORE,
+            Visibility::Hidden,
+            CarteColis,
+        ))
+        .id();
+    let caisse = commands
+        .spawn((
+            Node { width: px(76), height: px(76), flex_shrink: 0.0, justify_content: JustifyContent::Center, align_items: AlignItems::Center, border_radius: BorderRadius::all(px(16)), ..default() },
+            BackgroundColor(TEINTES[1]),
+            Pickable::IGNORE,
+            CCaisse,
+            ChildOf(carte),
+        ))
+        .id();
+    for (l, h) in [(14.0, 76.0), (76.0, 14.0)] {
+        commands.spawn((Node { position_type: PositionType::Absolute, width: px(l), height: px(h), ..default() }, BackgroundColor(Color::srgb(0.98, 0.96, 0.9)), Pickable::IGNORE, ChildOf(caisse)));
+    }
+    let col = commands.spawn((Node { flex_direction: FlexDirection::Column, row_gap: px(3), flex_grow: 1.0, ..default() }, Pickable::IGNORE, ChildOf(carte))).id();
+    let texte = |commands: &mut Commands, parent: Entity, t: &str, taille: f32, c: Color| -> Entity {
+        commands.spawn((Text::new(t), TextFont::from_font_size(taille), TextColor(c), Pickable::IGNORE, ThemedText, ChildOf(parent))).id()
+    };
+    texte(&mut commands, col, tx!("Livraison en cours", "Delivery in progress", "Lieferung unterwegs", "Consegna in corso", "Entrega en curso").t(), 18.0, ENCRE);
+    let ligne = commands.spawn((Node { align_items: AlignItems::Center, column_gap: px(8), ..default() }, Pickable::IGNORE, ChildOf(col))).id();
+    commands.spawn((Node { width: px(16), height: px(16), border_radius: BorderRadius::MAX, ..default() }, BackgroundColor(TEINTES[1]), Pickable::IGNORE, CPoint, ChildOf(ligne)));
+    let dest = texte(&mut commands, ligne, "", 20.0, ENCRE);
+    commands.entity(dest).insert(CDest);
+    texte(&mut commands, col, tx!("Récompense : +25 pts", "Reward: +25 pts", "Belohnung: +25 Pkt.", "Ricompensa: +25 pt", "Recompensa: +25 pts").t(), 15.0, DOUX);
+    let bouton = commands
+        .spawn((
+            Node { width: px(54), height: px(54), flex_shrink: 0.0, justify_content: JustifyContent::Center, align_items: AlignItems::Center, border_radius: BorderRadius::all(px(14)), ..default() },
+            BackgroundColor(Color::srgb(0.2, 0.5, 0.95)),
+            Pickable::IGNORE,
+            ChildOf(carte),
+        ))
+        .id();
+    commands.spawn((ImageNode::new(server.load("branding/hud/fleche.png")), Node { width: px(34), height: px(34), ..default() }, UiTransform::default(), Pickable::IGNORE, CFleche, ChildOf(bouton)));
+}
+
+#[allow(clippy::too_many_arguments)]
+fn majeur_carte(
+    state: Res<State<GameState>>,
+    porte: Res<Porte>,
+    frog: Res<Frog>,
+    dests: Query<&Destinataire>,
+    mut carte: Query<&mut Visibility, With<CarteColis>>,
+    mut caisse: Query<&mut BackgroundColor, (With<CCaisse>, Without<CPoint>)>,
+    mut point: Query<&mut BackgroundColor, (With<CPoint>, Without<CCaisse>)>,
+    mut dest: Query<&mut Text, With<CDest>>,
+    mut fleche: Query<&mut UiTransform, With<CFleche>>,
+) {
+    let Some(teinte) = porte.0.filter(|_| *state.get() == GameState::Playing) else {
+        for mut v in &mut carte {
+            *v = Visibility::Hidden;
+        }
+        return;
+    };
+    for mut v in &mut carte {
+        *v = Visibility::Inherited;
+    }
+    for mut c in &mut caisse {
+        c.0 = TEINTES[teinte];
+    }
+    for mut c in &mut point {
+        c.0 = TEINTES[teinte];
+    }
+    for mut t in &mut dest {
+        t.0 = tx!("Destinataire {}", "Recipient: {}", "Empfänger: {}", "Destinatario: {}", "Destinatario: {}").avec(&[&nom_teinte(teinte)]);
+    }
+    // La flèche montre le destinataire de la bonne couleur : l'angle est celui qu'on voit à l'écran
+    // (la caméra est tournée : « devant » va en haut à droite, « à droite » en bas à droite).
+    let angle = dests.iter().find(|d| d.teinte == teinte).map(|d| {
+        let dx = d.col as f32 - frog.pos.x;
+        let dz = -(d.row as f32) - frog.pos.z;
+        let droite = (9.0 * dx - 3.0 * dz) / 9.49;
+        let haut = 0.873 * (-3.0 * dx - 9.0 * dz) / 9.49;
+        droite.atan2(haut)
+    });
+    for mut t in &mut fleche {
+        t.rotation = Rot2::radians(angle.unwrap_or(0.0));
     }
 }

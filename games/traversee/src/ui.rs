@@ -2,7 +2,7 @@
 use bevy::prelude::*;
 use game_common::Score;
 use game_common::tx;
-use game_common::ui::{GameHelp, HelpButton, QuitButton, ThemedPanel, ThemedText, spawn_hud, spawn_panel_left, spawn_studio_logo};
+use game_common::ui::{GameHelp, HelpButton, QuitButton, ThemedPanel, ThemedText, spawn_panel_left, spawn_studio_logo};
 
 use crate::screens::{CountUp, Pop, Pulse, spawn_bar, spawn_chip};
 
@@ -87,13 +87,13 @@ enum UiAction {
     Play,
     Garage,
     Menu,
+    /// Le bouton menu du bandeau de jeu : met fin à la partie, comme Échap.
+    Stop,
 }
 
 #[derive(Component)]
 struct Hud;
 
-#[derive(Component)]
-struct HudText;
 
 /// Couleurs des lettres du titre.
 
@@ -257,17 +257,6 @@ fn spawn_menu(mut commands: Commands, progress: Res<Progress>, score: Res<Score>
 }
 
 /// « Score : 12    Record : 40 », dans la langue en cours.
-fn score_line(score: &Score) -> String {
-    tx!(
-        "Score : {}    Record : {}",
-        "Score: {}    Best: {}",
-        "Punkte: {}    Rekord: {}",
-        "Punti: {}    Record: {}",
-        "Puntos: {}    Récord: {}"
-    )
-    .avec(&[&score.current, &score.best])
-}
-
 /// Un texte posé à un endroit précis du panneau (position et taille en % du panneau).
 #[allow(clippy::too_many_arguments)]
 fn texte_abs(commands: &mut Commands, parent: Entity, texte: impl Into<String>, (x, y, l, h): (f32, f32, f32, f32), taille: f32, couleur: Color, justif: JustifyContent, ombre: Option<Color>) -> Entity {
@@ -418,26 +407,129 @@ pub fn spawn_game_over(mut commands: Commands, score: Res<Score>, death: Res<Dea
     sfx.write(if progress.new_record || !progress.fresh.is_empty() { Sfx::Win } else { Sfx::GameOver });
 }
 
-fn setup_hud(mut commands: Commands) {
-    let (hud, text) = spawn_hud(&mut commands);
-    commands.entity(hud).insert((Hud, Visibility::Hidden));
-    commands.entity(text).insert(HudText);
+#[derive(Component)]
+struct HudScore;
+#[derive(Component)]
+struct HudRecord;
+#[derive(Component)]
+struct HudSuivant;
+#[derive(Component)]
+struct HudCompte;
+#[derive(Component)]
+struct HudBarre;
+/// Ligne « prochain déblocage » (cachée quand tout est débloqué).
+#[derive(Component)]
+struct HudLigneSuivant;
+
+const CARTE: Color = Color::srgb(0.99, 0.97, 0.92);
+const ENCRE: Color = Color::srgb(0.12, 0.14, 0.2);
+const DOUX: Color = Color::srgb(0.46, 0.46, 0.5);
+
+fn hud_texte(commands: &mut Commands, parent: Entity, texte: &str, taille: f32, couleur: Color) -> Entity {
+    commands.spawn((Text::new(texte), TextFont::from_font_size(taille), TextColor(couleur), Pickable::IGNORE, ThemedText, ChildOf(parent))).id()
 }
 
+fn hud_icone(commands: &mut Commands, parent: Entity, image: Handle<Image>, cote: f32) {
+    commands.spawn((ImageNode::new(image), Node { width: px(cote), height: px(cote), flex_shrink: 0.0, ..default() }, Pickable::IGNORE, ChildOf(parent)));
+}
+
+/// Bandeau de jeu : score et record, prochain déblocage, bouton menu.
+fn setup_hud(mut commands: Commands, server: Res<AssetServer>) {
+    let carte = commands
+        .spawn((
+            Node { position_type: PositionType::Absolute, top: px(14), left: px(14), width: px(420), flex_direction: FlexDirection::Column, row_gap: px(8), padding: UiRect::axes(px(18), px(12)), border_radius: BorderRadius::all(px(22)), ..default() },
+            BackgroundColor(CARTE),
+            BoxShadow::new(Color::srgba(0.0, 0.0, 0.0, 0.25), px(0), px(4), px(0), px(10)),
+            GlobalZIndex(10),
+            Pickable::IGNORE,
+            Hud,
+            Visibility::Hidden,
+        ))
+        .id();
+    let haut = commands.spawn((Node { align_items: AlignItems::Center, column_gap: px(10), ..default() }, Pickable::IGNORE, ChildOf(carte))).id();
+    let bloc = |commands: &mut Commands, icone: &'static str, titre: &str| -> Entity {
+        hud_icone(commands, haut, server.load(icone), 40.0);
+        let col = commands.spawn((Node { flex_direction: FlexDirection::Column, min_width: px(70), ..default() }, Pickable::IGNORE, ChildOf(haut))).id();
+        hud_texte(commands, col, titre, 15.0, DOUX);
+        hud_texte(commands, col, "0", 30.0, ENCRE)
+    };
+    let score = bloc(&mut commands, "branding/hud/etoile.png", tx!("Score", "Score", "Punkte", "Punti", "Puntos").t());
+    commands.entity(score).insert(HudScore);
+    commands.spawn((Node { width: px(2), height: px(44), margin: UiRect::horizontal(px(6)), ..default() }, BackgroundColor(Color::srgb(0.85, 0.83, 0.78)), Pickable::IGNORE, ChildOf(haut)));
+    let record = bloc(&mut commands, "branding/hud/trophee.png", tx!("Record", "Best", "Rekord", "Record", "Récord").t());
+    commands.entity(record).insert(HudRecord);
+    // Prochain déblocage
+    let ligne = commands.spawn((Node { flex_direction: FlexDirection::Column, row_gap: px(5), ..default() }, Pickable::IGNORE, HudLigneSuivant, ChildOf(carte))).id();
+    let titres = commands.spawn((Node { justify_content: JustifyContent::SpaceBetween, align_items: AlignItems::Center, ..default() }, Pickable::IGNORE, ChildOf(ligne))).id();
+    let gauche = commands.spawn((Node { align_items: AlignItems::Center, column_gap: px(7), ..default() }, Pickable::IGNORE, ChildOf(titres))).id();
+    hud_icone(&mut commands, gauche, server.load("branding/hud/cadenas.png"), 18.0);
+    let suivant = hud_texte(&mut commands, gauche, "", 15.0, ENCRE);
+    commands.entity(suivant).insert(HudSuivant);
+    let compte = hud_texte(&mut commands, titres, "", 15.0, DOUX);
+    commands.entity(compte).insert(HudCompte);
+    let piste = commands.spawn((Node { width: percent(100), height: px(12), border_radius: BorderRadius::all(px(6)), overflow: Overflow::clip(), ..default() }, BackgroundColor(Color::srgb(0.85, 0.83, 0.8)), Pickable::IGNORE, ChildOf(ligne))).id();
+    commands.spawn((Node { width: percent(0), height: percent(100), ..default() }, BackgroundColor(Color::srgb(1.0, 0.65, 0.1)), Pickable::IGNORE, HudBarre, ChildOf(piste)));
+
+    // Bouton menu (trois barres) : même effet que la touche Échap.
+    let menu = commands
+        .spawn((
+            Node { position_type: PositionType::Absolute, top: px(14), right: px(14), width: px(62), height: px(62), flex_direction: FlexDirection::Column, justify_content: JustifyContent::Center, align_items: AlignItems::Center, row_gap: px(6), border_radius: BorderRadius::all(px(16)), ..default() },
+            BackgroundColor(CARTE),
+            BoxShadow::new(Color::srgba(0.0, 0.0, 0.0, 0.25), px(0), px(4), px(0), px(10)),
+            GlobalZIndex(10),
+            UiTransform::default(),
+            Survol,
+            UiAction::Stop,
+            Hud,
+            Visibility::Hidden,
+        ))
+        .id();
+    for _ in 0..3 {
+        commands.spawn((Node { width: px(30), height: px(5), border_radius: BorderRadius::all(px(3)), ..default() }, BackgroundColor(ENCRE), Pickable::IGNORE, ChildOf(menu)));
+    }
+}
+
+#[allow(clippy::too_many_arguments)]
 fn update_hud(
     score: Res<Score>,
+    progress: Res<Progress>,
     state: Res<State<GameState>>,
     mut hud: Query<&mut Visibility, With<Hud>>,
-    mut text: Query<&mut Text, With<HudText>>,
+    mut scores: Query<&mut Text, (With<HudScore>, Without<HudRecord>, Without<HudSuivant>, Without<HudCompte>)>,
+    mut records: Query<&mut Text, (With<HudRecord>, Without<HudScore>, Without<HudSuivant>, Without<HudCompte>)>,
+    mut suivants: Query<&mut Text, (With<HudSuivant>, Without<HudScore>, Without<HudRecord>, Without<HudCompte>)>,
+    mut comptes: Query<&mut Text, (With<HudCompte>, Without<HudScore>, Without<HudRecord>, Without<HudSuivant>)>,
+    mut barres: Query<&mut Node, With<HudBarre>>,
+    mut lignes: Query<&mut Node, (With<HudLigneSuivant>, Without<HudBarre>)>,
 ) {
     let show = matches!(state.get(), GameState::Playing | GameState::Dying);
     for mut v in &mut hud {
         *v = if show { Visibility::Inherited } else { Visibility::Hidden };
     }
-    if score.is_changed() {
-        for mut t in &mut text {
-            let son = tx!("M : son", "M: sound", "M: Ton", "M: audio", "M: sonido").t();
-            t.0 = format!("{}    {}", score_line(&score), son);
+    if !show {
+        return;
+    }
+    for mut t in &mut scores {
+        t.0 = score.current.to_string();
+    }
+    for mut t in &mut records {
+        t.0 = score.best.to_string();
+    }
+    let cumul = progress.total + score.current;
+    let suite = crate::progress::UNLOCKS.iter().filter(|(t, _)| cumul < *t).min_by_key(|(t, _)| *t).copied();
+    for mut n in &mut lignes {
+        n.display = if suite.is_some() { Display::Flex } else { Display::None };
+    }
+    if let Some((at, item)) = suite {
+        let fraction = cumul as f32 / at.max(1) as f32;
+        for mut t in &mut suivants {
+            t.0 = tx!("Prochain déblocage : {}", "Next unlock: {}", "Nächste Freischaltung: {}", "Prossimo sblocco: {}", "Próximo desbloqueo: {}").avec(&[&item.name()]);
+        }
+        for mut t in &mut comptes {
+            t.0 = format!("{} / {}", cumul, at);
+        }
+        for mut n in &mut barres {
+            n.width = percent(fraction.clamp(0.0, 1.0) * 100.0);
         }
     }
 }
@@ -472,5 +564,6 @@ fn on_click(
         UiAction::Play => next.set(GameState::Playing),
         UiAction::Garage => next.set(GameState::Garage),
         UiAction::Menu => next.set(GameState::Menu),
+        UiAction::Stop => next.set(GameState::GameOver),
     }
 }
