@@ -1,49 +1,60 @@
 +++
 title = "Cross or Die"
 weight = 2
-description = "Help your character cross roads, rivers and railways… and fill your collection."
+description = "The worst delivery service in the multiverse: pick up your parcels, deliver them to the right customer… and survive roads, trains and eagles."
 [extra]
 logo = "traversee/logo"
 web = true
 icone = "traversee"
 code = "games/traversee"
 dossier = "traversee"
-commandes = ["Arrow keys or WASD, Space or click: hop", "Touch: swipe", "M: sound · Esc: menu"]
+commandes = ["Arrow keys or WASD, Space or click: hop", "Touch: swipe", "M: sound · Esc: end the run"]
 chiffres = [
-  { n = "11", t = "vehicles to unlock" },
-  { n = "8", t = "characters" },
-  { n = "5", t = "worlds" },
-  { n = "5", t = "ways to lose" },
+  { n = "7", t = "worlds" },
+  { n = "12", t = "characters" },
+  { n = "34", t = "enemies to unlock" },
+  { n = "6", t = "achievements" },
 ]
 captures = [
-  { img = "menu", t = "The menu, with its jumping character" },
-  { img = "route", t = "Roads, rivers and railways" },
+  { img = "menu", t = "The menu: your best score, your next unlock, your achievements" },
+  { img = "livraison", t = "A parcel on your back: the arrow shows where to deliver" },
+  { img = "fin", t = "The end screen, with a world-weary courier's one-liner" },
   { img = "ecrase", t = "Every death has its own effect, with zoom and slow-mo" },
-  { img = "noye", t = "Splash!" },
-  { img = "cadeau", t = "A glowing gift: bonus points" },
+  { img = "choupi", t = "Cute style: butterflies and fountains of light" },
+  { img = "gore", t = "Silly gore style: ketchup everywhere" },
+  { img = "noye", t = "The delivery fell in the water" },
   { img = "ennemis", t = "The Collection: enemies to unlock" },
-  { img = "decors", t = "The Collection: scenery" },
+  { img = "decors", t = "The Collection: worlds" },
   { img = "personnages", t = "The Collection: characters" },
   { img = "pirates", t = "Pirate bay: cannons, barrels and palm trees" },
   { img = "halloween", t = "Halloween: graveyard and undead" },
   { img = "moyenage", t = "The Middle Ages: siege engines and towers" },
   { img = "espace", t = "Space: ships, meteors and platforms" },
+  { img = "farwest", t = "The Wild West: horses, bison and a steam train" },
+  { img = "cyber", t = "The futuristic city: speeders, monorail and skyscrapers" },
 ]
 +++
 
-**Cross or Die** is a low-poly 3D crossing game: a character, roads, rivers, railways, and a camera that moves on its own. Go as far as you can… and don't dawdle!
+**Cross or Die** is a low-poly 3D arcade game. You are a courier for **Cross Express**, a company that accepts every delivery, even the most dangerous ones. *"We deliver anywhere. We don't guarantee the courier."*
 
-## A world you uncover
-At first the road is quiet: a few cars, some grass. As your **points add up from game to game**, the game grows: trucks, taxis, motorbikes, buses, trains, golden gifts, then an **eagle** sweeping a whole column. Everything unlocks: enemies, worlds, characters.
+## How it works
+**Coloured crates** appear on the grass. Walk onto one to pick it up: it follows you, and a card at the bottom of the screen tells you who to deliver it to. The **customer of the same colour** is waiting at the edge of the field, with an **arrow** to guide you. But beware: another customer, of a different colour, is waiting too… and will happily take the wrong parcel.
+
+Every successful delivery is worth **25 points**, on top of the point for each step forward. And to get there, you have to cross.
+
+## A world that gets more dangerous
+The game starts in a quiet meadow: a few cars, some grass. As your **points add up from game to game**, it grows: trucks, taxis, motorbikes, **trains** that warn you before they pass, rivers to cross on logs, golden gifts, then an **eagle** sweeping a whole column. Everything unlocks: enemies, worlds, characters.
+
+## Tailor-made deaths
+Every ending has its own effect (zoom, slow motion, screen shake) **and its own line**, picked at random according to the cause: *"The delivery fell in the water."*, *"Your career has derailed."*, *"Your parcel took off. So did you."*…
+
+In **Options**, pick the style of the death effects: **Cute** (butterflies and fountains of light), **Normal**, or **silly gore** (ketchup in every direction, the car exploding in its corner).
+
+## Achievements
+Six challenges that carry over from game to game: first delivery, ten parcels delivered, three deliveries without a mistake, five deliveries in one run, five railways and five rivers crossed.
 
 ## A collection to fill
-Three showcases: the **enemies** (from the lemon cab to the zombie, via the catapult and the spaceship), the **scenery** (meadow, pirate bay, Halloween, Middle Ages, space, Wild West, futuristic city) and the **characters**: Leo, Lola, Gaston, Zoe, Hugo, Jade, Theo and Mila. Each shows as a silhouette until you win it.
+Three showcases: the **enemies** (from the lemon cab to the zombie, via the catapult and the spaceship), the **worlds** (meadow, pirate bay, Halloween, Middle Ages, space, Wild West, futuristic city) and the **characters**: Léo, Lola, Gaston, Zoé, Hugo, Jade, Théo, Mila, Noé, Inès, Sacha and Maya. Each shows as a silhouette until you win it.
 
-## Spectacular deaths
-Squashed, drowned, swept away, too slow, snatched by the eagle: every ending has its own effect, with **zoom-in, slow motion, screen shake** and bits of scenery flying.
-
-## And more
-**Glowing gifts** to collect for bonus points (golden ones are worth far more), logs, rafts and lily pads, rivers that can always be crossed, an announcement for every unlock and an end screen that counts up your points and your record.
-
-## New look
-The game is being rebuilt with Kenney's lovely **CC0 models** (cars, trees, animated characters). The meadow, the **pirate bay**, **Halloween**, the **Middle Ages**, **space**, the **Wild West** and the **futuristic city** are done; the other worlds will return one by one.
+## The look
+The game is built with Kenney's lovely **CC0 models** (cars, trees, animated characters). A light "miniature" blur on the sides makes it feel like playing on a little game table, and every world has its own light and sounds.

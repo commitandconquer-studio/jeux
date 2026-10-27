@@ -32,13 +32,14 @@ impl Plugin for AnnoncesPlugin {
         app.add_message::<Annonce>()
             .add_systems(OnEnter(GameState::Playing), bienvenue)
             .add_systems(OnEnter(GameState::Dying), |mut commands: Commands, q: Query<Entity, With<Bandeau>>| q.iter().for_each(|e| commands.entity(e).despawn()))
-            .add_systems(Update, (afficher, vieillir))
+            .add_systems(Update, (afficher.run_if(not(in_state(GameState::Dying))), vieillir))
             .add_systems(Update, (premier_train, premier_aigle).run_if(in_state(GameState::Playing)));
     }
 }
 
 fn bienvenue(frog: Res<Frog>, mut annonces: MessageWriter<Annonce>) {
-    if !frog.started {
+    // Pas de bandeau pendant les captures d'écran (TRAVERSEE_CAPTURE).
+    if !frog.started && std::env::var_os("TRAVERSEE_CAPTURE").is_none() {
         annonces.write(Annonce::blanc(
             tx!(
                 "Bienvenue chez Cross Express. L'assurance vie est en option.",

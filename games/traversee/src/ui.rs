@@ -426,7 +426,7 @@ const ENCRE: Color = Color::srgb(0.12, 0.14, 0.2);
 const DOUX: Color = Color::srgb(0.46, 0.46, 0.5);
 
 fn hud_texte(commands: &mut Commands, parent: Entity, texte: &str, taille: f32, couleur: Color) -> Entity {
-    commands.spawn((Text::new(texte), TextFont::from_font_size(taille), TextColor(couleur), Pickable::IGNORE, ThemedText, ChildOf(parent))).id()
+    commands.spawn((Text::new(texte), TextFont::from_font_size(taille), TextColor(couleur), TextLayout::new(Justify::Left, LineBreak::NoWrap), Pickable::IGNORE, ThemedText, ChildOf(parent))).id()
 }
 
 fn hud_icone(commands: &mut Commands, parent: Entity, image: Handle<Image>, cote: f32) {
@@ -437,7 +437,7 @@ fn hud_icone(commands: &mut Commands, parent: Entity, image: Handle<Image>, cote
 fn setup_hud(mut commands: Commands, server: Res<AssetServer>) {
     let carte = commands
         .spawn((
-            Node { position_type: PositionType::Absolute, top: px(14), left: px(14), width: px(420), flex_direction: FlexDirection::Column, row_gap: px(8), padding: UiRect::axes(px(18), px(12)), border_radius: BorderRadius::all(px(22)), ..default() },
+            Node { position_type: PositionType::Absolute, top: px(14), left: px(14), width: px(470), flex_direction: FlexDirection::Column, row_gap: px(8), padding: UiRect::axes(px(18), px(12)), border_radius: BorderRadius::all(px(22)), ..default() },
             BackgroundColor(CARTE),
             BoxShadow::new(Color::srgba(0.0, 0.0, 0.0, 0.25), px(0), px(4), px(0), px(10)),
             GlobalZIndex(10),
