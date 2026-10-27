@@ -1,5 +1,6 @@
-//! Règles du Snake : déplacement, nourriture, collisions.
+//! Règles de la chenille : déplacement, invités à attraper, collisions.
 use std::collections::VecDeque;
+use std::f32::consts::{PI, TAU};
 use std::time::Duration;
 
 use bevy::prelude::*;
@@ -7,6 +8,7 @@ use game_common::{Rng, Score, flat_material, palette};
 
 use crate::GameState;
 use crate::audio::Sfx;
+use crate::people::{self, Pose};
 use crate::settings::Settings;
 use crate::world::cell_to_world;
 
@@ -14,47 +16,56 @@ pub struct GamePlugin;
 
 impl Plugin for GamePlugin {
     fn build(&self, app: &mut App) {
-        app.insert_resource(Snake::new(14))
-            .insert_resource(Food(IVec2::ZERO))
+        app.insert_resource(Conga::new(14, 0))
+            .insert_resource(Food { cell: IVec2::ZERO, kind: 1, spawned: true })
+            .insert_resource(Paused(false))
             .insert_resource(StepTimer(Timer::from_seconds(0.16, TimerMode::Repeating)))
-            .add_systems(Startup, setup)
+            .add_systems(Startup, (setup, load_best))
             .add_systems(OnEnter(GameState::Playing), new_game)
             .add_systems(OnEnter(GameState::Menu), clear_board)
+            .add_systems(OnEnter(GameState::GameOver), (people::all_die, save_best))
             .add_systems(
                 Update,
                 (
                     (read_input, step).chain().run_if(in_state(GameState::Playing)),
-                    sync_segments.run_if(|s: Res<State<GameState>>| {
+                    (sync_guest, sync_segments).run_if(|s: Res<State<GameState>>| {
                         matches!(s.get(), GameState::Playing | GameState::GameOver)
                     }),
-                    animate_food,
+                    (animate_guest, animate_pop, people::start_animations),
                 )
                     .chain(),
             );
     }
 }
 
-/// État logique du serpent (la tête est en premier).
+/// `true` quand la partie est en pause.
 #[derive(Resource)]
-struct Snake {
+pub struct Paused(pub bool);
+
+/// La chenille : la tête en premier, puis les invités attrapés.
+#[derive(Resource)]
+struct Conga {
     cells: Vec<IVec2>,
     /// Positions au pas précédent, pour animer le glissement entre deux cases.
     prev: Vec<IVec2>,
+    /// Modèle de chaque membre (indice dans `people::KINDS`).
+    kinds: Vec<usize>,
     dir: IVec2,
     queued: VecDeque<IVec2>,
 }
 
-impl Snake {
-    fn new(grid: i32) -> Self {
+impl Conga {
+    fn new(grid: i32, leader: usize) -> Self {
         let c = grid / 2;
         let cells = vec![IVec2::new(c, c), IVec2::new(c - 1, c), IVec2::new(c - 2, c)];
-        Self { prev: cells.clone(), cells, dir: IVec2::X, queued: VecDeque::new() }
+        let kinds = vec![leader, (leader + 3) % 12, (leader + 6) % 12];
+        Self { prev: cells.clone(), cells, kinds, dir: IVec2::X, queued: VecDeque::new() }
     }
 
     /// Mémorise un virage ; renvoie `true` s'il est accepté.
     fn turn(&mut self, d: IVec2) -> bool {
         let last = self.queued.back().copied().unwrap_or(self.dir);
-        let ok = d != last && d != -last && self.queued.len() < 2;
+        let ok = d != last && d != -last && self.queued.len() < 3;
         if ok {
             self.queued.push_back(d);
         }
@@ -62,91 +73,138 @@ impl Snake {
     }
 }
 
+/// L'invité à attraper.
 #[derive(Resource)]
-struct Food(IVec2);
+struct Food {
+    cell: IVec2,
+    kind: usize,
+    /// `false` : son modèle reste à poser.
+    spawned: bool,
+}
 
 #[derive(Resource)]
 struct StepTimer(Timer);
 
 #[derive(Resource)]
-struct SnakeAssets {
-    cube: Handle<Mesh>,
-    head: Handle<StandardMaterial>,
-    body: Vec<Handle<StandardMaterial>>,
+struct GuestAssets {
+    ring: Handle<Mesh>,
+    ring_mat: Handle<StandardMaterial>,
+}
+
+/// Un membre de la chenille (racine du modèle).
+#[derive(Component)]
+struct Segment {
+    index: usize,
+    yaw: f32,
 }
 
 #[derive(Component)]
-struct Segment(usize);
+struct Guest;
 
 #[derive(Component)]
-struct FoodMarker;
+struct Ring;
+
+/// Petit rebond à l'arrivée d'un nouveau membre.
+#[derive(Component)]
+struct Pop(f32);
 
 fn setup(mut commands: Commands, mut meshes: ResMut<Assets<Mesh>>, mut materials: ResMut<Assets<StandardMaterial>>) {
-    let cube = meshes.add(Cuboid::new(1.0, 1.0, 1.0));
-    commands.spawn((
-        Mesh3d(cube.clone()),
-        MeshMaterial3d(materials.add(flat_material(palette::PINK))),
-        Transform::from_scale(Vec3::splat(0.55)),
-        Visibility::Hidden,
-        FoodMarker,
-    ));
-    let body = [palette::CYAN, palette::LILAC, palette::NAVY, palette::WHITE]
-        .into_iter()
-        .map(|c| materials.add(flat_material(c)))
-        .collect();
-    let head = materials.add(flat_material(palette::YELLOW));
-    commands.insert_resource(SnakeAssets { cube, head, body });
+    commands.insert_resource(GuestAssets {
+        ring: meshes.add(Cylinder::new(0.42, 0.04)),
+        ring_mat: materials.add(flat_material(palette::PINK)),
+    });
+}
+
+fn load_best(mut score: ResMut<Score>) {
+    if let Some(b) = game_common::save::load("snake", "best").and_then(|v| v.parse().ok()) {
+        score.best = b;
+    }
+}
+
+fn save_best(score: Res<Score>) {
+    game_common::save::store("snake", "best", &score.best.to_string());
 }
 
 #[allow(clippy::too_many_arguments)]
 fn new_game(
     mut commands: Commands,
     settings: Res<Settings>,
-    mut snake: ResMut<Snake>,
+    mut conga: ResMut<Conga>,
     mut food: ResMut<Food>,
     mut timer: ResMut<StepTimer>,
     mut score: ResMut<Score>,
+    mut paused: ResMut<Paused>,
     mut rng: ResMut<Rng>,
-    segments: Query<Entity, With<Segment>>,
-    mut food_vis: Query<&mut Visibility, With<FoodMarker>>,
+    stuff: Query<Entity, Or<(With<Segment>, With<Guest>)>>,
     mut sfx: MessageWriter<Sfx>,
 ) {
     sfx.write(Sfx::Start);
-    for e in &segments {
+    for e in &stuff {
         commands.entity(e).despawn();
     }
-    *snake = Snake::new(settings.grid());
-    food.0 = free_cell(&snake.cells, settings.grid(), &mut rng);
+    paused.0 = false;
+    *conga = Conga::new(settings.grid(), 0);
+    food.cell = free_cell(&conga.cells, settings.grid(), &mut rng);
+    food.kind = guest_kind(&mut rng);
+    food.spawned = false;
     timer.0 = Timer::from_seconds(settings.speed.step_times().0, TimerMode::Repeating);
     score.reset();
-    for mut v in &mut food_vis {
-        *v = Visibility::Visible;
-    }
 }
 
-fn clear_board(
-    mut commands: Commands,
-    segments: Query<Entity, With<Segment>>,
-    mut food_vis: Query<&mut Visibility, With<FoodMarker>>,
-) {
-    for e in &segments {
+fn clear_board(mut commands: Commands, stuff: Query<Entity, Or<(With<Segment>, With<Guest>)>>) {
+    for e in &stuff {
         commands.entity(e).despawn();
     }
-    for mut v in &mut food_vis {
-        *v = Visibility::Hidden;
-    }
 }
 
-fn read_input(keys: Res<ButtonInput<KeyCode>>, mut snake: ResMut<Snake>, mut sfx: MessageWriter<Sfx>) {
+/// Un invité au hasard parmi les humains.
+fn guest_kind(rng: &mut Rng) -> usize {
+    rng.below(12) as usize
+}
+
+/// Clavier, manette, glissement du doigt ; pause avec P, Espace ou la manette.
+fn read_input(
+    keys: Res<ButtonInput<KeyCode>>,
+    pads: Query<&Gamepad>,
+    touches: Res<Touches>,
+    mut swiped: Local<Vec<u64>>,
+    mut paused: ResMut<Paused>,
+    mut conga: ResMut<Conga>,
+    mut sfx: MessageWriter<Sfx>,
+) {
+    if keys.just_pressed(KeyCode::KeyP) || keys.just_pressed(KeyCode::Space) || pads.iter().any(|p| p.just_pressed(GamepadButton::Start)) {
+        paused.0 = !paused.0;
+    }
     // Touches physiques : W/A/S/D correspondent à Z/Q/S/D sur un clavier AZERTY.
     let bindings = [
-        (KeyCode::ArrowUp, KeyCode::KeyW, IVec2::NEG_Y),
-        (KeyCode::ArrowDown, KeyCode::KeyS, IVec2::Y),
-        (KeyCode::ArrowLeft, KeyCode::KeyA, IVec2::NEG_X),
-        (KeyCode::ArrowRight, KeyCode::KeyD, IVec2::X),
+        (KeyCode::ArrowUp, KeyCode::KeyW, GamepadButton::DPadUp, IVec2::NEG_Y),
+        (KeyCode::ArrowDown, KeyCode::KeyS, GamepadButton::DPadDown, IVec2::Y),
+        (KeyCode::ArrowLeft, KeyCode::KeyA, GamepadButton::DPadLeft, IVec2::NEG_X),
+        (KeyCode::ArrowRight, KeyCode::KeyD, GamepadButton::DPadRight, IVec2::X),
     ];
-    for (a, b, d) in bindings {
-        if (keys.just_pressed(a) || keys.just_pressed(b)) && snake.turn(d) {
+    let mut wanted: Vec<IVec2> = Vec::new();
+    for (a, b, pad, d) in bindings {
+        if keys.just_pressed(a) || keys.just_pressed(b) || pads.iter().any(|p| p.just_pressed(pad)) {
+            wanted.push(d);
+        }
+    }
+    // Glissement : un virage dès que le doigt a parcouru assez de chemin.
+    for t in touches.iter() {
+        if swiped.contains(&t.id()) {
+            continue;
+        }
+        let v = t.position() - t.start_position();
+        if v.length() > 28.0 {
+            swiped.push(t.id());
+            wanted.push(if v.x.abs() > v.y.abs() { IVec2::new(v.x.signum() as i32, 0) } else { IVec2::new(0, v.y.signum() as i32) });
+        }
+    }
+    swiped.retain(|id| touches.get_pressed(*id).is_some());
+    if paused.0 {
+        return;
+    }
+    for d in wanted {
+        if conga.turn(d) {
             sfx.write(Sfx::Turn);
         }
     }
@@ -156,47 +214,52 @@ fn read_input(keys: Res<ButtonInput<KeyCode>>, mut snake: ResMut<Snake>, mut sfx
 fn step(
     time: Res<Time>,
     settings: Res<Settings>,
+    paused: Res<Paused>,
     mut timer: ResMut<StepTimer>,
-    mut snake: ResMut<Snake>,
+    mut conga: ResMut<Conga>,
     mut food: ResMut<Food>,
     mut score: ResMut<Score>,
     mut rng: ResMut<Rng>,
     mut next: ResMut<NextState<GameState>>,
     mut sfx: MessageWriter<Sfx>,
 ) {
-    if !timer.0.tick(time.delta()).just_finished() {
+    if paused.0 || !timer.0.tick(time.delta()).just_finished() {
         return;
     }
     let grid = settings.grid();
-    if let Some(d) = snake.queued.pop_front() {
-        snake.dir = d;
+    if let Some(d) = conga.queued.pop_front() {
+        conga.dir = d;
     }
-    let mut head = snake.cells[0] + snake.dir;
+    let mut head = conga.cells[0] + conga.dir;
     let outside = head.x < 0 || head.y < 0 || head.x >= grid || head.y >= grid;
     if outside && settings.wrap {
         head = head.rem_euclid(IVec2::splat(grid));
     }
     // La queue va bouger : on peut avancer sur sa case actuelle.
-    let body = &snake.cells[..snake.cells.len() - 1];
+    let body = &conga.cells[..conga.cells.len() - 1];
     if (outside && !settings.wrap) || body.contains(&head) {
         next.set(GameState::GameOver);
         sfx.write(Sfx::GameOver);
         return;
     }
 
-    snake.prev = snake.cells.clone();
-    snake.cells.insert(0, head);
-    if head == food.0 {
+    conga.prev = conga.cells.clone();
+    conga.cells.insert(0, head);
+    if head == food.cell {
         score.add(1);
         sfx.write(Sfx::Eat(score.current));
-        let tail = *snake.prev.last().unwrap();
-        snake.prev.push(tail);
-        food.0 = free_cell(&snake.cells, grid, &mut rng);
+        let tail = *conga.prev.last().unwrap();
+        conga.prev.push(tail);
+        let kind = food.kind;
+        conga.kinds.push(kind);
+        food.cell = free_cell(&conga.cells, grid, &mut rng);
+        food.kind = guest_kind(&mut rng);
+        food.spawned = false;
         let min = settings.speed.step_times().1;
         let faster = (timer.0.duration().as_secs_f32() * 0.96).max(min);
         timer.0.set_duration(Duration::from_secs_f32(faster));
     } else {
-        snake.cells.pop();
+        conga.cells.pop();
     }
 }
 
@@ -209,59 +272,123 @@ fn free_cell(occupied: &[IVec2], grid: i32, rng: &mut Rng) -> IVec2 {
     }
 }
 
-/// Crée/supprime les cubes du serpent et les fait glisser entre les cases.
+/// Pose le nouvel invité (et son anneau) quand il a changé de place.
+fn sync_guest(
+    mut commands: Commands,
+    mut food: ResMut<Food>,
+    settings: Res<Settings>,
+    server: Res<AssetServer>,
+    assets: Res<GuestAssets>,
+    mut graphs: ResMut<Assets<AnimationGraph>>,
+    old: Query<Entity, With<Guest>>,
+) {
+    if food.spawned {
+        return;
+    }
+    food.spawned = true;
+    for e in &old {
+        commands.entity(e).despawn();
+    }
+    let root = commands
+        .spawn((
+            Transform::from_translation(cell_to_world(food.cell.as_vec2(), 0.0, settings.grid()))
+                .with_rotation(Quat::from_rotation_y(PI * 0.75))
+                .with_scale(Vec3::splat(0.01)),
+            Visibility::default(),
+            Guest,
+            Pop(0.0),
+        ))
+        .id();
+    commands.spawn((
+        Mesh3d(assets.ring.clone()),
+        MeshMaterial3d(assets.ring_mat.clone()),
+        Transform::from_xyz(0.0, 0.03, 0.0),
+        bevy::light::NotShadowCaster,
+        Ring,
+        ChildOf(root),
+    ));
+    people::spawn_model(&mut commands, &server, &mut graphs, root, food.kind, Pose::Wave, 1.0);
+}
+
+fn animate_guest(time: Res<Time>, mut rings: Query<&mut Transform, With<Ring>>) {
+    let s = 1.0 + (time.elapsed_secs() * 5.0).sin() * 0.08;
+    for mut tf in &mut rings {
+        tf.scale = Vec3::new(s, 1.0, s);
+    }
+}
+
+/// Apparition avec un petit rebond.
+fn animate_pop(time: Res<Time>, mut commands: Commands, mut q: Query<(Entity, &mut Pop, &mut Transform)>) {
+    for (e, mut pop, mut tf) in &mut q {
+        pop.0 += time.delta_secs() / 0.35;
+        let t = pop.0.min(1.0);
+        // Dépasse un peu 1 puis revient (« back out »).
+        let c = 1.70158;
+        let s = 1.0 + (c + 1.0) * (t - 1.0).powi(3) + c * (t - 1.0).powi(2);
+        tf.scale = Vec3::splat(s.max(0.01));
+        if pop.0 >= 1.0 {
+            commands.entity(e).remove::<Pop>();
+            tf.scale = Vec3::ONE;
+        }
+    }
+}
+
+/// Crée/supprime les membres de la chenille, les fait glisser entre les cases et les tourne dans le sens de la marche.
+#[allow(clippy::too_many_arguments)]
 fn sync_segments(
     mut commands: Commands,
-    snake: Res<Snake>,
+    time: Res<Time>,
+    conga: Res<Conga>,
     timer: Res<StepTimer>,
     settings: Res<Settings>,
     state: Res<State<GameState>>,
-    assets: Res<SnakeAssets>,
-    mut segments: Query<(Entity, &Segment, &mut Transform)>,
+    server: Res<AssetServer>,
+    mut graphs: ResMut<Assets<AnimationGraph>>,
+    mut segments: Query<(Entity, &mut Segment, &mut Transform)>,
 ) {
     let grid = settings.grid();
     let t = if *state.get() == GameState::Playing { timer.0.fraction() } else { 1.0 };
     let pos = |i: usize| {
-        let from = snake.prev.get(i).copied().unwrap_or(snake.cells[i]).as_vec2();
-        let to = snake.cells[i].as_vec2();
+        let from = conga.prev.get(i).copied().unwrap_or(conga.cells[i]).as_vec2();
+        let to = conga.cells[i].as_vec2();
         // Saut d'un bord à l'autre : pas de glissement à travers le plateau.
         if from.distance_squared(to) > 1.5 { to } else { from.lerp(to, t) }
     };
-    let height = |i: usize| if i == 0 { 0.45 } else { 0.39 };
+    // Direction de marche d'un membre : de la case précédente vers la case actuelle.
+    let heading = |i: usize| {
+        let d = conga.cells[i] - conga.prev.get(i).copied().unwrap_or(conga.cells[i]);
+        if d == IVec2::ZERO || d.abs().max_element() > 1 { None } else { Some(d) }
+    };
+    let dt = time.delta_secs();
 
-    let mut present = vec![false; snake.cells.len()];
-    for (e, seg, mut tf) in &mut segments {
-        if seg.0 >= snake.cells.len() {
+    let mut present = vec![false; conga.cells.len()];
+    for (e, mut seg, mut tf) in &mut segments {
+        if seg.index >= conga.cells.len() {
             commands.entity(e).despawn();
             continue;
         }
-        present[seg.0] = true;
-        tf.translation = cell_to_world(pos(seg.0), height(seg.0), grid);
+        present[seg.index] = true;
+        tf.translation = cell_to_world(pos(seg.index), 0.0, grid);
+        if let Some(d) = heading(seg.index) {
+            let target = (d.x as f32).atan2(d.y as f32);
+            let delta = (target - seg.yaw + PI).rem_euclid(TAU) - PI;
+            seg.yaw += delta * (1.0 - (-dt * 16.0).exp());
+        }
+        tf.rotation = Quat::from_rotation_y(seg.yaw);
     }
     for (i, _) in present.iter().enumerate().filter(|(_, p)| !**p) {
-        let (mat, size) = if i == 0 {
-            (assets.head.clone(), 0.9)
-        } else {
-            (assets.body[(i - 1) % assets.body.len()].clone(), 0.78)
-        };
-        commands.spawn((
-            Mesh3d(assets.cube.clone()),
-            MeshMaterial3d(mat),
-            Transform::from_translation(cell_to_world(pos(i), height(i), grid)).with_scale(Vec3::splat(size)),
-            Segment(i),
+        let yaw = heading(i).map_or(PI / 2.0, |d| (d.x as f32).atan2(d.y as f32));
+        let size = if i == 0 { 1.12 } else { 1.0 };
+        let mut root = commands.spawn((
+            Transform::from_translation(cell_to_world(pos(i), 0.0, grid)).with_rotation(Quat::from_rotation_y(yaw)),
+            Visibility::default(),
+            Segment { index: i, yaw },
         ));
-    }
-}
-
-fn animate_food(
-    time: Res<Time>,
-    food: Res<Food>,
-    settings: Res<Settings>,
-    mut q: Query<&mut Transform, With<FoodMarker>>,
-) {
-    let s = time.elapsed_secs();
-    for mut tf in &mut q {
-        tf.translation = cell_to_world(food.0.as_vec2(), 0.55 + (s * 3.0).sin() * 0.12, settings.grid());
-        tf.rotation = Quat::from_rotation_y(s * 1.5) * Quat::from_rotation_x(0.6);
+        // Les trois membres de départ sont déjà là ; les suivants apparaissent en rebondissant.
+        if i >= 3 {
+            root.insert((Pop(0.0), Transform::from_translation(cell_to_world(pos(i), 0.0, grid)).with_scale(Vec3::splat(0.01))));
+        }
+        let id = root.id();
+        people::spawn_model(&mut commands, &server, &mut graphs, id, conga.kinds[i], Pose::Walk, size);
     }
 }

@@ -160,7 +160,7 @@ fn update_hud(
     }
     if score.is_changed() || langue.is_changed() {
         let hud = tx!(
-            "Score : {}    Record : {}    Échap : menu    M : son",
+            "Score : {}    Record : {}    Échap : menu    P : pause",
             "Score: {}    Best: {}    Esc: menu    M: sound",
             "Punkte: {}    Rekord: {}    Esc: Menü    M: Ton",
             "Punti: {}    Record: {}    Esc: menu    M: audio",

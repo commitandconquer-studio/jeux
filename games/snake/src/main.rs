@@ -2,6 +2,7 @@
 mod audio;
 mod capture;
 mod game;
+mod people;
 mod settings;
 mod ui;
 mod world;

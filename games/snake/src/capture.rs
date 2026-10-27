@@ -48,7 +48,7 @@ fn run_capture(
 ) {
     let now = time.elapsed_secs();
     let Some(&(name, state, universe)) = SHOTS.get(cap.index) else {
-        if now - cap.since > 0.5 {
+        if now - cap.since > 2.0 {
             exit.write(AppExit::Success);
         }
         return;
