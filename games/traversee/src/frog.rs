@@ -14,7 +14,7 @@ const HOP_HEIGHT: f32 = 0.45;
 /// Demi-largeur du crapaud pour les collisions.
 const FROG_HALF: f32 = 0.26;
 /// Taille du modèle.
-const FROG_SCALE: f32 = 1.15;
+const FROG_SCALE: f32 = 1.5;
 
 #[derive(Resource, Default)]
 pub struct Frog {
@@ -532,7 +532,7 @@ pub fn sync_model(
         tf.scale = scale * FROG_SCALE;
     }
     for (mut tf, shadow) in &mut shadows {
-        let size = if shadow_on { (if shadow.halo { 1.6 } else { 1.0 }) * (1.0 - 0.35 * lift) } else { 0.0 };
+        let size = if shadow_on { (if shadow.halo { 1.6 } else { 1.0 }) * 1.3 * (1.0 - 0.35 * lift) } else { 0.0 };
         tf.translation = Vec3::new(ground.x, ground.y + if shadow.halo { 0.02 } else { 0.03 }, ground.z);
         tf.scale = Vec3::new(size, 0.01, size);
     }

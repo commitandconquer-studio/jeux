@@ -318,7 +318,7 @@ fn porteur(mut commands: Commands, porte: Res<Porte>, frog: Res<Frog>, kit: Res<
         return;
     }
     for (_, mut tf) in &mut q {
-        tf.translation = frog.visual_pos() + Vec3::Y * 1.15;
+        tf.translation = frog.visual_pos() + Vec3::Y * 1.5;
         tf.rotation = Quat::IDENTITY;
     }
 }
