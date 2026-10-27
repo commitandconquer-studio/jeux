@@ -2,7 +2,7 @@
 use bevy::prelude::*;
 use game_common::Score;
 use game_common::tx;
-use game_common::ui::{GameHelp, HelpButton, QuitButton, ThemedPanel, ThemedText, spawn_button, spawn_button_sized, spawn_gap, spawn_hud, spawn_panel, spawn_panel_left, spawn_studio_logo, spawn_text};
+use game_common::ui::{GameHelp, HelpButton, QuitButton, ThemedPanel, ThemedText, spawn_hud, spawn_panel_left, spawn_studio_logo};
 
 use crate::screens::{CountUp, Pop, Pulse, spawn_bar, spawn_chip};
 
@@ -95,24 +95,9 @@ struct Hud;
 #[derive(Component)]
 struct HudText;
 
-fn button(commands: &mut Commands, parent: Entity, label: &str, action: UiAction) -> Entity {
-    let (b, text) = spawn_button(commands, parent, label);
-    commands.entity(b).insert(action);
-    text
-}
-
 /// Couleurs des lettres du titre.
 
 /// Ligne « Prochain : … à N pts » suivie de sa barre de progression.
-fn spawn_next_goal(commands: &mut Commands, parent: Entity, progress: &Progress, size: f32, width: f32) {
-    let Some((at, item)) = progress.next() else {
-        return;
-    };
-    let line = tx!("Prochain : {} — {} pts", "Next: {} — {} pts", "Nächstes: {} — {} Pkt.", "Prossimo: {} — {} pt", "Siguiente: {} — {} pts").avec(&[&item.name(), &at]);
-    spawn_text(commands, parent, line, size);
-    spawn_bar(commands, parent, progress.next_fraction(), width, item.color());
-}
-
 /// Un gros bouton coloré du menu : dégradé, bord plus sombre, icône blanche et texte blanc ombré.
 #[allow(clippy::too_many_arguments)]
 fn gros_bouton(commands: &mut Commands, parent: Entity, texte: &str, icone: Option<Handle<Image>>, couleur: Color, largeur: f32, hauteur: f32, taille: f32) -> Entity {
@@ -283,48 +268,93 @@ fn score_line(score: &Score) -> String {
     .avec(&[&score.current, &score.best])
 }
 
-pub fn spawn_game_over(mut commands: Commands, score: Res<Score>, death: Res<Death>, progress: Res<Progress>, mut sfx: MessageWriter<Sfx>, mut rng: ResMut<game_common::Rng>) {
-    let panel = spawn_panel(&mut commands, DespawnOnExit(GameState::GameOver));
-    commands.entity(panel).insert(UiTransform::from_scale(Vec2::ZERO)).insert(Pop::after(0.0));
+/// Un texte posé à un endroit précis du panneau (position et taille en % du panneau).
+#[allow(clippy::too_many_arguments)]
+fn texte_abs(commands: &mut Commands, parent: Entity, texte: impl Into<String>, (x, y, l, h): (f32, f32, f32, f32), taille: f32, couleur: Color, justif: JustifyContent, ombre: Option<Color>) -> Entity {
+    let boite = commands
+        .spawn((
+            Node { position_type: PositionType::Absolute, left: percent(x), top: percent(y), width: percent(l), height: percent(h), justify_content: justif, align_items: AlignItems::Center, ..default() },
+            Pickable::IGNORE,
+            ChildOf(parent),
+        ))
+        .id();
+    let t = commands
+        .spawn((
+            Text::new(texte),
+            TextFont::from_font_size(taille),
+            TextColor(couleur),
+            TextLayout::justify(match justif {
+                JustifyContent::FlexStart => Justify::Left,
+                JustifyContent::FlexEnd => Justify::Right,
+                _ => Justify::Center,
+            }),
+            Pickable::IGNORE,
+            ThemedText,
+            ChildOf(boite),
+        ))
+        .id();
+    if let Some(c) = ombre {
+        commands.entity(t).insert(TextShadow { offset: Vec2::splat(3.0), color: c });
+    }
+    t
+}
+
+pub fn spawn_game_over(mut commands: Commands, score: Res<Score>, death: Res<Death>, progress: Res<Progress>, mut sfx: MessageWriter<Sfx>, mut rng: ResMut<game_common::Rng>, server: Res<AssetServer>) {
+    let brun = Color::srgb(0.35, 0.2, 0.08);
+    let racine = commands
+        .spawn((
+            Node { width: percent(100), height: percent(100), flex_direction: FlexDirection::Column, justify_content: JustifyContent::Center, align_items: AlignItems::Center, row_gap: px(6), ..default() },
+            DespawnOnExit(GameState::GameOver),
+        ))
+        .id();
+    // Le panneau du livreur K.O. (image 1000 x 824) : tout est posé dessus en pourcentages.
+    let panneau = commands
+        .spawn((
+            ImageNode::new(server.load("branding/panneau-fin.png")),
+            Node { width: px(800), height: px(659), ..default() },
+            UiTransform::from_scale(Vec2::ZERO),
+            Pop::after(0.0),
+            ChildOf(racine),
+        ))
+        .id();
     let title = death.cause.map(|c| crate::annonces::mort(c, death.train, &mut rng)).unwrap_or(tx!("Perdu !", "Game over!", "Verloren!", "Hai perso!", "¡Has perdido!").t());
-    // Les phrases de fin sont longues : on les rapetisse pour que la fenêtre reste étroite.
     let taille = match title.chars().count() {
         0..=18 => 46.0,
-        19..=34 => 36.0,
-        _ => 28.0,
+        19..=34 => 38.0,
+        _ => 32.0,
     };
-    spawn_text(&mut commands, panel, title, taille);
-    // Le score grimpe jusqu'à sa valeur
-    let row = commands.spawn((Node { align_items: AlignItems::FlexEnd, column_gap: px(10), ..default() }, ChildOf(panel))).id();
+    texte_abs(&mut commands, panneau, title, (15.6, 25.5, 70.0, 18.5), taille, Color::WHITE, JustifyContent::Center, Some(Color::srgba(0.35, 0.05, 0.02, 0.85)));
+    // Score
+    texte_abs(&mut commands, panneau, "Score", (39.0, 45.0, 20.0, 5.0), 24.0, Color::srgb(0.4, 0.36, 0.34), JustifyContent::Center, None);
+    let rang = commands
+        .spawn((
+            Node { position_type: PositionType::Absolute, left: percent(30.0), top: percent(50.0), width: percent(38.0), height: percent(14.0), justify_content: JustifyContent::Center, align_items: AlignItems::FlexEnd, column_gap: px(10), ..default() },
+            Pickable::IGNORE,
+            ChildOf(panneau),
+        ))
+        .id();
     commands.spawn((
         Text::new("0"),
-        TextFont::from_font_size(96.0),
-        TextColor(Color::srgb(0.12, 0.14, 0.2)),
+        TextFont::from_font_size(76.0),
+        TextColor(Color::srgb(1.0, 0.82, 0.2)),
+        TextShadow { offset: Vec2::splat(4.0), color: Color::srgba(0.25, 0.1, 0.0, 0.9) },
         ThemedText,
         CountUp { target: score.current, age: 0.0 },
-        ChildOf(row),
+        ChildOf(rang),
     ));
-    commands.spawn((Text::new("pts"), TextFont::from_font_size(30.0), TextColor(Color::srgb(0.4, 0.4, 0.45)), ThemedText, Node { margin: UiRect::bottom(px(14)), ..default() }, ChildOf(row)));
+    commands.spawn((Text::new("pts"), TextFont::from_font_size(28.0), TextColor(Color::srgb(0.4, 0.36, 0.34)), ThemedText, Node { margin: UiRect::bottom(px(14)), ..default() }, ChildOf(rang)));
+    // Record
+    let (etiquette, couleur_rec) = if progress.new_record {
+        (tx!("NOUVEAU !", "NEW!", "NEU!", "NUOVO!", "¡NUEVO!").t(), Color::srgb(0.8, 0.4, 0.0))
+    } else {
+        (tx!("Record", "Best", "Rekord", "Record", "Récord").t(), brun)
+    };
+    texte_abs(&mut commands, panneau, etiquette, (77.0, 51.2, 14.3, 4.5), 17.0, couleur_rec, JustifyContent::Center, None);
+    texte_abs(&mut commands, panneau, score.best.to_string(), (77.0, 55.6, 14.3, 6.0), 34.0, brun, JustifyContent::Center, None);
     if progress.new_record {
-        let badge = commands
-            .spawn((
-                Node { padding: UiRect::axes(px(22), px(8)), border_radius: BorderRadius::all(px(16)), ..default() },
-                BackgroundColor(Color::srgb(1.0, 0.82, 0.2)),
-                UiTransform::default(),
-                Pulse { speed: 6.0, amount: 0.06 },
-                ChildOf(panel),
-            ))
-            .id();
-        commands.spawn((
-            Text::new(tx!("NOUVEAU RECORD !", "NEW RECORD!", "NEUER REKORD!", "NUOVO RECORD!", "¡NUEVO RÉCORD!").t()),
-            TextFont::from_font_size(28.0),
-            TextColor(Color::srgb(0.35, 0.2, 0.0)),
-            ThemedText,
-            ChildOf(badge),
-        ));
-        spawn_text(
+        texte_abs(
             &mut commands,
-            panel,
+            panneau,
             tx!(
                 "Incroyable ! Vous êtes notre employé du mois.",
                 "Incredible! You are our employee of the month.",
@@ -333,26 +363,59 @@ pub fn spawn_game_over(mut commands: Commands, score: Res<Score>, death: Res<Dea
                 "¡Increíble! Es nuestro empleado del mes."
             )
             .t(),
+            (14.0, 62.6, 72.0, 4.5),
             20.0,
+            Color::srgb(0.3, 0.25, 0.22),
+            JustifyContent::Center,
+            None,
         );
-    } else {
-        spawn_text(&mut commands, panel, tx!("Record : {}", "Best: {}", "Rekord: {}", "Record: {}", "Récord: {}").avec(&[&score.best]), 22.0);
     }
-    // Ce que cette partie vient de débloquer
-    for (i, item) in progress.fresh.iter().enumerate() {
-        spawn_chip(&mut commands, panel, item.kind(), item.name(), item.color(), 0.7 + i as f32 * 0.3);
+    // Prochain déblocage : la barre du panneau est remplacée par la nôtre.
+    if let Some((at, item)) = progress.next() {
+        let piste = commands
+            .spawn((
+                Node { position_type: PositionType::Absolute, left: percent(23.0), top: percent(73.8), width: percent(63.5), height: percent(4.2), border_radius: BorderRadius::all(px(8)), overflow: Overflow::clip(), ..default() },
+                BackgroundColor(Color::srgb(0.83, 0.83, 0.8)),
+                Pickable::IGNORE,
+                ChildOf(panneau),
+            ))
+            .id();
+        commands.spawn((
+            Node { width: percent(progress.next_fraction().clamp(0.0, 1.0) * 100.0), height: percent(100), ..default() },
+            BackgroundColor(item.color()),
+            Pickable::IGNORE,
+            ChildOf(piste),
+        ));
+        let ligne = tx!("Prochain : {}", "Next: {}", "Nächstes: {}", "Prossimo: {}", "Siguiente: {}").avec(&[&item.name()]);
+        texte_abs(&mut commands, panneau, ligne, (23.0, 68.6, 44.0, 4.8), 21.0, brun, JustifyContent::FlexStart, None);
+        let cumul = format!("{} / {} pts", progress.live.min(at), at);
+        texte_abs(&mut commands, panneau, cumul, (62.0, 68.6, 24.5, 4.8), 20.0, Color::srgb(0.42, 0.38, 0.36), JustifyContent::FlexEnd, None);
     }
-    spawn_next_goal(&mut commands, panel, &progress, 18.0, 400.0);
+    // Boutons : posés sur ceux du panneau.
+    let bouton = |commands: &mut Commands, x: f32, texte: &str, action: UiAction, couleur: Color| {
+        let b = commands
+            .spawn((
+                Node { position_type: PositionType::Absolute, left: percent(x), top: percent(83.6), width: percent(30.8), height: percent(9.9), justify_content: JustifyContent::Center, align_items: AlignItems::Center, ..default() },
+                action,
+                UiTransform::default(),
+                Survol,
+                ChildOf(panneau),
+            ))
+            .id();
+        commands.spawn((Text::new(texte), TextFont::from_font_size(30.0), TextColor(couleur), Pickable::IGNORE, ThemedText, ChildOf(b)));
+        b
+    };
+    let rejouer = bouton(&mut commands, 17.3, tx!("Rejouer", "Play again", "Nochmal", "Rigioca", "Volver a jugar").t(), UiAction::Play, Color::srgb(0.38, 0.22, 0.02));
+    commands.entity(rejouer).insert(Pulse { speed: 3.0, amount: 0.02 });
+    bouton(&mut commands, 51.8, tx!("Menu", "Menu", "Menü", "Menu", "Menú").t(), UiAction::Menu, Color::srgb(0.25, 0.22, 0.2));
+    // Ce que cette partie vient de débloquer : sous le panneau.
+    if !progress.fresh.is_empty() {
+        let ligne = commands.spawn((Node { column_gap: px(10), ..default() }, ChildOf(racine))).id();
+        for (i, item) in progress.fresh.iter().enumerate() {
+            spawn_chip(&mut commands, ligne, item.kind(), item.name(), item.color(), 0.7 + i as f32 * 0.3);
+        }
+    }
     sfx.write(if progress.new_record || !progress.fresh.is_empty() { Sfx::Win } else { Sfx::GameOver });
-    spawn_gap(&mut commands, panel, 6.0);
-    let (again, _) = spawn_button_sized(&mut commands, panel, tx!("Rejouer", "Play again", "Nochmal", "Rigioca", "Volver a jugar").t(), 320.0, 64.0, 30.0);
-    commands.entity(again).insert((
-        UiAction::Play,
-        BackgroundColor(Color::srgb(1.0, 0.86, 0.3)),
-        UiTransform::default(),
-        Pulse { speed: 3.0, amount: 0.025 },
-    ));
-    button(&mut commands, panel, tx!("Menu", "Menu", "Menü", "Menu", "Menú").t(), UiAction::Menu);
 }
 
 fn setup_hud(mut commands: Commands) {
