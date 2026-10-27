@@ -1,11 +1,13 @@
 // Traversée — Commit & Conquer. Jeu libre sous licence GPL-3.0-or-later.
 //
 // Aidez le crapaud à traverser routes, rivières et voies ferrées.
+mod annonces;
 mod audio;
 mod capture;
 mod characters;
 mod colis;
 mod eagle;
+mod exploits;
 mod extra;
 mod frog;
 mod garage;
@@ -78,7 +80,7 @@ fn main() {
     .insert_resource(game_common::options::StyleMortOption)
     .add_systems(Startup, style_pour_test)
     .add_plugins(miniature::MiniaturePlugin)
-    .add_plugins((ui::UiPlugin, audio::AudioPlugin, capture::CapturePlugin, fx::FxPlugin, colis::ColisPlugin, progress::ProgressPlugin, garage::GaragePlugin, eagle::EaglePlugin, screens::ScreensPlugin, petals::PetalsPlugin, space::SpacePlugin))
+    .add_plugins((ui::UiPlugin, audio::AudioPlugin, capture::CapturePlugin, fx::FxPlugin, colis::ColisPlugin, annonces::AnnoncesPlugin, exploits::ExploitsPlugin, progress::ProgressPlugin, garage::GaragePlugin, eagle::EaglePlugin, screens::ScreensPlugin, petals::PetalsPlugin, space::SpacePlugin))
     .init_resource::<characters::Selection>()
     .init_resource::<characters::Cast>()
     // Après le style commun : Traversée garde son ciel à elle.

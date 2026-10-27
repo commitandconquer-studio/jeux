@@ -2,7 +2,7 @@
 use std::f32::consts::{FRAC_PI_2, PI};
 
 use bevy::prelude::*;
-use game_common::{Score, tx};
+use game_common::Score;
 
 use crate::GameState;
 use crate::audio::Sfx;
@@ -141,43 +141,6 @@ pub enum Cause {
     Eagle,
 }
 
-impl Cause {
-    pub fn message(self) -> &'static str {
-        match self {
-            Cause::Squashed => tx!("Écrasé !", "Squashed!", "Überfahren!", "Schiacciato!", "¡Aplastado!"),
-            Cause::Drowned => tx!(
-                "Plouf ! Tombé à l'eau",
-                "Splash! Fell in the water",
-                "Platsch! Ins Wasser gefallen",
-                "Splash! Caduto in acqua",
-                "¡Plof! Se cayó al agua"
-            ),
-            Cause::Void => tx!(
-                "Perdu dans le vide !",
-                "Lost in the void!",
-                "Im Nichts verloren!",
-                "Perso nel vuoto!",
-                "¡Perdido en el vacío!"
-            ),
-            Cause::CarriedAway => tx!(
-                "Emporté par le courant",
-                "Swept away by the current",
-                "Von der Strömung fortgerissen",
-                "Trascinato dalla corrente",
-                "Arrastrado por la corriente"
-            ),
-            Cause::Eagle => tx!(
-                "Enlevé par l'aigle !",
-                "Carried off by the eagle!",
-                "Vom Adler geholt!",
-                "Rapito dall'aquila!",
-                "¡Se lo llevó el águila!"
-            ),
-            Cause::TooSlow => tx!("Trop lent !", "Too slow!", "Zu langsam!", "Troppo lento!", "¡Demasiado lento!"),
-        }
-        .t()
-    }
-}
 
 #[derive(Resource, Default)]
 pub struct Death {
@@ -189,6 +152,8 @@ pub struct Death {
     pub fling_height: f32,
     /// La voiture qui a tué (pour la faire exploser en mode gore) et où.
     pub killer: Option<(Entity, Vec3)>,
+    /// Tué par un train (pour la phrase de fin).
+    pub train: bool,
 }
 
 pub fn die(cause: Cause, death: &mut Death, next: &mut NextState<GameState>) {
@@ -403,6 +368,7 @@ pub fn collide(
         die(Cause::Squashed, &mut death, &mut next);
         // Un train l'envoie bien plus loin et plus haut qu'une voiture.
         let train = m.kind == MoverKind::Train;
+        death.train = train;
         death.fling = Vec3::new(m.speed.signum() * if train { 9.0 } else { 3.6 }, 0.0, -0.8);
         death.fling_height = if train { 5.5 } else { 3.2 };
         death.killer = Some((car, Vec3::new(tf.translation.x, 0.5, -(m.row as f32))));

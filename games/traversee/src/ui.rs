@@ -176,7 +176,7 @@ fn survol_sort(out: On<PointerOut>, mut q: Query<&mut UiTransform, With<Survol>>
     }
 }
 
-fn spawn_menu(mut commands: Commands, progress: Res<Progress>, score: Res<Score>, server: Res<AssetServer>) {
+fn spawn_menu(mut commands: Commands, progress: Res<Progress>, score: Res<Score>, server: Res<AssetServer>, stats: Res<crate::exploits::Stats>) {
     let panel = spawn_panel_left(&mut commands, DespawnOnExit(GameState::Menu));
     // Panneau « verre » bleu translucide qui se fond vers le rose (et non plus le panneau crème du thème).
     commands
@@ -186,7 +186,7 @@ fn spawn_menu(mut commands: Commands, progress: Res<Progress>, score: Res<Score>
             Node {
                 flex_direction: FlexDirection::Column,
                 align_items: AlignItems::Center,
-                row_gap: px(9),
+                row_gap: px(6),
                 width: px(500),
                 padding: UiRect::axes(px(30), px(18)),
                 border: UiRect::all(px(3)),
@@ -204,7 +204,7 @@ fn spawn_menu(mut commands: Commands, progress: Res<Progress>, score: Res<Score>
         .insert(UiTransform::from_scale(Vec2::ZERO))
         .insert(Pop::after(0.05));
     // Le logo « Cross or Die » (le même dans toutes les langues).
-    commands.spawn((ImageNode::new(server.load("branding/cross-or-die.png")), Node { width: px(360), height: px(120), ..default() }, ChildOf(panel)));
+    commands.spawn((ImageNode::new(server.load("branding/cross-or-die.png")), Node { width: px(300), height: px(100), ..default() }, ChildOf(panel)));
 
     // Carte « Record » : couronne, record, prochain déblocage, barre et compte des déblocages.
     let carte = commands
@@ -244,19 +244,26 @@ fn spawn_menu(mut commands: Commands, progress: Res<Progress>, score: Res<Score>
         Pickable::IGNORE,
         ChildOf(carte),
     ));
+    commands.spawn((
+        Text::new(tx!("Livraisons : {}   Exploits : {} / {}", "Deliveries: {}   Achievements: {} / {}", "Lieferungen: {}   Erfolge: {} / {}", "Consegne: {}   Imprese: {} / {}", "Entregas: {}   Logros: {} / {}").avec(&[&stats.livraisons, &stats.exploits_gagnes(), &crate::exploits::NOMBRE])),
+        TextFont::from_font_size(18.0),
+        TextColor(sombre),
+        Pickable::IGNORE,
+        ChildOf(carte),
+    ));
 
     // Les boutons.
-    let jouer = gros_bouton(&mut commands, panel, tx!("Jouer", "Play", "Spielen", "Gioca", "Jugar").t(), Some(server.load("branding/menu/jouer.png")), Color::srgb(0.2, 0.72, 0.27), 420.0, 72.0, 40.0);
+    let jouer = gros_bouton(&mut commands, panel, tx!("Jouer", "Play", "Spielen", "Gioca", "Jugar").t(), Some(server.load("branding/menu/jouer.png")), Color::srgb(0.2, 0.72, 0.27), 420.0, 64.0, 40.0);
     commands.entity(jouer).insert((UiAction::Play, Pulse { speed: 3.0, amount: 0.03 })).remove::<Survol>();
-    let collection = gros_bouton(&mut commands, panel, tx!("Collection", "Collection", "Sammlung", "Collezione", "Colección").t(), Some(server.load("branding/menu/collection.png")), Color::srgb(0.16, 0.5, 0.96), 380.0, 56.0, 28.0);
+    let collection = gros_bouton(&mut commands, panel, tx!("Collection", "Collection", "Sammlung", "Collezione", "Colección").t(), Some(server.load("branding/menu/collection.png")), Color::srgb(0.16, 0.5, 0.96), 380.0, 48.0, 28.0);
     commands.entity(collection).insert(UiAction::Garage);
-    let options = gros_bouton(&mut commands, panel, tx!("Options", "Options", "Optionen", "Opzioni", "Opciones").t(), Some(server.load("branding/menu/options.png")), Color::srgb(0.56, 0.34, 0.86), 380.0, 56.0, 28.0);
+    let options = gros_bouton(&mut commands, panel, tx!("Options", "Options", "Optionen", "Opzioni", "Opciones").t(), Some(server.load("branding/menu/options.png")), Color::srgb(0.56, 0.34, 0.86), 380.0, 48.0, 28.0);
     commands.entity(options).insert(game_common::options::OptionsBouton);
-    let aide = gros_bouton(&mut commands, panel, tx!("Aide", "Help", "Hilfe", "Aiuto", "Ayuda").t(), Some(server.load("branding/menu/aide.png")), Color::srgb(0.98, 0.62, 0.12), 380.0, 56.0, 28.0);
+    let aide = gros_bouton(&mut commands, panel, tx!("Aide", "Help", "Hilfe", "Aiuto", "Ayuda").t(), Some(server.load("branding/menu/aide.png")), Color::srgb(0.98, 0.62, 0.12), 380.0, 48.0, 28.0);
     commands.entity(aide).insert(HelpButton);
     #[cfg(not(any(target_os = "android", target_arch = "wasm32")))]
     {
-        let quitter = gros_bouton(&mut commands, panel, tx!("Quitter", "Quit", "Beenden", "Esci", "Salir").t(), None, Color::srgb(0.86, 0.32, 0.34), 220.0, 42.0, 20.0);
+        let quitter = gros_bouton(&mut commands, panel, tx!("Quitter", "Quit", "Beenden", "Esci", "Salir").t(), None, Color::srgb(0.86, 0.32, 0.34), 200.0, 36.0, 20.0);
         commands.entity(quitter).insert(QuitButton);
     }
     // Filet et logo du studio.
@@ -276,11 +283,17 @@ fn score_line(score: &Score) -> String {
     .avec(&[&score.current, &score.best])
 }
 
-pub fn spawn_game_over(mut commands: Commands, score: Res<Score>, death: Res<Death>, progress: Res<Progress>, mut sfx: MessageWriter<Sfx>) {
+pub fn spawn_game_over(mut commands: Commands, score: Res<Score>, death: Res<Death>, progress: Res<Progress>, mut sfx: MessageWriter<Sfx>, mut rng: ResMut<game_common::Rng>) {
     let panel = spawn_panel(&mut commands, DespawnOnExit(GameState::GameOver));
     commands.entity(panel).insert(UiTransform::from_scale(Vec2::ZERO)).insert(Pop::after(0.0));
-    let title = death.cause.map(|c| c.message()).unwrap_or(tx!("Perdu !", "Game over!", "Verloren!", "Hai perso!", "¡Has perdido!").t());
-    spawn_text(&mut commands, panel, title, 46.0);
+    let title = death.cause.map(|c| crate::annonces::mort(c, death.train, &mut rng)).unwrap_or(tx!("Perdu !", "Game over!", "Verloren!", "Hai perso!", "¡Has perdido!").t());
+    // Les phrases de fin sont longues : on les rapetisse pour que la fenêtre reste étroite.
+    let taille = match title.chars().count() {
+        0..=18 => 46.0,
+        19..=34 => 36.0,
+        _ => 28.0,
+    };
+    spawn_text(&mut commands, panel, title, taille);
     // Le score grimpe jusqu'à sa valeur
     let row = commands.spawn((Node { align_items: AlignItems::FlexEnd, column_gap: px(10), ..default() }, ChildOf(panel))).id();
     commands.spawn((
@@ -309,6 +322,19 @@ pub fn spawn_game_over(mut commands: Commands, score: Res<Score>, death: Res<Dea
             ThemedText,
             ChildOf(badge),
         ));
+        spawn_text(
+            &mut commands,
+            panel,
+            tx!(
+                "Incroyable ! Vous êtes notre employé du mois.",
+                "Incredible! You are our employee of the month.",
+                "Unglaublich! Sie sind unser Mitarbeiter des Monats.",
+                "Incredibile! Siete il nostro dipendente del mese.",
+                "¡Increíble! Es nuestro empleado del mes."
+            )
+            .t(),
+            20.0,
+        );
     } else {
         spawn_text(&mut commands, panel, tx!("Record : {}", "Best: {}", "Rekord: {}", "Record: {}", "Récord: {}").avec(&[&score.best]), 22.0);
     }

@@ -1,12 +1,13 @@
 //! Les colis : on ramasse une caisse de couleur, puis on la livre au destinataire de la même couleur,
 //! posté sur le rebord de la zone de jeu. Un destinataire d'une autre couleur attend aussi : il se trompe de colis.
 use bevy::prelude::*;
-use game_common::ui::ThemedText;
 use game_common::{Rng, Score, flat_material, tx};
 
 use crate::GameState;
+use crate::annonces::Annonce;
 use crate::audio::Sfx;
 use crate::frog::Frog;
+use crate::exploits::Livraison;
 use crate::fx::Fx;
 use crate::lanes::{COLS, Lane, LaneKind};
 use crate::models::Kit;
@@ -53,15 +54,10 @@ struct Flotte {
     tourne: bool,
 }
 
-/// Le bandeau de message en haut de l'écran.
-#[derive(Component)]
-struct Avis {
-    age: f32,
-}
-
 #[derive(Resource)]
 struct ColisMats {
     teintes: [Handle<StandardMaterial>; 4],
+    lumiere: [Handle<StandardMaterial>; 4],
     ruban: Handle<StandardMaterial>,
     peau: Handle<StandardMaterial>,
 }
@@ -73,7 +69,7 @@ impl Plugin for ColisPlugin {
         app.init_resource::<Porte>()
             .add_systems(Startup, setup)
             .add_systems(OnEnter(GameState::Dying), |mut porte: ResMut<Porte>| porte.0 = None)
-            .add_systems(Update, (habiller, flotter, vieillir_avis))
+            .add_systems(Update, (habiller, flotter))
             .add_systems(Update, (logique, placer, porteur).chain().run_if(in_state(GameState::Playing)));
     }
 }
@@ -81,6 +77,7 @@ impl Plugin for ColisPlugin {
 fn setup(mut commands: Commands, mut mats: ResMut<Assets<StandardMaterial>>) {
     commands.insert_resource(ColisMats {
         teintes: TEINTES.map(|c| mats.add(flat_material(c))),
+        lumiere: TEINTES.map(|c| mats.add(StandardMaterial { unlit: true, ..flat_material(c.lighter(0.2)) })),
         ruban: mats.add(flat_material(Color::srgb(0.98, 0.96, 0.9))),
         peau: mats.add(flat_material(Color::srgb(0.95, 0.78, 0.62))),
     });
@@ -99,7 +96,7 @@ pub fn spawn_colis(c: &mut Commands, lane: Entity, row: i32, col: i32, teinte: u
 
 /// Une probabilité de caisse par rangée d'herbe ; `TRAVERSEE_COLIS=1` en met partout (essai).
 pub fn chance() -> f32 {
-    if essai() > 0 { 1.0 } else { 0.1 }
+    if essai() > 0 { 1.0 } else { 0.12 }
 }
 
 /// `TRAVERSEE_COLIS=2` : caisses et destinataires sur la colonne centrale (pour tester en pilote automatique).
@@ -127,6 +124,8 @@ fn habiller(
 ) {
     for (e, c) in &colis {
         caisse(&mut commands, e, &kit, &mats, c.teinte, 0.5);
+        // Un fin rayon de sa couleur : on repère les colis de loin (et on ne les prend pas pour des cadeaux).
+        commands.spawn((Mesh3d(kit.cube.clone()), MeshMaterial3d(mats.lumiere[c.teinte].clone()), Transform::from_xyz(0.0, 0.9, 0.0).with_scale(Vec3::new(0.07, 1.4, 0.07)), bevy::light::NotShadowCaster, ChildOf(e)));
     }
     for (e, d) in &dests {
         let t = &mats.teintes[d.teinte];
@@ -160,35 +159,6 @@ fn flotter(time: Res<Time>, mut q: Query<(&Flotte, &mut Transform)>) {
     }
 }
 
-fn avis(commands: &mut Commands, anciens: &Query<Entity, With<Avis>>, texte: &str, couleur: Color) {
-    for e in anciens {
-        commands.entity(e).despawn();
-    }
-    commands.spawn((
-        Text::new(texte),
-        TextFont::from_font_size(30.0),
-        TextColor(couleur),
-        TextShadow { offset: Vec2::splat(3.0), color: Color::srgba(0.0, 0.0, 0.0, 0.75) },
-        TextLayout::justify(Justify::Center),
-        Node { position_type: PositionType::Absolute, width: percent(100), top: percent(22), padding: UiRect::horizontal(px(40)), ..default() },
-        GlobalZIndex(36),
-        Pickable::IGNORE,
-        ThemedText,
-        Avis { age: 0.0 },
-    ));
-}
-
-fn vieillir_avis(mut commands: Commands, time: Res<Time<Real>>, mut q: Query<(Entity, &mut Avis, &mut TextColor)>) {
-    for (e, mut a, mut c) in &mut q {
-        a.age += time.delta_secs();
-        if a.age > 3.2 {
-            commands.entity(e).despawn();
-        } else {
-            c.0 = c.0.with_alpha((3.2 - a.age).clamp(0.0, 1.0).min(1.0));
-        }
-    }
-}
-
 /// Ramasse la caisse de la case, ou livre à un destinataire du rebord.
 #[allow(clippy::too_many_arguments)]
 fn logique(
@@ -199,7 +169,8 @@ fn logique(
     mut dernier: Local<(i32, i32)>,
     colis: Query<(Entity, &Colis)>,
     dests: Query<(Entity, &Destinataire)>,
-    anciens: Query<Entity, With<Avis>>,
+    mut annonces: MessageWriter<Annonce>,
+    mut livraisons: MessageWriter<Livraison>,
     mut sfx: MessageWriter<Sfx>,
     mut fx: MessageWriter<Fx>,
 ) {
@@ -228,12 +199,26 @@ fn logique(
                 "Pacco ritirato! Ora cercate di restare vivi.",
                 "¡Paquete recogido! Ahora intente seguir con vida."
             );
-            avis(&mut commands, &anciens, texte.t(), Color::WHITE);
+            annonces.write(Annonce(texte.t(), Color::WHITE));
         }
+        return;
+    }
+    if colis.iter().any(|(_, c)| c.row == case.0 && c.col == case.1) {
+        annonces.write(Annonce::blanc(
+            tx!(
+                "Vos mains sont pleines. Livrez d'abord !",
+                "Your hands are full. Deliver first!",
+                "Ihre Hände sind voll. Erst liefern!",
+                "Hai le mani piene. Prima consegna!",
+                "Tiene las manos llenas. ¡Primero entregue!"
+            )
+            .t(),
+        ));
         return;
     }
     let Some((_, d)) = dests.iter().find(|(_, d)| d.row == case.0 && d.col == case.1) else { return };
     if Some(d.teinte) == porte.0 {
+        livraisons.write(Livraison { reussie: true });
         frog.add_bonus(POINTS_LIVRAISON);
         score.current = frog.score();
         score.best = score.best.max(score.current);
@@ -250,8 +235,9 @@ fn logique(
             "Pacco consegnato! Quasi professionale.",
             "¡Paquete entregado! Casi profesional."
         );
-        avis(&mut commands, &anciens, texte.t(), Color::srgb(0.6, 1.0, 0.6));
+        annonces.write(Annonce(texte.t(), Color::srgb(0.6, 1.0, 0.6)));
     } else {
+        livraisons.write(Livraison { reussie: false });
         sfx.write(Sfx::Alarm);
         let texte = tx!(
             "Mauvaise couleur. On recrute vraiment n'importe qui.",
@@ -260,7 +246,7 @@ fn logique(
             "Colore sbagliato. Assumiamo proprio chiunque.",
             "Color equivocado. Contratamos a cualquiera."
         );
-        avis(&mut commands, &anciens, texte.t(), Color::srgb(1.0, 0.65, 0.4));
+        annonces.write(Annonce(texte.t(), Color::srgb(1.0, 0.65, 0.4)));
     }
 }
 

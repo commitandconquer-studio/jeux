@@ -50,6 +50,11 @@ impl Eagle {
     pub fn grip(&self) -> Option<Vec3> {
         self.grip
     }
+
+    /// La colonne clignote : un aigle va passer.
+    pub fn warning(&self) -> bool {
+        matches!(self.phase, Phase::Warning { .. })
+    }
 }
 
 #[derive(Component)]
