@@ -50,6 +50,16 @@ pub struct Hop {
 }
 
 impl Frog {
+    /// Points gagnés en plus des pas (mouches, livraisons).
+    pub fn add_bonus(&mut self, n: u32) {
+        self.bonus += n;
+    }
+
+    /// Le score du moment : rangée la plus lointaine plus bonus.
+    pub fn score(&self) -> u32 {
+        self.max_row as u32 + self.bonus
+    }
+
     /// Où se trouve le crapaud à l'écran (au sol, en plein saut compris).
     pub fn max_row_i(&self) -> i32 {
         self.max_row

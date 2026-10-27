@@ -383,6 +383,13 @@ fn spawn_lane(c: &mut Commands, kit: &Kit, x: &Extra, server: &AssetServer, grap
                     }
                 }
             }
+            // Une caisse à livrer, parfois.
+            if row >= if crate::colis::essai() > 0 { 2 } else { 6 } && g.rand() < crate::colis::chance() {
+                let col = if crate::colis::essai() == 2 { 0 } else { g.rng.below((COLS * 2 + 1) as u32) as i32 - COLS };
+                if !blocked.contains(&col) {
+                    crate::colis::spawn_colis(c, root, row, col, g.rng.below(4) as usize);
+                }
+            }
             // Décor sur les côtés
             for col in (COLS + 1)..(HALF as i32) {
                 if biome == Biome::Space {
