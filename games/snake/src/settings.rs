@@ -2,6 +2,7 @@
 use bevy::prelude::*;
 use game_common::tx;
 
+use crate::progress::{Item, Progress};
 use crate::world::Universe;
 
 #[derive(Resource, Clone, Copy, Default)]
@@ -11,6 +12,8 @@ pub struct Settings {
     pub size: BoardSize,
     /// `true` : on traverse les bords ; `false` : les bords tuent.
     pub wrap: bool,
+    /// Personnage qui mène la chenille (indice dans `people::KINDS`).
+    pub leader: usize,
 }
 
 impl Settings {
@@ -63,14 +66,16 @@ pub enum OptionKind {
     Speed,
     Size,
     Edges,
+    Leader,
 }
 
 impl OptionKind {
-    pub const ALL: [OptionKind; 4] = [OptionKind::Universe, OptionKind::Speed, OptionKind::Size, OptionKind::Edges];
+    pub const ALL: [OptionKind; 5] = [OptionKind::Leader, OptionKind::Universe, OptionKind::Speed, OptionKind::Size, OptionKind::Edges];
 
-    pub fn text(self, s: &Settings) -> String {
+    pub fn text(self, s: &Settings, _p: &Progress) -> String {
         let (label, value) = match self {
-            OptionKind::Universe => (tx!("Univers :", "World:", "Welt:", "Mondo:", "Mundo:"), s.universe.label()),
+            OptionKind::Universe => (tx!("Paysage :", "Scenery:", "Landschaft:", "Paesaggio:", "Paisaje:"), s.universe.label()),
+            OptionKind::Leader => (tx!("Chef de file :", "Leader:", "Anführer:", "Capofila:", "Cabeza de fila:"), crate::people::name(s.leader)),
             OptionKind::Speed => (
                 tx!("Vitesse :", "Speed:", "Tempo:", "Velocità:", "Velocidad:"),
                 match s.speed {
@@ -102,9 +107,21 @@ impl OptionKind {
         format!("{}  {}", label.t(), value)
     }
 
-    pub fn cycle(self, s: &mut Settings) {
+    pub fn cycle(self, s: &mut Settings, p: &Progress) {
         match self {
-            OptionKind::Universe => s.universe = s.universe.next(),
+            OptionKind::Universe => {
+                // Saute les paysages encore verrouillés.
+                let mut u = s.universe.next();
+                while !p.has(Item::World(u)) {
+                    u = u.next();
+                }
+                s.universe = u;
+            }
+            OptionKind::Leader => {
+                let pool = p.persons();
+                let i = pool.iter().position(|k| *k == s.leader).unwrap_or(0);
+                s.leader = pool[(i + 1) % pool.len()];
+            }
             OptionKind::Speed => {
                 s.speed = match s.speed {
                     Speed::Lente => Speed::Normale,

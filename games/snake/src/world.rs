@@ -1,7 +1,7 @@
 //! Les univers : plateau, sol, décor et lumière.
 use bevy::light::NotShadowCaster;
 use bevy::prelude::*;
-use game_common::{Rng, flat_material, palette, tx};
+use game_common::{Rng, flat_material, tx};
 
 use crate::settings::Settings;
 
@@ -13,14 +13,12 @@ pub enum Universe {
     #[default]
     Prairie,
     Desert,
-    Banquise,
+    Cimetiere,
     Ocean,
-    Volcan,
 }
 
 impl Universe {
-    const ALL: [Universe; 5] =
-        [Universe::Prairie, Universe::Desert, Universe::Banquise, Universe::Ocean, Universe::Volcan];
+    const ALL: [Universe; 4] = [Universe::Prairie, Universe::Desert, Universe::Cimetiere, Universe::Ocean];
 
     pub fn next(self) -> Self {
         let i = Self::ALL.iter().position(|u| *u == self).unwrap_or(0);
@@ -31,60 +29,47 @@ impl Universe {
         match self {
             Universe::Prairie => tx!("Prairie", "Meadow", "Wiese", "Prateria", "Pradera"),
             Universe::Desert => tx!("Désert", "Desert", "Wüste", "Deserto", "Desierto"),
-            Universe::Banquise => tx!("Banquise", "Ice floe", "Packeis", "Banchisa", "Banquisa"),
-            Universe::Ocean => tx!("Océan", "Ocean", "Ozean", "Oceano", "Océano"),
-            Universe::Volcan => tx!("Volcan", "Volcano", "Vulkan", "Vulcano", "Volcán"),
+            Universe::Cimetiere => tx!("Cimetière", "Graveyard", "Friedhof", "Cimitero", "Cementerio"),
+            Universe::Ocean => tx!("Île des pirates", "Pirate island", "Pirateninsel", "Isola dei pirati", "Isla pirata"),
         }
         .t()
     }
 
+    /// Ambiance « Kenney » de Cross or Die : ciel gris-bleu doux, ombres lavande.
     fn theme(self) -> Theme {
         let c = Color::srgb;
         match self {
             Universe::Prairie => Theme {
-                sky: palette::SKY,
-                tiles: (palette::GRASS_LIGHT, palette::GRASS),
-                rim: palette::FOLIAGE_DARK,
-                ground: palette::PATH,
-                ground_glow: None,
-                sun: (Color::WHITE, 6_000.0),
-                ambient: 900.0,
+                sky: c(0.662, 0.692, 0.757),
+                tiles: (c(0.56, 0.78, 0.40), c(0.50, 0.72, 0.36)),
+                rim: c(0.42, 0.30, 0.22),
+                ground: c(0.38, 0.62, 0.32),
+                sun: (Color::WHITE, 6_500.0),
+                ambient: (c(0.495, 0.482, 0.565), 1000.0),
             },
             Universe::Desert => Theme {
-                sky: c(0.98, 0.90, 0.76),
+                sky: c(0.93, 0.84, 0.70),
                 tiles: (c(0.97, 0.87, 0.62), c(0.93, 0.81, 0.54)),
-                rim: c(0.80, 0.62, 0.38),
+                rim: c(0.72, 0.52, 0.32),
                 ground: c(0.89, 0.73, 0.49),
-                ground_glow: None,
-                sun: (c(1.0, 0.95, 0.85), 7_000.0),
-                ambient: 900.0,
+                sun: (c(1.0, 0.95, 0.85), 7_500.0),
+                ambient: (c(0.62, 0.52, 0.45), 900.0),
             },
-            Universe::Banquise => Theme {
-                sky: c(0.86, 0.93, 0.98),
-                tiles: (c(0.90, 0.96, 1.0), c(0.79, 0.90, 0.97)),
-                rim: c(0.55, 0.72, 0.86),
-                ground: c(0.96, 0.97, 1.0),
-                ground_glow: None,
-                sun: (c(0.92, 0.96, 1.0), 5_500.0),
-                ambient: 1_000.0,
+            Universe::Cimetiere => Theme {
+                sky: c(0.42, 0.38, 0.52),
+                tiles: (c(0.45, 0.47, 0.50), c(0.40, 0.42, 0.46)),
+                rim: c(0.25, 0.24, 0.28),
+                ground: c(0.30, 0.34, 0.30),
+                sun: (c(0.80, 0.82, 1.0), 3_500.0),
+                ambient: (c(0.50, 0.47, 0.68), 1100.0),
             },
             Universe::Ocean => Theme {
-                sky: c(0.80, 0.92, 0.96),
+                sky: c(0.72, 0.88, 0.95),
                 tiles: (c(0.98, 0.91, 0.72), c(0.94, 0.86, 0.64)),
-                rim: c(0.85, 0.75, 0.52),
-                ground: c(0.22, 0.60, 0.80),
-                ground_glow: None,
+                rim: c(0.60, 0.42, 0.26),
+                ground: c(0.22, 0.58, 0.78),
                 sun: (Color::WHITE, 6_500.0),
-                ambient: 900.0,
-            },
-            Universe::Volcan => Theme {
-                sky: c(0.20, 0.15, 0.17),
-                tiles: (c(0.36, 0.33, 0.35), c(0.29, 0.27, 0.30)),
-                rim: c(0.16, 0.14, 0.16),
-                ground: c(0.95, 0.35, 0.08),
-                ground_glow: Some(LinearRgba::rgb(2.0, 0.45, 0.05)),
-                sun: (c(1.0, 0.72, 0.52), 4_000.0),
-                ambient: 450.0,
+                ambient: (c(0.55, 0.60, 0.70), 1000.0),
             },
         }
     }
@@ -95,22 +80,13 @@ struct Theme {
     tiles: (Color, Color),
     rim: Color,
     ground: Color,
-    ground_glow: Option<LinearRgba>,
     sun: (Color, f32),
-    ambient: f32,
+    ambient: (Color, f32),
 }
 
 /// Tout ce qui appartient au décor, supprimé quand on change d'univers.
 #[derive(Component)]
 pub struct WorldPart;
-
-/// Petit mouvement de flottaison (bouées, vagues, lave).
-#[derive(Component)]
-pub struct Bob {
-    base_y: f32,
-    phase: f32,
-    amp: f32,
-}
 
 /// Case de la grille → position dans le monde (grille centrée sur l'origine).
 pub fn cell_to_world(c: Vec2, y: f32, grid: i32) -> Vec3 {
@@ -130,6 +106,7 @@ pub fn rebuild_world(
     mut clear: ResMut<ClearColor>,
     mut ambient: ResMut<GlobalAmbientLight>,
     mut suns: Query<&mut DirectionalLight>,
+    server: Res<AssetServer>,
 ) {
     let key = (settings.universe, settings.grid());
     if *built == Some(key) {
@@ -143,20 +120,18 @@ pub fn rebuild_world(
     let (universe, grid) = key;
     let theme = universe.theme();
     clear.0 = theme.sky;
-    ambient.brightness = theme.ambient;
+    ambient.color = theme.ambient.0;
+    ambient.brightness = theme.ambient.1;
     for mut sun in &mut suns {
         sun.color = theme.sun.0;
         sun.illuminance = theme.sun.1;
     }
 
     let cube = meshes.add(Cuboid::new(1.0, 1.0, 1.0));
-    let mut b = Builder { commands: &mut commands, cube, mats: &mut materials, cache: Vec::new() };
+    let mut b = Builder { commands: &mut commands, cube, mats: &mut materials, cache: Vec::new(), server: &server };
 
     // Sol extérieur
-    let ground = match theme.ground_glow {
-        Some(glow) => b.glow(theme.ground, glow),
-        None => b.mat(theme.ground),
-    };
+    let ground = b.mat(theme.ground);
     let e = b.block_with(ground, Vec3::new(0.0, GROUND_Y - 0.2, 0.0), Vec3::new(90.0, 0.2, 90.0), 0.0);
     b.flat(e);
 
@@ -196,108 +171,65 @@ pub fn rebuild_world(
     }
 }
 
-fn spawn_decor(u: Universe, b: &mut Builder, rng: &mut Rng, pos: Vec3) {
-    let c = Color::srgb;
-    let yaw = rng.below(4) as f32 * 0.4;
-    match (u, rng.below(3)) {
-        // Prairie : immeubles, arbres
-        (Universe::Prairie, 0) => {
-            let (w, h) = (1.8 + rng.below(2) as f32 * 0.6, 1.0 + rng.below(3) as f32);
-            b.block(palette::WALL, pos, Vec3::new(w, h, w));
-            b.block(palette::ROOF, pos + Vec3::Y * h, Vec3::new(w, 0.9, w));
-        }
-        (Universe::Prairie, 1) => {
-            b.block(palette::FOLIAGE_DARK, pos, Vec3::new(2.4, 0.9, 2.4));
-            b.block(palette::FOLIAGE, pos + Vec3::Y * 0.9, Vec3::splat(1.1));
-        }
-        (Universe::Prairie, _) => {
-            b.block(c(0.50, 0.36, 0.25), pos, Vec3::new(0.25, 0.6, 0.25));
-            b.block(palette::FOLIAGE, pos + Vec3::Y * 0.6, Vec3::splat(0.9));
-        }
-
-        // Désert : cactus, pyramides, rochers
-        (Universe::Desert, 0) => {
-            let green = c(0.36, 0.62, 0.36);
-            let h = 1.4 + rng.below(3) as f32 * 0.4;
-            b.block(green, pos, Vec3::new(0.5, h, 0.5));
-            b.block(green, pos + Vec3::new(-0.45, 0.6, 0.0), Vec3::new(0.45, 0.3, 0.3));
-            b.block(green, pos + Vec3::new(-0.6, 0.6, 0.0), Vec3::new(0.3, 0.7, 0.3));
-            b.block(green, pos + Vec3::new(0.45, 0.9, 0.0), Vec3::new(0.45, 0.3, 0.3));
-            b.block(green, pos + Vec3::new(0.6, 0.9, 0.0), Vec3::new(0.3, 0.5, 0.3));
-        }
-        (Universe::Desert, 1) => {
-            for (i, w) in [3.2, 2.4, 1.6, 0.8].into_iter().enumerate() {
-                b.block(c(0.86, 0.69, 0.43), pos + Vec3::Y * (i as f32 * 0.6), Vec3::new(w, 0.6, w));
-            }
-        }
-        (Universe::Desert, _) => {
-            b.block_rot(c(0.66, 0.48, 0.34), pos, Vec3::new(1.4, 0.7, 1.1), yaw);
-        }
-
-        // Banquise : sapins enneigés, igloos, blocs de glace
-        (Universe::Banquise, 0) => {
-            b.block(c(0.45, 0.32, 0.22), pos, Vec3::new(0.3, 0.5, 0.3));
-            for (i, w) in [1.6, 1.2, 0.8].into_iter().enumerate() {
-                let y = 0.5 + i as f32 * 0.55;
-                b.block(c(0.20, 0.42, 0.33), pos + Vec3::Y * y, Vec3::new(w, 0.45, w));
-                b.block(Color::WHITE, pos + Vec3::Y * (y + 0.45), Vec3::new(w * 0.9, 0.1, w * 0.9));
-            }
-        }
-        (Universe::Banquise, 1) => {
-            let snow = c(0.97, 0.98, 1.0);
-            b.block(snow, pos, Vec3::new(2.0, 1.0, 2.0));
-            b.block(snow, pos + Vec3::Y, Vec3::new(1.3, 0.6, 1.3));
-            b.block(c(0.85, 0.90, 0.96), pos + Vec3::new(0.0, 0.0, 1.2), Vec3::new(0.7, 0.6, 0.5));
-        }
-        (Universe::Banquise, _) => {
-            let ice = c(0.70, 0.88, 0.97);
-            b.block_rot(ice, pos, Vec3::splat(1.2), yaw);
-            if rng.below(2) == 0 {
-                b.block_rot(ice, pos + Vec3::Y * 1.2, Vec3::splat(0.7), yaw + 0.5);
-            }
-        }
-
-        // Océan : îlots à palmier, bouées, vagues
-        (Universe::Ocean, 0) => {
-            b.block(c(0.96, 0.88, 0.66), pos, Vec3::new(2.6, 0.4, 2.6));
-            b.block(c(0.55, 0.40, 0.26), pos + Vec3::Y * 0.4, Vec3::new(0.25, 1.6, 0.25));
-            let leaf = c(0.30, 0.66, 0.35);
-            b.block_rot(leaf, pos + Vec3::Y * 2.0, Vec3::new(2.0, 0.15, 0.5), yaw);
-            b.block_rot(leaf, pos + Vec3::Y * 2.0, Vec3::new(0.5, 0.15, 2.0), yaw);
-        }
-        (Universe::Ocean, 1) => {
-            let e1 = b.block(c(0.90, 0.25, 0.25), pos, Vec3::new(0.5, 0.5, 0.5));
-            let e2 = b.block(Color::WHITE, pos + Vec3::Y * 0.5, Vec3::new(0.5, 0.25, 0.5));
-            let phase = rng.below(628) as f32 / 100.0;
-            b.bob(e1, pos.y, phase, 0.12);
-            b.bob(e2, pos.y + 0.5, phase, 0.12);
-        }
-        (Universe::Ocean, _) => {
-            let e = b.block_rot(c(0.55, 0.80, 0.92), pos, Vec3::new(1.6, 0.12, 0.6), yaw);
-            b.bob(e, pos.y, rng.below(628) as f32 / 100.0, 0.08);
-        }
-
-        // Volcan : orgues basaltiques, cônes, roches incandescentes
-        (Universe::Volcan, 0) => {
-            let dark = c(0.20, 0.19, 0.21);
-            for i in 0..3 {
-                let h = 1.0 + rng.below(4) as f32 * 0.6;
-                b.block(dark, pos + Vec3::new(i as f32 * 0.8 - 0.8, 0.0, 0.0), Vec3::new(0.75, h, 0.75));
-            }
-        }
-        (Universe::Volcan, 1) => {
-            for (i, w) in [3.0, 2.2, 1.4].into_iter().enumerate() {
-                b.block(c(0.25, 0.22, 0.23), pos + Vec3::Y * (i as f32 * 0.7), Vec3::new(w, 0.7, w));
-            }
-            let lava = b.glow(c(1.0, 0.45, 0.1), LinearRgba::rgb(4.0, 1.0, 0.1));
-            b.block_with(lava, pos + Vec3::Y * 2.1, Vec3::new(0.8, 0.15, 0.8), 0.0);
-        }
-        (Universe::Volcan, _) => {
-            let ember = b.glow(c(1.0, 0.5, 0.15), LinearRgba::rgb(3.0, 0.8, 0.1));
-            let e = b.block_with(ember, pos, Vec3::splat(0.6), yaw);
-            b.bob(e, pos.y, rng.below(628) as f32 / 100.0, 0.15);
-        }
+/// Le décor autour du plateau : modèles Kenney (CC0), (fichier, échelle).
+fn decor_models(u: Universe) -> &'static [(&'static str, f32)] {
+    match u {
+        Universe::Prairie => &[
+            ("mini-forest/tree", 2.2),
+            ("mini-forest/tree-high", 2.2),
+            ("mini-forest/tree", 2.8),
+            ("mini-forest/tent", 2.0),
+            ("nature-kit/rock_largeA", 2.2),
+            ("nature-kit/plant_bush", 2.4),
+            ("nature-kit/stump_round", 2.4),
+            ("nature-kit/flower_redA", 2.5),
+            ("nature-kit/flower_yellowB", 2.5),
+            ("nature-kit/log_large", 2.2),
+        ],
+        Universe::Desert => &[
+            ("nature-kit/cactus_tall", 2.8),
+            ("nature-kit/cactus_short", 2.8),
+            ("nature-kit/cactus_tall", 3.4),
+            ("pirate-kit/rocks-sand-a", 2.4),
+            ("pirate-kit/rocks-sand-b", 2.4),
+            ("pirate-kit/rocks-sand-c", 2.4),
+            ("survival-kit/tent-canvas", 2.2),
+            ("survival-kit/campfire-pit", 2.4),
+            ("survival-kit/signpost", 2.4),
+        ],
+        Universe::Cimetiere => &[
+            ("graveyard-kit/pine-fall", 2.4),
+            ("graveyard-kit/pine", 2.4),
+            ("graveyard-kit/pine-crooked", 2.4),
+            ("graveyard-kit/gravestone-cross", 2.4),
+            ("graveyard-kit/gravestone-round", 2.4),
+            ("graveyard-kit/gravestone-broken", 2.4),
+            ("graveyard-kit/crypt-small", 2.2),
+            ("graveyard-kit/pumpkin-carved", 2.4),
+            ("graveyard-kit/lightpost-single", 2.4),
+            ("graveyard-kit/iron-fence", 2.4),
+        ],
+        Universe::Ocean => &[
+            ("pirate-kit/palm-straight", 2.4),
+            ("pirate-kit/palm-bend", 2.4),
+            ("pirate-kit/palm-detailed-straight", 2.4),
+            ("pirate-kit/barrel", 2.4),
+            ("pirate-kit/crate", 2.4),
+            ("pirate-kit/chest", 2.4),
+            ("pirate-kit/rocks-a", 2.4),
+            ("pirate-kit/boat-row-small", 2.4),
+            ("pirate-kit/ship-small", 2.0),
+        ],
     }
+}
+
+fn spawn_decor(u: Universe, b: &mut Builder, rng: &mut Rng, pos: Vec3) {
+    let models = decor_models(u);
+    let (file, scale) = models[rng.below(models.len() as u32) as usize];
+    let yaw = rng.below(628) as f32 / 100.0;
+    // Sur l'île des pirates, les objets flottent un peu au-dessus de l'eau.
+    let pos = if u == Universe::Ocean { pos + Vec3::Y * 0.05 } else { pos };
+    b.model(file, pos, scale, yaw);
 }
 
 /// Aide à la construction de blocs, avec un cache de matériaux.
@@ -306,6 +238,7 @@ struct Builder<'a, 'w, 's> {
     cube: Handle<Mesh>,
     mats: &'a mut Assets<StandardMaterial>,
     cache: Vec<(Color, Handle<StandardMaterial>)>,
+    server: &'a AssetServer,
 }
 
 impl Builder<'_, '_, '_> {
@@ -316,10 +249,6 @@ impl Builder<'_, '_, '_> {
         let h = self.mats.add(flat_material(color));
         self.cache.push((color, h.clone()));
         h
-    }
-
-    fn glow(&mut self, color: Color, emissive: LinearRgba) -> Handle<StandardMaterial> {
-        self.mats.add(StandardMaterial { emissive, ..flat_material(color) })
     }
 
     /// Pose un bloc dont `base` est le centre de la face inférieure.
@@ -345,18 +274,18 @@ impl Builder<'_, '_, '_> {
             .id()
     }
 
+    fn model(&mut self, file: &str, at: Vec3, scale: f32, yaw: f32) {
+        let scene = self.server.load(GltfAssetLabel::Scene(0).from_asset(format!("kenney/{file}.glb")));
+        self.commands.spawn((
+            WorldAssetRoot(scene),
+            Transform::from_translation(at).with_rotation(Quat::from_rotation_y(yaw)).with_scale(Vec3::splat(scale)),
+            WorldPart,
+        ));
+    }
+
     fn flat(&mut self, e: Entity) {
         self.commands.entity(e).insert(NotShadowCaster);
     }
 
-    fn bob(&mut self, e: Entity, bottom_y: f32, phase: f32, amp: f32) {
-        self.commands.entity(e).insert(Bob { base_y: bottom_y, phase, amp });
-    }
 }
 
-pub fn animate_bobs(time: Res<Time>, mut q: Query<(&Bob, &mut Transform)>) {
-    let t = time.elapsed_secs();
-    for (bob, mut tf) in &mut q {
-        tf.translation.y = bob.base_y + tf.scale.y / 2.0 + (t * 1.8 + bob.phase).sin() * bob.amp;
-    }
-}

@@ -118,3 +118,27 @@ pub fn all_die(
         }
     }
 }
+
+/// Prénom ou nom du personnage.
+pub fn name(kind: usize) -> &'static str {
+    use game_common::tx;
+    match kind {
+        0 => tx!("Léo", "Leo", "Leo", "Leo", "Leo"),
+        1 => tx!("Lola", "Lola", "Lola", "Lola", "Lola"),
+        2 => tx!("Max", "Max", "Max", "Max", "Max"),
+        3 => tx!("Inès", "Ines", "Ines", "Ines", "Inés"),
+        4 => tx!("Noé", "Noah", "Noah", "Noè", "Noé"),
+        5 => tx!("Zoé", "Zoe", "Zoe", "Zoe", "Zoe"),
+        6 => tx!("Hugo", "Hugo", "Hugo", "Ugo", "Hugo"),
+        7 => tx!("Jade", "Jade", "Jade", "Jade", "Jade"),
+        8 => tx!("Sacha", "Sasha", "Sascha", "Sasha", "Sasha"),
+        9 => tx!("Maya", "Maya", "Maya", "Maya", "Maya"),
+        10 => tx!("Théo", "Theo", "Theo", "Teo", "Teo"),
+        11 => tx!("Lou", "Lou", "Lou", "Lou", "Lou"),
+        12 => tx!("Zombie", "Zombie", "Zombie", "Zombie", "Zombi"),
+        13 => tx!("Squelette", "Skeleton", "Skelett", "Scheletro", "Esqueleto"),
+        14 => tx!("Vampire", "Vampire", "Vampir", "Vampiro", "Vampiro"),
+        _ => tx!("Fantôme", "Ghost", "Geist", "Fantasma", "Fantasma"),
+    }
+    .t()
+}

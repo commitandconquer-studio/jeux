@@ -10,6 +10,7 @@ use crate::GameState;
 use crate::audio::Sfx;
 use crate::board::{Board, Feature, Tile};
 use crate::people::{self, Pose};
+use crate::progress::Progress;
 use crate::settings::Settings;
 use crate::world::cell_to_world;
 
@@ -115,9 +116,10 @@ struct Conga {
 
 impl Conga {
     fn new(grid: i32, leader: usize) -> Self {
+        let pal = |k: usize| (k + 1) % 6;
         let c = grid / 2;
         let cells = vec![IVec2::new(c, c), IVec2::new(c - 1, c), IVec2::new(c - 2, c)];
-        let kinds = vec![leader, (leader + 3) % 12, (leader + 6) % 12];
+        let kinds = vec![leader, pal(leader), pal(pal(leader) + 2)];
         Self { prev: cells.clone(), cells, kinds, dir: IVec2::X, queued: VecDeque::new() }
     }
 
@@ -195,6 +197,7 @@ fn new_game(
     mut paused: ResMut<Paused>,
     mut board: ResMut<Board>,
     mut boost: ResMut<Boost>,
+    progress: Res<Progress>,
     mut rng: ResMut<Rng>,
     stuff: Query<Entity, Or<(With<Segment>, With<Guest>)>>,
     mut sfx: MessageWriter<Sfx>,
@@ -206,9 +209,9 @@ fn new_game(
     paused.0 = false;
     board.clear();
     boost.0 = 0;
-    *conga = Conga::new(settings.grid(), 0);
+    *conga = Conga::new(settings.grid(), settings.leader);
     food.cell = free_cell(&conga.cells, &board, settings.grid(), &mut rng);
-    food.kind = guest_kind(&mut rng);
+    food.kind = guest_kind(&mut rng, &progress);
     food.spawned = false;
     // Captures d'écran : tous les éléments sont déjà posés.
     if std::env::var("SNAKE_CAPTURE").is_ok() {
@@ -227,9 +230,10 @@ fn clear_board(mut commands: Commands, stuff: Query<Entity, Or<(With<Segment>, W
     }
 }
 
-/// Un invité au hasard parmi les humains.
-fn guest_kind(rng: &mut Rng) -> usize {
-    rng.below(12) as usize
+/// Un invité au hasard parmi les personnages débloqués.
+fn guest_kind(rng: &mut Rng, progress: &Progress) -> usize {
+    let pool = progress.persons();
+    pool[rng.below(pool.len() as u32) as usize]
 }
 
 /// Clavier, manette, glissement du doigt ; pause avec P, Espace ou la manette.
@@ -293,6 +297,7 @@ fn step(
     mut board: ResMut<Board>,
     mut boost: ResMut<Boost>,
     mut banner: ResMut<Banner>,
+    progress: Res<Progress>,
     mut next: ResMut<NextState<GameState>>,
     mut sfx: MessageWriter<Sfx>,
 ) {
@@ -346,10 +351,10 @@ fn step(
         let kind = food.kind;
         conga.kinds.push(kind);
         food.cell = free_cell(&conga.cells, &board, grid, &mut rng);
-        food.kind = guest_kind(&mut rng);
+        food.kind = guest_kind(&mut rng, &progress);
         food.spawned = false;
         if score.current % LEVEL_EVERY == 0 {
-            level_up(&mut board, &conga, food.cell, &settings, &mut banner, &mut sfx, &mut rng, score.current / LEVEL_EVERY);
+            level_up(&mut board, &progress, &conga, food.cell, &settings, &mut banner, &mut sfx, &mut rng, score.current / LEVEL_EVERY);
         }
         let min = settings.speed.step_times().1;
         let faster = (timer.0.duration().as_secs_f32() * 0.96).max(min);
@@ -365,12 +370,12 @@ fn step(
 
 /// Un nouvel élément arrive sur le plateau (le premier de la liste que le joueur a débloqué et qui a encore de la place).
 #[allow(clippy::too_many_arguments)]
-fn level_up(board: &mut Board, conga: &Conga, food: IVec2, settings: &Settings, banner: &mut Banner, sfx: &mut MessageWriter<Sfx>, rng: &mut Rng, level: u32) {
+fn level_up(board: &mut Board, progress: &Progress, conga: &Conga, food: IVec2, settings: &Settings, banner: &mut Banner, sfx: &mut MessageWriter<Sfx>, rng: &mut Rng, level: u32) {
     let mut busy = conga.cells.clone();
     busy.push(food);
     for k in 0..SEQUENCE.len() {
         let f = SEQUENCE[(level as usize - 1 + k) % SEQUENCE.len()];
-        if !crate::progress::allows(f) || board.count(f) >= cap(f) {
+        if !progress.allows(f) || board.count(f) >= cap(f) {
             continue;
         }
         if board.place(f, &busy, conga.cells[0], settings.grid(), settings.universe, rng) {

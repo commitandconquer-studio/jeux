@@ -8,14 +8,13 @@ use crate::GameState;
 use crate::settings::Settings;
 use crate::world::Universe;
 
-const SHOTS: [(&str, GameState, Universe); 7] = [
+const SHOTS: [(&str, GameState, Universe); 6] = [
     ("1-menu-prairie", GameState::Menu, Universe::Prairie),
     ("2-jeu-prairie", GameState::Playing, Universe::Prairie),
     ("3-options-desert", GameState::Options, Universe::Desert),
     ("4-jeu-desert", GameState::Playing, Universe::Desert),
-    ("5-jeu-banquise", GameState::Playing, Universe::Banquise),
+    ("5-jeu-cimetiere", GameState::Playing, Universe::Cimetiere),
     ("6-jeu-ocean", GameState::Playing, Universe::Ocean),
-    ("7-jeu-volcan", GameState::Playing, Universe::Volcan),
 ];
 
 #[derive(Resource)]

@@ -37,9 +37,8 @@ fn music_for(universe: Universe) -> &'static str {
     match universe {
         Universe::Prairie => lib::MUSIC_PRAIRIE,
         Universe::Desert => lib::MUSIC_DESERT,
-        Universe::Banquise => lib::MUSIC_BANQUISE,
+        Universe::Cimetiere => lib::MUSIC_NOCTURNE,
         Universe::Ocean => lib::MUSIC_OCEAN,
-        Universe::Volcan => lib::MUSIC_VOLCAN,
     }
 }
 

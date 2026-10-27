@@ -3,6 +3,7 @@ mod audio;
 mod board;
 mod capture;
 mod game;
+mod miniature;
 mod people;
 mod progress;
 mod settings;
@@ -31,22 +32,27 @@ fn main() {
         .add_plugins(
             DefaultPlugins
                 .set(WindowPlugin {
-                    primary_window: Some(game_common::fenetre("Snake — Commit & Conquer")),
+                    primary_window: Some(game_common::fenetre("À la queue leu leu — Commit & Conquer")),
                     ..default()
                 })
                 .set(game_common::shared_assets()),
         )
         .init_state::<GameState>()
         .add_plugins(StudioPlugin::new(Univers::Croa, game_common::ambiance::AmbiancePlugin::exterieur()))
-        .add_plugins((game::GamePlugin, ui::UiPlugin, audio::AudioPlugin, capture::CapturePlugin))
+        .add_plugins(miniature::MiniaturePlugin)
+        .add_plugins((progress::ProgressPlugin, game::GamePlugin, ui::UiPlugin, audio::AudioPlugin, capture::CapturePlugin))
         .add_systems(Update, game_common::langue::rebatir_menu(GameState::Menu))
         .insert_resource(Rng::from_time())
+        .insert_resource(bevy::light::DirectionalLightShadowMap { size: 2048 })
         .init_resource::<Settings>()
         .init_resource::<Score>()
         .add_systems(Startup, |mut commands: Commands| {
-            commands.spawn(iso_camera(Vec3::ZERO, 24.0, 18.0));
+            let mut cam = commands.spawn((iso_camera(Vec3::ZERO, 24.0, 18.0), bevy::core_pipeline::tonemapping::Tonemapping::AcesFitted));
+            if miniature::actif() {
+                cam.insert(miniature::Miniature::default());
+            }
         })
-        .add_systems(Update, (world::rebuild_world, world::animate_bobs, move_camera))
+        .add_systems(Update, (world::rebuild_world, move_camera))
         .run();
 }
 
