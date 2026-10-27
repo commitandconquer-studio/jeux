@@ -4,7 +4,6 @@ weight = 5
 description = "Bâtissez le bouclier de Nova bloc par bloc et abattez le croiseur de l'Hégémonie."
 [extra]
 web = true
-univers = "nova"
 icone = "nova"
 code = "games/nova"
 commandes = ["Gauche/droite : déplacer · Haut : tourner", "Bas : accélérer · Espace : poser · C : réserve", "Tactile : glisser, toucher pour tourner"]

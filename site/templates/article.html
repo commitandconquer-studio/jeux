@@ -1,0 +1,18 @@
+{% extends "base.html" %}
+{% block title %}{{ page.title }} · Commit & Conquer{% endblock %}
+{% block content %}
+{%- set suf = "" -%}{%- if lang != "fr" -%}{%- set suf = "." ~ lang -%}{%- endif -%}
+<section class="page-head">
+  <h1>{{ page.title }}</h1>
+</section>
+<article class="prose">
+  <p class="maj-date"><time datetime="{{ page.date }}">{% if lang == "fr" %}{{ page.date | date(format="%d/%m/%Y") }}{% else %}{{ page.date | date(format="%Y-%m-%d") }}{% endif %}</time>
+  {%- set morceaux = page.relative_path | split(pat="/") %}
+      {%- if morceaux | length == 3 %}
+      {%- set blog_du_jeu = get_section(path="blog/" ~ morceaux[1] ~ "/_index" ~ suf ~ ".md") %}
+      · <a href="{{ blog_du_jeu.permalink }}">{{ blog_du_jeu.title }}</a>
+      {%- endif %}</p>
+  {{ page.content | safe }}
+  <p><a href="{{ get_url(path='@/blog/_index.md', lang=lang) }}">{{ trans(key="blog_tous", lang=lang) }}</a></p>
+</article>
+{% endblock %}

@@ -1,6 +1,7 @@
 +++
 title = "Ouverture du site et jeux en ligne"
 date = 2026-10-15
+aliases = ["/mises-a-jour/ouverture/"]
 +++
 
 - Le site **commitandconquer.fr** ouvre, en français et en anglais.

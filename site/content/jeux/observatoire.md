@@ -4,7 +4,6 @@ weight = 9
 description = "Soleils et lunes sur la carte du ciel : autant de chaque, jamais trois à la suite."
 [extra]
 web = true
-univers = "eureka"
 icone = "observatoire"
 code = "games/observatoire"
 commandes = ["Clic : vide, soleil, lune · clic droit : dans l'autre sens", "Toucher : vide, soleil, lune", "H : indice · Ctrl+Z : annuler · Échap : menu"]

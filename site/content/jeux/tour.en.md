@@ -4,7 +4,6 @@ weight = 3
 description = "Stack the blocks as high as you can, with perfect timing."
 [extra]
 web = true
-univers = "croa"
 icone = "tour"
 code = "games/tour"
 commandes = ["Space, click or tap: drop", "M: sound · Esc: menu"]

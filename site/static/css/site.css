@@ -114,29 +114,15 @@ h3 { font-size: 1.25rem; }
 .pilier-icon { width: 58px; height: 58px; margin-bottom: 10px; }
 .pilier p { margin: 0; color: var(--ink-soft); }
 
-.univers-band { background: var(--sky-soft); }
-.univers-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 22px; }
-@media (max-width: 1100px) { .piliers, .univers-grid { grid-template-columns: repeat(2, 1fr); } }
-@media (max-width: 560px) { .piliers, .univers-grid { grid-template-columns: 1fr; } }
-.univers-card {
-  display: block; overflow: hidden; border-radius: var(--radius); text-decoration: none;
-  color: var(--ink); background: var(--card); box-shadow: var(--shadow);
-  transition: transform .2s;
-}
-.univers-card:hover { transform: translateY(-6px) rotate(-.5deg); }
-.univers-card .illus { display: block; width: 100%; height: auto; }
-.univers-card-text { padding: 18px 22px 22px; }
-.univers-card-text p { margin: 0; color: var(--ink-soft); font-size: 15px; }
-.univers-grid.big { padding: 0 clamp(16px, 6vw, 80px) 80px; }
+@media (max-width: 1100px) { .piliers { grid-template-columns: repeat(2, 1fr); } }
+@media (max-width: 560px) { .piliers { grid-template-columns: 1fr; } }
+.blog-band { background: var(--sky-soft); }
+.blog-band .maj-liste { max-width: 760px; }
 
 .tag {
   display: inline-block; font: 700 12px/1 var(--body); letter-spacing: .04em; text-transform: uppercase;
   padding: 6px 10px; border-radius: 99px; background: var(--ivory); color: var(--ink); text-decoration: none;
 }
-.tag-croa { background: #E5F5D2; color: #3D6B10; }
-.tag-nova { background: var(--night); color: var(--sky); }
-.tag-eureka { background: #DDEFFF; color: #0B5DA0; }
-.tag-legendes { background: #FFE3E0; color: #B02A20; }
 
 .jeux-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(300px, 100%), 1fr)); gap: 18px; max-width: 1180px; margin: 0 auto; }
 .jeu-card {
@@ -158,23 +144,18 @@ h3 { font-size: 1.25rem; }
 
 /* ---- Pages intérieures ------------------------------------------------ */
 .page-head { text-align: center; padding: clamp(48px, 7vw, 80px) 16px 28px; }
-.filtres { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; }
-.filtre { border: 2px solid transparent; cursor: pointer; padding: 8px 14px; border-radius: 99px; font: 700 14px var(--body); background: #fff; color: var(--ink); }
-.filtre.on { border-color: var(--ink); }
 .prose { max-width: 760px; margin: 0 auto; padding: 0 16px 64px; }
 .prose h2 { margin-top: 1.6em; font-size: 1.6rem; }
 .retour { text-align: center; padding-bottom: 64px; }
 
-.univers-hero, .jeu-hero {
+.jeu-hero {
   display: grid; grid-template-columns: 1.1fr 1fr; gap: clamp(20px, 4vw, 56px); align-items: center;
   padding: clamp(40px, 6vw, 80px) clamp(16px, 6vw, 80px);
 }
-.univers-hero .illus { width: 100%; border-radius: var(--radius); box-shadow: var(--shadow); }
 .jeu-hero { grid-template-columns: auto 1fr; }
 .jeu-icone { width: clamp(120px, 18vw, 200px); border-radius: 36px; box-shadow: var(--shadow); }
-.jeu-hero .tag { margin-bottom: 14px; }
 @media (max-width: 760px) {
-  .univers-hero, .jeu-hero { grid-template-columns: 1fr; }
+  .jeu-hero { grid-template-columns: 1fr; }
 }
 .jeu-corps { display: grid; grid-template-columns: minmax(0, 1fr) 300px; gap: 32px; max-width: 1100px; margin: 0 auto; padding: 24px 16px 0; }
 .jeu-corps .prose { padding: 0; margin: 0; }
@@ -188,19 +169,12 @@ h3 { font-size: 1.25rem; }
 .plateformes li.ok span { color: #3D6B10; font-weight: 700; }
 @media (max-width: 860px) { .jeu-corps { grid-template-columns: 1fr; } }
 
-/* ---- Thèmes des univers ----------------------------------------------- */
-.univers-hero.theme-croa, .jeu-hero.theme-croa { background: linear-gradient(180deg, #E5F5D2, var(--ivory)); }
-.univers-hero.theme-nova, .jeu-hero.theme-nova {
-  background: radial-gradient(ellipse at 70% 30%, #1E4A6E 0%, var(--night) 60%), var(--night);
-  color: var(--ivory);
-}
-.theme-nova .lede, .theme-nova .prose-inline { color: #C9D8E4; }
-.univers-hero.theme-eureka, .jeu-hero.theme-eureka {
-  background-color: #FBF6E9;
-  background-image: linear-gradient(rgba(139,217,255,.35) 1px, transparent 1px), linear-gradient(90deg, rgba(139,217,255,.35) 1px, transparent 1px);
-  background-size: 24px 24px;
-}
-.univers-hero.theme-legendes, .jeu-hero.theme-legendes { background: linear-gradient(180deg, #F3E9DE, var(--ivory)); }
+/* ---- Fiche d'un jeu --------------------------------------------------- */
+.jeu-hero { background: linear-gradient(180deg, #E5F5D2, var(--ivory)); }
+.jeu-blog { max-width: 760px; margin: 32px auto 0; padding: 0 16px; }
+.jeu-blog h2 a { color: inherit; text-decoration: none; }
+.jeu-blog h3 { margin: 0; font-size: 1.1rem; }
+.maj .tag { margin-left: 8px; }
 
 /* ---- Pied de page ----------------------------------------------------- */
 .foot { position: relative; background: var(--night); color: var(--ivory); margin-top: 60px; padding: 40px clamp(16px, 6vw, 80px) 24px; }
@@ -233,23 +207,7 @@ h3 { font-size: 1.25rem; }
 .m1 { fill: var(--m1); } .m1b { fill: var(--m1b); }
 .m2 { fill: var(--m2); } .m2b { fill: var(--m2b); }
 .m3 { fill: var(--m3); }
-.theme-croa .montagnes { --m1: #CFEFB0; --m1b: #BDE594; --m2: #8FCB4E; --m2b: #7AB83C; }
-.theme-nova .montagnes { --m1: #2A557B; --m1b: #234A6C; --m2: #1B3B58; --m2b: #17324B; }
-.theme-eureka .montagnes { --m1: #D7EEFB; --m1b: #C4E5F7; --m2: #A8D3F0; --m2b: #93C6EA; }
-.theme-legendes .montagnes { --m1: #D9CFC3; --m1b: #CBBFB1; --m2: #8FC456; --m2b: #7AB040; }
 
-/* ---- En-tête 3D des univers ------------------------------------------- */
-.univers-hero { position: relative; overflow: hidden; min-height: min(82vh, 760px); }
-.univers-hero .scene-3d { position: absolute; inset: 0; width: 100%; height: 100%; }
-.univers-hero-text {
-  position: relative; z-index: 1; padding: 26px 28px; border-radius: 24px;
-  background: rgba(255, 249, 237, .8); backdrop-filter: blur(6px); box-shadow: var(--shadow);
-}
-.univers-hero.theme-nova .univers-hero-text { background: rgba(20, 44, 64, .72); }
-.univers-hero.a-3d .illus { visibility: hidden; }
-.univers-hero.theme-croa { background: linear-gradient(180deg, var(--ciel-haut) 0%, var(--ciel-milieu) 50%, #E5F5D2 100%); }
-.univers-hero.theme-legendes { background: linear-gradient(180deg, #F6C9A0 0%, #F3E1CB 55%, #EFE7DC 100%); }
-@media (max-width: 760px) { .univers-hero { min-height: 100vh; align-content: start; } }
 
 /* ---- Ambiance : moment, saison, météo (classes posées par ambiance.js) -- */
 :root { --ciel-haut: #5FC3FA; --ciel-milieu: var(--sky); --ciel-bas: var(--ivory); }
@@ -260,11 +218,7 @@ h3 { font-size: 1.25rem; }
 .meteo-pluie:not(.moment-nuit), .meteo-orage:not(.moment-nuit) { --ciel-haut: #5E7487; --ciel-milieu: #93A8B8; --ciel-bas: #DCE4EA; }
 .meteo-brouillard:not(.moment-nuit) { --ciel-haut: #B9C6CF; --ciel-milieu: #DCE3E8; --ciel-bas: #F2F4F5; }
 .meteo-neige:not(.moment-nuit) { --ciel-haut: #A9C4D8; --ciel-milieu: #DCE9F2; --ciel-bas: #F7FAFC; }
-.moment-nuit .hero h1, .moment-nuit .univers-hero h1 { color: var(--night); }
-.moment-nuit .univers-hero.theme-legendes, .moment-nuit .univers-hero.theme-eureka {
-  background: linear-gradient(180deg, var(--ciel-haut), var(--ciel-milieu) 60%, var(--ciel-bas));
-}
-.moment-nuit .univers-hero.theme-croa { background: linear-gradient(180deg, var(--ciel-haut), var(--ciel-milieu) 60%, #2F5A3A); }
+.moment-nuit .hero h1 { color: var(--night); }
 /* Montagnes : neige l'hiver, roux l'automne, bleu sombre la nuit. */
 .saison-hiver .montagnes { --m1: #EEF5FB; --m1b: #DCE8F1; --m2: #E3EDF3; --m2b: #CFDDE7; }
 .saison-automne .montagnes { --m2: #D9A55A; --m2b: #C48A3E; }

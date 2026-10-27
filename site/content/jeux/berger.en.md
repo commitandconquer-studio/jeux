@@ -4,7 +4,6 @@ weight = 10
 description = "Gather the flock and bring it into the pen before the wolves arrive."
 [extra]
 web = true
-univers = "croa"
 icone = "berger"
 code = "games/berger"
 commandes = ["Arrow keys or WASD: run · Shift: sprint", "Space or B: bark · right click too", "Mouse or finger: the dog goes to the pointer · Esc: menu"]

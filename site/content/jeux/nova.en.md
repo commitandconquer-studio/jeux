@@ -4,7 +4,6 @@ weight = 5
 description = "Build Nova's shield block by block and bring down the Hegemony's cruiser."
 [extra]
 web = true
-univers = "nova"
 icone = "nova"
 code = "games/nova"
 commandes = ["Left/right: move · Up: rotate", "Down: speed up · Space: drop · C: hold", "Touch: swipe, tap to rotate"]

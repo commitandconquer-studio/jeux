@@ -4,7 +4,6 @@ weight = 3
 description = "Empilez les blocs le plus haut possible, au bon moment."
 [extra]
 web = true
-univers = "croa"
 icone = "tour"
 code = "games/tour"
 commandes = ["Espace, clic ou toucher l'écran : poser", "M : son · Échap : menu"]

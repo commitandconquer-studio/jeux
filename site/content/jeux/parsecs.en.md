@@ -4,7 +4,6 @@ weight = 8
 description = "Cross the 12 parsecs of an asteroid belt and win new ships."
 [extra]
 web = true
-univers = "nova"
 icone = "parsecs"
 code = "games/parsecs"
 commandes = ["Arrow keys or WASD: fly", "Space: shoot · Esc: pause", "Touch: slide to fly, auto fire"]

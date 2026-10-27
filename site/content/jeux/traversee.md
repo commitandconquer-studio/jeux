@@ -5,7 +5,6 @@ description = "Aidez votre personnage à traverser routes, rivières et voies fe
 [extra]
 logo = "traversee/logo"
 web = true
-univers = "croa"
 icone = "traversee"
 code = "games/traversee"
 dossier = "traversee"

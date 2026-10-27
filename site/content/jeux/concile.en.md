@@ -4,7 +4,6 @@ weight = 7
 description = "One bishop per diocese, row and column, and never side by side."
 [extra]
 web = true
-univers = "eureka"
 icone = "concile"
 code = "games/concile"
 commandes = ["Click: cross, then bishop, then empty", "Drag: cross out several cells", "H: hint · U: undo · Esc: menu"]

@@ -4,7 +4,6 @@ weight = 8
 description = "Traversez les 12 parsecs d'une ceinture d'astéroïdes et gagnez de nouveaux vaisseaux."
 [extra]
 web = true
-univers = "nova"
 icone = "parsecs"
 code = "games/parsecs"
 commandes = ["Flèches ou ZQSD : piloter", "Espace : tirer · Échap : pause", "Tactile : glisser pour piloter, tir automatique"]

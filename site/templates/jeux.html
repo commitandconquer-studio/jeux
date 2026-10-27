@@ -1,34 +1,13 @@
 {% extends "base.html" %}
 {% block title %}{{ section.title }} · Commit & Conquer{% endblock %}
 {% block content %}
-{%- set suf = "" -%}{%- if lang != "fr" -%}{%- set suf = "." ~ lang -%}{%- endif -%}
-{%- set univers = get_section(path="univers/_index" ~ suf ~ ".md") -%}
 <section class="page-head">
   <h1>{{ section.title }}</h1>
   <div class="intro">{{ section.content | safe }}</div>
-  <div class="filtres" role="group">
-    <button class="filtre on" data-f="">✦ {{ trans(key="nav_jeux", lang=lang) }}</button>
-    {%- for u in univers.pages %}{% if not u.extra.bientot %}
-    <button class="filtre tag-{{ u.extra.cle }}" data-f="{{ u.extra.cle }}">{{ u.title }}</button>
-    {%- endif %}{% endfor %}
-  </div>
 </section>
 <div class="band-in jeux-grid">
   {%- for j in section.pages %}
-  {{ <cc.carte_jeu j={j} univers={univers} lang={lang} /> }}
+  {{ <cc.carte_jeu j={j} lang={lang} /> }}
   {%- endfor %}
 </div>
-{% endblock %}
-{% block scripts %}
-<script>
-  // Filtre du catalogue par univers.
-  document.querySelectorAll(".filtre").forEach(function (b) {
-    b.addEventListener("click", function () {
-      document.querySelectorAll(".filtre").forEach(function (x) { x.classList.toggle("on", x === b); });
-      document.querySelectorAll(".jeu-card").forEach(function (c) {
-        c.hidden = b.dataset.f !== "" && c.dataset.univers !== b.dataset.f;
-      });
-    });
-  });
-</script>
 {% endblock %}

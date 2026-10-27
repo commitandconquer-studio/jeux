@@ -1,0 +1,34 @@
+{% extends "base.html" %}
+{% block title %}{{ section.title }} · Commit & Conquer{% endblock %}
+{% block content %}
+{%- set suf = "" -%}{%- if lang != "fr" -%}{%- set suf = "." ~ lang -%}{%- endif -%}
+<section class="page-head">
+  <h1>{{ section.title }}</h1>
+  {%- if section.extra.jeu %}
+  <p class="lede"><a href="{{ get_url(path='@/jeux/' ~ section.extra.jeu ~ '.md', lang=lang) }}">← {{ trans(key="voir_jeu", lang=lang) }}</a></p>
+  {%- endif %}
+</section>
+<div class="prose">
+  {{ section.content | safe }}
+  {%- if section.pages | length == 0 %}
+  <p class="muted">{{ trans(key="aucun_article", lang=lang) }}</p>
+  {%- endif %}
+  <ol class="maj-liste">
+    {% for p in section.pages %}
+    <li class="maj">
+      <time datetime="{{ p.date }}">{% if lang == "fr" %}{{ p.date | date(format="%d/%m/%Y") }}{% else %}{{ p.date | date(format="%Y-%m-%d") }}{% endif %}</time>
+      {%- set morceaux = p.relative_path | split(pat="/") %}
+      {%- if morceaux | length == 3 %}
+      {%- set blog_du_jeu = get_section(path="blog/" ~ morceaux[1] ~ "/_index" ~ suf ~ ".md") %}
+      <a class="tag" href="{{ blog_du_jeu.permalink }}">{{ blog_du_jeu.title }}</a>
+      {%- endif %}
+      <h2><a href="{{ p.permalink }}">{{ p.title }}</a></h2>
+      {{ p.content | safe }}
+    </li>
+    {% endfor %}
+  </ol>
+  {%- if section.extra.jeu %}
+  <p><a href="{{ get_url(path='@/blog/_index.md', lang=lang) }}">{{ trans(key="blog_tous", lang=lang) }}</a></p>
+  {%- endif %}
+</div>
+{% endblock %}

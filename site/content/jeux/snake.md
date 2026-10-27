@@ -4,7 +4,6 @@ weight = 1
 description = "Le serpent classique, dans cinq paysages : prairie, désert, banquise, océan et volcan."
 [extra]
 web = true
-univers = "croa"
 icone = "snake"
 code = "games/snake"
 commandes = ["Flèches ou ZQSD : diriger", "Entrée ou Espace : valider", "M : couper le son · Échap : menu"]

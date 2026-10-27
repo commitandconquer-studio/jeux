@@ -4,7 +4,6 @@ weight = 9
 description = "Suns and moons on the star chart: as many of each, never three in a row."
 [extra]
 web = true
-univers = "eureka"
 icone = "observatoire"
 code = "games/observatoire"
 commandes = ["Click: empty, sun, moon · right click: the other way", "Tap: empty, sun, moon", "H: hint · Ctrl+Z: undo · Esc: menu"]

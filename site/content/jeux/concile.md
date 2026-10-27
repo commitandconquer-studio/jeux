@@ -4,7 +4,6 @@ weight = 7
 description = "Un évêque par diocèse, par rangée et par colonne, et jamais de voisin."
 [extra]
 web = true
-univers = "eureka"
 icone = "concile"
 code = "games/concile"
 commandes = ["Clic : croix, puis évêque, puis case vide", "Glisser : barrer plusieurs cases", "H : indice · U : annuler · Échap : menu"]

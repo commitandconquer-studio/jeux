@@ -6,7 +6,7 @@
 {% endblock %}
 {% block content %}
 {%- set suf = "" -%}{%- if lang != "fr" -%}{%- set suf = "." ~ lang -%}{%- endif -%}
-{%- set univers = get_section(path="univers/_index" ~ suf ~ ".md") -%}
+{%- set blog = get_section(path="blog/_index" ~ suf ~ ".md") -%}
 {%- set jeux = get_section(path="jeux/_index" ~ suf ~ ".md") -%}
 
 <section class="hero">
@@ -36,33 +36,27 @@
   </div>
 </section>
 
-<section class="band univers-band">
-  {{ <cc.ridge fill="var(--sky-soft)" /> }}
-  <div class="band-in">
-    <h2>{{ trans(key="univers_titre", lang=lang) }}</h2>
-    <p class="intro">{{ trans(key="univers_intro", lang=lang) }}</p>
-    <div class="univers-grid">
-      {%- for u in univers.pages %}
-      <a class="univers-card theme-{{ u.extra.cle }}" href="{{ u.permalink }}">
-        {{ <cc.illus cle={u.extra.cle} /> }}
-        <div class="univers-card-text">
-          <h3>{{ u.title }}{% if u.extra.bientot %} <span class="tag">{{ trans(key="bientot", lang=lang) }}</span>{% endif %}</h3>
-          <p>{{ u.description }}</p>
-        </div>
-      </a>
-      {%- endfor %}
-    </div>
-  </div>
-</section>
-
 <section class="band jeux-band">
   <h2>{{ trans(key="jeux_titre", lang=lang) }}</h2>
   <p class="intro">{{ trans(key="jeux_intro", lang=lang) }}</p>
   <div class="jeux-grid">
     {%- for j in jeux.pages %}
-    {{ <cc.carte_jeu j={j} univers={univers} lang={lang} /> }}
+    {{ <cc.carte_jeu j={j} lang={lang} /> }}
     {%- endfor %}
   </div>
+</section>
+
+<section class="band blog-band">
+  <h2>{{ trans(key="blog_titre", lang=lang) }}</h2>
+  <ol class="maj-liste band-in">
+    {%- for p in blog.pages %}{% if loop.index <= 3 %}
+    <li class="maj">
+      <time datetime="{{ p.date }}">{% if lang == "fr" %}{{ p.date | date(format="%d/%m/%Y") }}{% else %}{{ p.date | date(format="%Y-%m-%d") }}{% endif %}</time>
+      <h3><a href="{{ p.permalink }}">{{ p.title }}</a></h3>
+    </li>
+    {%- endif %}{% endfor %}
+  </ol>
+  <p class="intro"><a href="{{ blog.permalink }}">{{ trans(key="blog_tous", lang=lang) }} →</a></p>
 </section>
 
 <section class="band libre">

@@ -5,7 +5,6 @@ description = "Help your character cross roads, rivers and railways… and fill 
 [extra]
 logo = "traversee/logo"
 web = true
-univers = "croa"
 icone = "traversee"
 code = "games/traversee"
 dossier = "traversee"

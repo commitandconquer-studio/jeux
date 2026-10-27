@@ -38,59 +38,11 @@
 </svg>
 {% endcomponent cc.pilier %}
 
-{# Illustration de chaque univers. #}
-{% component cc.illus(cle) %}
-<svg class="illus" viewBox="0 0 200 140" aria-hidden="true">
-{%- if cle == "croa" -%}
-  <polygon points="0,90 200,80 200,140 0,140" fill="#8BD9FF"/><polygon points="0,90 70,86 30,140 0,140" fill="#6CC4F0"/>
-  <polygon points="130,84 200,80 200,140 160,140" fill="#A8E3FF"/>
-  <polygon points="40,104 100,96 160,104 140,122 60,124" fill="#80C92B"/><polygon points="100,96 160,104 140,122 104,112" fill="#5A9A1C"/>
-  <polygon points="70,100 130,100 124,72 100,60 76,72" fill="#80C92B"/><polygon points="100,60 124,72 130,100 100,92" fill="#5A9A1C"/>
-  <polygon points="76,72 100,60 100,76" fill="#D8F43F"/>
-  <polygon points="74,64 84,56 92,64 84,72" fill="#FFF9ED"/><polygon points="108,64 116,56 126,64 116,72" fill="#FFF9ED"/>
-  <polygon points="81,62 87,62 87,67 81,67" fill="#142C40"/><polygon points="113,62 119,62 119,67 113,67" fill="#142C40"/>
-  <polygon points="86,84 114,84 100,90" fill="#FF493E"/>
-  <polygon points="150,30 170,22 186,32 176,44 156,42" fill="#FFF9ED"/><polygon points="20,26 38,18 52,28 40,36" fill="#FFF9ED"/>
-{%- elif cle == "nova" -%}
-  <rect width="200" height="140" fill="#142C40"/>
-  <polygon points="10,20 12,22 10,24 8,22" fill="#FFF9ED"/><polygon points="170,14 172,16 170,18 168,16" fill="#FFF9ED"/>
-  <polygon points="150,110 152,112 150,114 148,112" fill="#8BD9FF"/><polygon points="30,112 32,114 30,116 28,114" fill="#D8F43F"/>
-  <polygon points="60,40 80,28 104,32 116,52 108,76 84,86 62,78 52,58" fill="#168FE8"/>
-  <polygon points="60,40 80,28 84,56" fill="#8BD9FF"/><polygon points="84,56 116,52 108,76" fill="#0E5FA8"/>
-  <polygon points="52,58 84,56 62,78" fill="#1A73C0"/><polygon points="84,56 108,76 84,86" fill="#0B4E8A"/>
-  <polygon points="30,62 140,44 142,50 34,70" fill="#D8F43F" opacity=".85"/>
-  <polygon points="140,92 176,80 168,96" fill="#FFF9ED"/><polygon points="140,92 168,96 150,102" fill="#8BD9FF"/>
-  <polygon points="136,94 140,92 150,102 138,100" fill="#FF493E"/>
-{%- elif cle == "eureka" -%}
-  <rect width="200" height="140" fill="#FBF6E9"/>
-  <path d="M0 20H200M0 40H200M0 60H200M0 80H200M0 100H200M0 120H200M20 0V140M40 0V140M60 0V140M80 0V140M100 0V140M120 0V140M140 0V140M160 0V140M180 0V140" stroke="#8BD9FF" stroke-width=".8" opacity=".7"/>
-  <polygon points="86,20 114,20 112,52 140,118 60,118 88,52" fill="#FFF9ED" stroke="#142C40" stroke-width="3" stroke-linejoin="round"/>
-  <polygon points="78,88 122,88 136,114 64,114" fill="#80C92B"/><polygon points="100,88 122,88 136,114 108,114" fill="#5A9A1C"/>
-  <polygon points="78,88 100,88 84,102" fill="#D8F43F"/>
-  <polygon points="96,70 102,66 108,70 102,76" fill="#8BD9FF"/><polygon points="104,52 108,49 112,52 108,56" fill="#8BD9FF"/>
-  <polygon points="146,30 176,30 176,60 146,60" fill="#168FE8"/><polygon points="146,30 176,30 172,26 150,26" fill="#8BD9FF"/>
-  <text x="161" y="52" font-family="Russo One, sans-serif" font-size="18" fill="#FFF9ED" text-anchor="middle">2</text>
-{%- else -%}
-  <rect width="200" height="140" fill="#EFE7DC"/>
-  <polygon points="0,120 60,96 120,108 200,90 200,140 0,140" fill="#80C92B"/><polygon points="60,96 120,108 90,140 30,140" fill="#5A9A1C"/>
-  <polygon points="66,50 134,50 134,108 66,108" fill="#C9C2B8"/><polygon points="100,50 134,50 134,108 100,108" fill="#A9A197"/>
-  <polygon points="52,36 76,36 76,108 52,108" fill="#D8D2C9"/><polygon points="124,36 148,36 148,108 124,108" fill="#B6AEA4"/>
-  <polygon points="48,36 64,14 80,36" fill="#FF493E"/><polygon points="64,14 80,36 66,36" fill="#D63A30"/>
-  <polygon points="120,36 136,14 152,36" fill="#FF493E"/><polygon points="136,14 152,36 138,36" fill="#D63A30"/>
-  <polygon points="90,84 110,84 110,108 90,108" fill="#142C40"/><polygon points="90,84 100,76 110,84" fill="#142C40"/>
-  <polygon points="136,14 136,2 150,6 136,10" fill="#FF493E"/>
-{%- endif -%}
-</svg>
-{% endcomponent cc.illus %}
-
-{# Carte d'un jeu (accueil, catalogue, page d'univers). #}
-{% component cc.carte_jeu(j, univers, lang) %}
-{%- set nom_univers = "" -%}
-{%- for u in univers.pages -%}{%- if u.extra.cle == j.extra.univers -%}{%- set_global nom_univers = u.title -%}{%- endif -%}{%- endfor -%}
-<a class="jeu-card theme-{{ j.extra.univers }}" href="{{ j.permalink }}" data-univers="{{ j.extra.univers }}">
+{# Carte d'un jeu (accueil, catalogue). #}
+{% component cc.carte_jeu(j, lang) %}
+<a class="jeu-card" href="{{ j.permalink }}">
   <img src="{{ get_url(path='img/jeux/' ~ j.extra.icone ~ '.png') }}" alt="" width="96" height="96" loading="lazy">
   <div>
-    <span class="tag tag-{{ j.extra.univers }}">{{ nom_univers }}</span>
     <h3>{{ j.title }}</h3>
     <p>{{ j.description }}</p>
   </div>

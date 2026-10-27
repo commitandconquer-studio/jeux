@@ -4,7 +4,6 @@ weight = 10
 description = "Rassemblez le troupeau et rentrez-le dans l'enclos, avant que les loups n'arrivent."
 [extra]
 web = true
-univers = "croa"
 icone = "berger"
 code = "games/berger"
 commandes = ["Flèches ou ZQSD : courir · Maj : sprinter", "Espace ou B : aboyer · clic droit aussi", "Souris ou doigt : le chien va vers le pointeur · Échap : menu"]
