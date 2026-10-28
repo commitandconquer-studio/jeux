@@ -49,7 +49,12 @@ Des **caisses de couleur** apparaissent sur l'herbe. Ramassez-en une en marchant
 Chaque livraison réussie rapporte **25 points**, en plus du point par pas en avant. Et pour y aller, il faut traverser.
 
 ## Un monde qui devient dangereux
-Le jeu commence dans une prairie calme : quelques voitures, un peu d'herbe. À mesure que vos **points s'accumulent d'une partie à l'autre**, il s'enrichit : camions, taxis, motos, **trains** qui préviennent avant de passer, rivières à franchir sur des rondins, cadeaux dorés, puis un **aigle** qui balaie une colonne entière. Tout se débloque : ennemis, mondes, personnages.
+Une partie **monte en douceur**. De l'herbe jusqu'à la ligne 12, puis la **première route** (une voie) en 13, les **nénuphars** en 20, les **troncs** en 30, la **route à deux voies** en 50 (jusqu'à quatre voies d'affilée au plus : de l'herbe coupe toujours les autoroutes), les **trains**, qui préviennent avant de passer, en 100, puis le premier **changement de monde**. Les **colis** n'arrivent qu'à partir de la ligne 25.
+
+À mesure que vos **points s'accumulent d'une partie à l'autre**, le jeu s'enrichit : camions, taxis, motos, puis un **aigle** qui balaie une colonne entière. Tout se débloque : ennemis, mondes, personnages.
+
+## De la nourriture plutôt que des cadeaux
+Pour gagner des points en route, ramassez de la **nourriture** (fruits, légumes, burgers, donuts…), différente **dans chaque monde**. Chaque bonus tourne lentement dans un halo de lumière colorée.
 
 ## Des morts sur mesure
 Chaque fin a son effet (zoom, ralenti, tremblement d'écran) **et sa phrase**, tirée au hasard selon la cause : *« La livraison est tombée à l'eau. »*, *« Votre carrière a déraillé. »*, *« Votre colis a pris son envol. Vous aussi. »*…

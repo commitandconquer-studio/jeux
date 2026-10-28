@@ -49,7 +49,12 @@ captures = [
 Every successful delivery is worth **25 points**, on top of the point for each step forward. And to get there, you have to cross.
 
 ## A world that gets more dangerous
-The game starts in a quiet meadow: a few cars, some grass. As your **points add up from game to game**, it grows: trucks, taxis, motorbikes, **trains** that warn you before they pass, rivers to cross on logs, golden gifts, then an **eagle** sweeping a whole column. Everything unlocks: enemies, worlds, characters.
+A run **builds up gently**. Grass up to row 12, then the **first road** (one lane) at 13, **lily pads** at 20, **logs** at 30, the **two-lane road** at 50 (never more than four lanes in a row: grass always breaks up the highways), **trains**, which warn you before they pass, at 100, then the first **change of world**. **Parcels** only show up from row 25.
+
+As your **points add up from game to game**, the game grows: trucks, taxis, motorbikes, then an **eagle** sweeping a whole column. Everything unlocks: enemies, worlds, characters.
+
+## Food instead of gifts
+To score points along the way, pick up **food** (fruit, vegetables, burgers, donuts…), different **in each world**. Each bonus spins slowly in a glow of coloured light.
 
 ## Tailor-made deaths
 Every ending has its own effect (zoom, slow motion, screen shake) **and its own line**, picked at random according to the cause: *"The delivery fell in the water."*, *"Your career has derailed."*, *"Your parcel took off. So did you."*…
