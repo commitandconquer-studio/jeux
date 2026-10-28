@@ -8,30 +8,39 @@ pub struct Kind {
     pub pack: &'static str,
     pub file: &'static str,
     pub scale: f32,
+    /// Fauteuil roulant (modèle du même pack) dans lequel le personnage est assis.
+    pub chair: Option<&'static str>,
 }
 
 const fn k(pack: &'static str, file: &'static str, scale: f32) -> Kind {
-    Kind { pack, file, scale }
+    Kind { pack, file, scale, chair: None }
 }
 
-/// Les 12 humains de Mini Characters, puis les 4 monstres du Cimetière.
-pub const KINDS: [Kind; 16] = [
-    k("mini-characters", "character-male-a", 2.4),
-    k("mini-characters", "character-female-a", 2.4),
-    k("mini-characters", "character-male-b", 2.4),
-    k("mini-characters", "character-female-b", 2.4),
-    k("mini-characters", "character-male-c", 2.4),
-    k("mini-characters", "character-female-c", 2.4),
-    k("mini-characters", "character-male-d", 2.4),
-    k("mini-characters", "character-female-d", 2.4),
-    k("mini-characters", "character-male-e", 2.4),
-    k("mini-characters", "character-female-e", 2.4),
-    k("mini-characters", "character-male-f", 2.4),
-    k("mini-characters", "character-female-f", 2.4),
-    k("graveyard-kit", "character-zombie", 2.4),
-    k("graveyard-kit", "character-skeleton", 2.4),
-    k("graveyard-kit", "character-vampire", 2.4),
-    k("graveyard-kit", "character-ghost", 2.4),
+const fn seated(file: &'static str, chair: &'static str) -> Kind {
+    Kind { pack: "mini-characters", file, scale: 1.9, chair: Some(chair) }
+}
+
+/// Les 12 humains de Mini Characters, les 4 monstres du Cimetière, puis 3 personnes en fauteuil roulant.
+pub const KINDS: [Kind; 19] = [
+    k("mini-characters", "character-male-a", 1.9),
+    k("mini-characters", "character-female-a", 1.9),
+    k("mini-characters", "character-male-b", 1.9),
+    k("mini-characters", "character-female-b", 1.9),
+    k("mini-characters", "character-male-c", 1.9),
+    k("mini-characters", "character-female-c", 1.9),
+    k("mini-characters", "character-male-d", 1.9),
+    k("mini-characters", "character-female-d", 1.9),
+    k("mini-characters", "character-male-e", 1.9),
+    k("mini-characters", "character-female-e", 1.9),
+    k("mini-characters", "character-male-f", 1.9),
+    k("mini-characters", "character-female-f", 1.9),
+    k("graveyard-kit", "character-zombie", 1.9),
+    k("graveyard-kit", "character-skeleton", 1.9),
+    k("graveyard-kit", "character-vampire", 1.9),
+    k("graveyard-kit", "character-ghost", 1.9),
+    seated("character-male-e", "wheelchair"),
+    seated("character-female-b", "wheelchair-deluxe"),
+    seated("character-male-c", "wheelchair-power"),
 ];
 
 /// Ce que fait un personnage en boucle.
@@ -66,9 +75,15 @@ pub fn spawn_model(
     let scene = server.load(GltfAssetLabel::Scene(0).from_asset(file.clone()));
     let clip = |i: usize| server.load(GltfAssetLabel::Animation(i).from_asset(file.clone()));
     let mut graph = AnimationGraph::new();
-    let walk = graph.add_clip(clip(2), 1.0, graph.root);
-    let wave = graph.add_clip(clip(11), 1.0, graph.root);
+    // En fauteuil : « wheelchair-move-forward » (28) pour avancer, « wheelchair-sit » (25) à l'arrêt.
+    let (walk_clip, wave_clip) = if k.chair.is_some() { (28, 25) } else { (2, 11) };
+    let walk = graph.add_clip(clip(walk_clip), 1.0, graph.root);
+    let wave = graph.add_clip(clip(wave_clip), 1.0, graph.root);
     let die = graph.add_clip(clip(9), 1.0, graph.root);
+    if let Some(chair) = k.chair {
+        let scene = server.load(GltfAssetLabel::Scene(0).from_asset(format!("kenney/mini-characters/{chair}.glb")));
+        commands.spawn((WorldAssetRoot(scene), Transform::from_scale(Vec3::splat(k.scale * size)), ChildOf(parent)));
+    }
     commands.spawn((
         WorldAssetRoot(scene),
         Transform::from_scale(Vec3::splat(k.scale * size)),
@@ -138,7 +153,10 @@ pub fn name(kind: usize) -> &'static str {
         12 => tx!("Zombie", "Zombie", "Zombie", "Zombie", "Zombi"),
         13 => tx!("Squelette", "Skeleton", "Skelett", "Scheletro", "Esqueleto"),
         14 => tx!("Vampire", "Vampire", "Vampir", "Vampiro", "Vampiro"),
-        _ => tx!("Fantôme", "Ghost", "Geist", "Fantasma", "Fantasma"),
+        15 => tx!("Fantôme", "Ghost", "Geist", "Fantasma", "Fantasma"),
+        16 => tx!("Rémi", "Remy", "Remo", "Remo", "Remi"),
+        17 => tx!("Camille", "Camille", "Camille", "Camilla", "Camila"),
+        _ => tx!("Sam", "Sam", "Sam", "Sam", "Sam"),
     }
     .t()
 }

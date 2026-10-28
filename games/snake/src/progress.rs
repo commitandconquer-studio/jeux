@@ -27,6 +27,7 @@ pub const UNLOCKS: &[(u32, Item)] = &[
     (55, Item::Person(7)),
     (70, Item::Feature(Feature::Hole)),
     (90, Item::World(Universe::Cimetiere)),
+    (100, Item::Person(18)),
     (110, Item::Person(8)),
     (130, Item::Feature(Feature::Teleport)),
     (155, Item::Person(9)),

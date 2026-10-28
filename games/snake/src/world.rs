@@ -161,7 +161,7 @@ pub fn rebuild_world(
         while z <= reach {
             let jitter = Vec3::new(rng.below(100) as f32 / 100.0 - 0.5, 0.0, rng.below(100) as f32 / 100.0 - 0.5);
             let pos = Vec3::new(x, GROUND_Y, z) + jitter;
-            let inside = pos.x.abs() < half + 1.8 && pos.z.abs() < half + 1.8;
+            let inside = pos.x.abs() < half + 3.2 && pos.z.abs() < half + 3.2;
             if !inside && rng.below(10) < 6 {
                 spawn_decor(universe, &mut b, &mut rng, pos);
             }
@@ -190,11 +190,11 @@ fn decor_models(u: Universe) -> &'static [(&'static str, f32)] {
             ("nature-kit/cactus_tall", 2.8),
             ("nature-kit/cactus_short", 2.8),
             ("nature-kit/cactus_tall", 3.4),
-            ("pirate-kit/rocks-sand-a", 2.4),
-            ("pirate-kit/rocks-sand-b", 2.4),
-            ("pirate-kit/rocks-sand-c", 2.4),
-            ("survival-kit/tent-canvas", 2.2),
-            ("survival-kit/campfire-pit", 2.4),
+            ("pirate-kit/rocks-sand-a", 1.4),
+            ("pirate-kit/rocks-sand-b", 1.4),
+            ("pirate-kit/rocks-sand-c", 1.4),
+            ("survival-kit/tent-canvas", 1.6),
+            ("survival-kit/campfire-pit", 1.8),
             ("survival-kit/signpost", 2.4),
         ],
         Universe::Cimetiere => &[
@@ -210,22 +210,31 @@ fn decor_models(u: Universe) -> &'static [(&'static str, f32)] {
             ("graveyard-kit/iron-fence", 2.4),
         ],
         Universe::Ocean => &[
-            ("pirate-kit/palm-straight", 2.4),
-            ("pirate-kit/palm-bend", 2.4),
-            ("pirate-kit/palm-detailed-straight", 2.4),
-            ("pirate-kit/barrel", 2.4),
-            ("pirate-kit/crate", 2.4),
-            ("pirate-kit/chest", 2.4),
-            ("pirate-kit/rocks-a", 2.4),
-            ("pirate-kit/boat-row-small", 2.4),
-            ("pirate-kit/ship-small", 2.0),
+            ("pirate-kit/palm-straight", 1.9),
+            ("pirate-kit/palm-bend", 1.9),
+            ("pirate-kit/palm-detailed-straight", 1.9),
+            ("pirate-kit/barrel", 1.6),
+            ("pirate-kit/crate", 1.6),
+            ("pirate-kit/chest", 1.6),
+            ("pirate-kit/rocks-a", 1.3),
+            ("pirate-kit/boat-row-small", 1.4),
+            ("pirate-kit/ship-small", 1.0),
         ],
     }
 }
 
+/// Hauts ou larges : ils cacheraient le plateau s'ils étaient devant (côté caméra).
+fn is_tall(file: &str) -> bool {
+    ["tree", "pine", "palm", "cactus_tall", "ship", "boat", "crypt", "tent", "lightpost", "log_large", "fence", "rocks", "rock_large"].iter().any(|k| file.contains(k))
+}
+
 fn spawn_decor(u: Universe, b: &mut Builder, rng: &mut Rng, pos: Vec3) {
     let models = decor_models(u);
-    let (file, scale) = models[rng.below(models.len() as u32) as usize];
+    // La caméra est du côté +x/+z : là, on ne pose que du bas.
+    let front = pos.x * 0.4 + pos.z > 0.0;
+    let Some(&(file, scale)) = (0..6).map(|_| &models[rng.below(models.len() as u32) as usize]).find(|(f, _)| !front || !is_tall(f)) else {
+        return;
+    };
     let yaw = rng.below(628) as f32 / 100.0;
     // Sur l'île des pirates, les objets flottent un peu au-dessus de l'eau.
     let pos = if u == Universe::Ocean { pos + Vec3::Y * 0.05 } else { pos };
