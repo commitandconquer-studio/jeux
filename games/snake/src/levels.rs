@@ -4,6 +4,7 @@ use std::sync::LazyLock;
 
 use bevy::prelude::IVec2;
 
+use crate::board::Feature;
 use crate::layout::{Layout, Shape};
 use crate::world::Universe;
 
@@ -20,6 +21,8 @@ pub struct Level {
     pub pace: f32,
     /// Temps de la 2e étoile (la 3e demande 25 % de moins).
     pub par: f32,
+    /// Cases spéciales posées au départ : (genre, nombre). Leur place est tirée au sort mais toujours la même pour un niveau.
+    pub cases: Vec<(Feature, u32)>,
 }
 
 #[derive(Clone, Copy, PartialEq, Eq, Debug)]
@@ -115,7 +118,7 @@ pub fn parse(text: &str) -> Result<Vec<Level>, String> {
         }
         let err = |m: &str| format!("ligne {} : {m}", n + 1);
         if let Some(name) = line.strip_prefix('[').and_then(|l| l.strip_suffix(']')) {
-            levels.push(Level { name: name.to_owned(), place: Place::Garden, shape: Form::Square(14), tourists: 6, exit: false, pace: 0.3, par: 0.0 });
+            levels.push(Level { name: name.to_owned(), place: Place::Garden, shape: Form::Square(14), tourists: 6, exit: false, pace: 0.3, par: 0.0, cases: Vec::new() });
             continue;
         }
         let Some((key, value)) = line.split_once('=') else { return Err(err("« clé = valeur » attendu")) };
@@ -128,6 +131,17 @@ pub fn parse(text: &str) -> Result<Vec<Level>, String> {
             "sortie" => level.exit = value == "oui",
             "pas" => level.pace = value.parse().map_err(|_| err("nombre attendu"))?,
             "temps" => level.par = value.parse().map_err(|_| err("nombre attendu"))?,
+            "blocs" | "trous" | "teleporteurs" | "accelerateurs" | "tapis" => {
+                let n = value.parse().map_err(|_| err("nombre attendu"))?;
+                let f = match key {
+                    "blocs" => Feature::Obstacle,
+                    "trous" => Feature::Hole,
+                    "teleporteurs" => Feature::Teleport,
+                    "accelerateurs" => Feature::Speeder,
+                    _ => Feature::Belt,
+                };
+                level.cases.push((f, n));
+            }
             _ => return Err(err("clé inconnue")),
         }
     }
@@ -143,7 +157,7 @@ pub fn parse(text: &str) -> Result<Vec<Level>, String> {
 /// Tous les niveaux, dans l'ordre du Voyage.
 pub static LEVELS: LazyLock<Vec<Level>> = LazyLock::new(|| {
     let mut all = Vec::new();
-    for text in [include_str!("../levels/jardin.txt")] {
+    for text in [include_str!("../levels/jardin.txt"), include_str!("../levels/desert.txt")] {
         all.extend(parse(text).unwrap_or_else(|e| panic!("niveaux illisibles : {e}")));
     }
     all

@@ -1,0 +1,77 @@
+# Désert — les premiers blocs : cactus et rochers de sable. Un obstacle, jamais deux de suite sur le même passage.
+# Cases (nombre) : blocs, trous, teleporteurs (paires), accelerateurs, tapis.
+
+[Premiers cactus]
+lieu = desert
+forme = carre 18
+touristes = 8
+blocs = 2
+pas = 0.33
+
+[Le sentier des cactus]
+lieu = desert
+forme = carre 18
+touristes = 10
+blocs = 5
+pas = 0.33
+
+[Le champ de rochers]
+lieu = desert
+forme = carre 16
+touristes = 14
+blocs = 8
+pas = 0.32
+
+[Le goulet]
+lieu = desert
+forme = U
+touristes = 14
+blocs = 3
+pas = 0.31
+
+[L'oasis]
+lieu = desert
+forme = rectangle 22x10
+touristes = 16
+blocs = 6
+pas = 0.31
+
+[La caravane]
+lieu = desert
+forme = carre 16
+touristes = 14
+blocs = 6
+sortie = oui
+pas = 0.31
+
+[La passe]
+lieu = desert
+forme = L
+touristes = 18
+blocs = 5
+sortie = oui
+pas = 0.30
+
+[Le canyon]
+lieu = desert
+forme = route
+touristes = 12
+blocs = 4
+sortie = oui
+pas = 0.30
+
+[La tempête de sable]
+lieu = desert
+forme = carre 16
+touristes = 20
+blocs = 8
+sortie = oui
+pas = 0.24
+
+[Le grand désert]
+lieu = desert
+forme = allees
+touristes = 24
+blocs = 6
+sortie = oui
+pas = 0.28

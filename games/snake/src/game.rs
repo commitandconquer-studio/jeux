@@ -321,6 +321,15 @@ fn new_run(
         outcome.best_before = progress_v.stars(i);
         if let Some(level) = mode.level() {
             timer.0 = Timer::from_seconds(level.pace / demo.auto.unwrap_or(1.0), TimerMode::Repeating);
+            // Les cases du niveau : toujours à la même place pour un niveau donné.
+            let mut level_rng = Rng::new(0xC0FFEE + i as u64 * 7919);
+            let mut busy = conga.cells.clone();
+            busy.push(food.cell);
+            for (feature, n) in &level.cases {
+                for _ in 0..*n {
+                    board.place(*feature, &busy, conga.cells[0], &layout, scenery.0, &mut level_rng);
+                }
+            }
         }
     }
 }
