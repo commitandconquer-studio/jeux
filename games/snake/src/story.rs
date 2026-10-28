@@ -89,6 +89,7 @@ fn enter_step(mode: Res<Mode>, mut next: ResMut<NextState<GameState>>) {
         next.set(GameState::Menu);
         return;
     };
+    debug!("aventure : étape {}", step + 1);
     match SCENARIOS.get(scenario).and_then(|s| s.steps.get(step)) {
         Some(l) if l.scene.is_some() => next.set(GameState::Scene),
         Some(_) => next.set(GameState::Playing),
@@ -98,8 +99,12 @@ fn enter_step(mode: Res<Mode>, mut next: ResMut<NextState<GameState>>) {
 }
 
 /// Un niveau réussi dans une aventure : on enchaîne sans écran de fin.
-fn after_win(mut mode: ResMut<Mode>, outcome: Res<Outcome>, mut progress: ResMut<StoryProgress>, mut next: ResMut<NextState<GameState>>) {
+fn after_win(mut mode: ResMut<Mode>, outcome: Res<Outcome>, mut progress: ResMut<StoryProgress>, mut next: ResMut<NextState<GameState>>, mut banner: ResMut<crate::game::Banner>) {
     if matches!(*mode, Mode::Scenario { .. }) && outcome.won {
+        if crate::levels::single_step() {
+            banner.text = "Réussi ! Aperçu d'une seule étape : le niveau recommence (décochez « cette étape seulement » pour enchaîner).".to_owned();
+            banner.left = 5.0;
+        }
         advance(&mut mode, &mut progress, &mut next);
     }
 }

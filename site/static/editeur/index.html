@@ -579,7 +579,7 @@ $('mdesc').onchange = e => { meta.description = e.target.value; schedulePreview(
 $('addscene').onclick = () => { levels.splice(cur + 1, 0, newScene()); cur++; undo = []; redo = []; sync(); };
 
 // ---------- aperçu 3D (le vrai jeu, dans la page) ----------
-let previewTimer = null;
+let previewTimer = null, previewKind = '';
 const GAME = new URLSearchParams(location.search).get('jeu') || '/jouer/snake/';
 function schedulePreview(ok) {
   if (!document.body.classList.contains('preview') || !$('auto').checked) return;
@@ -587,6 +587,8 @@ function schedulePreview(ok) {
   previewTimer = setTimeout(() => refreshPreview(ok), 900);
 }
 function refreshPreview(ok = check()) {
+  // Par défaut : une scène se règle seule (caméra…), un niveau s'enchaîne (on veut voir la suite après la sortie).
+  if (previewKind !== (isScene(L()) ? 'scene' : 'niveau')) { previewKind = isScene(L()) ? 'scene' : 'niveau'; $('seul').checked = previewKind === 'scene'; }
   const info = $('aperçuinfo');
   if (location.protocol === 'file:') { info.textContent = 'L’aperçu 3D ne marche que depuis le site (page ouverte en http/https), pas depuis un fichier local.'; return; }
   if (!ok) { info.textContent = 'Corrigez d’abord les erreurs rouges (à droite) : l’aperçu garde la dernière version valide.'; return; }

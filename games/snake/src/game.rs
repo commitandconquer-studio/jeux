@@ -824,7 +824,7 @@ fn exit_sequence(
     voyage.run.stepped = false;
     let old = conga.cells.clone();
     conga.cells.pop();
-    conga.vias.pop();
+    // Le premier membre sort : une seule entrée à retirer dans chaque liste (un retrait de trop faisait planter la sortie).
     conga.vias.remove(0);
     conga.kinds.remove(0);
     conga.looks.remove(0);
