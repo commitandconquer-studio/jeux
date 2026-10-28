@@ -1,7 +1,7 @@
 //! Écrans : accueil, réglages, fin de partie, et affichage du score.
 use bevy::prelude::*;
 use game_common::langue::Langue;
-use game_common::ui::{ButtonColor, GameHelp, spawn_button_sized, spawn_button, spawn_gap, spawn_hud, spawn_panel, spawn_text};
+use game_common::ui::{GameHelp, spawn_button, spawn_gap, spawn_hud, spawn_panel, spawn_text};
 use game_common::{Score, tx};
 
 use crate::GameState;
@@ -250,62 +250,120 @@ fn pick_tab(mode: Res<Mode>, mut tab: ResMut<VoyageTab>) {
     }
 }
 
-/// La carte du Voyage : un onglet par lieu, puis 12 niveaux en 3 colonnes × 4 lignes.
-fn spawn_voyage(mut commands: Commands, voyage: Res<VoyageProgress>, mut tab: ResMut<VoyageTab>) {
+/// La carte du Voyage : un onglet par lieu, puis 12 niveaux en cartes (4 colonnes × 3 lignes).
+fn spawn_voyage(mut commands: Commands, voyage: Res<VoyageProgress>, mut tab: ResMut<VoyageTab>, mode: Res<Mode>, server: Res<AssetServer>) {
     tab.built = Some(tab.selected);
-    let panel = spawn_panel(&mut commands, DespawnOnExit(GameState::Voyage));
-    commands.entity(panel).insert(VoyagePanel);
-    spawn_text(&mut commands, panel, tx!("Voyage", "Journey", "Reise", "Viaggio", "Viaje").t(), 40.0);
-    spawn_text(
-        &mut commands,
-        panel,
-        tx!("Étoiles : {}", "Stars: {}", "Sterne: {}", "Stelle: {}", "Estrellas: {}").avec(&[&voyage.total_stars()]),
-        18.0,
-    );
-    // Onglets : un par lieu.
+    let img = |name: &str| server.load(format!("ui/suivez/{name}.png"));
+    let root = commands
+        .spawn((
+            Node { width: Val::Percent(100.0), height: Val::Percent(100.0), flex_direction: FlexDirection::Column, align_items: AlignItems::Center, justify_content: JustifyContent::Center, row_gap: Val::Px(6.0), padding: UiRect::all(Val::Px(10.0)), ..default() },
+            DespawnOnExit(GameState::Voyage),
+            VoyagePanel,
+        ))
+        .id();
+    // Décors aux coins (derrière le reste).
+    commands.spawn((Node { position_type: PositionType::Absolute, left: Val::Px(0.0), bottom: Val::Px(0.0), width: Val::Px(260.0), height: Val::Px(124.0), ..default() }, ImageNode::new(img("decor_bas_gauche")), Pickable::IGNORE, ChildOf(root)));
+    commands.spawn((Node { position_type: PositionType::Absolute, right: Val::Px(0.0), bottom: Val::Px(0.0), width: Val::Px(260.0), height: Val::Px(124.0), ..default() }, ImageNode { flip_x: true, ..ImageNode::new(img("decor_bas_gauche")) }, Pickable::IGNORE, ChildOf(root)));
+    commands.spawn((Node { width: Val::Px(360.0), height: Val::Px(111.0), ..default() }, ImageNode::new(img("logo_selection")).with_rect(Rect::new(0.0, 0.0, 764.0, 236.0)), Pickable::IGNORE, ChildOf(root)));
+    let board = commands
+        .spawn((
+            Node { flex_direction: FlexDirection::Column, align_items: AlignItems::Center, row_gap: Val::Px(8.0), padding: UiRect::all(Val::Px(12.0)), border: UiRect::all(Val::Px(4.0)), border_radius: BorderRadius::all(Val::Px(18.0)), ..default() },
+            BackgroundColor(Color::srgb(0.66, 0.43, 0.24)),
+            BorderColor::all(Color::srgb(0.43, 0.27, 0.14)),
+            ChildOf(root),
+        ))
+        .id();
+    // Onglets : un par lieu (en deux lignes si l'écran est étroit).
     let tabs = commands
-        .spawn((Node { column_gap: Val::Px(8.0), margin: UiRect::vertical(Val::Px(6.0)), ..default() }, ChildOf(panel)))
+        .spawn((Node { flex_wrap: FlexWrap::Wrap, justify_content: JustifyContent::Center, column_gap: Val::Px(6.0), row_gap: Val::Px(4.0), width: Val::Px(940.0), ..default() }, ChildOf(board)))
         .id();
     for place in Place::ALL {
         let levels: Vec<usize> = LEVELS.iter().enumerate().filter(|(_, l)| l.place == place).map(|(i, _)| i).collect();
         let open = levels.first().is_some_and(|i| voyage.unlocked(*i));
-        let (b, _) = spawn_button_sized(&mut commands, tabs, place.label(), 190.0, 48.0, 19.0);
-        if place == tab.selected {
-            commands.entity(b).insert((BackgroundColor(Color::srgb(1.0, 0.86, 0.45)), ButtonColor(Color::srgb(1.0, 0.86, 0.45))));
-        } else if !open {
-            commands.entity(b).insert((BackgroundColor(Color::srgb(0.85, 0.84, 0.80)), ButtonColor(Color::srgb(0.85, 0.84, 0.80))));
+        let selected = place == tab.selected;
+        let b = commands
+            .spawn((
+                Node { width: Val::Px(128.0), height: Val::Px(36.0), justify_content: JustifyContent::Center, align_items: AlignItems::Center, ..default() },
+                ImageNode::new(img(if selected { "panneau_bois_dore_large" } else { "panneau_bois_fonce_large" })).with_color(if open { Color::WHITE } else { Color::srgb(0.5, 0.5, 0.5) }),
+                if open { UiAction::Tab(place) } else { UiAction::Locked },
+                ChildOf(tabs),
+            ))
+            .id();
+        if open && !selected {
+            commands.entity(b).insert(Plank);
         }
-        commands.entity(b).insert(if open { UiAction::Tab(place) } else { UiAction::Locked });
+        let t = spawn_text(&mut commands, b, place.label(), 12.0);
+        commands.entity(t).insert(TextColor(if selected { Color::srgb(0.30, 0.17, 0.05) } else { Color::srgb(1.0, 0.96, 0.84) }));
     }
-    // Les niveaux du lieu : 12 cases.
-    let grid = commands
+    // Contenu : à gauche le panneau du lieu, à droite les 12 cartes.
+    let content = commands.spawn((Node { column_gap: Val::Px(14.0), align_items: AlignItems::Center, ..default() }, ChildOf(board))).id();
+    let levels: Vec<usize> = LEVELS.iter().enumerate().filter(|(_, l)| l.place == tab.selected).map(|(i, _)| i).collect();
+    let side = commands.spawn((Node { width: Val::Px(210.0), flex_direction: FlexDirection::Column, align_items: AlignItems::Center, row_gap: Val::Px(8.0), ..default() }, ChildOf(content))).id();
+    let sign = commands
         .spawn((
-            Node {
-                flex_wrap: FlexWrap::Wrap,
-                justify_content: JustifyContent::Center,
-                column_gap: Val::Px(8.0),
-                row_gap: Val::Px(8.0),
-                width: Val::Px(3.0 * 250.0 + 2.0 * 8.0),
-                ..default()
-            },
-            ChildOf(panel),
+            Node { width: Val::Px(210.0), height: Val::Px(84.0), justify_content: JustifyContent::Center, align_items: AlignItems::Center, padding: UiRect::all(Val::Px(18.0)), ..default() },
+            ImageNode::new(img("panneau_bois_dore_large")),
+            ChildOf(side),
         ))
         .id();
-    let levels: Vec<usize> = LEVELS.iter().enumerate().filter(|(_, l)| l.place == tab.selected).map(|(i, _)| i).collect();
+    let t = spawn_text(&mut commands, sign, tab.selected.label(), 19.0);
+    commands.entity(t).insert(TextColor(Color::srgb(0.30, 0.17, 0.05)));
+    let done = levels.iter().filter(|i| voyage.stars(**i) > 0).count();
+    let t = spawn_text(&mut commands, side, tx!("Niveaux réussis : {} / {}", "Levels done: {} / {}", "Geschafft: {} / {}", "Livelli superati: {} / {}", "Niveles superados: {} / {}").avec(&[&done, &levels.len()]), 16.0);
+    commands.entity(t).insert(TextColor(Color::srgb(1.0, 0.96, 0.84)));
+    let t = spawn_text(&mut commands, side, tx!("Étoiles : {}", "Stars: {}", "Sterne: {}", "Stelle: {}", "Estrellas: {}").avec(&[&voyage.total_stars()]), 16.0);
+    commands.entity(t).insert(TextColor(Color::srgb(1.0, 0.9, 0.55)));
+    let grid = commands
+        .spawn((Node { flex_wrap: FlexWrap::Wrap, justify_content: JustifyContent::Center, column_gap: Val::Px(8.0), row_gap: Val::Px(8.0), width: Val::Px(4.0 * 148.0 + 3.0 * 8.0), ..default() }, ChildOf(content)))
+        .id();
+    let playing = if let Mode::Voyage(i) = *mode { Some(i) } else { None };
     for slot in 0..12 {
-        let (label, action) = match levels.get(slot) {
-            Some(&i) if voyage.unlocked(i) => (format!("{} · {}\n{}", slot + 1, LEVELS[i].name, stars_text(voyage.stars(i))), UiAction::Level(i)),
-            Some(_) => (format!("{}\n?", slot + 1), UiAction::Locked),
-            None => ("·".to_owned(), UiAction::Locked),
+        let level = levels.get(slot).copied();
+        let open = level.is_some_and(|i| voyage.unlocked(i));
+        let skin = match level {
+            Some(i) if open && playing == Some(i) => "carte_vierge_selectionne",
+            Some(_) if open => "carte_vierge_disponible",
+            _ => "carte_vierge_verrouille",
         };
-        let (b, _) = spawn_button_sized(&mut commands, grid, label, 250.0, 84.0, 19.0);
-        if !matches!(action, UiAction::Level(_)) {
-            commands.entity(b).insert((BackgroundColor(Color::srgb(0.85, 0.84, 0.80)), ButtonColor(Color::srgb(0.85, 0.84, 0.80))));
+        let card = commands
+            .spawn((
+                Node { width: Val::Px(148.0), height: Val::Px(128.0), flex_direction: FlexDirection::Column, align_items: AlignItems::Center, justify_content: JustifyContent::Center, row_gap: Val::Px(2.0), padding: UiRect::axes(Val::Px(10.0), Val::Px(8.0)), ..default() },
+                ImageNode::new(img(skin)),
+                match level {
+                    Some(i) if open => UiAction::Level(i),
+                    _ => UiAction::Locked,
+                },
+                ChildOf(grid),
+            ))
+            .id();
+        if open {
+            commands.entity(card).insert(Plank);
+            let badge = commands
+                .spawn((
+                    Node { position_type: PositionType::Absolute, left: Val::Px(-4.0), top: Val::Px(-4.0), width: Val::Px(26.0), height: Val::Px(26.0), justify_content: JustifyContent::Center, align_items: AlignItems::Center, border: UiRect::all(Val::Px(2.0)), border_radius: BorderRadius::MAX, ..default() },
+                    BackgroundColor(Color::srgb(1.0, 0.82, 0.2)),
+                    BorderColor::all(Color::srgb(0.85, 0.5, 0.1)),
+                    Pickable::IGNORE,
+                    ChildOf(card),
+                ))
+                .id();
+            let t = spawn_text(&mut commands, badge, format!("{}", slot + 1), 15.0);
+            commands.entity(t).insert(TextColor(Color::srgb(0.3, 0.17, 0.05)));
+            let stars = commands.spawn((Node { column_gap: Val::Px(2.0), ..default() }, Pickable::IGNORE, ChildOf(card))).id();
+            let n = voyage.stars(level.expect("niveau ouvert"));
+            for k in 0..3 {
+                commands.spawn((Node { width: Val::Px(30.0), height: Val::Px(30.0), ..default() }, ImageNode::new(img(if k < n { "icone_etoile_doree" } else { "icone_etoile_grise" })), Pickable::IGNORE, ChildOf(stars)));
+            }
+            let t = spawn_text(&mut commands, card, LEVELS[level.expect("niveau ouvert")].name.clone(), 13.0);
+            commands.entity(t).insert(TextColor(Color::srgb(0.30, 0.17, 0.05)));
+        } else if level.is_some() {
+            commands.spawn((Node { width: Val::Px(46.0), height: Val::Px(46.0), ..default() }, ImageNode::new(img("icone_cadenas")), Pickable::IGNORE, ChildOf(card)));
+            let t = spawn_text(&mut commands, card, format!("{}", slot + 1), 15.0);
+            commands.entity(t).insert(TextColor(Color::srgb(0.75, 0.78, 0.85)));
         }
-        commands.entity(b).insert(action);
     }
-    spawn_gap(&mut commands, panel, 4.0);
-    button(&mut commands, panel, tx!("Retour", "Back", "Zurück", "Indietro", "Volver").t(), UiAction::Menu);
+    let (b, _) = plank(&mut commands, &server, root, "panneau_bois_fonce_large", "fleche_precedent", 220.0, tx!("Retour", "Back", "Zurück", "Indietro", "Volver").t(), None);
+    commands.entity(b).insert(UiAction::Menu);
 }
 
 /// Changement d'onglet : on redessine la carte.
@@ -313,6 +371,8 @@ fn redraw_voyage(
     mut commands: Commands,
     voyage: Res<VoyageProgress>,
     tab: ResMut<VoyageTab>,
+    mode: Res<Mode>,
+    server: Res<AssetServer>,
     panels: Query<Entity, With<VoyagePanel>>,
     state: Res<State<GameState>>,
 ) {
@@ -322,7 +382,7 @@ fn redraw_voyage(
     for e in &panels {
         commands.entity(e).despawn();
     }
-    spawn_voyage(commands, voyage, tab);
+    spawn_voyage(commands, voyage, tab, mode, server);
 }
 
 fn spawn_options(mut commands: Commands, settings: Res<Settings>, progress: Res<Progress>) {
