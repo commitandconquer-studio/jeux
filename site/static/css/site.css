@@ -555,3 +555,22 @@ html.moment-nuit .hero-fallback { filter: brightness(.42) saturate(.75) hue-rota
   .onglets-barre { flex-wrap: nowrap; overflow-x: auto; justify-content: flex-start; scrollbar-width: none; padding-bottom: 4px; }
   .onglet { flex: none; white-space: nowrap; }
 }
+
+/* ---- Transitions entre les blocs : bords en biais et fonds en dégradé -- */
+:root { --pente: clamp(28px, 4.5vw, 68px); }
+.band.mondes::before, .band.libre::before, .band.blog-band::before, .band.onglets-band::before,
+.band.galerie-band::before, .band.jeu-fin::before, .band.jeux-band::before {
+  content: ""; position: absolute; z-index: 1; left: 0; right: 0; top: calc(1px - var(--pente)); height: var(--pente); pointer-events: none;
+}
+/* Blocs sombres : le biais monte vers la droite. */
+.band.mondes::before, .band.libre::before { background: var(--night); clip-path: polygon(0 100%, 100% 0, 100% 100%); }
+/* Blocs clairs : le biais monte vers la gauche, couleur du début du dégradé. */
+.band.blog-band::before, .band.onglets-band::before, .band.galerie-band::before, .band.jeu-fin::before, .band.jeux-band::before {
+  background: var(--ivory); clip-path: polygon(0 0, 100% 100%, 0 100%);
+}
+/* Fonds clairs : fondu doux au lieu d'aplats. */
+.blog-band { background: linear-gradient(180deg, var(--ivory) 0, var(--sky-soft) 120px, var(--sky-soft) calc(100% - 120px), var(--ivory) 100%); }
+.onglets-band { background: linear-gradient(180deg, var(--ivory) 0, #fff 40%, var(--ivory) 100%); }
+.galerie-band { background: linear-gradient(180deg, var(--ivory) 0, #EEF8FF 50%, var(--ivory) 100%); }
+/* Le dernier bloc clair avant un bloc sombre : pas de biais supplémentaire. */
+.band.mondes + .galerie-band::before { display: block; }
