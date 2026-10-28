@@ -8,13 +8,14 @@ use crate::GameState;
 use crate::jeu::{Commencer, Genre};
 
 /// (nom, état, délai, partie à lancer avant la prise de vue)
-const CLICHES: [(&str, GameState, f32, Option<Genre>); 7] = [
+const CLICHES: [(&str, GameState, f32, Option<Genre>); 8] = [
     ("1-menu", GameState::Menu, 3.0, None),
     ("2-niveaux", GameState::Niveaux, 1.5, None),
     ("2b-chiens", GameState::Chiens, 1.5, None),
     ("3-premier-pre", GameState::Playing, 14.0, Some(Genre::Campagne(0))),
     ("4-obstacles", GameState::Playing, 25.0, Some(Genre::Campagne(3))),
     ("5-loups", GameState::Playing, 45.0, Some(Genre::Campagne(7))),
+    ("7-desert", GameState::Playing, 30.0, Some(Genre::Campagne(14))),
     ("6-grand-pre", GameState::Playing, 30.0, Some(Genre::Campagne(11))),
 ];
 

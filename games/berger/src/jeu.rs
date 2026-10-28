@@ -69,7 +69,7 @@ pub struct MainCamera;
 /// Les étoiles gagnées et la série des cartes du jour (sauvegardées).
 #[derive(Resource)]
 pub struct Progression {
-    pub etoiles: [u8; 12],
+    pub etoiles: [u8; NIVEAUX.len()],
     pub jour_fait: Option<i64>,
     pub serie: u32,
     /// Le chien choisi (index dans `CHIENS`).
@@ -80,7 +80,7 @@ pub struct Progression {
 
 impl Progression {
     pub fn charger() -> Self {
-        let mut etoiles = [0u8; 12];
+        let mut etoiles = [0u8; NIVEAUX.len()];
         if let Some(s) = save::load(JEU, "etoiles") {
             for (e, c) in etoiles.iter_mut().zip(s.chars()) {
                 *e = c.to_digit(10).unwrap_or(0).min(3) as u8;

@@ -300,7 +300,7 @@ mod tests {
 
     #[test]
     fn le_robot_protege_le_troupeau_des_loups() {
-        for i in [4usize, 7] {
+        for i in [4usize, 7, 12, 15] {
             let mut sauf = 0;
             for graine in 0..4 {
                 let (fin, t, _, p) = jouer(&NIVEAUX[i], graine * 17 + 2, true);

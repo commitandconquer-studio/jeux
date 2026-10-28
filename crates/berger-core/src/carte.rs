@@ -146,6 +146,8 @@ pub struct Niveau {
     pub noirs: u32,
     pub agneaux: u32,
     pub beliers: u32,
+    /// Monde du désert : sable, cactus, oasis (les « arbres » sont des cactus).
+    pub desert: bool,
 }
 
 #[allow(clippy::too_many_arguments)]
@@ -176,11 +178,12 @@ const fn n(
         noirs: 0,
         agneaux: 0,
         beliers: 0,
+        desert: false,
     }
 }
 
-/// La campagne : douze niveaux de plus en plus difficiles.
-pub const NIVEAUX: [Niveau; 12] = [
+/// La campagne : douze niveaux de prairie puis six du désert, de plus en plus difficiles.
+pub const NIVEAUX: [Niveau; 18] = [
     n((18.0, 12.0), 5, 3, 0, 0, 0, 0, 0, 60.0),
     Niveau { noirs: 1, agneaux: 0, beliers: 0, ..n((20.5, 13.0), 7, 5, 2, 0, 0, 0, 0, 70.0) },
     Niveau { noirs: 1, agneaux: 0, beliers: 0, ..n((23.0, 14.5), 8, 6, 3, 1, 0, 0, 0, 80.0) },
@@ -193,6 +196,13 @@ pub const NIVEAUX: [Niveau; 12] = [
     Niveau { noirs: 3, agneaux: 3, beliers: 0, ..n((31.0, 19.0), 18, 12, 7, 3, 5, 2, 2, 170.0) },
     Niveau { noirs: 4, agneaux: 3, beliers: 2, ..n((33.5, 20.5), 20, 12, 8, 4, 6, 3, 3, 190.0) },
     Niveau { noirs: 4, agneaux: 4, beliers: 2, ..n((36.0, 21.5), 24, 14, 9, 4, 6, 3, 3, 215.0) },
+    // Le désert : deux puis trois loups, tous les types de moutons mêlés.
+    Niveau { noirs: 2, agneaux: 2, beliers: 1, desert: true, ..n((30.0, 18.0), 14, 7, 8, 1, 3, 2, 2, 150.0) },
+    Niveau { noirs: 3, agneaux: 2, beliers: 1, desert: true, ..n((31.0, 19.0), 15, 8, 9, 1, 4, 2, 2, 160.0) },
+    Niveau { noirs: 3, agneaux: 3, beliers: 2, desert: true, ..n((33.0, 20.0), 18, 8, 10, 2, 4, 2, 2, 180.0) },
+    Niveau { noirs: 4, agneaux: 3, beliers: 2, desert: true, ..n((34.0, 21.0), 20, 9, 10, 2, 5, 3, 3, 195.0) },
+    Niveau { noirs: 4, agneaux: 4, beliers: 2, desert: true, ..n((36.0, 22.0), 22, 9, 11, 2, 5, 3, 3, 210.0) },
+    Niveau { noirs: 5, agneaux: 4, beliers: 3, desert: true, ..n((38.0, 23.0), 26, 10, 12, 3, 6, 3, 4, 235.0) },
 ];
 
 pub fn niveau(i: usize) -> Niveau {

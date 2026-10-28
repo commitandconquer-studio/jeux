@@ -275,6 +275,8 @@ fn spawn_niveaux(mut c: Commands, progression: Res<Progression>) {
             c.entity(b).insert(Action::Choisir(i));
             if progression.etoiles[i] > 0 {
                 c.entity(b).insert(ButtonColor(Color::srgb(0.98, 0.93, 0.72)));
+            } else if NIVEAUX[i].desert {
+                c.entity(b).insert(ButtonColor(Color::srgb(0.95, 0.84, 0.62)));
             }
             if NIVEAUX[i].loups > 0 {
                 // Un point rouge : des loups rôdent sur ce niveau.

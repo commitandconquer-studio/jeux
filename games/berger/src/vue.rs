@@ -82,6 +82,9 @@ pub struct Kit {
     pub feuillage: Handle<StandardMaterial>,
     pub feuillage_fonce: Handle<StandardMaterial>,
     pub sol_foret: Handle<StandardMaterial>,
+    pub sable: Handle<StandardMaterial>,
+    pub sable_clair: Handle<StandardMaterial>,
+    pub sol_desert: Handle<StandardMaterial>,
     pub fleurs: [Handle<StandardMaterial>; 4],
     pub onde: Handle<StandardMaterial>,
     pub onde_disque: Handle<StandardMaterial>,
@@ -121,6 +124,9 @@ impl FromWorld for Kit {
         let eau = m(0.36, 0.64, 0.84);
         let eau_claire = m(0.55, 0.80, 0.93);
         let sol_foret = m(0.50, 0.70, 0.36);
+        let sable = m(0.93, 0.80, 0.55);
+        let sable_clair = m(0.96, 0.85, 0.62);
+        let sol_desert = m(0.86, 0.70, 0.46);
         let fleurs = [m(0.98, 0.98, 0.95), m(0.98, 0.82, 0.18), m(0.94, 0.33, 0.55), m(0.78, 0.68, 0.93)];
         // Les herbes et feuillages gardent les couleurs de la palette : les saisons les repeignent.
         let herbe = mats.add(flat_material(palette::GRASS));
@@ -164,6 +170,9 @@ impl FromWorld for Kit {
             feuillage,
             feuillage_fonce,
             sol_foret,
+            sable,
+            sable_clair,
+            sol_desert,
             fleurs,
             onde,
             onde_disque,
@@ -338,7 +347,12 @@ fn modele(c: &mut Commands, server: &AssetServer, fichier: &str, pos: Vec3, rot:
     c.spawn((WorldAssetRoot(scene), Transform::from_translation(pos).with_rotation(Quat::from_rotation_y(rot)).with_scale(echelle), DeScene)).id()
 }
 
-fn arbre(c: &mut Commands, server: &AssetServer, pos: Vec3, rayon: f32, variante: u8, pin: bool) {
+fn arbre(c: &mut Commands, server: &AssetServer, pos: Vec3, rayon: f32, variante: u8, pin: bool, desert: bool) {
+    if desert {
+        let fichier = if pin { "nature-kit/cactus_tall" } else { "nature-kit/cactus_short" };
+        modele(c, server, fichier, pos, variante as f32 * 1.3, Vec3::splat(rayon * 2.4));
+        return;
+    }
     let fichier = if pin { "mini-forest/tree-high" } else { "mini-forest/tree" };
     modele(c, server, fichier, pos, variante as f32 * 1.3, Vec3::splat(rayon * 2.0 * (0.9 + (variante % 3) as f32 * 0.1)));
 }
@@ -395,14 +409,15 @@ pub fn spawn_scene(c: &mut Commands, server: &AssetServer, k: &Kit, carte: &Cart
 
     // Le champ, tondu en bandes, entouré d'un grand pré.
     let racine = c.spawn((Transform::default(), Visibility::default(), DeScene)).id();
-    piece(c, racine, &k.cube, &k.sol_foret, Vec3::new(0.0, -0.6, 0.0), Vec3::new(hx * 2.0 + 90.0, 1.0, hz * 2.0 + 90.0));
-    piece(c, racine, &k.cube, &k.herbe, Vec3::new(0.0, -0.1, 0.0), Vec3::new(hx * 2.0 + 0.4, 0.2, hz * 2.0 + 0.4));
+    let (sol_ext, sol_champ, sol_bande) = if niveau.desert { (&k.sol_desert, &k.sable, &k.sable_clair) } else { (&k.sol_foret, &k.herbe, &k.herbe_claire) };
+    piece(c, racine, &k.cube, sol_ext, Vec3::new(0.0, -0.6, 0.0), Vec3::new(hx * 2.0 + 90.0, 1.0, hz * 2.0 + 90.0));
+    piece(c, racine, &k.cube, sol_champ, Vec3::new(0.0, -0.1, 0.0), Vec3::new(hx * 2.0 + 0.4, 0.2, hz * 2.0 + 0.4));
     let bande = 3.0;
     let n = (hx * 2.0 / bande).ceil() as i32;
     for i in (0..n).step_by(2) {
         let x0 = -hx + i as f32 * bande;
         let l = bande.min(hx - x0);
-        let e = piece(c, racine, &k.cube, &k.herbe_claire, Vec3::new(x0 + l * 0.5, 0.005, 0.0), Vec3::new(l, 0.02, hz * 2.0));
+        let e = piece(c, racine, &k.cube, sol_bande, Vec3::new(x0 + l * 0.5, 0.005, 0.0), Vec3::new(l, 0.02, hz * 2.0));
         c.entity(e).insert(NotShadowCaster);
     }
 
@@ -413,7 +428,17 @@ pub fn spawn_scene(c: &mut Commands, server: &AssetServer, k: &Kit, carte: &Cart
         if carte.bloque(v2, 0.6) || carte.enclos.dedans(v2, -1.0) {
             continue;
         }
-        if rng.next_f32() < 0.55 {
+        if niveau.desert {
+            // Cailloux et touffes sèches, pas de fleurs.
+            if rng.next_f32() < 0.5 {
+                let h = 0.1 + rng.next_f32() * 0.1;
+                piece(c, racine, &k.cube, &k.sol_desert, p + Vec3::Y * (h * 0.5), Vec3::new(0.2 + h, h, 0.16 + h));
+            } else {
+                let h = 0.2 + rng.next_f32() * 0.14;
+                piece(c, racine, &k.cone, &k.paille_fonce, p + Vec3::Y * (h * 0.5), Vec3::new(0.14, h, 0.14));
+                piece(c, racine, &k.cone, &k.paille_fonce, p + Vec3::new(0.09, h * 0.4, 0.04), Vec3::new(0.1, h * 0.8, 0.1));
+            }
+        } else if rng.next_f32() < 0.55 {
             let h = 0.18 + rng.next_f32() * 0.16;
             piece(c, racine, &k.cone, &k.feuillage, p + Vec3::Y * (h * 0.5), Vec3::new(0.16, h, 0.16));
             piece(c, racine, &k.cone, &k.feuillage, p + Vec3::new(0.1, h * 0.4, 0.05), Vec3::new(0.12, h * 0.8, 0.12));
@@ -442,7 +467,7 @@ pub fn spawn_scene(c: &mut Commands, server: &AssetServer, k: &Kit, carte: &Cart
             };
             let pin = rng.next_f32() < 0.55;
             let r = 0.9 + rng.next_f32() * 0.5;
-            arbre(c, server, Vec3::new(x, 0.0, z), r, rng.below(4) as u8, pin);
+            arbre(c, server, Vec3::new(x, 0.0, z), r, rng.below(4) as u8, pin, niveau.desert);
             t += pas * (0.7 + rng.next_f32() * 0.7);
         }
     }
@@ -451,8 +476,8 @@ pub fn spawn_scene(c: &mut Commands, server: &AssetServer, k: &Kit, carte: &Cart
     for o in &carte.obstacles {
         let p = Vec3::new(o.pos.x, 0.0, o.pos.y);
         match o.genre {
-            Genre::Arbre => arbre(c, server, p, o.rayon, o.variante, false),
-            Genre::Pin => arbre(c, server, p, o.rayon, o.variante, true),
+            Genre::Arbre => arbre(c, server, p, o.rayon, o.variante, false, niveau.desert),
+            Genre::Pin => arbre(c, server, p, o.rayon, o.variante, true, niveau.desert),
             Genre::Rocher => rocher(c, server, p, o.rayon, o.variante),
             Genre::Mare => mare(c, k, p, o.rayon, o.variante),
         }
