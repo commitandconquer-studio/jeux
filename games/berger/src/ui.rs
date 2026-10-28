@@ -298,6 +298,9 @@ fn spawn_niveaux(mut c: Commands, progression: Res<Progression>) {
 }
 
 fn spawn_bandeau(mut c: Commands) {
+    if crate::capture::sans_interface() {
+        return;
+    }
     let barre = c
         .spawn((
             Node {

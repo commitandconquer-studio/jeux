@@ -48,7 +48,7 @@ fn peindre(
     mut mats: ResMut<Assets<StandardMaterial>>,
     mut fait: Local<Option<usize>>,
 ) {
-    let voulu = if *state.get() == crate::GameState::Chiens { vu.0 } else { progression.chien };
+    let voulu = if matches!(*state.get(), crate::GameState::Chiens | crate::GameState::Playing) && crate::capture::mode_kit() || *state.get() == crate::GameState::Chiens { vu.0 } else { progression.chien };
     if *fait == Some(voulu) {
         return;
     }

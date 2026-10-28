@@ -22,7 +22,7 @@ const SHADER: &str = "shaders/miniature.wgsl";
 /// sur le web il reste à essayer : `BERGER_FLOU=1` ne s'y lit pas, donc coupé.
 pub fn actif() -> bool {
     static A: std::sync::OnceLock<bool> = std::sync::OnceLock::new();
-    *A.get_or_init(|| !cfg!(target_arch = "wasm32") && std::env::var("BERGER_FLOU").map_or(true, |v| v != "0"))
+    *A.get_or_init(|| !cfg!(target_arch = "wasm32") && !crate::capture::mode_kit() && std::env::var("BERGER_FLOU").map_or(true, |v| v != "0"))
 }
 
 /// Réglages du flou, posés sur la caméra. Tous en fraction de l'écran.

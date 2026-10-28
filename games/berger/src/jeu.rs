@@ -81,7 +81,10 @@ pub struct Progression {
 impl Progression {
     pub fn charger() -> Self {
         let mut etoiles = [0u8; NIVEAUX.len()];
-        if let Some(s) = save::load(JEU, "etoiles") {
+        if crate::capture::pour_la_presse() {
+            // Dossier de presse : tout est ouvert, les trois étoiles partout.
+            etoiles = [3; NIVEAUX.len()];
+        } else if let Some(s) = save::load(JEU, "etoiles") {
             for (e, c) in etoiles.iter_mut().zip(s.chars()) {
                 *e = c.to_digit(10).unwrap_or(0).min(3) as u8;
             }
@@ -97,6 +100,9 @@ impl Progression {
     }
 
     pub fn enregistrer(&self) {
+        if crate::capture::sans_sauvegarde() {
+            return;
+        }
         let s: String = self.etoiles.iter().map(|e| char::from_digit(*e as u32, 10).unwrap_or('0')).collect();
         save::store(JEU, "etoiles", &s);
         if let Some(j) = self.jour_fait {
@@ -172,6 +178,9 @@ fn setup(mut commands: Commands, mut depart: MessageWriter<Commencer>, progressi
     // Flou « maquette » sur les bords de l'écran (ordinateur seulement, BERGER_FLOU=0 le coupe).
     if crate::miniature::actif() {
         cam.insert(crate::miniature::Miniature::default());
+    }
+    if crate::capture::mode_kit() {
+        return;
     }
     // Le menu s'affiche devant un champ tranquille.
     let robot = std::env::var("BERGER_ROBOT").is_ok();

@@ -92,3 +92,18 @@ commune.
 - **Caméra** : suit le chien et le troupeau (zoom doux) ; touche C pour la fixer.
 - **Niveau 4 = vitrine**, dessiné à la main : enclos à l'ouest, mare, passage
   entre deux rochers, un bélier, un loup.
+
+## Fiche pour le site (chiffres exacts)
+
+**Principe** : tu es un chien de berger dans un champ vu de dessus (3D en miniature). Les moutons fuient le chien et restent groupés : place-toi derrière eux et avance pour les pousser vers l'enclos. Aboie pour les affoler ou faire fuir les loups ; trois étoiles = tout le troupeau rentré, sans perte, avant le temps de référence.
+
+- **Campagne** : 18 niveaux, 54 étoiles en tout (3 par niveau). 12 niveaux de prairie (1 à 12) puis le monde du désert (13 à 18 : sable, cactus, oasis, deux puis trois loups).
+- **Autres parties** : un pré du jour (le même pour tout le monde, avec une série de jours), un pré au hasard.
+- **Moutons** : 4 sortes — blancs, noirs (plus têtus), agneaux (petits et rapides), béliers (ils chargent le chien s'il les provoque). De 5 à 26 moutons par niveau.
+- **Loups** : 3 sortes — solitaire, prudent (attaque par derrière), audacieux (plus rapide). Ils attrapent un mouton et l'emportent : il faut les faire fuir.
+- **Chiens** : 6 pelages à débloquer avec les étoiles — Border (départ), Caramel (4 étoiles), Neige (9), Ardoise (15), Braise (22), Doré (30).
+- **Commandes** : clavier (flèches/ZQSD, Maj pour courir, espace pour aboyer), souris ou doigt (le chien va vers le pointeur), mode souris (V ou Options : le chien suit le pointeur sans cliquer, le clic aboie), caméra fixe ou mobile (C).
+- **Langues** : 5 (français, anglais, allemand, italien, espagnol).
+- **Plateformes** : ordinateur et navigateur.
+
+Images : `site/static/img/jeux/berger/` — `01` à `09` (1920×1080 sauf `09-six-chiens.jpg`), `logo.png`, `kit/` (PNG transparents : 6 chiens, mouton blanc, mouton noir, agneau, bélier, 3 loups, étoile, cadenas, flèche). Régénérer : `BERGER_PRESSE=/tmp/pr cargo run -p berger`, `BERGER_KIT=/tmp/kit cargo run -p berger` puis `python3 tools/berger-kit.py /tmp/kit /tmp/pr` (les captures ne touchent pas à la sauvegarde).
