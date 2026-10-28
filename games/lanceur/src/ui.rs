@@ -11,10 +11,10 @@ use game_common::brand::{self, colors};
 use game_common::langue::Texte;
 use game_common::tx;
 use game_common::ui::{ButtonColor, GameHelp, ThemedPanel, UiTheme, pied_de_menu, spawn_button, spawn_button_sized, spawn_text};
-use game_common::universe::{UiStyle, Universe};
+use game_common::universe::UiStyle;
 
 use crate::GameState;
-use crate::catalogue::{JEUX, LANCEUR, UNIVERS};
+use crate::catalogue::{JEUX, LANCEUR};
 use crate::installation::{self, Catalogue, Etat, Partage, Tache};
 
 const AIDE: Texte = tx!(
@@ -144,14 +144,6 @@ struct TexteCatalogue;
 #[derive(Resource, Default)]
 struct Lances(Vec<(usize, f32)>);
 
-fn couleur_univers(u: Universe) -> Color {
-    match u {
-        Universe::Croa => colors::GREEN,
-        Universe::Nova => colors::BLUE,
-        Universe::Eureka => colors::CORAL,
-    }
-}
-
 fn spawn_ecran(mut commands: Commands, server: Res<AssetServer>, icones: Local<Icones>) {
     let racine = commands
         // Bornée à la fenêtre : sinon la liste des jeux l'agrandirait au lieu de défiler.
@@ -239,27 +231,11 @@ fn spawn_ecran(mut commands: Commands, server: Res<AssetServer>, icones: Local<I
             ChildOf(page),
         ))
         .id();
-    for univers in UNIVERS {
-        let titre = commands
-            .spawn((
-                Node { align_items: AlignItems::Center, column_gap: Val::Px(10.0), margin: UiRect::top(Val::Px(8.0)), ..default() },
-                Pickable::IGNORE,
-                ChildOf(zone),
-            ))
-            .id();
-        commands.spawn((
-            Node { width: Val::Px(14.0), height: Val::Px(14.0), border_radius: BorderRadius::MAX, ..default() },
-            BackgroundColor(couleur_univers(univers)),
-            ChildOf(titre),
-        ));
-        let t = spawn_text(&mut commands, titre, univers.name(), 28.0);
-        commands.entity(t).insert(TextColor(IVOIRE));
-        let grille = commands
-            .spawn((Node { flex_wrap: FlexWrap::Wrap, column_gap: Val::Px(14.0), row_gap: Val::Px(14.0), ..default() }, ChildOf(zone)))
-            .id();
-        for (i, jeu) in JEUX.iter().enumerate().filter(|(_, j)| j.univers == univers) {
-            spawn_carte(&mut commands, grille, i, icones.0[i].clone(), couleur_univers(univers), jeu.nom.t(), jeu.description.t());
-        }
+    let grille = commands
+        .spawn((Node { flex_wrap: FlexWrap::Wrap, column_gap: Val::Px(14.0), row_gap: Val::Px(14.0), ..default() }, ChildOf(zone)))
+        .id();
+    for (i, jeu) in JEUX.iter().enumerate() {
+        spawn_carte(&mut commands, grille, i, icones.0[i].clone(), colors::GREEN, jeu.nom.t(), jeu.description.t());
     }
 }
 
