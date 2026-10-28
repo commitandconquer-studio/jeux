@@ -7,6 +7,7 @@
 #[macro_use]
 pub mod langue;
 pub mod ambiance;
+pub mod look;
 pub mod ambiance_panneau;
 pub mod audio;
 pub mod options;
