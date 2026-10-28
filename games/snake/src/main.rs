@@ -3,7 +3,7 @@ mod audio;
 mod board;
 mod capture;
 mod dress;
-mod game;
+pub mod game;
 mod layout;
 mod levels;
 mod miniature;
@@ -68,7 +68,10 @@ fn move_camera(
     time: Res<Time>,
     state: Res<State<GameState>>,
     layout: Res<layout::Layout>,
+    focus: Res<game::Focus>,
     mut angle: Local<f32>,
+    mut at: Local<Vec3>,
+    mut zoomed: Local<bool>,
     mut cam: Query<(&mut Transform, &mut Projection), With<Camera3d>>,
 ) {
     let dt = time.delta_secs();
@@ -79,10 +82,15 @@ fn move_camera(
         *angle = a * (1.0 - (dt * 4.0).min(1.0));
     }
     let (w, h) = (layout.w as f32, layout.h as f32);
+    // Grande carte : en jeu, la caméra zoome et suit la tête ; dans les menus, elle survole la ville.
+    let following = layout.follow && matches!(state.get(), GameState::Playing | GameState::GameOver);
+    let goal = if following { Vec3::new(focus.0.x, 0.0, focus.0.y) } else { Vec3::ZERO };
+    *at = if layout.is_changed() { goal } else { at.lerp(goal, (dt * 10.0).min(1.0)) };
     for (mut tf, mut proj) in &mut cam {
-        *tf = Transform::from_translation(Quat::from_rotation_y(*angle) * ISO_OFFSET).looking_at(Vec3::ZERO, Vec3::Y);
-        if layout.is_changed() {
-            *proj = iso_projection(w * 1.2 + h * 0.5, h * 0.8 + w * 0.5);
+        *tf = Transform::from_translation(*at + Quat::from_rotation_y(*angle) * ISO_OFFSET).looking_at(*at, Vec3::Y);
+        if layout.is_changed() || following != (*zoomed) {
+            *zoomed = following;
+            *proj = if following { iso_projection(20.0, 15.0) } else if layout.follow { iso_projection(w * 0.75, h * 0.75) } else { iso_projection(w * 1.2 + h * 0.5, h * 0.8 + w * 0.5) };
         }
     }
 }

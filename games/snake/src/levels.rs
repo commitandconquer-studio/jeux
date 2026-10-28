@@ -30,6 +30,8 @@ pub enum Form {
     Square(i32),
     Rect(i32, i32),
     Shape(Shape),
+    /// Grande ville de n×n pâtés de maisons.
+    City(i32),
 }
 
 /// Les lieux du Voyage. Ceux qui n'ont pas encore leur décor empruntent celui d'un autre paysage.
@@ -80,6 +82,7 @@ impl Level {
             Form::Square(n) => Layout::rect(n, n),
             Form::Rect(w, h) => Layout::rect(w, h),
             Form::Shape(s) => s.layout(),
+            Form::City(n) => Layout::city(n),
         };
         l.id = 1000 + id;
         l
@@ -96,6 +99,7 @@ fn parse_shape(v: &str) -> Option<Form> {
             let (w, h) = arg?.split_once('x')?;
             Form::Rect(w.parse().ok()?, h.parse().ok()?)
         }
+        "ville" => Form::City(arg?.parse().ok()?),
         "l" => Form::Shape(Shape::L),
         "u" => Form::Shape(Shape::U),
         "route" => Form::Shape(Shape::Route),
@@ -140,7 +144,7 @@ pub fn parse(text: &str) -> Result<Vec<Level>, String> {
             "sortie" => level.exit = value == "oui",
             "pas" => level.pace = value.parse().map_err(|_| err("nombre attendu"))?,
             "temps" => level.par = value.parse().map_err(|_| err("nombre attendu"))?,
-            "blocs" | "trous" | "teleporteurs" | "accelerateurs" | "tapis" | "barrieres" => {
+            "blocs" | "trous" | "teleporteurs" | "accelerateurs" | "tapis" | "barrieres" | "trains" => {
                 let n = value.parse().map_err(|_| err("nombre attendu"))?;
                 let f = match key {
                     "blocs" => Feature::Obstacle,
@@ -148,6 +152,7 @@ pub fn parse(text: &str) -> Result<Vec<Level>, String> {
                     "teleporteurs" => Feature::Teleport,
                     "accelerateurs" => Feature::Speeder,
                     "barrieres" => Feature::Gate,
+                    "trains" => Feature::Train,
                     _ => Feature::Belt,
                 };
                 level.cases.push((f, n));

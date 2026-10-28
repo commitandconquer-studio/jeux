@@ -1,5 +1,7 @@
 //! Les univers : plateau, sol, décor et lumière.
 use bevy::light::NotShadowCaster;
+use std::f32::consts::FRAC_PI_2;
+
 use bevy::prelude::*;
 use game_common::{Rng, flat_material, tx};
 
@@ -177,6 +179,33 @@ pub fn rebuild_world(
         b.flat(e);
         let e = b.block(theme.rim, Vec3::new(p.x, GROUND_Y, p.z), Vec3::new(1.2, 0.2, 1.2));
         b.flat(e);
+    }
+
+    // Grande ville : des immeubles occupent les pâtés de maisons entre les rues.
+    if l.follow {
+        let mut rng = Rng::new(universe as u64 * 7919 + shape as u64 * 31);
+        let pitch = crate::layout::CITY_BLOCK + crate::layout::CITY_STREET;
+        let lawn = b.mat(theme.rim);
+        let low = ["city-kit-commercial/building-a", "city-kit-commercial/building-d", "city-kit-commercial/building-g", "city-kit-commercial/building-k", "city-kit-commercial/building-c", "city-kit-commercial/building-h"];
+        let towers = ["city-kit-commercial/building-skyscraper-b", "city-kit-commercial/building-skyscraper-d", "city-kit-commercial/building-skyscraper-a"];
+        for by in 0..l.blocks {
+            for bx in 0..l.blocks {
+                let (x0, y0) = (bx * pitch + crate::layout::CITY_STREET, by * pitch + crate::layout::CITY_STREET);
+                let centre = cell_to_world(Vec2::new(x0 as f32 + 1.5, y0 as f32 + 1.5), -0.05, l);
+                let e = b.block_with(lawn.clone(), centre, Vec3::new(3.9, 0.1, 3.9), 0.0);
+                b.flat(e);
+                for (dx, dy) in [(0.0, 0.0), (2.0, 0.0), (0.0, 2.0), (2.0, 2.0)] {
+                    let at = cell_to_world(Vec2::new(x0 as f32 + 0.5 + dx, y0 as f32 + 0.5 + dy), 0.05, l);
+                    // Du côté de la caméra les immeubles restent bas : ils cacheraient la rue.
+                    let front = at.x * 0.4 + at.z > 0.0;
+                    let tower = !front && rng.below(4) == 0;
+                    let file = if tower { towers[rng.below(towers.len() as u32) as usize] } else { low[rng.below(low.len() as u32) as usize] };
+                    let yaw = rng.below(4) as f32 * FRAC_PI_2;
+                    b.model(file, at, if tower { 1.3 } else { 1.6 }, yaw);
+                }
+            }
+        }
+        return;
     }
 
     // Décor autour du plateau, y compris dans les creux des formes en L, en U ou en route.

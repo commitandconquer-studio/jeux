@@ -24,6 +24,8 @@ pub enum Tile {
     Portal,
     /// Barrière qui s'ouvre et se ferme au rythme des pas (décalage de phase).
     Gate(u8),
+    /// Voie ferrée (vrai : le long de x) ; un train y passe de temps en temps.
+    Rail(bool),
 }
 
 /// Ce que le jeu sait poser sur le plateau.
@@ -37,6 +39,38 @@ pub enum Feature {
     /// Portail de paysage (mode infini) : change le décor, pas le plateau.
     Portal,
     Gate,
+    /// Une voie ferrée entière avec son train.
+    Train,
+}
+
+/// Un train : il traverse tout le plateau le long d'une ligne de cases, puis revient après une pause.
+pub struct Train {
+    /// Les cases de la voie, dans le sens de la marche.
+    pub cells: Vec<IVec2>,
+    pub offset: u32,
+}
+
+impl Train {
+    pub const CARS: i32 = 3;
+
+    pub fn period(&self) -> u32 {
+        self.cells.len() as u32 + 6
+    }
+
+    /// Indice (sur la voie) de la locomotive au pas `clock` ; négatif = pas encore entré.
+    pub fn front(&self, clock: u32) -> i32 {
+        ((clock + self.offset) % self.period()) as i32
+    }
+
+    /// Le train arrive dans deux pas ou moins : les feux clignotent.
+    pub fn warning(&self, clock: u32) -> bool {
+        self.front(clock) as u32 >= self.period() - 2
+    }
+
+    pub fn hits(&self, c: IVec2, clock: u32) -> bool {
+        let f = self.front(clock);
+        self.cells.iter().position(|p| *p == c).is_some_and(|i| (f - Self::CARS + 1..=f).contains(&(i as i32)))
+    }
 }
 
 /// Nombre de pas pendant lesquels une barrière reste ouverte (puis fermée).
@@ -48,6 +82,7 @@ pub struct Board {
     pub teleports: u8,
     /// Nombre de pas faits (rythme des barrières).
     pub clock: u32,
+    pub trains: Vec<Train>,
 }
 
 impl Board {
@@ -55,6 +90,12 @@ impl Board {
         self.tiles.clear();
         self.teleports = 0;
         self.clock = 0;
+        self.trains.clear();
+    }
+
+    /// Un train occupe-t-il cette case au pas `clock` ?
+    pub fn train_hits(&self, c: IVec2, clock: u32) -> bool {
+        self.trains.iter().any(|t| t.hits(c, clock))
     }
 
     /// La barrière de cette case est-elle fermée au pas `clock` ?
@@ -73,6 +114,9 @@ impl Board {
 
     /// Nombre de cases de ce genre déjà posées.
     pub fn count(&self, f: Feature) -> usize {
+        if f == Feature::Train {
+            return self.trains.len();
+        }
         self.tiles
             .values()
             .filter(|t| {
@@ -109,6 +153,21 @@ impl Board {
                 Feature::Speeder => {
                     self.tiles.insert(c, Tile::Speeder);
                     return true;
+                }
+                Feature::Train => {
+                    let horizontal = rng.below(2) == 0;
+                    let line: Vec<IVec2> = if horizontal { (0..layout.w).map(|x| IVec2::new(x, c.y)).collect() } else { (0..layout.h).map(|y| IVec2::new(c.x, y)).collect() };
+                    let line: Vec<IVec2> = line.into_iter().filter(|p| layout.walkable(*p)).collect();
+                    // La voie doit traverser tout le plateau d'un seul tenant, loin de la tête.
+                    let straight = line.windows(2).all(|w| (w[1] - w[0]).abs().element_sum() == 1);
+                    if line.len() >= 8 && straight && line.iter().all(|p| self.is_free(*p, busy, head) && !busy.contains(p)) {
+                        for p in &line {
+                            self.tiles.insert(*p, Tile::Rail(horizontal));
+                        }
+                        let offset = rng.below(line.len() as u32 + 6);
+                        self.trains.push(Train { cells: line, offset });
+                        return true;
+                    }
                 }
                 Feature::Gate => {
                     self.tiles.insert(c, Tile::Gate(rng.below(2) as u8));
@@ -223,9 +282,31 @@ pub fn sync_tiles(
     let gate_shut = mk(Color::srgb(0.95, 0.25, 0.20), 0.8);
     let gate_warn = mk(Color::srgb(1.0, 0.75, 0.15), 1.0);
     let gate_open = mk(Color::srgb(0.35, 0.85, 0.45), 0.4);
+    let rail_bed = mk(Color::srgb(0.40, 0.34, 0.30), 0.0);
+    let rail_steel = mk(Color::srgb(0.75, 0.77, 0.80), 0.0);
+    let rail_lamp = mk(Color::srgb(1.0, 0.25, 0.15), 2.0);
     let speed_plate = mk(Color::srgb(1.0, 0.8, 0.1), 0.6);
     let speed_core = mk(Color::WHITE, 2.0);
     *count = board.tiles.len();
+    // Les trains : une locomotive et deux wagons par voie, et un feu à l'entrée.
+    for (n, t) in board.trains.iter().enumerate() {
+        let horizontal = t.cells.len() > 1 && t.cells[1].x != t.cells[0].x;
+        let cars = ["train-kit/train-diesel-a", "train-kit/train-carriage-box", "train-kit/train-carriage-container-red"];
+        for (k, file) in cars.iter().enumerate() {
+            let scene = server.load(GltfAssetLabel::Scene(0).from_asset(format!("kenney/{file}.glb")));
+            commands.spawn((
+                WorldAssetRoot(scene),
+                Transform::from_translation(Vec3::new(0.0, -50.0, 0.0)).with_scale(Vec3::new(0.7, 0.6, 0.4)),
+                Visibility::Hidden,
+                TrainCar { train: n, car: k as i32, horizontal },
+                TileVisual,
+            ));
+        }
+        let lamp_at = cell_to_world(t.cells[0].as_vec2(), 0.3, grid);
+        let lamp_at = lamp_at - if horizontal { Vec3::X } else { Vec3::Z } * 0.0;
+        let lamp = commands.spawn((Mesh3d(cube.clone()), MeshMaterial3d(rail_lamp.clone()), Transform::from_translation(lamp_at + Vec3::Y * 0.1).with_scale(Vec3::splat(0.22)), Visibility::Hidden, TrainLamp(n), NotShadowCaster, TileVisual));
+        let _ = lamp;
+    }
 
     for (&cell, &tile) in &board.tiles {
         let at = |y: f32| Transform::from_translation(cell_to_world(cell.as_vec2(), y + 0.05, grid));
@@ -275,6 +356,17 @@ pub fn sync_tiles(
                     commands.entity(e).insert(GateBar { phase, kind });
                 }
             }
+            Tile::Rail(horizontal) => {
+                let yaw = if horizontal { FRAC_PI_2 } else { 0.0 };
+                let root = commands.spawn((at(0.0).with_rotation(Quat::from_rotation_y(yaw)), Visibility::default(), TileVisual)).id();
+                spawn(&mut commands, plate.clone(), rail_bed.clone(), Transform::IDENTITY, Some(root));
+                for x in [-0.25_f32, 0.25] {
+                    spawn(&mut commands, cube.clone(), rail_steel.clone(), Transform::from_xyz(x, 0.06, 0.0).with_scale(Vec3::new(0.07, 0.05, 1.0)), Some(root));
+                }
+                for z in [-0.3_f32, 0.0, 0.3] {
+                    spawn(&mut commands, cube.clone(), rail_bed.clone(), Transform::from_xyz(0.0, 0.045, z).with_scale(Vec3::new(0.7, 0.03, 0.1)), Some(root));
+                }
+            }
             Tile::Hole => {
                 spawn(&mut commands, disc.clone(), hole_rim.clone(), at(0.0).with_scale(Vec3::new(1.08, 1.0, 1.08)), None);
                 spawn(&mut commands, disc.clone(), hole.clone(), at(0.02).with_scale(Vec3::new(0.9, 1.0, 0.9)), None);
@@ -316,6 +408,46 @@ pub fn sync_tiles(
 
 #[derive(Component)]
 pub struct SideOffset(f32);
+
+#[derive(Component)]
+pub struct TrainCar {
+    train: usize,
+    car: i32,
+    horizontal: bool,
+}
+
+#[derive(Component)]
+pub struct TrainLamp(usize);
+
+/// Fait rouler les trains d'une case par pas, et clignoter le feu avant leur arrivée.
+pub fn animate_trains(
+    time: Res<Time>,
+    board: Res<Board>,
+    layout: Res<Layout>,
+    mut cars: Query<(&TrainCar, &mut Transform, &mut Visibility), Without<TrainLamp>>,
+    mut lamps: Query<(&TrainLamp, &mut Visibility), Without<TrainCar>>,
+) {
+    let blink = (time.elapsed_secs() * 8.0).sin() > 0.0;
+    for (l, mut v) in &mut lamps {
+        let on = board.trains.get(l.0).is_some_and(|t| t.warning(board.clock)) && blink;
+        *v = if on { Visibility::Inherited } else { Visibility::Hidden };
+    }
+    for (c, mut tf, mut v) in &mut cars {
+        let Some(t) = board.trains.get(c.train) else { continue };
+        let i = t.front(board.clock) - c.car;
+        if i < -1 || i > t.cells.len() as i32 {
+            *v = Visibility::Hidden;
+            continue;
+        }
+        *v = Visibility::Inherited;
+        // Les voies vont de la case 0 à la dernière ; au-delà, on prolonge en ligne droite.
+        let step = if c.horizontal { Vec2::X } else { Vec2::Y };
+        let target = cell_to_world(t.cells[0].as_vec2() + step * i as f32, 0.05, &layout);
+        let jump = tf.translation.distance(target) > 2.5;
+        tf.translation = if jump { target } else { tf.translation.lerp(target, (time.delta_secs() * 14.0).min(1.0)) };
+        tf.rotation = Quat::from_rotation_y(if c.horizontal { FRAC_PI_2 } else { 0.0 });
+    }
+}
 
 #[derive(Component)]
 pub struct GateBar {

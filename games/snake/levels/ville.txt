@@ -1,80 +1,73 @@
-# Centre-ville — les premières barrières : passages qui s'ouvrent et se ferment au rythme des pas (vert = ouvert, orange = va fermer, rouge = fermé).
-# Cases (nombre) : blocs, trous, teleporteurs (paires), accelerateurs, tapis, barrieres.
+# Centre-ville — une grande carte zoomée : la caméra suit la file dans les rues, les immeubles bordent les pâtés de maisons.
+# Cases (nombre) : blocs, trous, teleporteurs (paires), accelerateurs, tapis.
 
-[Le passage piéton]
+[Les premières rues]
 lieu = ville
-forme = carre 18
+forme = ville 2
+touristes = 6
+pas = 0.3
+
+[Un petit quartier]
+lieu = ville
+forme = ville 3
 touristes = 8
-barrieres = 2
-pas = 0.33
-
-[Le carrefour]
-lieu = ville
-forme = carre 18
-touristes = 10
-barrieres = 3
-pas = 0.32
-
-[Les feux]
-lieu = ville
-forme = carre 16
-touristes = 14
-barrieres = 4
-pas = 0.32
-
-[Travaux]
-lieu = ville
-forme = carre 16
-touristes = 14
-barrieres = 3
-blocs = 4
-pas = 0.31
-
-[L'avenue]
-lieu = ville
-forme = rectangle 22x10
-touristes = 16
-barrieres = 5
 pas = 0.3
 
-[La sortie du centre]
+[Le tour du quartier]
 lieu = ville
-forme = carre 16
-touristes = 16
-barrieres = 3
-accelerateurs = 2
-sortie = oui
+forme = ville 3
+touristes = 12
 pas = 0.3
 
-[La rue étroite]
+[Le marché]
 lieu = ville
-forme = U
+forme = ville 4
+touristes = 14
+blocs = 6
+pas = 0.3
+
+[La grande avenue]
+lieu = ville
+forme = ville 4
 touristes = 18
-barrieres = 4
-pas = 0.3
+pas = 0.28
+
+[La sortie de la ville]
+lieu = ville
+forme = ville 4
+touristes = 16
+sortie = oui
+pas = 0.28
+
+[Les travaux]
+lieu = ville
+forme = ville 5
+touristes = 20
+blocs = 10
+pas = 0.28
 
 [Le quartier d'affaires]
 lieu = ville
-forme = route
-touristes = 20
-barrieres = 5
-trous = 2
-pas = 0.3
+forme = ville 5
+touristes = 24
+blocs = 8
+accelerateurs = 3
+pas = 0.27
 
 [L'heure de pointe]
 lieu = ville
-forme = allees
-touristes = 22
-barrieres = 6
-blocs = 3
-pas = 0.28
+forme = ville 6
+touristes = 30
+blocs = 10
+accelerateurs = 4
+pas = 0.26
 
 [La grande parade]
 lieu = ville
-forme = carre 16
-touristes = 26
-barrieres = 6
+forme = ville 6
+touristes = 36
+blocs = 10
 teleporteurs = 1
-accelerateurs = 2
+accelerateurs = 4
 sortie = oui
-pas = 0.26
+pas = 0.25
