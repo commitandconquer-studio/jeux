@@ -12,7 +12,7 @@
   <div class="jeu-plein-in">
     <div class="jeu-plein-texte">
       {%- if page.extra.logo %}
-      <img class="jeu-logo" src="{{ get_url(path='img/jeux/' ~ page.extra.logo ~ '.png') }}" alt="{{ page.title }}" width="1200" height="400">
+      <img class="jeu-logo" src="{{ get_url(path='img/jeux/' ~ page.extra.logo ~ '.png') }}" alt="{{ page.title }}" >
       <h1 class="cache">{{ page.title }}</h1>
       {%- else %}
       <h1>{{ page.title }}</h1>

@@ -578,3 +578,5 @@ html.moment-nuit .hero-fallback { filter: brightness(.42) saturate(.75) hue-rota
 /* Petite illustration (kit du jeu) au pied de la fiche */
 .jeu-fin { position: relative; }
 .jeu-fin-deco { display: block; margin: 0 auto 8px; height: clamp(110px, 16vw, 190px); width: auto; filter: drop-shadow(0 8px 10px rgba(0,0,0,.25)); }
+/* Logos carrés (Berger) : on borne la hauteur pour garder le texte et les boutons dans l'écran */
+.jeu-plein .jeu-logo { max-height: min(34vh, 300px); width: auto; max-width: 100%; }
