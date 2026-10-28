@@ -31,7 +31,7 @@ pub struct CapturePlugin;
 impl Plugin for CapturePlugin {
     fn build(&self, app: &mut App) {
         if let Ok(dossier) = std::env::var("BERGER_CAPTURE") {
-            app.insert_resource(Capture { dossier, i: 0, depuis: 0.0, lance: false, pris: false }).add_systems(Update, capturer);
+            app.insert_resource(Capture { dossier, i: 0, depuis: 0.0, lance: false, pris: false }).add_systems(Update, capturer).add_systems(Startup, sans_synchro);
         }
     }
 }
@@ -78,5 +78,12 @@ fn capturer(
         cap.i += 1;
         cap.pris = false;
         cap.lance = false;
+    }
+}
+
+/// Sans synchronisation verticale : la fenêtre continue de tourner même cachée derrière une autre (Wayland).
+fn sans_synchro(mut fenetres: Query<&mut Window>) {
+    for mut f in &mut fenetres {
+        f.present_mode = bevy::window::PresentMode::AutoNoVsync;
     }
 }
