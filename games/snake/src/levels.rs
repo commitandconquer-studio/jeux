@@ -586,6 +586,16 @@ mod tests {
     }
 
     #[test]
+    fn the_documented_example_is_valid() {
+        // L'exemple du mode opératoire (docs/jeux/snake-scenarios.md) doit toujours être lisible.
+        let (meta, steps) = parse_file(include_str!("../scenarios/exemple.txt")).unwrap();
+        assert_eq!(meta.title, "La visite de Léa");
+        assert_eq!(steps.len(), 4);
+        assert_eq!((steps[0].scene.is_some(), steps[1].scene.is_some(), steps[3].exit), (true, false, true));
+        assert!(steps[1].layout(0).start_cells().iter().all(|c| steps[1].layout(0).walkable(*c)));
+    }
+
+    #[test]
     fn exported_levels_read_back() {
         let dir = std::env::temp_dir().join("snake-export-test");
         export(dir.to_str().unwrap()).unwrap();

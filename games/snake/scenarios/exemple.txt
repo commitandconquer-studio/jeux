@@ -1,0 +1,54 @@
+titre = La visite de Léa
+description = Un guide, des touristes et une journée bien remplie
+
+[Rencontre]
+type = scene
+decor = jardin
+camera = moyen
+personnage = Léa | 1 | 12 | centre | salut | guide
+replique = Léa | Bonjour ! Je m'appelle Léa, et je serai votre guide aujourd'hui.
+replique = Léa | Restez groupés et suivez-moi à la queue leu leu. | gros
+
+[Premier rassemblement]
+lieu = jardin
+touristes = 4
+pas = 0.34
+depart = est
+carte:
+0011111111111100
+0111111111111110
+1111111111111111
+1111111111111111
+111S111111111111
+1111111111111111
+1111111111111111
+0111111111111110
+0011111111111100
+
+[Les voyageurs]
+type = scene
+decor = desert
+camera = large
+personnage = Léa | 1 | 12 | gauche | repos | guide
+personnage = Max | 2 | 3.8.5.1.0 | centre | salut | - | lunettes-soleil
+personnage = Zoé | 5 | 5.4.9.2.3 | droite | repos | - | canne
+replique = Max | On est partis pour le désert ? Il fait déjà chaud ! | moyen
+replique = Léa | Attention aux cactus. Ils ne bougent pas, mais ils piquent. | gros
+
+[Dans le désert]
+lieu = desert
+touristes = 6
+pas = 0.32
+depart = est
+sortie = oui
+carte:
+00111111111111111100
+01111111111111111110
+11111111111111111111
+11111111111111111111
+111S1111112111111111
+11111111111111111111
+11111111111211111111
+11111111111111111111
+01111111111111111110
+00111111111111111100
