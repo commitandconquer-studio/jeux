@@ -7,7 +7,7 @@ pub mod robot;
 pub mod v2;
 
 pub use carte::{Carte, Cote, Genre, Mur, NIVEAUX, Niveau, generer, niveau, niveau_du_jour};
-pub use monde::{Commande, EtatLoup, Evenement, Fin, Monde};
+pub use monde::{Commande, EtatLoup, Evenement, Fin, Monde, PAS_FIXE, Reglages};
 pub use v2::{V2, v2};
 
 #[cfg(test)]
@@ -37,6 +37,21 @@ mod tests {
                 assert!(c.moutons.iter().all(|&p| !c.enclos.dedans(p, 0.0)), "mouton dans l'enclos au départ");
             }
         }
+    }
+
+    #[test]
+    fn le_pas_fixe_ne_depend_pas_de_la_frequence_d_affichage() {
+        let nv = NIVEAUX[0];
+        let (mut a, mut b) = (Monde::nouveau(generer(&nv, 3), nv), Monde::nouveau(generer(&nv, 3), nv));
+        let cmd = Commande { dir: v2(1.0, 0.0), course: true, aboyer: false };
+        for _ in 0..120 {
+            a.pas(1.0 / 60.0, cmd);
+        }
+        for _ in 0..60 {
+            b.pas(1.0 / 30.0, cmd);
+        }
+        assert!(a.chien.pos.dist(b.chien.pos) < 0.01);
+        assert!((a.temps - b.temps).abs() < 0.02);
     }
 
     #[test]

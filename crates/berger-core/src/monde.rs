@@ -3,24 +3,57 @@
 use crate::carte::{Carte, Niveau};
 use crate::v2::{Hasard, V2, sur_segment, v2};
 
-// Le chien.
-pub const VITESSE_CHIEN: f32 = 5.2;
-pub const VITESSE_COURSE: f32 = 8.2;
-pub const RAYON_CHIEN: f32 = 0.45;
-pub const PORTEE_ABOIEMENT: f32 = 10.0;
-const RECHARGE_ABOIEMENT: f32 = 1.8;
-const DUREE_COURSE: f32 = 3.2;
+/// Pas de simulation fixe : le jeu se déroule pareil quelle que soit la fréquence d'affichage.
+pub const PAS_FIXE: f32 = 1.0 / 60.0;
 
-// Les moutons.
-pub const RAYON_MOUTON: f32 = 0.38;
-const SEPARATION_R: f32 = 1.5;
-const VOISINAGE_R: f32 = 5.0;
-const PEUR_CHIEN_R: f32 = 4.8;
-const PEUR_LOUP_R: f32 = 8.0;
+/// Tous les réglages de gameplay au même endroit (distances en mètres, durées en secondes).
+#[derive(Clone, Copy, Debug)]
+pub struct Reglages {
+    // Le chien.
+    pub vitesse_chien: f32,
+    pub vitesse_course: f32,
+    pub rayon_chien: f32,
+    /// Vitesse de rattrapage de la vitesse voulue (plus grand = plus nerveux).
+    pub reactivite_chien: f32,
+    pub duree_course: f32,
+    pub duree_recuperation: f32,
+    // L'aboiement.
+    pub portee_aboiement: f32,
+    pub recharge_aboiement: f32,
+    pub vitesse_onde: f32,
+    // Les moutons.
+    pub rayon_mouton: f32,
+    pub separation_r: f32,
+    pub voisinage_r: f32,
+    pub peur_chien_r: f32,
+    pub peur_loup_r: f32,
+    // Les loups.
+    pub vitesse_loup: f32,
+    pub vitesse_fuite_loup: f32,
+}
 
-// Les loups.
-pub const VITESSE_LOUP: f32 = 5.4;
-const VITESSE_FUITE_LOUP: f32 = 6.4;
+impl Default for Reglages {
+    fn default() -> Self {
+        Reglages {
+            vitesse_chien: 5.2,
+            vitesse_course: 8.2,
+            rayon_chien: 0.45,
+            reactivite_chien: 11.0,
+            duree_course: 3.2,
+            duree_recuperation: 6.0,
+            portee_aboiement: 10.0,
+            recharge_aboiement: 1.8,
+            vitesse_onde: 26.0,
+            rayon_mouton: 0.38,
+            separation_r: 1.5,
+            voisinage_r: 5.0,
+            peur_chien_r: 4.8,
+            peur_loup_r: 8.0,
+            vitesse_loup: 5.4,
+            vitesse_fuite_loup: 6.4,
+        }
+    }
+}
 
 #[derive(Clone, Copy, Debug, Default)]
 pub struct Commande {
@@ -106,8 +139,11 @@ pub struct Monde {
     pub temps: f32,
     pub fin: Option<Fin>,
     pub evenements: Vec<Evenement>,
+    pub reg: Reglages,
     /// Temps pendant lequel tous les moutons restants sont dans l'enclos.
     tenu: f32,
+    /// Temps pas encore simulé (le pas fixe consomme ce reste).
+    reste: f32,
     hasard: Hasard,
 }
 
@@ -125,7 +161,7 @@ impl Monde {
                 panique: 0.0,
                 perdu: false,
                 abrite: false,
-                phase: hasard.entre(0.0, 6.28),
+                phase: hasard.entre(0.0, std::f32::consts::TAU),
             })
             .collect();
         let loups = carte
@@ -140,11 +176,11 @@ impl Monde {
                 morsure: 0.0,
                 apparition: l.apparition,
                 bord: l.bord,
-                phase: hasard.entre(0.0, 6.28),
+                phase: hasard.entre(0.0, std::f32::consts::TAU),
             })
             .collect();
         let chien = Chien { pos: carte.depart_chien, vel: V2::ZERO, cap: 0.0, endurance: 1.0, essouffle: false, recharge: 0.0, onde: 0.0, court: false };
-        Monde { carte, niveau, chien, moutons, loups, temps: 0.0, fin: None, evenements: Vec::new(), tenu: 0.0, hasard }
+        Monde { carte, niveau, chien, moutons, loups, temps: 0.0, fin: None, evenements: Vec::new(), reg: Reglages::default(), tenu: 0.0, reste: 0.0, hasard }
     }
 
     pub fn abrites(&self) -> usize {
@@ -171,13 +207,24 @@ impl Monde {
         1 + (self.temps <= self.niveau.temps_ref) as u32 + (self.perdus() == 0) as u32
     }
 
-    /// Fait avancer le monde de `dt` secondes. Les événements du pas sont dans `evenements`.
+    /// Fait avancer le monde de `dt` secondes, par pas fixes de `PAS_FIXE`.
+    /// Les événements des pas sont dans `evenements` (vidés à chaque appel).
     pub fn pas(&mut self, dt: f32, cmd: Commande) {
         self.evenements.clear();
         if self.fin.is_some() {
             return;
         }
-        let dt = dt.min(0.05);
+        self.reste += dt.min(0.1);
+        let mut cmd = cmd;
+        while self.reste >= PAS_FIXE - 1e-6 && self.fin.is_none() {
+            self.reste -= PAS_FIXE;
+            self.un_pas(PAS_FIXE, cmd);
+            // L'aboiement est une pression : il ne se répète pas d'un pas à l'autre.
+            cmd.aboyer = false;
+        }
+    }
+
+    fn un_pas(&mut self, dt: f32, cmd: Commande) {
         self.temps += dt;
         self.pas_chien(dt, cmd);
         self.pas_loups(dt);
@@ -212,16 +259,16 @@ impl Monde {
         let bouge = veut.len2() > 0.01;
         let court = cmd.course && bouge && !c.essouffle && c.endurance > 0.0;
         c.court = court;
-        let vitesse = if court { VITESSE_COURSE } else { VITESSE_CHIEN };
-        c.vel = c.vel.lerp(veut * vitesse, (dt * 11.0).min(1.0));
+        let vitesse = if court { self.reg.vitesse_course } else { self.reg.vitesse_chien };
+        c.vel = c.vel.lerp(veut * vitesse, (dt * self.reg.reactivite_chien).min(1.0));
         c.pos += c.vel * dt;
         if court {
-            c.endurance = (c.endurance - dt / DUREE_COURSE).max(0.0);
+            c.endurance = (c.endurance - dt / self.reg.duree_course).max(0.0);
             if c.endurance <= 0.0 {
                 c.essouffle = true;
             }
         } else {
-            c.endurance = (c.endurance + dt / 6.0).min(1.0);
+            c.endurance = (c.endurance + dt / self.reg.duree_recuperation).min(1.0);
             if c.essouffle && c.endurance >= 0.35 {
                 c.essouffle = false;
             }
@@ -231,31 +278,31 @@ impl Monde {
         }
         c.recharge = (c.recharge - dt).max(0.0);
         if c.onde > 0.0 {
-            c.onde += dt * 26.0;
-            if c.onde > PORTEE_ABOIEMENT + 2.0 {
+            c.onde += dt * self.reg.vitesse_onde;
+            if c.onde > self.reg.portee_aboiement + 2.0 {
                 c.onde = 0.0;
             }
         }
         let (mut pos, mut vel) = (c.pos, c.vel);
-        Self::collisions(&self.carte, &mut pos, &mut vel, RAYON_CHIEN, 0.3);
+        Self::collisions(&self.carte, &mut pos, &mut vel, self.reg.rayon_chien, 0.3);
         self.chien.pos = pos;
         self.chien.vel = vel;
 
         if cmd.aboyer && self.chien.recharge <= 0.0 {
-            self.chien.recharge = RECHARGE_ABOIEMENT;
+            self.chien.recharge = self.reg.recharge_aboiement;
             self.chien.onde = 0.01;
             self.evenements.push(Evenement::Aboiement);
             let chien = self.chien.pos;
             for m in self.moutons.iter_mut().filter(|m| !m.perdu) {
                 let d = m.pos.dist(chien);
-                if d < PORTEE_ABOIEMENT {
-                    let t = 1.0 - d / PORTEE_ABOIEMENT;
+                if d < self.reg.portee_aboiement {
+                    let t = 1.0 - d / self.reg.portee_aboiement;
                     m.vel += (m.pos - chien).norm() * (1.5 + 3.5 * t);
                     m.panique = m.panique.max(0.5 + 0.5 * t);
                 }
             }
             for (i, l) in self.loups.iter_mut().enumerate() {
-                if matches!(l.etat, EtatLoup::Rode | EtatLoup::Fuit) && l.pos.dist(chien) < PORTEE_ABOIEMENT {
+                if matches!(l.etat, EtatLoup::Rode | EtatLoup::Fuit) && l.pos.dist(chien) < self.reg.portee_aboiement {
                     l.etat = EtatLoup::Fuit;
                     l.timer = 4.5;
                     l.cible = None;
@@ -277,7 +324,7 @@ impl Monde {
                 *pos = o.pos + n * min;
                 let vn = vel.dot(n);
                 if vn < 0.0 {
-                    *vel = *vel - n * vn;
+                    *vel -= n * vn;
                 }
             }
         }
@@ -290,7 +337,7 @@ impl Monde {
                 *pos = q + n * rayon_mur;
                 let vn = vel.dot(n);
                 if vn < 0.0 {
-                    *vel = *vel - n * vn;
+                    *vel -= n * vn;
                 }
             }
         }
@@ -366,10 +413,10 @@ impl Monde {
                 }
                 let d = pos[j] - p;
                 let dist = d.len();
-                if dist < SEPARATION_R && dist > 1e-4 {
-                    sep -= d / dist * (1.0 - dist / SEPARATION_R);
+                if dist < self.reg.separation_r && dist > 1e-4 {
+                    sep -= d / dist * (1.0 - dist / self.reg.separation_r);
                 }
-                if dist < VOISINAGE_R {
+                if dist < self.reg.voisinage_r {
                     ali += vel[j];
                     coh += pos[j];
                     voisins += 1.0;
@@ -389,7 +436,7 @@ impl Monde {
 
             // La peur : le chien (plus il court, plus il fait peur) et les loups.
             let mut menace: f32 = 0.0;
-            let rayon_peur = PEUR_CHIEN_R + vitesse_chien * 0.25;
+            let rayon_peur = self.reg.peur_chien_r + vitesse_chien * 0.25;
             let d = p - chien;
             let dist = d.len();
             if dist < rayon_peur {
@@ -400,15 +447,15 @@ impl Monde {
             for &lp in &loups {
                 let d = p - lp;
                 let dist = d.len();
-                if dist < PEUR_LOUP_R {
-                    let t = 1.0 - dist / PEUR_LOUP_R;
+                if dist < self.reg.peur_loup_r {
+                    let t = 1.0 - dist / self.reg.peur_loup_r;
                     acc += d.norm() * (26.0 * t + 4.0);
                     menace = 1.0;
                 }
             }
 
             // Obstacles et clôtures : on les contourne.
-            acc += Self::evitement(&self.carte, p, RAYON_MOUTON, 1.6) * 9.0;
+            acc += Self::evitement(&self.carte, p, self.reg.rayon_mouton, 1.6) * 9.0;
 
             // Tranquille : il broute, par moments il se déplace un peu.
             let m = &mut self.moutons[i];
@@ -432,7 +479,7 @@ impl Monde {
             let mut vel = (v + acc * dt) * (1.0 - 2.4 * dt).max(0.0);
             vel = vel.limit(vmax);
             let mut pos = p + vel * dt;
-            Self::collisions(&self.carte, &mut pos, &mut vel, RAYON_MOUTON, RAYON_MOUTON * 0.8);
+            Self::collisions(&self.carte, &mut pos, &mut vel, self.reg.rayon_mouton, self.reg.rayon_mouton * 0.8);
             m.pos = pos;
             m.vel = vel;
             m.phase += dt * (1.5 + vel.len() * 2.2);
@@ -484,7 +531,7 @@ impl Monde {
                     l.timer -= dt;
                     let d = l.pos - chien;
                     let dir = (d.norm() + Self::evitement(&self.carte, l.pos, 0.5, 2.0) * 1.2).norm();
-                    l.vel = l.vel.lerp(dir * VITESSE_FUITE_LOUP, (dt * 6.0).min(1.0));
+                    l.vel = l.vel.lerp(dir * self.reg.vitesse_fuite_loup, (dt * 6.0).min(1.0));
                     if l.timer <= 0.0 {
                         l.etat = EtatLoup::Rode;
                     }
@@ -498,7 +545,7 @@ impl Monde {
                         v2(l.pos.x, l.pos.y.signum() * (carte_demi.y + 3.0))
                     };
                     let dir = ((sortie - l.pos).norm() + Self::evitement(&self.carte, l.pos, 0.5, 2.0)).norm();
-                    l.vel = l.vel.lerp(dir * VITESSE_FUITE_LOUP, (dt * 6.0).min(1.0));
+                    l.vel = l.vel.lerp(dir * self.reg.vitesse_fuite_loup, (dt * 6.0).min(1.0));
                     if l.pos.x.abs() > carte_demi.x + 1.5 || l.pos.y.abs() > carte_demi.y + 1.5 {
                         l.etat = EtatLoup::Absent;
                         l.apparition = temps + self.niveau.loup_ecart * 0.8;
@@ -551,7 +598,7 @@ impl Monde {
         let l = &mut self.loups[i];
         let dist = l.pos.dist(vers);
         let dir = ((vers - l.pos).norm() + Self::evitement(&self.carte, l.pos, 0.5, 1.8) * 1.4).norm();
-        let vitesse = if dist < 3.5 { VITESSE_LOUP * 1.15 } else { VITESSE_LOUP };
+        let vitesse = if dist < 3.5 { self.reg.vitesse_loup * 1.15 } else { self.reg.vitesse_loup };
         l.vel = l.vel.lerp(dir * vitesse, (dt * 5.0).min(1.0));
         if self.moutons[c].pos.dist(l.pos) < 1.0 {
             l.morsure += dt;

@@ -1,7 +1,7 @@
 //! Un chien automatique : il sert aux tests (chaque niveau a une solution) et
 //! aux captures d'écran. Il se place derrière le mouton le plus loin de la
 //! porte et le pousse, en chassant les loups quand ils menacent.
-use crate::monde::{Commande, EtatLoup, Monde, PORTEE_ABOIEMENT};
+use crate::monde::{Commande, EtatLoup, Monde};
 use crate::v2::{V2, v2};
 
 pub fn commande(m: &Monde) -> Commande {
@@ -22,7 +22,7 @@ pub fn commande(m: &Monde) -> Commande {
             return Commande {
                 dir: chemin(&m.carte, chien, l.pos) + evite(m, chien) * 0.5,
                 course: d > 4.0,
-                aboyer: d < PORTEE_ABOIEMENT - 1.5,
+                aboyer: d < m.reg.portee_aboiement - 1.5,
             };
         }
     }

@@ -93,6 +93,7 @@ pub struct Niveau {
     pub entonnoir: bool,
 }
 
+#[allow(clippy::too_many_arguments)]
 const fn n(
     demi: (f32, f32),
     moutons: u32,
@@ -256,9 +257,9 @@ fn essayer(nv: &Niveau, graine: u64, clairsemee: bool) -> Carte {
     for k in 0..4 {
         libres.push((enclos.entree() + cote.sortie() * (2.5 + k as f32 * 2.8), 2.6));
     }
-    let etendue = if bord % 2 == 0 { demi.y } else { demi.x };
+    let etendue = if bord.is_multiple_of(2) { demi.y } else { demi.x };
     let tangente = vers_enclos.perp();
-    let largeur = if bord % 2 == 0 { demi.x } else { demi.y };
+    let largeur = if bord.is_multiple_of(2) { demi.x } else { demi.y };
     let troupeau = v2(0.0, 0.0) - vers_enclos * (etendue * 0.35) + tangente * h.entre(-0.45, 0.45) * largeur;
     let rayon_troupeau = 2.2 + m.sqrt() * 0.7;
     libres.push((troupeau, rayon_troupeau + 1.5));
