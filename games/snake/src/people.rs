@@ -58,6 +58,20 @@ pub struct Person {
     wave: AnimationNodeIndex,
     die: AnimationNodeIndex,
     pose: Pose,
+    /// (modèle de base Mini Characters, numéro d'apparence) ; `None` : couleurs d'origine.
+    look: Option<(usize, u32)>,
+}
+
+impl Person {
+    pub fn look(&self) -> Option<(usize, u32)> {
+        self.look
+    }
+}
+
+/// Indice du modèle Mini Characters (0–11) sur lequel repose ce personnage, s'il peut changer de couleurs.
+fn base_model(kind: usize) -> Option<usize> {
+    let file = KINDS[kind].file;
+    KINDS[..12].iter().position(|k| k.file == file)
 }
 
 /// Pose le modèle `kind` sous `parent`.
@@ -69,6 +83,7 @@ pub fn spawn_model(
     kind: usize,
     pose: Pose,
     size: f32,
+    look: u32,
 ) {
     let k = &KINDS[kind % KINDS.len()];
     let file = format!("kenney/{}/{}.glb", k.pack, k.file);
@@ -87,7 +102,7 @@ pub fn spawn_model(
     commands.spawn((
         WorldAssetRoot(scene),
         Transform::from_scale(Vec3::splat(k.scale * size)),
-        Person { graph: graphs.add(graph), walk, wave, die, pose },
+        Person { graph: graphs.add(graph), walk, wave, die, pose, look: base_model(kind % KINDS.len()).map(|m| (m, look)) },
         ChildOf(parent),
     ));
 }

@@ -2,6 +2,7 @@
 mod audio;
 mod board;
 mod capture;
+mod dress;
 mod game;
 mod miniature;
 mod people;

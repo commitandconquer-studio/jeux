@@ -9,6 +9,7 @@ use game_common::{Rng, Score, flat_material, palette};
 use crate::GameState;
 use crate::audio::Sfx;
 use crate::board::{Board, Feature, Tile};
+use crate::dress::LOOKS;
 use crate::people::{self, Pose};
 use crate::progress::Progress;
 use crate::settings::Settings;
@@ -19,14 +20,14 @@ pub struct GamePlugin;
 impl Plugin for GamePlugin {
     fn build(&self, app: &mut App) {
         app.insert_resource(Conga::new(14, 0))
-            .insert_resource(Food { cell: IVec2::ZERO, kind: 1, spawned: true })
+            .insert_resource(Food { cell: IVec2::ZERO, kind: 1, look: 0, spawned: true })
             .insert_resource(Paused(false))
             .insert_resource(Boost(0))
             .insert_resource(Crash::default())
             .insert_resource(Banner::default())
             .init_resource::<Board>()
             .insert_resource(StepTimer(Timer::from_seconds(0.16, TimerMode::Repeating)))
-            .add_systems(Startup, (setup, load_best))
+            .add_systems(Startup, (setup, load_best, crate::dress::setup))
             .add_systems(OnEnter(GameState::Playing), new_game)
             .add_systems(OnEnter(GameState::Menu), clear_board)
             .add_systems(OnEnter(GameState::GameOver), (people::all_die, save_best))
@@ -38,7 +39,7 @@ impl Plugin for GamePlugin {
                     (sync_guest, sync_segments).run_if(|s: Res<State<GameState>>| {
                         matches!(s.get(), GameState::Playing | GameState::GameOver)
                     }),
-                    (animate_guest, animate_pop, people::start_animations),
+                    (animate_guest, animate_pop, people::start_animations, crate::dress::dress),
                 )
                     .chain(),
             );
@@ -121,6 +122,8 @@ struct Conga {
     prev: Vec<IVec2>,
     /// Modèle de chaque membre (indice dans `people::KINDS`).
     kinds: Vec<usize>,
+    /// Numéro d'apparence de chaque membre (couleurs de peau, cheveux, vêtements).
+    looks: Vec<u32>,
     dir: IVec2,
     queued: VecDeque<IVec2>,
 }
@@ -131,7 +134,8 @@ impl Conga {
         let c = grid / 2;
         let cells = vec![IVec2::new(c, c), IVec2::new(c - 1, c), IVec2::new(c - 2, c)];
         let kinds = vec![leader, pal(leader), pal(pal(leader) + 2)];
-        Self { prev: cells.clone(), cells, kinds, dir: IVec2::X, queued: VecDeque::new() }
+        let looks = vec![leader as u32 * 7 + 3, 11, 58];
+        Self { prev: cells.clone(), cells, kinds, looks, dir: IVec2::X, queued: VecDeque::new() }
     }
 
     /// Mémorise un virage ; renvoie `true` s'il est accepté.
@@ -150,6 +154,7 @@ impl Conga {
 struct Food {
     cell: IVec2,
     kind: usize,
+    look: u32,
     /// `false` : son modèle reste à poser.
     spawned: bool,
 }
@@ -225,6 +230,7 @@ fn new_game(
     *conga = Conga::new(settings.grid(), settings.leader);
     food.cell = free_cell(&conga.cells, &board, settings.grid(), &mut rng);
     food.kind = guest_kind(&mut rng, &progress);
+    food.look = rng.below(LOOKS);
     food.spawned = false;
     // Captures d'écran : tous les éléments sont déjà posés.
     if std::env::var("SNAKE_CAPTURE").is_ok() {
@@ -234,6 +240,24 @@ fn new_game(
         }
     }
     timer.0 = Timer::from_seconds(settings.speed.step_times().0, TimerMode::Repeating);
+    // Essai : une très longue file (SNAKE_LONG=n) pour vérifier la variété des apparences.
+    if let Some(n) = std::env::var("SNAKE_LONG").ok().and_then(|v| v.parse::<usize>().ok()) {
+        let grid = settings.grid();
+        let mut path = Vec::new();
+        for y in 0..grid {
+            let xs: Vec<i32> = if y % 2 == 0 { (0..grid).collect() } else { (0..grid).rev().collect() };
+            path.extend(xs.into_iter().map(|x| IVec2::new(x, y)));
+        }
+        path.truncate(n.min(path.len()));
+        path.reverse();
+        let pool = progress.persons();
+        conga.cells = path.clone();
+        conga.prev = path;
+        conga.kinds = (0..conga.cells.len()).map(|_| pool[rng.below(pool.len() as u32) as usize]).collect();
+        conga.looks = (0..conga.cells.len() as u32).map(|i| i * 5 % LOOKS).collect();
+        conga.dir = if conga.cells.len() > 1 { conga.cells[0] - conga.cells[1] } else { IVec2::X };
+        timer.0 = Timer::from_seconds(5.0, TimerMode::Repeating);
+    }
     score.reset();
 }
 
@@ -363,8 +387,11 @@ fn step(
         conga.prev.push(tail);
         let kind = food.kind;
         conga.kinds.push(kind);
+        let look = food.look;
+        conga.looks.push(look);
         food.cell = free_cell(&conga.cells, &board, grid, &mut rng);
         food.kind = guest_kind(&mut rng, &progress);
+        food.look = rng.below(LOOKS);
         food.spawned = false;
         if score.current % LEVEL_EVERY == 0 {
             level_up(&mut board, &progress, &conga, food.cell, &settings, &mut banner, &mut sfx, &mut rng, score.current / LEVEL_EVERY);
@@ -456,7 +483,7 @@ fn sync_guest(
         Ring,
         ChildOf(root),
     ));
-    people::spawn_model(&mut commands, &server, &mut graphs, root, food.kind, Pose::Wave, 1.0);
+    people::spawn_model(&mut commands, &server, &mut graphs, root, food.kind, Pose::Wave, 1.0, food.look);
 }
 
 fn animate_guest(time: Res<Time>, mut rings: Query<&mut Transform, With<Ring>>) {
@@ -542,6 +569,6 @@ fn sync_segments(
             root.insert((Pop(0.0), Transform::from_translation(cell_to_world(pos(i), 0.05, grid)).with_scale(Vec3::splat(0.01))));
         }
         let id = root.id();
-        people::spawn_model(&mut commands, &server, &mut graphs, id, conga.kinds[i], Pose::Walk, size);
+        people::spawn_model(&mut commands, &server, &mut graphs, id, conga.kinds[i], Pose::Walk, size, conga.looks[i]);
     }
 }
