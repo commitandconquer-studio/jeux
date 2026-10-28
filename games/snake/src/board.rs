@@ -170,6 +170,11 @@ impl Board {
                 }
                 Feature::Rival | Feature::Train => {
                     let horizontal = rng.below(2) == 0;
+                    // Il passe au milieu du plateau, pas le long d'un bord où il ne gênerait personne.
+                    let (pos, size) = if horizontal { (c.y, layout.h) } else { (c.x, layout.w) };
+                    if pos < size / 4 || pos > size - size / 4 {
+                        continue;
+                    }
                     let line: Vec<IVec2> = if horizontal { (0..layout.w).map(|x| IVec2::new(x, c.y)).collect() } else { (0..layout.h).map(|y| IVec2::new(c.x, y)).collect() };
                     let line: Vec<IVec2> = line.into_iter().filter(|p| layout.walkable(*p)).collect();
                     // Le chemin doit traverser tout le plateau d'un seul tenant, loin de la tête.

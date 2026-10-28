@@ -99,9 +99,9 @@ impl Universe {
             },
             Universe::Ville => Theme {
                 sky: c(0.70, 0.76, 0.86),
-                tiles: (c(0.52, 0.54, 0.58), c(0.47, 0.49, 0.53)),
-                rim: c(0.30, 0.31, 0.35),
-                ground: c(0.62, 0.64, 0.66),
+                tiles: (c(0.40, 0.41, 0.45), c(0.37, 0.38, 0.42)),
+                rim: c(0.26, 0.27, 0.30),
+                ground: c(0.34, 0.35, 0.38),
                 sun: (Color::WHITE, 6_500.0),
                 ambient: (c(0.52, 0.52, 0.62), 1000.0),
             },
@@ -191,27 +191,59 @@ pub fn rebuild_world(
         b.flat(e);
     }
 
-    // Grande ville : des immeubles occupent les pâtés de maisons entre les rues.
+    // Ville : des pâtés de maisons (immeubles bas ou petits parcs côté caméra) entre les rues, qui se prolongent au-delà du plateau.
     if l.blocks > 0 {
         let mut rng = Rng::new(universe as u64 * 7919 + shape as u64 * 31);
         let pitch = crate::layout::CITY_BLOCK + crate::layout::CITY_STREET;
-        let lawn = b.mat(theme.rim);
-        let low = ["city-kit-commercial/building-a", "city-kit-commercial/building-d", "city-kit-commercial/building-g", "city-kit-commercial/building-k", "city-kit-commercial/building-c", "city-kit-commercial/building-h"];
-        let towers = ["city-kit-commercial/building-skyscraper-b", "city-kit-commercial/building-skyscraper-d", "city-kit-commercial/building-skyscraper-a"];
-        for by in 0..l.blocks {
-            for bx in 0..l.blocks {
-                let (x0, y0) = (bx * pitch + crate::layout::CITY_STREET, by * pitch + crate::layout::CITY_STREET);
-                let centre = cell_to_world(Vec2::new(x0 as f32 + 1.5, y0 as f32 + 1.5), -0.05, l);
-                let e = b.block_with(lawn.clone(), centre, Vec3::new(3.9, 0.1, 3.9), 0.0);
+        let street = crate::layout::CITY_STREET;
+        let pavement = b.mat(Color::srgb(0.80, 0.78, 0.74));
+        let lawn = b.mat(Color::srgb(0.50, 0.72, 0.38));
+        let line = b.mat(Color::srgb(0.95, 0.93, 0.85));
+        let low = ["city-kit-commercial/building-a", "city-kit-commercial/building-d", "city-kit-commercial/building-g", "city-kit-commercial/building-k", "city-kit-commercial/building-c", "city-kit-commercial/building-h", "city-kit-commercial/building-b"];
+        let towers = ["city-kit-commercial/building-skyscraper-b", "city-kit-commercial/building-skyscraper-d", "city-kit-commercial/building-skyscraper-a", "city-kit-commercial/building-skyscraper-c"];
+        let parks = ["city-kit-suburban/tree-small", "city-kit-suburban/tree-large", "city-kit-suburban/planter", "coaster-kit/bench", "coaster-kit/flowers"];
+        // Traits de rue : un pointillé au milieu de chaque rue du plateau.
+        for k in 0..=l.blocks {
+            let c = (k * pitch) as f32 + 0.5;
+            for t in (0..l.w).filter(|t| t % 2 == 0) {
+                for (x, y, yaw) in [(t as f32, c, 0.0), (c, t as f32, FRAC_PI_2)] {
+                    if l.walkable(IVec2::new(x as i32, y as i32)) {
+                        let e = b.block_rot(Color::srgb(0.95, 0.93, 0.85), cell_to_world(Vec2::new(x, y), 0.05, l), Vec3::new(0.5, 0.01, 0.07), yaw);
+                        b.flat(e);
+                    }
+                }
+            }
+        }
+        let _ = line;
+        let ring = 2;
+        for by in -ring..l.blocks + ring {
+            for bx in -ring..l.blocks + ring {
+                let (x0, y0) = (bx * pitch + street, by * pitch + street);
+                let inside = (0..l.blocks).contains(&bx) && (0..l.blocks).contains(&by);
+                let centre = cell_to_world(Vec2::new(x0 as f32 + 1.5, y0 as f32 + 1.5), 0.0, l);
+                // Du côté de la caméra, rien de haut : on garde la vue sur la rue.
+                let front = centre.x * 0.4 + centre.z > 0.0;
+                let park = front && (inside || rng.below(2) == 0);
+                let (mat, base) = (if park { lawn.clone() } else { pavement.clone() }, if inside { -0.05 } else { GROUND_Y });
+                let h = if inside { 0.1 } else { 0.25 };
+                let e = b.block_with(mat, Vec3::new(centre.x, base, centre.z), Vec3::new(3.9, h, 3.9), 0.0);
                 b.flat(e);
                 for (dx, dy) in [(0.0, 0.0), (2.0, 0.0), (0.0, 2.0), (2.0, 2.0)] {
                     let at = cell_to_world(Vec2::new(x0 as f32 + 0.5 + dx, y0 as f32 + 0.5 + dy), 0.05, l);
-                    // Du côté de la caméra les immeubles restent bas : ils cacheraient la rue.
-                    let front = at.x * 0.4 + at.z > 0.0;
-                    let tower = !front && rng.below(4) == 0;
-                    let file = if tower { towers[rng.below(towers.len() as u32) as usize] } else { low[rng.below(low.len() as u32) as usize] };
                     let yaw = rng.below(4) as f32 * FRAC_PI_2;
-                    b.model(file, at, if tower { 1.3 } else { 1.6 }, yaw);
+                    if park {
+                        if rng.below(3) > 0 {
+                            b.model(parks[rng.below(parks.len() as u32) as usize], at, 1.8, yaw);
+                        }
+                    } else if !front && rng.below(3) == 0 {
+                        b.model(towers[rng.below(towers.len() as u32) as usize], at, 1.2, yaw);
+                    } else {
+                        b.model(low[rng.below(low.len() as u32) as usize], at, if front { 1.0 } else { 1.25 }, yaw);
+                    }
+                }
+                // Un lampadaire au coin du pâté.
+                if rng.below(2) == 0 {
+                    b.model("city-kit-roads/light-square", cell_to_world(Vec2::new(x0 as f32 - 0.5, y0 as f32 - 0.5), 0.05, l), 1.8, 0.0);
                 }
             }
         }
