@@ -22,6 +22,7 @@ impl Plugin for GamePlugin {
             .insert_resource(Food { cell: IVec2::ZERO, kind: 1, spawned: true })
             .insert_resource(Paused(false))
             .insert_resource(Boost(0))
+            .insert_resource(Crash::default())
             .insert_resource(Banner::default())
             .init_resource::<Board>()
             .insert_resource(StepTimer(Timer::from_seconds(0.16, TimerMode::Repeating)))
@@ -33,7 +34,7 @@ impl Plugin for GamePlugin {
                 Update,
                 (
                     (crate::board::sync_tiles, crate::board::animate_tiles),
-                    (read_input, step).chain().run_if(in_state(GameState::Playing)),
+                    (read_input, step, finish_crash).chain().run_if(in_state(GameState::Playing)),
                     (sync_guest, sync_segments).run_if(|s: Res<State<GameState>>| {
                         matches!(s.get(), GameState::Playing | GameState::GameOver)
                     }),
@@ -47,6 +48,16 @@ impl Plugin for GamePlugin {
 /// `true` quand la partie est en pause.
 #[derive(Resource)]
 pub struct Paused(pub bool);
+
+/// Choc en cours : la tête avance jusqu'au mur (ou à l'obstacle) avant que la partie ne s'arrête.
+#[derive(Resource, Default)]
+struct Crash {
+    left: f32,
+    dir: IVec2,
+    active: bool,
+}
+
+const CRASH_TIME: f32 = 0.14;
 
 /// Pas restants d'élan donné par un accélérateur.
 #[derive(Resource)]
@@ -197,6 +208,7 @@ fn new_game(
     mut paused: ResMut<Paused>,
     mut board: ResMut<Board>,
     mut boost: ResMut<Boost>,
+    mut crash: ResMut<Crash>,
     progress: Res<Progress>,
     mut rng: ResMut<Rng>,
     stuff: Query<Entity, Or<(With<Segment>, With<Guest>)>>,
@@ -209,6 +221,7 @@ fn new_game(
     paused.0 = false;
     board.clear();
     boost.0 = 0;
+    *crash = Crash::default();
     *conga = Conga::new(settings.grid(), settings.leader);
     food.cell = free_cell(&conga.cells, &board, settings.grid(), &mut rng);
     food.kind = guest_kind(&mut rng, &progress);
@@ -298,11 +311,11 @@ fn step(
     mut boost: ResMut<Boost>,
     mut banner: ResMut<Banner>,
     progress: Res<Progress>,
-    mut next: ResMut<NextState<GameState>>,
+    mut crash: ResMut<Crash>,
     mut sfx: MessageWriter<Sfx>,
 ) {
     banner.left = (banner.left - time.delta_secs()).max(0.0);
-    if paused.0 {
+    if paused.0 || crash.active {
         return;
     }
     // L'élan d'un accélérateur fait avancer le temps deux fois plus vite.
@@ -336,7 +349,7 @@ fn step(
     // La queue va bouger : on peut avancer sur sa case actuelle.
     let body = &conga.cells[..conga.cells.len() - 1];
     if (outside && !settings.wrap) || deadly || body.contains(&head) {
-        next.set(GameState::GameOver);
+        *crash = Crash { left: CRASH_TIME, dir: conga.dir, active: true };
         sfx.write(Sfx::GameOver);
         return;
     }
@@ -384,6 +397,18 @@ fn level_up(board: &mut Board, progress: &Progress, conga: &Conga, food: IVec2, 
             sfx.write(Sfx::Spawn);
             return;
         }
+    }
+}
+
+/// Laisse la tête finir sa glissade contre l'obstacle, puis termine la partie.
+fn finish_crash(time: Res<Time>, mut crash: ResMut<Crash>, mut next: ResMut<NextState<GameState>>) {
+    if !crash.active {
+        return;
+    }
+    crash.left -= time.delta_secs();
+    if crash.left <= 0.0 {
+        crash.active = false;
+        next.set(GameState::GameOver);
     }
 }
 
@@ -466,17 +491,21 @@ fn sync_segments(
     timer: Res<StepTimer>,
     settings: Res<Settings>,
     state: Res<State<GameState>>,
+    crash: Res<Crash>,
     server: Res<AssetServer>,
     mut graphs: ResMut<Assets<AnimationGraph>>,
     mut segments: Query<(Entity, &mut Segment, &mut Transform)>,
 ) {
     let grid = settings.grid();
-    let t = if *state.get() == GameState::Playing { timer.0.fraction() } else { 1.0 };
+    let t = if *state.get() == GameState::Playing && !crash.active { timer.0.fraction() } else { 1.0 };
+    // Choc : la tête avance d'une demi-case, jusqu'au mur.
+    let nudge = if crash.active { crash.dir.as_vec2() * 0.5 * (1.0 - crash.left / CRASH_TIME).clamp(0.0, 1.0) } else { Vec2::ZERO };
     let pos = |i: usize| {
         let from = conga.prev.get(i).copied().unwrap_or(conga.cells[i]).as_vec2();
         let to = conga.cells[i].as_vec2();
         // Saut d'un bord à l'autre : pas de glissement à travers le plateau.
-        if from.distance_squared(to) > 1.5 { to } else { from.lerp(to, t) }
+        let p = if from.distance_squared(to) > 1.5 { to } else { from.lerp(to, t) };
+        if i == 0 { p + nudge } else { p }
     };
     // Direction de marche d'un membre : de la case précédente vers la case actuelle.
     let heading = |i: usize| {
