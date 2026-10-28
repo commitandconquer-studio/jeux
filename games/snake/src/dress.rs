@@ -213,7 +213,7 @@ pub fn dress(
                 let img = Image::new(
                     Extent3d { width: 128, height: 128, depth_or_array_layers: 1 },
                     TextureDimension::D2,
-                    paint(&small, &Look::from_id(id as u64)),
+                    paint(&small, &Look::from_code(id as u64)),
                     TextureFormat::Rgba8UnormSrgb,
                     RenderAssetUsages::RENDER_WORLD,
                 );

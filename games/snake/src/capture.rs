@@ -49,7 +49,9 @@ fn shots(press: bool) -> Vec<Shot> {
         let rich = |name: &'static str, level: usize, long: usize, features: bool| Shot { name, state: Playing, universe: Prairie, long: Some(long), features, shape: Shape::Medium, mode: Mode::Voyage(level) };
         vec![
             shot("01-menu", Menu, Prairie, None, false),
-            at("02-voyage", GameState::Voyage, Mode::Infinite, None),
+            at("02-mode-scenario", GameState::Scenarios, Mode::Infinite, None),
+            at("16-scene-bienvenue", GameState::Scene, Mode::Scenario { scenario: 0, step: 0 }, None),
+            at("17-scene-visite", GameState::Scene, Mode::Scenario { scenario: 0, step: 1 }, None),
             rich("03-jardin-public", 5, 30, true),
             rich("04-desert", 19, 30, false),
             rich("05-ruines-antiques", 29, 30, false),
@@ -132,7 +134,7 @@ fn run_capture(
     let (name, state, universe, long, features, shape, mode) = (s.name, s.state, s.universe, s.long, s.features, s.shape, s.mode);
     // Laisse le temps au décor, à la caméra et au serpent de se mettre en place
     // (plus longtemps au démarrage, le temps de compiler les shaders).
-    let shoot = if cap.index == 0 { 4.0 } else { 1.5 };
+    let shoot = if cap.index == 0 || state == GameState::Scene { 4.0 } else { 1.5 };
     let elapsed = now - cap.since;
     if !cap.started {
         cap.started = true;

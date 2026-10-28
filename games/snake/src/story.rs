@@ -62,6 +62,10 @@ impl StoryProgress {
 }
 
 fn load_progress(mut p: ResMut<StoryProgress>) {
+    // Images de presse : on ne montre pas la progression personnelle.
+    if std::env::var("SNAKE_PRESSE").is_ok() {
+        return;
+    }
     if let Some(text) = game_common::save::load("snake", "scenarios") {
         p.next = text.lines().filter_map(|l| l.split_once('\t')).filter_map(|(t, s)| Some((t.to_owned(), s.parse().ok()?))).collect();
     }

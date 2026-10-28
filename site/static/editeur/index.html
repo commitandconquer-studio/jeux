@@ -30,6 +30,10 @@
   #scenepanel h3 { margin:14px 0 6px; font-size:13px; color:var(--dim); text-transform:uppercase; letter-spacing:.05em; }
   #scenepanel .carte { background:#2d3550; border:1px solid var(--line); border-radius:8px; padding:8px; margin-bottom:8px; display:grid; gap:6px; }
   #scenepanel .ligne { display:flex; gap:6px; align-items:center; flex-wrap:wrap; }
+  .puces-bloc { display:grid; gap:3px; }
+  .puces-lab { width:78px; color:var(--dim); font-size:12px; }
+  .puce { width:20px; height:20px; border-radius:5px; border:2px solid #0006; cursor:pointer; display:inline-block; }
+  .puce.sel { outline:2px solid var(--accent); outline-offset:1px; }
   #scenepanel textarea { width:100%; min-height:54px; background:#323a52; color:var(--text); border:1px solid var(--line); border-radius:6px; padding:6px; font:inherit; }
   #scenepanel input[type=text] { width:auto; flex:1; min-width:90px; }
   #scenepanel input[type=number] { width:70px; }
@@ -147,6 +151,21 @@ const POSES = [['repos','Au repos'],['salut','Salue / dit oui'],['non','Dit non'
   ['frappe-droite','Frappe (droite)'],['frappe-gauche','Frappe (gauche)'],['coup-pied-droite','Coup de pied (droit)'],['coup-pied-gauche','Coup de pied (gauche)'],['interagit-droite','Manipule (droite)'],['interagit-gauche','Manipule (gauche)'],
   ['fauteuil-assis','Fauteuil : assis'],['fauteuil-regarde-gauche','Fauteuil : regarde à gauche'],['fauteuil-regarde-droite','Fauteuil : regarde à droite'],['fauteuil-avance','Fauteuil : avance'],['fauteuil-recule','Fauteuil : recule'],['fauteuil-gauche','Fauteuil : tourne à gauche'],['fauteuil-droite','Fauteuil : tourne à droite'],['fixe','Immobile (pose neutre)']];
 const POSITIONS = ['gauche2','gauche','centre','droite','droite2'].flatMap(p => [p, p + '-fond']);
+// Couleurs des personnages : mêmes listes que le jeu (crates/game-common/src/look.rs).
+const SKINS = [[255, 224, 196],[241, 194, 153],[224, 172, 120],[198, 134, 87],[160, 100, 62],[124, 76, 48],[92, 56, 36],[66, 40, 28]], HAIRS = [[35, 30, 30],[70, 45, 30],[110, 70, 40],[140, 90, 50],[225, 190, 110],[240, 220, 150],[190, 85, 40],[160, 160, 165],[235, 235, 235],[70, 110, 200],[230, 110, 170],[90, 190, 120]], TOPS = [[214, 69, 65],[243, 156, 18],[247, 202, 24],[76, 175, 80],[38, 166, 154],[52, 152, 219],[44, 62, 120],[142, 68, 173],[236, 135, 190],[245, 245, 245],[149, 165, 166],[45, 45, 52],[139, 94, 60],[160, 224, 200],[190, 170, 230],[212, 160, 40]], BOTTOMS = [[40, 52, 96],[38, 38, 44],[120, 124, 130],[110, 76, 50],[196, 176, 130],[76, 120, 180],[48, 90, 64],[120, 40, 50]], SHOES = [[240, 240, 240],[35, 35, 40],[100, 66, 42],[200, 60, 55]];
+const M64 = (1n << 64n) - 1n;
+function mix(x) { x = (x + 0x9E3779B97F4A7C15n) & M64; x = ((x ^ (x >> 30n)) * 0xBF58476D1CE4E5B9n) & M64; x = ((x ^ (x >> 27n)) * 0x94D049BB133111EBn) & M64; return x ^ (x >> 31n); }
+function pick(id, salt, n) { return Number(mix(id ^ ((BigInt(salt) * 0xA24BAED4963EE407n) & M64)) % BigInt(n)); }
+// Les cinq indices de couleur (peau, cheveux, haut, bas, chaussures) d'une apparence : « 3.5.2.1.0 » (choisie) ou un numéro prédéfini (même calcul que le jeu).
+function lookParts(code) {
+  if (String(code).includes('.')) return String(code).split('.').map(Number);
+  const id = BigInt(code);
+  const hair = pick(id, 2, 6) === 0 ? 9 + pick(id, 3, 3) : pick(id, 4, 9);
+  const top = pick(id, 5, 16); let bottom = pick(id, 6, 8);
+  if (BOTTOMS[bottom].join() === TOPS[top].join()) bottom = (bottom + 1) % 8;
+  return [pick(id, 1, 8), hair, top, bottom, pick(id, 7, 4)];
+}
+const randomLook = () => [SKINS, HAIRS, TOPS, BOTTOMS, SHOES].map(a => Math.floor(Math.random() * a.length)).join('.');
 let meta = { titre:'', description:'' };
 const isScene = l => l && l.type === 'scene';
 
@@ -184,7 +203,7 @@ function parse(text) {
     const [k, ...rest] = line.split('='); const key = k.trim(), v = rest.join('=').trim();
     if (key === 'type') { l.type = v === 'scene' ? 'scene' : 'niveau'; if (l.type === 'scene') Object.assign(l, { decor:'jardin', camera:'moyen', actors:[], lines:[] }); }
     else if (key === 'decor') l.decor = v; else if (key === 'camera') l.camera = v;
-    else if (key === 'personnage') { const f = v.split('|').map(x => x.trim()); l.actors.push({ name:f[0] || '', kind:+f[1] || 0, look:+f[2] || 0, pos:f[3] || 'centre', pose:f[4] || 'repos', guide:f[5] === 'guide' }); }
+    else if (key === 'personnage') { const f = v.split('|').map(x => x.trim()); l.actors.push({ name:f[0] || '', kind:+f[1] || 0, look:(f[2] || '').includes('.') ? f[2] : (+f[2] || 0), pos:f[3] || 'centre', pose:f[4] || 'repos', guide:f[5] === 'guide' }); }
     else if (key === 'replique') { const f = v.split('|').map(x => x.trim()); l.lines.push({ who:f[0] || '', text:f[1] || '', camera:f[2] || '' }); }
     else if (key === 'lieu') l.lieu = v; else if (key === 'paysage') l.paysage = v; else if (key === 'touristes') l.touristes = +v; else if (key === 'pas') l.pas = +v;
     else if (key === 'temps') l.temps = +v; else if (key === 'sortie') l.sortie = v === 'oui'; else if (key === 'depart') l.depart = v;
@@ -469,8 +488,8 @@ function renderScene() {
     ${l.actors.map((a, i) => `<div class="carte"><div class="ligne">
         <input type="text" data-p="actors.${i}.name" value="${a.name.replace(/"/g, '&quot;')}" placeholder="Nom">
         <select data-p="actors.${i}.kind" data-t="num">${opts(kinds, a.kind)}</select>
-        <label>apparence <input type="number" min="0" max="95" data-p="actors.${i}.look" data-t="num" value="${a.look}"></label>
-        <button data-act="rand:${i}" title="Apparence au hasard">🎲</button></div>
+        <button data-act="rand:${i}" title="Apparence au hasard">🎲 au hasard</button></div>
+      <div class="puces-bloc">${[['Peau', SKINS], ['Cheveux', HAIRS], ['Haut', TOPS], ['Bas', BOTTOMS], ['Chaussures', SHOES]].map(([lab, pal], part) => `<div class="ligne"><span class="puces-lab">${lab}</span>${pal.map((c, k) => `<span class="puce ${lookParts(a.look)[part] === k ? 'sel' : ''}" style="background:rgb(${c})" data-actor="${i}" data-part="${part}" data-v="${k}" title="${lab} ${k + 1}"></span>`).join('')}</div>`).join('')}</div>
       <div class="ligne"><label>place <input type="text" list="positions" data-p="actors.${i}.pos" value="${a.pos}"></label>
         <select data-p="actors.${i}.pose">${opts(POSES, a.pose)}</select>
         <label><input type="checkbox" data-p="actors.${i}.guide" data-t="bool" ${a.guide ? 'checked' : ''}> guide (casquette et drapeau)</label>
@@ -495,12 +514,19 @@ $('scenepanel').addEventListener('change', e => {
   sync(false); renderScene();
 });
 $('scenepanel').addEventListener('click', e => {
+  const pc = e.target.closest('.puce');
+  if (pc) {
+    push();
+    const a = L().actors[+pc.dataset.actor], parts = lookParts(a.look);
+    parts[+pc.dataset.part] = +pc.dataset.v; a.look = parts.join('.');
+    sync(false); return;
+  }
   const b = e.target.closest('button[data-act]'); if (!b) return;
   const [act, arg] = b.dataset.act.split(':'), i = +arg, l = L();
   push();
-  if (act === 'addactor') l.actors.push({ name:'Nouveau', kind:0, look:Math.floor(Math.random() * 96), pos:'centre', pose:'repos', guide:false });
+  if (act === 'addactor') l.actors.push({ name:'Nouveau', kind:0, look:randomLook(), pos:'centre', pose:'repos', guide:false });
   else if (act === 'delactor') l.actors.splice(i, 1);
-  else if (act === 'rand') l.actors[i].look = Math.floor(Math.random() * 96);
+  else if (act === 'rand') l.actors[i].look = randomLook();
   else if (act === 'addline') l.lines.push({ who:(l.actors[0] || {}).name || '', text:'', camera:'' });
   else if (act === 'delline') l.lines.splice(i, 1);
   else if (act === 'upline' && i > 0) [l.lines[i - 1], l.lines[i]] = [l.lines[i], l.lines[i - 1]];

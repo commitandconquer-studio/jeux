@@ -89,7 +89,32 @@ fn pick(id: u64, salt: u64, n: usize) -> usize {
     (mix(id ^ salt.wrapping_mul(0xA24B_AED4_963E_E407)) % n as u64) as usize
 }
 
+/// À partir de ce numéro, un numéro d'apparence code des couleurs choisies une à une (voir `parts_code`).
+pub const PARTS_BASE: u64 = 1000;
+
+/// Le numéro d'une apparence dont on a choisi chaque couleur : indices de peau, cheveux, haut, bas et chaussures.
+pub fn parts_code(skin: usize, hair: usize, top: usize, bottom: usize, shoes: usize) -> u64 {
+    PARTS_BASE + ((((skin * HAIRS.len() + hair) * TOPS.len() + top) * BOTTOMS.len() + bottom) * SHOES.len() + shoes) as u64
+}
+
 impl Look {
+    /// L'apparence d'un numéro : un numéro tiré au hasard (`from_id`), ou des couleurs choisies une à une (`parts_code`).
+    pub fn from_code(code: u64) -> Self {
+        if code < PARTS_BASE {
+            return Self::from_id(code);
+        }
+        let mut n = (code - PARTS_BASE) as usize;
+        let shoes = n % SHOES.len();
+        n /= SHOES.len();
+        let bottom = n % BOTTOMS.len();
+        n /= BOTTOMS.len();
+        let top = n % TOPS.len();
+        n /= TOPS.len();
+        let hair = n % HAIRS.len();
+        n /= HAIRS.len();
+        Look { skin: SKINS[n % SKINS.len()], hair: HAIRS[hair], top: TOPS[top], bottom: BOTTOMS[bottom], shoes: SHOES[shoes] }
+    }
+
     /// L'apparence du personnage n° `id`.
     pub fn from_id(id: u64) -> Self {
         // Cheveux : surtout naturels (les 9 premiers), une fois sur six une teinte de fantaisie.
@@ -114,6 +139,24 @@ impl Look {
 mod tests {
     use super::*;
     use std::collections::HashSet;
+
+    #[test]
+    fn editor_computes_the_same_looks() {
+        // Indices (peau, cheveux, haut, bas, chaussures) calculés par l'éditeur du site (JavaScript) pour quelques numéros.
+        for (id, p) in [(0u64, [4, 10, 7, 7, 0]), (1, [7, 7, 10, 5, 3]), (5, [1, 6, 4, 7, 0]), (12, [2, 0, 7, 1, 2]), (42, [5, 1, 6, 7, 0]), (77, [3, 4, 11, 3, 3]), (95, [6, 2, 13, 2, 2])] {
+            let l = Look::from_id(id);
+            assert_eq!((l.skin, l.hair, l.top, l.bottom, l.shoes), (SKINS[p[0]], HAIRS[p[1]], TOPS[p[2]], BOTTOMS[p[3]], SHOES[p[4]]), "numéro {id}");
+        }
+    }
+
+    #[test]
+    fn chosen_parts_round_trip() {
+        let l = Look::from_code(parts_code(3, 11, 15, 7, 3));
+        assert_eq!((l.skin, l.hair, l.top, l.bottom, l.shoes), (SKINS[3], HAIRS[11], TOPS[15], BOTTOMS[7], SHOES[3]));
+        // Les petits numéros restent des apparences tirées au hasard.
+        assert_eq!(Look::from_code(42), Look::from_id(42));
+        assert_ne!(parts_code(0, 0, 0, 0, 0), parts_code(0, 0, 0, 0, 1));
+    }
 
     #[test]
     fn same_id_same_look() {

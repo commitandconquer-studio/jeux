@@ -319,7 +319,17 @@ pub fn parse_file(text: &str) -> Result<(Meta, Vec<Level>), String> {
                             return Err(err("personnage = Nom | modèle | apparence | position [| animation | guide]"));
                         }
                         let kind: usize = f[1].parse().map_err(|_| err("modèle : un numéro (0 à 18)"))?;
-                        let look: u32 = f[2].parse().map_err(|_| err("apparence : un numéro (0 à 95)"))?;
+                        // Apparence : un numéro (0 à 95), ou des couleurs choisies : peau.cheveux.haut.bas.chaussures (indices).
+                        let look: u32 = if f[2].contains('.') {
+                            let c: Vec<usize> = f[2].split('.').filter_map(|v| v.parse().ok()).collect();
+                            use game_common::look::{BOTTOMS, HAIRS, SHOES, SKINS, TOPS, parts_code};
+                            if c.len() != 5 || c[0] >= SKINS.len() || c[1] >= HAIRS.len() || c[2] >= TOPS.len() || c[3] >= BOTTOMS.len() || c[4] >= SHOES.len() {
+                                return Err(err("couleurs : peau.cheveux.haut.bas.chaussures (0-7, 0-11, 0-15, 0-7, 0-3)"));
+                            }
+                            parts_code(c[0], c[1], c[2], c[3], c[4]) as u32
+                        } else {
+                            f[2].parse().map_err(|_| err("apparence : un numéro (0 à 95) ou peau.cheveux.haut.bas.chaussures"))?
+                        };
                         let (x, z) = parse_position(f[3]).ok_or_else(|| err("position : gauche2, gauche, centre, droite, droite2 (+ « -fond »), ou x,z"))?;
                         let pose = crate::people::Pose::from_name(match f.get(4).copied() {
                             Some("") | None => "repos",
@@ -557,6 +567,10 @@ mod tests {
         assert!(levels[1].scene.is_none() && levels[1].grid.is_some());
         assert!(parse("[X]\nreplique = A | b").is_err(), "réplique sans type = scene");
         assert!(parse("[X]\ntype = scene\npersonnage = A | 1").is_err());
+        // Couleurs choisies une à une.
+        let l = &parse("[X]\ntype = scene\npersonnage = A | 1 | 3.5.2.1.0 | centre").unwrap()[0];
+        assert_eq!(l.scene.as_ref().unwrap().actors[0].look, 1000 + (((3 * 12 + 5) * 16 + 2) * 8 + 1) as u32 * 4);
+        assert!(parse("[X]\ntype = scene\npersonnage = A | 1 | 9.0.0.0.0 | centre").is_err());
     }
 
     #[test]
