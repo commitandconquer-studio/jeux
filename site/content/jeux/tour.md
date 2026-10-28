@@ -11,7 +11,7 @@ dossier = "tour"
 hero = "2-parfaits"
 vignette = "2-parfaits"
 chiffres = [
-  { n = "3", t = "« Parfait » d'affilée = bloc qui regrandit" },
+  { n = "3", t = "« Parfait » d'affilée" },
 ]
 captures = [
   { img = "1-menu", t = "Le menu" },

@@ -11,7 +11,7 @@ dossier = "tour"
 hero = "2-parfaits"
 vignette = "2-parfaits"
 chiffres = [
-  { n = "3", t = "“Perfect” in a row to grow the block back" },
+  { n = "3", t = "perfects in a row" },
 ]
 captures = [
   { img = "1-menu", t = "The menu" },
