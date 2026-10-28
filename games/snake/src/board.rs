@@ -41,6 +41,8 @@ pub enum Feature {
     Gate,
     /// Un guide rival qui traverse le plateau en emmenant les touristes qu'il touche.
     Rival,
+    /// Un train mortel qui traverse le plateau.
+    Train,
 }
 
 /// Un guide rival et ses deux touristes : il traverse tout le plateau le long d'une ligne de cases, puis revient après une pause.
@@ -48,15 +50,20 @@ pub struct Rival {
     /// Les cases du chemin, dans le sens de la marche (la première est l'entrée).
     pub cells: Vec<IVec2>,
     pub offset: u32,
+    /// Un vrai train (mortel, 5 wagons) au lieu d'un guide et ses deux touristes.
+    pub train: bool,
 }
 
 impl Rival {
-    pub const CARS: i32 = 3;
+    pub fn cars(&self) -> i32 {
+        if self.train { 5 } else { 3 }
+    }
+
     /// Pas pendant lesquels l'entrée clignote avant son arrivée.
     pub const WARN: u32 = 10;
 
     pub fn period(&self) -> u32 {
-        self.cells.len() as u32 + Self::CARS as u32 + 14
+        self.cells.len() as u32 + self.cars() as u32 + 14
     }
 
     /// Indice (sur le chemin) du guide rival au pas `clock`.
@@ -71,7 +78,7 @@ impl Rival {
 
     pub fn hits(&self, c: IVec2, clock: u32) -> bool {
         let f = self.front(clock);
-        self.cells.iter().position(|p| *p == c).is_some_and(|i| (f - Self::CARS + 1..=f).contains(&(i as i32)))
+        self.cells.iter().position(|p| *p == c).is_some_and(|i| (f - self.cars() + 1..=f).contains(&(i as i32)))
     }
 }
 
@@ -96,8 +103,13 @@ impl Board {
     }
 
     /// Un rival occupe-t-il cette case au pas `clock` ?
+    /// Un train (mortel) occupe-t-il cette case ?
+    pub fn train_hits(&self, c: IVec2, clock: u32) -> bool {
+        self.rivals.iter().any(|t| t.train && t.hits(c, clock))
+    }
+
     pub fn rival_hits(&self, c: IVec2, clock: u32) -> bool {
-        self.rivals.iter().any(|t| t.hits(c, clock))
+        self.rivals.iter().any(|t| !t.train && t.hits(c, clock))
     }
 
     /// La barrière de cette case est-elle fermée au pas `clock` ?
@@ -116,8 +128,8 @@ impl Board {
 
     /// Nombre de cases de ce genre déjà posées.
     pub fn count(&self, f: Feature) -> usize {
-        if f == Feature::Rival {
-            return self.rivals.len();
+        if matches!(f, Feature::Rival | Feature::Train) {
+            return self.rivals.iter().filter(|r| r.train == (f == Feature::Train)).count();
         }
         self.tiles
             .values()
@@ -156,7 +168,7 @@ impl Board {
                     self.tiles.insert(c, Tile::Speeder);
                     return true;
                 }
-                Feature::Rival => {
+                Feature::Rival | Feature::Train => {
                     let horizontal = rng.below(2) == 0;
                     let line: Vec<IVec2> = if horizontal { (0..layout.w).map(|x| IVec2::new(x, c.y)).collect() } else { (0..layout.h).map(|y| IVec2::new(c.x, y)).collect() };
                     let line: Vec<IVec2> = line.into_iter().filter(|p| layout.walkable(*p)).collect();
@@ -171,7 +183,7 @@ impl Board {
                             self.tiles.insert(*p, Tile::Lane(horizontal));
                         }
                         let offset = rng.below(line.len() as u32 + 6);
-                        self.rivals.push(Rival { cells: line, offset });
+                        self.rivals.push(Rival { cells: line, offset, train: f == Feature::Train });
                         return true;
                     }
                 }
@@ -231,6 +243,7 @@ pub fn obstacle_models(u: Universe) -> &'static [(&'static str, f32)] {
         Universe::Ocean => &[("survival-kit/barrel", 2.5), ("nature-kit/rock_largeE", 1.8), ("nature-kit/log", 2.0)],
         Universe::Parc => &[("coaster-kit/bench", 2.2), ("coaster-kit/trash", 2.4), ("coaster-kit/flowers", 2.4), ("fantasy-town-kit/stall-bench", 2.0)],
         Universe::Ville => &[("city-kit-roads/construction-barrier", 2.0), ("city-kit-roads/construction-cone", 2.6), ("city-kit-suburban/planter", 2.2)],
+        Universe::Gare => &[("city-kit-industrial/shipping-container-a", 1.0), ("city-kit-industrial/detail-tank", 1.2), ("city-kit-roads/construction-barrier", 2.0)],
     }
 }
 
@@ -298,16 +311,24 @@ pub fn sync_tiles(
     // Les guides rivaux : un guide et deux touristes en marche, et un signal clignotant à l'entrée.
     for (n, t) in board.rivals.iter().enumerate() {
         let dir = if t.cells.len() > 1 { t.cells[1] - t.cells[0] } else { IVec2::X };
-        for (k, kind) in [3usize, 5, 8].into_iter().enumerate() {
-            let root = commands
-                .spawn((
-                    Transform::from_translation(Vec3::new(0.0, -50.0, 0.0)).with_rotation(Quat::from_rotation_y((dir.x as f32).atan2(dir.y as f32))),
+        let yaw = Quat::from_rotation_y((dir.x as f32).atan2(dir.y as f32));
+        if t.train {
+            let cars = ["train-kit/train-diesel-a", "train-kit/train-carriage-box", "train-kit/train-carriage-container-red", "train-kit/train-carriage-tank", "train-kit/train-carriage-box"];
+            for (k, file) in cars.iter().enumerate() {
+                let scene = server.load(GltfAssetLabel::Scene(0).from_asset(format!("kenney/{file}.glb")));
+                commands.spawn((
+                    WorldAssetRoot(scene),
+                    Transform::from_translation(Vec3::new(0.0, -50.0, 0.0)).with_rotation(yaw).with_scale(Vec3::new(0.75, 0.6, 0.4)),
                     Visibility::Hidden,
                     RivalCar { rival: n, car: k as i32, dir },
                     TileVisual,
-                ))
-                .id();
-            crate::people::spawn_model(&mut commands, &server, &mut graphs, root, kind, crate::people::Pose::Walk, 1.0, (n * 7 + k * 13 + 5) as u32, k == 0);
+                ));
+            }
+        } else {
+            for (k, kind) in [3usize, 5, 8].into_iter().enumerate() {
+                let root = commands.spawn((Transform::from_translation(Vec3::new(0.0, -50.0, 0.0)).with_rotation(yaw), Visibility::Hidden, RivalCar { rival: n, car: k as i32, dir }, TileVisual)).id();
+                crate::people::spawn_model(&mut commands, &server, &mut graphs, root, kind, crate::people::Pose::Walk, 1.0, (n * 7 + k * 13 + 5) as u32, k == 0);
+            }
         }
         let at_entry = cell_to_world(t.cells[0].as_vec2(), 0.12, grid);
         commands.spawn((Mesh3d(disc.clone()), MeshMaterial3d(rail_lamp.clone()), Transform::from_translation(at_entry).with_scale(Vec3::new(1.1, 1.0, 1.1)), Visibility::Hidden, RivalMarker(n), NotShadowCaster, TileVisual));
@@ -494,7 +515,7 @@ mod tests {
 
     #[test]
     fn rival_warns_before_entering_and_covers_three_cells() {
-        let r = Rival { cells: (0..10).map(|x| IVec2::new(x, 0)).collect(), offset: 0 };
+        let r = Rival { cells: (0..10).map(|x| IVec2::new(x, 0)).collect(), offset: 0, train: false };
         // Au pas 0 il entre : seule la première case est occupée.
         assert!(r.hits(IVec2::new(0, 0), 0) && !r.hits(IVec2::new(1, 0), 0));
         // Au pas 4 il occupe les cases 2 à 4.

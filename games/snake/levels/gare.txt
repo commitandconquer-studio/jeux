@@ -1,0 +1,80 @@
+# Gare — de vrais trains traversent le plateau (leur voie clignote quelques secondes avant) et écrasent la file.
+# Cases (nombre) : blocs, trous, teleporteurs (paires), accelerateurs, tapis, barrieres, rivaux, trains.
+
+[Le quai]
+lieu = gare
+forme = carre 18
+touristes = 8
+trains = 1
+pas = 0.33
+
+[Voie 2]
+lieu = gare
+forme = carre 18
+touristes = 10
+trains = 1
+pas = 0.32
+
+[Le tunnel]
+lieu = gare
+forme = carre 16
+touristes = 12
+trains = 2
+pas = 0.32
+
+[Les wagons de marchandises]
+lieu = gare
+forme = carre 16
+touristes = 14
+trains = 1
+blocs = 5
+pas = 0.31
+
+[Le grand hall]
+lieu = gare
+forme = rectangle 22x10
+touristes = 16
+trains = 2
+pas = 0.3
+
+[La sortie de la gare]
+lieu = gare
+forme = carre 16
+touristes = 14
+trains = 2
+sortie = oui
+pas = 0.3
+
+[L'express]
+lieu = gare
+forme = carre 18
+touristes = 18
+trains = 2
+accelerateurs = 2
+pas = 0.3
+
+[La gare de triage]
+lieu = gare
+forme = allees
+touristes = 20
+trains = 2
+blocs = 4
+pas = 0.29
+
+[L'heure de pointe]
+lieu = gare
+forme = carre 18
+touristes = 24
+trains = 3
+blocs = 5
+pas = 0.28
+
+[Le terminus]
+lieu = gare
+forme = carre 18
+touristes = 28
+trains = 3
+teleporteurs = 1
+accelerateurs = 3
+sortie = oui
+pas = 0.26

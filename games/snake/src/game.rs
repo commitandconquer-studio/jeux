@@ -143,6 +143,7 @@ fn cap(f: Feature) -> usize {
         Feature::Portal => 1,
         Feature::Gate => 6,
         Feature::Rival => 2,
+        Feature::Train => 2,
     }
 }
 
@@ -154,6 +155,7 @@ pub fn feature_name(f: Feature) -> &'static str {
         Feature::Teleport => tx!("Téléporteurs !", "Teleporters!", "Teleporter!", "Teletrasporti!", "¡Teletransportadores!"),
         Feature::Speeder => tx!("Accélérateurs !", "Speed pads!", "Turbo-Felder!", "Acceleratori!", "¡Aceleradores!"),
         Feature::Portal => tx!("Un portail !", "A portal!", "Ein Portal!", "Un portale!", "¡Un portal!"),
+        Feature::Train => tx!("Un train arrive !", "A train is coming!", "Ein Zug kommt!", "Arriva un treno!", "¡Llega un tren!"),
         Feature::Rival => tx!("Un guide rival !", "A rival guide!", "Ein Konkurrenzführer!", "Una guida rivale!", "¡Un guía rival!"),
         Feature::Gate => tx!("Barrières !", "Barriers!", "Schranken!", "Barriere!", "¡Barreras!"),
         Feature::Belt => tx!("Tapis roulants !", "Conveyor belts!", "Förderbänder!", "Nastri trasportatori!", "¡Cintas transportadoras!"),
@@ -505,6 +507,7 @@ fn step(
     let deadly = match board.tiles.get(&head) {
         Some(Tile::Obstacle(_) | Tile::Hole) => true,
         Some(Tile::Belt(d)) => *d == -conga.dir,
+        Some(Tile::Lane(_)) => board.train_hits(head, board.clock),
         Some(Tile::Gate(ph)) => Board::gate_closed(*ph, board.clock),
         _ => false,
     };
@@ -595,6 +598,12 @@ fn step(
     } else {
         conga.cells.pop();
         conga.vias.pop();
+    }
+    // Un train écrase la file s'il touche l'un de ses membres.
+    if conga.cells.iter().any(|c| board.train_hits(*c, board.clock)) {
+        *crash = Crash { left: CRASH_TIME, dir: conga.dir, active: true, hole: None, total: CRASH_TIME };
+        sfx.write(Sfx::GameOver);
+        return;
     }
     // Un guide rival emmène avec lui les touristes qu'il touche (ceux de la case touchée jusqu'au bout de la file).
     if let Some(i) = conga.cells.iter().position(|c| board.rival_hits(*c, board.clock)) {
