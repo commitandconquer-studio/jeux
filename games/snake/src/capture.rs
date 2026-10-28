@@ -33,7 +33,9 @@ fn shots(press: bool) -> Vec<Shot> {
     if std::env::var("SNAKE_VOYAGE").is_ok() {
         let at = |name: &'static str, state: GameState, mode: Mode| Shot { name, state, universe: Universe::Prairie, long: Some(12), features: false, shape: Shape::Medium, mode };
         return vec![
-            at("voyage-carte", GameState::Voyage, Mode::Infinite),
+            at("scene-1", GameState::Scene, Mode::Scenario { scenario: 0, step: 0 }),
+            at("scene-2", GameState::Scene, Mode::Scenario { scenario: 0, step: 1 }),
+            at("scenarios", GameState::Scenarios, Mode::Infinite),
         ];
     }
     if std::env::var("SNAKE_FORMES").is_ok() {

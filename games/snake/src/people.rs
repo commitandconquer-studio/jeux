@@ -44,10 +44,12 @@ pub const KINDS: [Kind; 19] = [
 ];
 
 /// Ce que fait un personnage en boucle.
-#[derive(Clone, Copy, PartialEq, Eq)]
+#[derive(Clone, Copy, PartialEq, Eq, Debug)]
 pub enum Pose {
     Walk,
     Wave,
+    /// Debout, au repos (scènes).
+    Idle,
 }
 
 /// Graphe d'animation d'un personnage (clips des GLB : 1 repos, 2 marche, 9 mort, 11 « oui »).
@@ -56,6 +58,7 @@ pub struct Person {
     graph: Handle<AnimationGraph>,
     walk: AnimationNodeIndex,
     wave: AnimationNodeIndex,
+    idle: AnimationNodeIndex,
     die: AnimationNodeIndex,
     pose: Pose,
     /// (modèle de base Mini Characters, numéro d'apparence) ; `None` : couleurs d'origine.
@@ -97,6 +100,7 @@ pub fn spawn_model(
     let (walk_clip, wave_clip) = if k.chair.is_some() { (28, 25) } else { (2, 11) };
     let walk = graph.add_clip(clip(walk_clip), 1.0, graph.root);
     let wave = graph.add_clip(clip(wave_clip), 1.0, graph.root);
+    let idle = graph.add_clip(clip(if k.chair.is_some() { 25 } else { 1 }), 1.0, graph.root);
     let die = graph.add_clip(clip(9), 1.0, graph.root);
     if let Some(chair) = k.chair {
         let scene = server.load(GltfAssetLabel::Scene(0).from_asset(format!("kenney/mini-characters/{chair}.glb")));
@@ -105,7 +109,7 @@ pub fn spawn_model(
     commands.spawn((
         WorldAssetRoot(scene),
         Transform::from_scale(Vec3::splat(k.scale * size)),
-        Person { graph: graphs.add(graph), walk, wave, die, pose, look: base_model(kind % KINDS.len()).map(|m| (m, look)), guide },
+        Person { graph: graphs.add(graph), walk, wave, idle, die, pose, look: base_model(kind % KINDS.len()).map(|m| (m, look)), guide },
         ChildOf(parent),
     ));
 }
@@ -132,6 +136,7 @@ pub fn start_animations(
         match p.pose {
             Pose::Walk => player.play(p.walk).repeat().set_speed(1.6),
             Pose::Wave => player.play(p.wave).repeat().set_speed(1.0),
+            Pose::Idle => player.play(p.idle).repeat().set_speed(1.0),
         };
     }
 }

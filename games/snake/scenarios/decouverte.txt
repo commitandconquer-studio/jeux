@@ -1,0 +1,52 @@
+# Aventure de démonstration : le tutoriel du jeu. Format : voir l'éditeur (site/static/editeur/index.html).
+titre = Découverte
+description = Votre première visite guidée
+
+[Bienvenue]
+type = scene
+decor = jardin
+camera = moyen
+personnage = Léa | 1 | 12 | centre | salut | guide
+replique = Léa | Bonjour, je m'appelle Léa. Je suis votre nouveau guide.
+replique = Léa | Aujourd'hui, je vais vous faire visiter la ville. Mais d'abord, il faut rassembler tout le monde !
+replique = Léa | Suivez-moi, et surtout, ne vous perdez pas. | gros
+
+[Les premiers touristes]
+type = scene
+decor = jardin
+camera = large
+personnage = Léa | 1 | 12 | gauche | repos | guide
+personnage = Max | 2 | 30 | droite | salut
+personnage = Zoé | 5 | 55 | centre-fond | repos
+replique = Max | Bonjour ! On est prêts, nous !
+replique = Léa | Parfait. Dans le parc, vous me suivez à la queue leu leu : attrapez les touristes isolés, et la file s'allonge. | moyen
+replique = Léa | Attention : ne touchez ni les murs ni votre propre file. Allez, on y va !
+
+[Le parc]
+lieu = jardin
+touristes = 4
+pas = 0.34
+depart = est
+carte:
+11111111111111
+11111111111111
+11111111111111
+11111111111111
+11111111111111
+11111111111111
+111S1111111111
+11111111111111
+11111111111111
+11111111111111
+11111111111111
+11111111111111
+
+[Bravo]
+type = scene
+decor = jardin
+camera = moyen
+personnage = Léa | 1 | 12 | gauche | salut | guide
+personnage = Max | 2 | 30 | droite | salut
+replique = Léa | Bravo, tout le monde est là ! Vous avez très bien suivi.
+replique = Max | C'était facile. Et maintenant, on va où ? | gros
+replique = Léa | Vous verrez bien. En route pour la suite de l'aventure !

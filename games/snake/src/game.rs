@@ -331,12 +331,14 @@ fn new_run(
     debug!("nouvelle partie : plateau {}×{}, tête {}, invité {}", layout.w, layout.h, conga.cells[0], food.cell);
     // Aperçu de l'éditeur : la partie attend la première flèche, pour voir tout le plateau avant de jouer.
     paused.0 = demo.press || crate::levels::preview_active();
-    if let Mode::Voyage(i) = *mode {
-        outcome.best_before = progress_v.stars(i);
+    if let Some(seed) = mode.seed() {
+        if let Mode::Voyage(i) = *mode {
+            outcome.best_before = progress_v.stars(i);
+        }
         if let Some(level) = mode.level() {
             timer.0 = Timer::from_seconds(level.pace / demo.auto.unwrap_or(1.0), TimerMode::Repeating);
             // Les cases du niveau : toujours à la même place pour un niveau donné.
-            let mut level_rng = Rng::new(0xC0FFEE + i as u64 * 7919);
+            let mut level_rng = Rng::new(0xC0FFEE + seed * 7919);
             // La position de l'invité ne compte pas ici : elle est tirée au sort, et le niveau doit toujours être le même.
             let busy = conga.cells.clone();
             // Carte dessinée : ses cases sont posées telles quelles.

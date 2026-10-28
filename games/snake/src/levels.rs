@@ -30,6 +30,68 @@ pub struct Level {
     pub dir: IVec2,
     /// Paysage choisi (`paysage = …`) ; sinon celui du lieu.
     pub universe: Option<Universe>,
+    /// Une scène (décor, personnages, dialogues) au lieu d'un niveau jouable : `type = scene`.
+    pub scene: Option<Scene>,
+}
+
+/// Cadrage de la caméra d'une scène (perspective, pas isométrique).
+#[derive(Clone, Copy, PartialEq, Eq, Debug, Default)]
+pub enum Cam {
+    /// Tout le décor.
+    Large,
+    #[default]
+    Medium,
+    /// Gros plan sur les personnages.
+    Close,
+    /// Vue de dessus, un peu en recul.
+    High,
+    /// Contre-plongée : on les voit d'en bas.
+    Low,
+}
+
+impl Cam {
+    pub fn parse(v: &str) -> Option<Cam> {
+        Some(match v {
+            "large" => Cam::Large,
+            "moyen" => Cam::Medium,
+            "gros" => Cam::Close,
+            "plongee" => Cam::High,
+            "bas" => Cam::Low,
+            _ => return None,
+        })
+    }
+}
+
+/// Un personnage posé sur la scène.
+#[derive(Clone, Debug)]
+pub struct Actor {
+    #[allow(dead_code)]
+    pub name: String,
+    /// Indice dans `people::KINDS`.
+    pub kind: usize,
+    /// Numéro d'apparence (couleurs de peau, cheveux, vêtements).
+    pub look: u32,
+    pub x: f32,
+    pub z: f32,
+    pub pose: crate::people::Pose,
+    pub guide: bool,
+}
+
+/// Une réplique, affichée en sous-titre.
+#[derive(Clone, Debug)]
+pub struct Line {
+    pub who: String,
+    pub text: String,
+    /// Nouveau cadrage à partir de cette réplique.
+    pub camera: Option<Cam>,
+}
+
+#[derive(Clone, Debug, Default)]
+pub struct Scene {
+    pub decor: Option<Universe>,
+    pub camera: Cam,
+    pub actors: Vec<Actor>,
+    pub lines: Vec<Line>,
 }
 
 impl Level {
@@ -174,6 +236,35 @@ fn parse_place(v: &str) -> Option<Place> {
 
 /// Lit un fichier de niveaux ; renvoie la liste, ou le message de la première erreur.
 pub fn parse(text: &str) -> Result<Vec<Level>, String> {
+    parse_file(text).map(|(_, levels)| levels)
+}
+
+/// Titre et description d'une aventure (lignes `titre = …` avant la première section).
+#[derive(Clone, Debug, Default)]
+pub struct Meta {
+    pub title: String,
+    pub description: String,
+}
+
+fn parse_position(v: &str) -> Option<(f32, f32)> {
+    let (name, back) = v.strip_suffix("-fond").map_or((v, false), |n| (n, true));
+    let x = match name {
+        "gauche2" => -3.4,
+        "gauche" => -1.7,
+        "centre" => 0.0,
+        "droite" => 1.7,
+        "droite2" => 3.4,
+        _ => {
+            let (x, z) = v.split_once(',')?;
+            return Some((x.trim().parse().ok()?, z.trim().parse().ok()?));
+        }
+    };
+    Some((x, if back { 1.6 } else { 0.0 }))
+}
+
+/// Lit un fichier de niveaux et de scènes ; renvoie aussi son titre.
+pub fn parse_file(text: &str) -> Result<(Meta, Vec<Level>), String> {
+    let mut meta = Meta::default();
     let mut levels: Vec<Level> = Vec::new();
     // Lignes de la carte en cours de lecture (après « carte: »), par niveau.
     let mut maps: Vec<Vec<String>> = Vec::new();
@@ -186,7 +277,7 @@ pub fn parse(text: &str) -> Result<Vec<Level>, String> {
         }
         let err = |m: &str| format!("ligne {} : {m}", n + 1);
         if let Some(name) = line.strip_prefix('[').and_then(|l| l.strip_suffix(']')) {
-            levels.push(Level { name: name.to_owned(), place: Place::Garden, shape: Form::Square(14), tourists: 6, exit: false, pace: 0.3, par: 0.0, cases: Vec::new(), grid: None, dir: IVec2::X, universe: None });
+            levels.push(Level { name: name.to_owned(), place: Place::Garden, shape: Form::Square(14), tourists: 6, exit: false, pace: 0.3, par: 0.0, cases: Vec::new(), grid: None, dir: IVec2::X, universe: None, scene: None });
             maps.push(Vec::new());
             in_map = false;
             continue;
@@ -204,8 +295,52 @@ pub fn parse(text: &str) -> Result<Vec<Level>, String> {
         }
         let Some((key, value)) = line.split_once('=') else { return Err(err("« clé = valeur » attendu")) };
         let (key, value) = (key.trim(), value.trim());
-        let Some(level) = levels.last_mut() else { return Err(err("clé avant le premier [niveau]")) };
+        let Some(level) = levels.last_mut() else {
+            match key {
+                "titre" => meta.title = value.to_owned(),
+                "description" => meta.description = value.to_owned(),
+                _ => return Err(err("clé avant le premier [niveau] (seuls « titre » et « description » sont permis)")),
+            }
+            continue;
+        };
         match key {
+            "type" if value == "scene" => level.scene = Some(Scene::default()),
+            "type" if value == "niveau" => level.scene = None,
+            "type" => return Err(err("type attendu : scene ou niveau")),
+            "decor" | "camera" | "personnage" | "replique" => {
+                let Some(scene) = level.scene.as_mut() else { return Err(err("cette clé demande « type = scene » plus haut dans la section")) };
+                match key {
+                    "decor" => scene.decor = Some(parse_place(value).ok_or_else(|| err("décor inconnu (jardin, desert, ruines…)"))?.scenery()),
+                    "camera" => scene.camera = Cam::parse(value).ok_or_else(|| err("caméra attendue : large, moyen, gros, plongee ou bas"))?,
+                    "personnage" => {
+                        // Nom | modèle | apparence | position | animation | rôle
+                        let f: Vec<&str> = value.split('|').map(str::trim).collect();
+                        if f.len() < 4 {
+                            return Err(err("personnage = Nom | modèle | apparence | position [| animation | guide]"));
+                        }
+                        let kind: usize = f[1].parse().map_err(|_| err("modèle : un numéro (0 à 18)"))?;
+                        let look: u32 = f[2].parse().map_err(|_| err("apparence : un numéro (0 à 95)"))?;
+                        let (x, z) = parse_position(f[3]).ok_or_else(|| err("position : gauche2, gauche, centre, droite, droite2 (+ « -fond »), ou x,z"))?;
+                        let pose = match f.get(4).copied().unwrap_or("repos") {
+                            "repos" | "" => crate::people::Pose::Idle,
+                            "salut" => crate::people::Pose::Wave,
+                            "marche" => crate::people::Pose::Walk,
+                            _ => return Err(err("animation : repos, salut ou marche")),
+                        };
+                        scene.actors.push(Actor { name: f[0].to_owned(), kind, look, x, z, pose, guide: f.get(5).copied() == Some("guide") });
+                    }
+                    _ => {
+                        // Qui | texte [| caméra]
+                        let mut it = value.splitn(3, '|').map(str::trim);
+                        let (who, text) = (it.next().unwrap_or(""), it.next().ok_or_else(|| err("replique = Qui | texte"))?);
+                        let camera = match it.next() {
+                            Some(c) => Some(Cam::parse(c).ok_or_else(|| err("caméra attendue : large, moyen, gros, plongee ou bas"))?),
+                            None => None,
+                        };
+                        scene.lines.push(Line { who: who.to_owned(), text: text.to_owned(), camera });
+                    }
+                }
+            }
             "lieu" => level.place = parse_place(value).ok_or_else(|| err("lieu inconnu"))?,
             "forme" => level.shape = parse_shape(value).ok_or_else(|| err("forme inconnue"))?,
             "touristes" => level.tourists = value.parse().map_err(|_| err("nombre attendu"))?,
@@ -244,7 +379,7 @@ pub fn parse(text: &str) -> Result<Vec<Level>, String> {
             l.par = l.tourists as f32 * l.pace * 14.0 + if l.exit { 15.0 } else { 0.0 };
         }
     }
-    Ok(levels)
+    Ok((meta, levels))
 }
 
 /// Niveau demandé par l'éditeur en ligne : `?editeur=N` dans l'adresse de la page (ou `SNAKE_EDITEUR=N` en natif). 1 = premier niveau du fichier.
@@ -260,22 +395,28 @@ pub fn preview_active() -> bool {
     editor_request().is_some() || std::env::var("SNAKE_FICHIER").is_ok()
 }
 
+/// Le texte du fichier d'aperçu : celui de l'éditeur en ligne, ou `SNAKE_FICHIER` en natif.
+pub fn preview_text() -> Option<String> {
+    if editor_request().is_some() {
+        return game_common::save::load("snake", "editeur");
+    }
+    let path = std::env::var("SNAKE_FICHIER").ok()?;
+    Some(std::fs::read_to_string(&path).unwrap_or_else(|e| panic!("{path} : {e}")))
+}
+
 /// Tous les niveaux, dans l'ordre du Voyage.
 pub static LEVELS: LazyLock<Vec<Level>> = LazyLock::new(|| {
-    // Aperçu depuis l'éditeur en ligne : les niveaux sont dans le stockage local de la page.
-    if editor_request().is_some() {
-        match game_common::save::load("snake", "editeur").map(|t| parse(&t)) {
-            Some(Ok(levels)) if !levels.is_empty() => return levels,
-            Some(Err(e)) => warn!("éditeur : niveaux illisibles : {e}"),
-            _ => warn!("éditeur : aucun niveau reçu"),
+    // Aperçu d'un fichier (éditeur en ligne ou SNAKE_FICHIER) : ses niveaux jouables remplacent ceux du Voyage.
+    if let Some(text) = preview_text() {
+        match parse(&text) {
+            Ok(levels) => {
+                let playable: Vec<Level> = levels.into_iter().filter(|l| l.scene.is_none()).collect();
+                if !playable.is_empty() {
+                    return playable;
+                }
+            }
+            Err(e) => warn!("aperçu : fichier illisible : {e}"),
         }
-    }
-    // Aperçu d'un fichier de niveaux : `SNAKE_FICHIER=chemin` remplace tous les niveaux.
-    if let Ok(path) = std::env::var("SNAKE_FICHIER") {
-        let text = std::fs::read_to_string(&path).unwrap_or_else(|e| panic!("{path} : {e}"));
-        let levels = parse(&text).unwrap_or_else(|e| panic!("{path} : {e}"));
-        assert!(!levels.is_empty(), "{path} : aucun niveau");
-        return levels;
     }
     let mut all = Vec::new();
     for text in [include_str!("../levels/jardin.txt"), include_str!("../levels/desert.txt"), include_str!("../levels/ruines.txt"), include_str!("../levels/cimetiere.txt"), include_str!("../levels/pirates.txt"), include_str!("../levels/parc.txt"), include_str!("../levels/ville.txt"), include_str!("../levels/gare.txt"), include_str!("../levels/port.txt"), include_str!("../levels/medieval.txt"), include_str!("../levels/grottes.txt")] {
@@ -397,6 +538,20 @@ mod tests {
         let l = &parse("[X]\nlieu = ruines\ncarte:\n0011111100\n11S1111111\n0011111100\n").unwrap()[0];
         assert_eq!(l.scenery(), Universe::Ruines);
         assert!(parse("[X]\npaysage = mars").is_err());
+    }
+
+    #[test]
+    fn reads_a_scene() {
+        let text = "titre = Essai\ndescription = Une aventure\n[Intro]\ntype = scene\ndecor = ville\ncamera = gros\npersonnage = Léa | 1 | 12 | gauche-fond | salut | guide\npersonnage = Max | 2 | 5 | 1.5,0.5\nreplique = Léa | Bonjour !\nreplique = Max | Salut | bas\n[Niveau]\nlieu = jardin\ncarte:\n0011111100\n11S1111111\n0011111100\n";
+        let (meta, levels) = parse_file(text).unwrap();
+        assert_eq!((meta.title.as_str(), levels.len()), ("Essai", 2));
+        let scene = levels[0].scene.as_ref().unwrap();
+        assert_eq!((scene.camera, scene.actors.len(), scene.lines.len()), (Cam::Close, 2, 2));
+        assert!(scene.actors[0].guide && scene.actors[0].z > 0.0 && scene.actors[1].x == 1.5);
+        assert_eq!(scene.lines[1].camera, Some(Cam::Low));
+        assert!(levels[1].scene.is_none() && levels[1].grid.is_some());
+        assert!(parse("[X]\nreplique = A | b").is_err(), "réplique sans type = scene");
+        assert!(parse("[X]\ntype = scene\npersonnage = A | 1").is_err());
     }
 
     #[test]

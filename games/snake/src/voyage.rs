@@ -20,12 +20,32 @@ pub enum Mode {
     Infinite,
     /// Indice dans `LEVELS`.
     Voyage(usize),
+    /// Une aventure : une suite de scènes et de niveaux (`story::SCENARIOS`).
+    Scenario { scenario: usize, step: usize },
 }
 
 impl Mode {
     pub fn level(self) -> Option<&'static Level> {
         match self {
             Mode::Voyage(i) => LEVELS.get(i),
+            Mode::Scenario { scenario, step } => crate::story::SCENARIOS.get(scenario)?.steps.get(step).filter(|l| l.scene.is_none()),
+            Mode::Infinite => None,
+        }
+    }
+
+    /// La scène de l'étape en cours, si c'en est une.
+    pub fn scene(self) -> Option<&'static crate::levels::Scene> {
+        match self {
+            Mode::Scenario { scenario, step } => crate::story::SCENARIOS.get(scenario)?.steps.get(step)?.scene.as_ref(),
+            _ => None,
+        }
+    }
+
+    /// Numéro qui fixe le tirage des cases d'un niveau (le même niveau a toujours les mêmes cases).
+    pub fn seed(self) -> Option<u64> {
+        match self {
+            Mode::Voyage(i) => Some(i as u64),
+            Mode::Scenario { scenario, step } => Some(100_000 + scenario as u64 * 1000 + step as u64),
             Mode::Infinite => None,
         }
     }
@@ -150,8 +170,9 @@ fn load(mut p: ResMut<VoyageProgress>, mut progress: ResMut<Progress>, mut mode:
     let preview = crate::levels::preview_active();
     if preview {
         // Aperçu d'un fichier (SNAKE_FICHIER) ou de l'éditeur en ligne (?editeur=N) : on ouvre directement le niveau demandé.
-        *mode = Mode::Voyage(crate::levels::editor_request().map_or(0, |n| n - 1).min(LEVELS.len() - 1));
-        next.set(GameState::Playing);
+        let last = crate::story::SCENARIOS[0].steps.len().saturating_sub(1);
+        *mode = Mode::Scenario { scenario: 0, step: crate::levels::editor_request().map_or(0, |n| n - 1).min(last) };
+        next.set(GameState::Step);
     }
     if let Some(n) = std::env::var("SNAKE_NIVEAU").ok().and_then(|v| v.parse::<usize>().ok()) {
         *mode = Mode::Voyage(n.saturating_sub(1));
@@ -174,13 +195,20 @@ pub fn sync_layout(
     if !(settings.is_changed() || mode.is_changed()) {
         return;
     }
-    match mode.level() {
-        Some(level) => {
-            let Mode::Voyage(i) = *mode else { return };
-            *layout = level.layout(i as u32);
+    if let Some(scene) = mode.scene() {
+        // Une scène : un petit plateau pour poser le décor.
+        let mut stage = Layout::rect(14, 8);
+        stage.id = 7000;
+        *layout = stage;
+        scenery.0 = scene.decor.unwrap_or(Universe::Prairie);
+        return;
+    }
+    match (mode.level(), mode.seed()) {
+        (Some(level), Some(seed)) => {
+            *layout = level.layout(seed as u32);
             scenery.0 = level.scenery();
         }
-        None => {
+        _ => {
             *layout = settings.layout();
             scenery.0 = settings.universe;
         }
@@ -188,7 +216,7 @@ pub fn sync_layout(
 }
 
 /// Fin de partie : en Voyage, enregistre les étoiles d'un niveau réussi.
-fn conclude(
+pub fn conclude(
     mode: Res<Mode>,
     outcome: Res<Outcome>,
     mut progress_v: ResMut<VoyageProgress>,

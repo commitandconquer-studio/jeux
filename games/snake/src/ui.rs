@@ -111,6 +111,8 @@ enum UiAction {
     Replay,
     /// Carte du Voyage.
     Voyage,
+    /// Liste des aventures.
+    Scenarios,
     Level(usize),
     Tab(Place),
     Locked,
@@ -143,7 +145,7 @@ struct Plank;
 
 /// Pose un panneau cliquable ; renvoie `(panneau, texte du titre)`.
 #[allow(clippy::too_many_arguments)]
-fn plank(commands: &mut Commands, server: &AssetServer, parent: Entity, board: &str, icon: &str, width: f32, label: impl Into<String>, subtitle: Option<&str>) -> (Entity, Entity) {
+pub(crate) fn plank(commands: &mut Commands, server: &AssetServer, parent: Entity, board: &str, icon: &str, width: f32, label: impl Into<String>, subtitle: Option<&str>) -> (Entity, Entity) {
     let cream = Color::srgb(1.0, 0.96, 0.84);
     let b = commands
         .spawn((
@@ -185,8 +187,8 @@ fn spawn_menu(mut commands: Commands, settings: Res<Settings>, progress: Res<Pro
         ))
         .id();
     commands.spawn((Node { width: Val::Px(380.0), height: Val::Px(191.0), margin: UiRect::bottom(Val::Px(6.0)), ..default() }, ImageNode::new(server.load("ui/suivez/logo_complet.png")), Pickable::IGNORE, ChildOf(root)));
-    let (b, _) = plank(&mut commands, &server, root, "panneau_bois_dore_large", "icone_carte", 340.0, tx!("Voyage", "Journey", "Reise", "Viaggio", "Viaje").t(), Some(tx!("Niveaux à découvrir", "Levels to discover", "Level zu entdecken", "Livelli da scoprire", "Niveles por descubrir").t()));
-    commands.entity(b).insert(UiAction::Voyage);
+    let (b, _) = plank(&mut commands, &server, root, "panneau_bois_dore_large", "icone_carte", 340.0, tx!("Mode scénario", "Story mode", "Story-Modus", "Modalità storia", "Modo historia").t(), Some(tx!("Des aventures à vivre", "Adventures to live", "Abenteuer erleben", "Avventure da vivere", "Aventuras por vivir").t()));
+    commands.entity(b).insert(UiAction::Scenarios);
     let (b, _) = plank(&mut commands, &server, root, "panneau_bois_fonce_large", "icone_infini", 340.0, tx!("Mode infini", "Endless mode", "Endlos-Modus", "Modalità infinita", "Modo infinito").t(), Some(tx!("Toujours plus nombreux !", "More and more guests!", "Immer mehr Gäste!", "Sempre più numerosi!", "¡Cada vez más!").t()));
     commands.entity(b).insert(UiAction::Play);
     let (b, t) = plank(&mut commands, &server, root, "panneau_bois_fonce_large", "icone_jumelles", 340.0, OptionKind::Universe.text(&settings, &progress), None);
@@ -406,6 +408,24 @@ fn spawn_options(mut commands: Commands, settings: Res<Settings>, progress: Res<
 
 fn spawn_game_over(mut commands: Commands, score: Res<Score>, progress: Res<Progress>, mode: Res<Mode>, outcome: Res<Outcome>, run: Res<Run>) {
     let panel = spawn_panel(&mut commands, DespawnOnExit(GameState::GameOver));
+    // Aventure : un niveau réussi enchaîne tout de suite ; un niveau raté se rejoue.
+    if let (Mode::Scenario { .. }, Some(level)) = (*mode, mode.level()) {
+        if outcome.won {
+            return;
+        }
+        spawn_text(&mut commands, panel, tx!("Raté !", "Missed!", "Verpasst!", "Mancato!", "¡Fallaste!").t(), 56.0);
+        spawn_text(
+            &mut commands,
+            panel,
+            tx!("Touristes recrutés : {} sur {}", "Tourists recruited: {} of {}", "Touristen gewonnen: {} von {}", "Turisti reclutati: {} su {}", "Turistas reclutados: {} de {}")
+                .avec(&[&run.recruited, &level.tourists]),
+            24.0,
+        );
+        spawn_gap(&mut commands, panel, 6.0);
+        button(&mut commands, panel, tx!("Rejouer", "Play again", "Nochmal", "Rigioca", "Otra vez").t(), UiAction::Replay);
+        button(&mut commands, panel, tx!("Mode scénario", "Story mode", "Story-Modus", "Modalità storia", "Modo historia").t(), UiAction::Scenarios);
+        return;
+    }
     if let Mode::Voyage(i) = *mode {
         let level = &LEVELS[i];
         if outcome.won {
@@ -522,7 +542,11 @@ fn update_hud(
     if !playing {
         return;
     }
-    let s = if let (Mode::Voyage(i), Some(level)) = (*mode, mode.level()) {
+    let s = if let (Mode::Scenario { scenario, step }, Some(level)) = (*mode, mode.level()) {
+        let secs = run.elapsed as u32;
+        let total = crate::story::SCENARIOS.get(scenario).map_or(0, |s| s.steps.len());
+        format!("Étape {}/{} · Touristes {}/{} · {}:{:02} · P : pause", step + 1, total, run.recruited.min(level.tourists), level.tourists, secs / 60, secs % 60)
+    } else if let (Mode::Voyage(i), Some(level)) = (*mode, mode.level()) {
         let secs = run.elapsed as u32;
         let clock = format!("{}:{:02}", secs / 60, secs % 60);
         tx!(
@@ -571,9 +595,19 @@ fn keyboard_shortcuts(
         GameState::Menu if confirm => next.set(GameState::Playing),
         GameState::Options if back => next.set(GameState::Menu),
         GameState::Voyage if back => next.set(GameState::Menu),
-        GameState::Playing if back => next.set(if matches!(*mode, Mode::Voyage(_)) { GameState::Voyage } else { GameState::Menu }),
+        GameState::Playing if back => next.set(match *mode {
+            Mode::Voyage(_) => GameState::Voyage,
+            Mode::Scenario { .. } if crate::levels::preview_active() => GameState::Menu,
+            Mode::Scenario { .. } => GameState::Scenarios,
+            Mode::Infinite => GameState::Menu,
+        }),
         GameState::GameOver if confirm => next.set(GameState::Playing),
-        GameState::GameOver if back => next.set(if matches!(*mode, Mode::Voyage(_)) { GameState::Voyage } else { GameState::Menu }),
+        GameState::GameOver if back => next.set(match *mode {
+            Mode::Voyage(_) => GameState::Voyage,
+            Mode::Scenario { .. } if crate::levels::preview_active() => GameState::Menu,
+            Mode::Scenario { .. } => GameState::Scenarios,
+            Mode::Infinite => GameState::Menu,
+        }),
         _ => {}
     }
 }
@@ -599,6 +633,7 @@ fn on_click(
         }
         UiAction::Replay => next.set(GameState::Playing),
         UiAction::Voyage => next.set(GameState::Voyage),
+        UiAction::Scenarios => next.set(GameState::Scenarios),
         UiAction::Level(i) => {
             *mode = Mode::Voyage(i);
             next.set(GameState::Playing);
