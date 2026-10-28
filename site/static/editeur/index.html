@@ -27,6 +27,12 @@
   body.preview #apercu { display:flex; }
   body.large #grille { display:none; }
   #apercu iframe { flex:1; border:1px solid var(--line); border-radius:8px; background:#000; width:100%; }
+  #scenepanel h3 { margin:14px 0 6px; font-size:13px; color:var(--dim); text-transform:uppercase; letter-spacing:.05em; }
+  #scenepanel .carte { background:#2d3550; border:1px solid var(--line); border-radius:8px; padding:8px; margin-bottom:8px; display:grid; gap:6px; }
+  #scenepanel .ligne { display:flex; gap:6px; align-items:center; flex-wrap:wrap; }
+  #scenepanel textarea { width:100%; min-height:54px; background:#323a52; color:var(--text); border:1px solid var(--line); border-radius:6px; padding:6px; font:inherit; }
+  #scenepanel input[type=text] { width:auto; flex:1; min-width:90px; }
+  #scenepanel input[type=number] { width:70px; }
   #apercu .barre { display:flex; gap:8px; align-items:center; flex-wrap:wrap; }
   canvas { background:#11151f; border:1px solid var(--line); cursor:crosshair; image-rendering:pixelated; touch-action:none; }
   #palette { display:grid; grid-template-columns: repeat(4, 1fr); gap:5px; }
@@ -50,13 +56,17 @@
 </header>
 
 <aside>
-  <h2>Niveaux du fichier</h2>
+  <h2>Aventure</h2>
+  <div class="row"><label>Titre</label><input id="mtitle" type="text" placeholder="Titre de l’aventure"></div>
+  <div class="row"><label>Description</label><input id="mdesc" type="text" placeholder="Une phrase"></div>
+  <h2>Étapes du fichier</h2>
   <div id="levels"></div>
-  <div class="row" style="margin-top:8px"><button id="add">+ Nouveau</button><button id="dup">Dupliquer</button><button id="del">Supprimer</button></div>
+  <div class="row" style="margin-top:8px"><button id="add">+ Niveau</button><button id="addscene">+ Scène</button><button id="dup">Dupliquer</button><button id="del">Supprimer</button></div>
   <div class="row"><button id="up">↑</button><button id="down">↓</button></div>
 
-  <h2>Réglages du niveau</h2>
+  <h2 id="h2level">Réglages</h2>
   <div class="row"><label>Nom</label><input id="name" type="text"></div>
+  <div id="levelform">
   <div class="row"><label>Lieu</label><select id="place"></select></div>
   <div class="row" id="rowpaysage"><label>Paysage</label><select id="paysage"></select></div>
   <div class="row"><label>Touristes</label><input id="tourists" type="number" min="1" max="200"></div>
@@ -68,10 +78,11 @@
   <div class="row" id="rowtrains"><label>Trains</label><input id="trains" type="number" min="0" max="6"></div>
   <div class="row" id="roweboulements"><label>Éboulements</label><input id="eboulements" type="number" min="0" max="40"></div>
   <div class="row"><label>Taille</label><input id="gw" type="number" min="6" max="64"> × <input id="gh" type="number" min="6" max="64"><button id="resize">Appliquer</button></div>
+  </div>
 </aside>
 
 <main>
-  <div id="grille"><canvas id="cv"></canvas></div>
+  <div id="grille"><canvas id="cv"></canvas><div id="scenepanel" style="display:none"></div></div>
   <section id="apercu">
     <div class="barre">
       <button id="refresh">Actualiser</button>
@@ -85,6 +96,7 @@
 </main>
 
 <aside class="right">
+  <div id="levelside">
   <h2>Outil</h2>
   <div class="tools" id="tools"></div>
   <div class="row" style="margin-top:8px"><label>Symétrie</label><button id="symx">gauche/droite</button><button id="symy">haut/bas</button></div>
@@ -94,6 +106,7 @@
   <p class="hint">Clic gauche : poser. Clic droit : effacer (vide). Les rectangles et disques se tracent en glissant.</p>
   <h2>Contrôles</h2>
   <div id="msgs"></div>
+  </div>
   <h2>Tester dans le jeu</h2>
   <p class="hint">Enregistrez le fichier, puis :<br><code>SNAKE_FICHIER=chemin/niveaux.txt cargo run -p snake</code></p>
 </aside>
@@ -126,41 +139,69 @@ const CELLS = [
 const BY = Object.fromEntries(CELLS.map(c => [c[0], c]));
 const LEGEND = CELLS.map(c => c[0]).join('');
 const KEYS = ['rivaux','trains','eboulements'];
+const KINDS = ['Léo','Lola','Max','Inès','Noé','Zoé','Hugo','Jade','Sacha','Maya','Théo','Lou','Zombie','Squelette','Vampire','Fantôme','Rémi (fauteuil)','Camille (fauteuil)','Sam (fauteuil)'];
+const CAMS = [['large','Large (tout le décor)'],['moyen','Moyen'],['gros','Gros plan'],['plongee','Plongée'],['bas','Contre-plongée']];
+const POSES = [['repos','Au repos'],['salut','Salue'],['marche','Marche']];
+const POSITIONS = ['gauche2','gauche','centre','droite','droite2'].flatMap(p => [p, p + '-fond']);
+let meta = { titre:'', description:'' };
+const isScene = l => l && l.type === 'scene';
 
 let levels = [], cur = 0, brush = '1', tool = 'pinceau', symx = false, symy = false, cell = 28;
 let undo = [], redo = [], drag = null, hover = null;
 const $ = id => document.getElementById(id);
 const cv = $('cv'), ctx = cv.getContext('2d');
 
+function newScene() {
+  return { type:'scene', name:'Nouvelle scène', lieu:'jardin', paysage:'jardin', touristes:1, pas:0.3, temps:0, sortie:false, depart:'est', rivaux:0, trains:0, eboulements:0, rows:[], other:[],
+    decor:'jardin', camera:'moyen', actors:[{ name:'Léa', kind:1, look:12, pos:'centre', pose:'salut', guide:true }], lines:[{ who:'Léa', text:'Bonjour !', camera:'' }] };
+}
 function newLevel(w = 18, h = 18) {
   const rows = Array.from({length:h}, () => Array(w).fill('1'));
   rows[Math.floor(h/2)][Math.floor(w/2)] = 'S';
-  return { name:'Nouveau niveau', lieu:'jardin', paysage:'jardin', touristes:8, pas:0.33, temps:0, sortie:false, depart:'est', rivaux:0, trains:0, eboulements:0, rows };
+  return { type:'niveau', name:'Nouveau niveau', lieu:'jardin', paysage:'jardin', touristes:8, pas:0.33, temps:0, sortie:false, depart:'est', rivaux:0, trains:0, eboulements:0, rows };
 }
 
 // ---------- fichier ----------
 function parse(text) {
+  meta = { titre:'', description:'' };
   const out = []; let l = null, inMap = false;
   text.split(/\r?\n/).forEach((raw, i) => {
     const line = raw.trim();
     if (!line || line.startsWith('#')) { inMap = false; return; }
     const m = line.match(/^\[(.*)\]$/);
-    if (m) { l = { name:m[1], lieu:'jardin', paysage:'jardin', touristes:6, pas:0.3, temps:0, sortie:false, depart:'est', rivaux:0, trains:0, eboulements:0, rows:[], other:[] }; out.push(l); inMap = false; return; }
+    if (m) { l = { type:'niveau', name:m[1], lieu:'jardin', paysage:'jardin', touristes:6, pas:0.3, temps:0, sortie:false, depart:'est', rivaux:0, trains:0, eboulements:0, rows:[], other:[] }; out.push(l); inMap = false; return; }
     if (line === 'carte:') { inMap = true; return; }
-    if (!l) throw new Error(`ligne ${i+1} : contenu avant le premier [niveau]`);
+    if (!l) {
+      const [mk, ...mr] = line.split('='); const mkey = mk.trim();
+      if (mkey === 'titre' || mkey === 'description') { meta[mkey] = mr.join('=').trim(); return; }
+      throw new Error(`ligne ${i+1} : contenu avant la première étape`);
+    }
     if (inMap) { l.rows.push([...line]); return; }
     const [k, ...rest] = line.split('='); const key = k.trim(), v = rest.join('=').trim();
-    if (key === 'lieu') l.lieu = v; else if (key === 'paysage') l.paysage = v; else if (key === 'touristes') l.touristes = +v; else if (key === 'pas') l.pas = +v;
+    if (key === 'type') { l.type = v === 'scene' ? 'scene' : 'niveau'; if (l.type === 'scene') Object.assign(l, { decor:'jardin', camera:'moyen', actors:[], lines:[] }); }
+    else if (key === 'decor') l.decor = v; else if (key === 'camera') l.camera = v;
+    else if (key === 'personnage') { const f = v.split('|').map(x => x.trim()); l.actors.push({ name:f[0] || '', kind:+f[1] || 0, look:+f[2] || 0, pos:f[3] || 'centre', pose:f[4] || 'repos', guide:f[5] === 'guide' }); }
+    else if (key === 'replique') { const f = v.split('|').map(x => x.trim()); l.lines.push({ who:f[0] || '', text:f[1] || '', camera:f[2] || '' }); }
+    else if (key === 'lieu') l.lieu = v; else if (key === 'paysage') l.paysage = v; else if (key === 'touristes') l.touristes = +v; else if (key === 'pas') l.pas = +v;
     else if (key === 'temps') l.temps = +v; else if (key === 'sortie') l.sortie = v === 'oui'; else if (key === 'depart') l.depart = v;
     else if (KEYS.includes(key)) l[key] = +v;
     else if (key === 'forme') throw new Error(`« ${l.name} » n'a pas de carte (forme = ${v}). Générez d'abord les cartes : SNAKE_EXPORT=dossier cargo run -p snake`);
     else l.other.push(line);   // autres réglages (blocs, tapis…) conservés tels quels
   });
-  return out.filter(x => x.rows.length);
+  return out.filter(x => isScene(x) || x.rows.length);
 }
 function serialize() {
   let s = '# Niveaux — carte dessinée avec site/static/editeur/index.html\n# 0 vide, 1 libre, 2-7 blocs, o trou, p ponton, z accélérateur, h/H herses, > < ^ v tapis, A-D téléporteurs (par deux), S départ, E sortie.\n';
+  if (meta.titre) s += `titre = ${meta.titre}\n`;
+  if (meta.description) s += `description = ${meta.description}\n`;
+  const clean = t => String(t).replace(/[|\r\n]+/g, ' ').trim();
   for (const l of levels) {
+    if (isScene(l)) {
+      s += `\n[${l.name}]\ntype = scene\ndecor = ${l.decor}\ncamera = ${l.camera}\n`;
+      for (const a of l.actors) s += `personnage = ${clean(a.name)} | ${a.kind} | ${a.look} | ${clean(a.pos)} | ${a.pose}${a.guide ? ' | guide' : ''}\n`;
+      for (const r of l.lines) s += `replique = ${clean(r.who)} | ${clean(r.text)}${r.camera ? ' | ' + r.camera : ''}\n`;
+      continue;
+    }
     s += `\n[${l.name}]\nlieu = ${l.lieu}\n${l.lieu === 'special' ? `paysage = ${l.paysage || 'jardin'}\n` : ''}touristes = ${l.touristes}\npas = ${l.pas}\n`;
     if (l.sortie) s += 'sortie = oui\n';
     if (l.temps > 0) s += `temps = ${l.temps}\n`;
@@ -241,14 +282,21 @@ function resize(w, h) {
 function sync(full = true) {
   const l = L();
   if (full) {
-    $('levels').innerHTML = levels.map((x, i) => `<button data-i="${i}" class="${i === cur ? 'sel' : ''}">${i + 1}. ${x.name} <span class="hint">${x.rows[0].length}×${x.rows.length}</span></button>`).join('');
+    $('levels').innerHTML = levels.map((x, i) => `<button data-i="${i}" class="${i === cur ? 'sel' : ''}">${i + 1}. ${isScene(x) ? '🎬' : '🧩'} ${x.name} <span class="hint">${isScene(x) ? 'scène' : x.rows[0].length + '×' + x.rows.length}</span></button>`).join('');
+    $('mtitle').value = meta.titre; $('mdesc').value = meta.description;
     $('levels').onclick = e => { const b = e.target.closest('button'); if (b) { cur = +b.dataset.i; undo = []; redo = []; sync(); } };
     $('name').value = l.name; $('place').value = l.lieu; $('tourists').value = l.touristes; $('pace').value = l.pas; $('par').value = l.temps;
     $('exit').checked = l.sortie; $('dir').value = l.depart; KEYS.forEach(k => $(k).value = l[k] || 0);
-    $('gw').value = l.rows[0].length; $('gh').value = l.rows.length;
+    if (!isScene(l)) { $('gw').value = l.rows[0].length; $('gh').value = l.rows.length; }
     $('paysage').value = l.paysage || 'jardin';
-    buildPalette();
+    if (!isScene(l)) buildPalette();
   }
+  // Une scène n'a ni grille ni palette : un formulaire à la place.
+  const sc = isScene(l);
+  $('cv').style.display = sc ? 'none' : ''; $('scenepanel').style.display = sc ? '' : 'none';
+  $('levelform').style.display = sc ? 'none' : ''; $('levelside').style.display = sc ? 'none' : '';
+  $('h2level').textContent = sc ? 'Scène' : 'Réglages du niveau';
+  if (sc) { renderScene(); schedulePreview(true); return; }
   document.querySelectorAll('#tools button').forEach(b => b.classList.toggle('on', b.dataset.t === tool));
   document.querySelectorAll('#palette button').forEach(b => b.classList.toggle('on', b.dataset.c === brush));
   $('symx').classList.toggle('on', symx); $('symy').classList.toggle('on', symy);
@@ -258,6 +306,7 @@ function sync(full = true) {
 
 // ---------- dessin ----------
 function draw(preview) {
+  if (isScene(L())) return;
   const rows = preview || L().rows, h = rows.length, w = rows[0].length;
   cv.width = w * cell; cv.height = h * cell;
   for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) {
@@ -343,6 +392,7 @@ cv.addEventListener('pointerleave', () => { hover = null; if (!drag) draw(); });
 
 // ---------- contrôles ----------
 function check() {
+  if (isScene(L())) return true;
   const l = L(), rows = l.rows, h = rows.length, w = rows[0].length, msgs = [];
   let blocking = false;
   const add = (cls, t) => { if (cls === 'bad') blocking = true; msgs.push(`<div class="${cls}">${t}</div>`); };
@@ -400,6 +450,62 @@ function check() {
   $('msgs').innerHTML = msgs.join('');
   return !blocking;
 }
+
+// ---------- scènes ----------
+function renderScene() {
+  const l = L(), el = $('scenepanel');
+  const opts = (arr, sel, blank) => (blank ? [['', blank]] : []).concat(arr).map(([v, t]) => `<option value="${v}" ${String(v) === String(sel) ? 'selected' : ''}>${t}</option>`).join('');
+  const decors = ORDER.map(k => [k, PLACES[k]]);
+  const kinds = KINDS.map((n, i) => [i, `${i} — ${n}`]);
+  const names = l.actors.map(a => a.name).filter(Boolean);
+  el.innerHTML = `
+    <div class="carte"><div class="ligne"><b>Décor</b><select data-p="decor">${opts(decors, l.decor)}</select>
+      <b>Caméra</b><select data-p="camera">${opts(CAMS, l.camera)}</select></div></div>
+    <h3>Personnages (${l.actors.length})</h3>
+    ${l.actors.map((a, i) => `<div class="carte"><div class="ligne">
+        <input type="text" data-p="actors.${i}.name" value="${a.name.replace(/"/g, '&quot;')}" placeholder="Nom">
+        <select data-p="actors.${i}.kind" data-t="num">${opts(kinds, a.kind)}</select>
+        <label>apparence <input type="number" min="0" max="95" data-p="actors.${i}.look" data-t="num" value="${a.look}"></label>
+        <button data-act="rand:${i}" title="Apparence au hasard">🎲</button></div>
+      <div class="ligne"><label>place <input type="text" list="positions" data-p="actors.${i}.pos" value="${a.pos}"></label>
+        <select data-p="actors.${i}.pose">${opts(POSES, a.pose)}</select>
+        <label><input type="checkbox" data-p="actors.${i}.guide" data-t="bool" ${a.guide ? 'checked' : ''}> guide (casquette et drapeau)</label>
+        <button data-act="delactor:${i}">Retirer</button></div></div>`).join('')}
+    <datalist id="positions">${POSITIONS.map(p => `<option value="${p}">`).join('')}</datalist>
+    <button data-act="addactor" ${l.actors.length >= 5 ? 'disabled' : ''}>+ Personnage</button>
+    <h3>Répliques (${l.lines.length})</h3>
+    ${l.lines.map((r, i) => `<div class="carte"><div class="ligne">
+        <b>${i + 1}.</b>
+        <input type="text" list="noms" data-p="lines.${i}.who" value="${r.who.replace(/"/g, '&quot;')}" placeholder="Qui parle">
+        <select data-p="lines.${i}.camera" title="Nouveau cadrage à partir de cette réplique">${opts(CAMS, r.camera, 'caméra inchangée')}</select>
+        <button data-act="upline:${i}">↑</button><button data-act="downline:${i}">↓</button><button data-act="delline:${i}">Retirer</button></div>
+      <textarea data-p="lines.${i}.text" placeholder="Ce que dit le personnage">${r.text.replace(/</g, '&lt;')}</textarea></div>`).join('')}
+    <datalist id="noms">${names.map(n => `<option value="${n.replace(/"/g, '&quot;')}">`).join('')}</datalist>
+    <button data-act="addline">+ Réplique</button>`;
+}
+function setPath(obj, path, val) { const k = path.split('.'); let o = obj; for (let i = 0; i < k.length - 1; i++) o = o[k[i]]; o[k[k.length - 1]] = val; }
+$('scenepanel').addEventListener('change', e => {
+  const t = e.target; if (!t.dataset.p) return;
+  push();
+  setPath(L(), t.dataset.p, t.dataset.t === 'bool' ? t.checked : t.dataset.t === 'num' ? +t.value : t.value);
+  sync(false); renderScene();
+});
+$('scenepanel').addEventListener('click', e => {
+  const b = e.target.closest('button[data-act]'); if (!b) return;
+  const [act, arg] = b.dataset.act.split(':'), i = +arg, l = L();
+  push();
+  if (act === 'addactor') l.actors.push({ name:'Nouveau', kind:0, look:Math.floor(Math.random() * 96), pos:'centre', pose:'repos', guide:false });
+  else if (act === 'delactor') l.actors.splice(i, 1);
+  else if (act === 'rand') l.actors[i].look = Math.floor(Math.random() * 96);
+  else if (act === 'addline') l.lines.push({ who:(l.actors[0] || {}).name || '', text:'', camera:'' });
+  else if (act === 'delline') l.lines.splice(i, 1);
+  else if (act === 'upline' && i > 0) [l.lines[i - 1], l.lines[i]] = [l.lines[i], l.lines[i - 1]];
+  else if (act === 'downline' && i < l.lines.length - 1) [l.lines[i + 1], l.lines[i]] = [l.lines[i], l.lines[i + 1]];
+  sync(false);
+});
+$('mtitle').onchange = e => { meta.titre = e.target.value; schedulePreview(true); };
+$('mdesc').onchange = e => { meta.description = e.target.value; schedulePreview(true); };
+$('addscene').onclick = () => { levels.splice(cur + 1, 0, newScene()); cur++; undo = []; redo = []; sync(); };
 
 // ---------- aperçu 3D (le vrai jeu, dans la page) ----------
 let previewTimer = null;
