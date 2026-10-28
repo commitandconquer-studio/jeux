@@ -61,7 +61,7 @@ pub struct Demo {
     pub features: bool,
     /// Dossier de presse : partie figée, sans interface.
     pub press: bool,
-    /// Pilote automatique (`SNAKE_AUTO=n` : n fois plus vite), pour essayer les niveaux.
+    /// Pilote automatique (`SNAKE_AUTO=n` ou `&auto=n` dans l'adresse : n fois plus vite), pour essayer les niveaux.
     pub auto: Option<f32>,
 }
 
@@ -72,7 +72,7 @@ impl Default for Demo {
             long: std::env::var("SNAKE_LONG").ok().and_then(|v| v.parse().ok()),
             features: press || std::env::var("SNAKE_CAPTURE").is_ok(),
             press,
-            auto: std::env::var("SNAKE_AUTO").ok().and_then(|v| v.parse().ok()),
+            auto: std::env::var("SNAKE_AUTO").ok().or_else(|| game_common::save::url_param("auto")).and_then(|v| v.parse().ok()),
         }
     }
 }
