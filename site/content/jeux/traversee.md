@@ -8,16 +8,16 @@ web = true
 icone = "traversee"
 code = "games/traversee"
 dossier = "traversee"
-vignette = "livraison"
-hero = "livraison"
+vignette = "livraison-hero"
+hero = "livraison-hero"
 mondes = [
-  { img = "livraison", nom = "La prairie", t = "Le départ : routes, rivières et voies ferrées" },
-  { img = "pirates", nom = "La baie des pirates", t = "Canons, tonneaux et palmiers" },
-  { img = "halloween", nom = "Halloween", t = "Cimetière et morts-vivants" },
-  { img = "moyenage", nom = "Le Moyen Âge", t = "Machines de siège et tours" },
-  { img = "espace", nom = "L'espace", t = "Vaisseaux, météorites et plateformes" },
-  { img = "farwest", nom = "Le Far West", t = "Chevaux, bisons et train à vapeur" },
-  { img = "cyber", nom = "La ville futuriste", t = "Speeders, monorail et gratte-ciel" },
+  { img = "livraison-hero", nom = "La prairie", t = "Le départ : routes, rivières et voies ferrées" },
+  { img = "presse-pirates", nom = "La baie des pirates", t = "Canons, tonneaux et palmiers" },
+  { img = "presse-halloween", nom = "Halloween", t = "Cimetière et morts-vivants" },
+  { img = "presse-moyenage", nom = "Le Moyen Âge", t = "Machines de siège et tours" },
+  { img = "presse-espace", nom = "L'espace", t = "Vaisseaux, météorites et plateformes" },
+  { img = "presse-farwest", nom = "Le Far West", t = "Chevaux, bisons et train à vapeur" },
+  { img = "presse-cyber", nom = "La ville futuriste", t = "Speeders, monorail et gratte-ciel" },
 ]
 commandes = ["Flèches ou ZQSD, Espace ou clic : avancer", "Tactile : glisser du doigt", "M : son · Échap : fin de partie"]
 chiffres = [
@@ -37,12 +37,6 @@ captures = [
   { img = "ennemis", t = "La Collection : les ennemis à débloquer" },
   { img = "decors", t = "La Collection : les mondes" },
   { img = "personnages", t = "La Collection : les personnages" },
-  { img = "pirates", t = "La baie des pirates : canons, tonneaux et palmiers" },
-  { img = "halloween", t = "Halloween : cimetière et morts-vivants" },
-  { img = "moyenage", t = "Le Moyen Âge : machines de siège et tours" },
-  { img = "espace", t = "L'espace : vaisseaux, météorites et plateformes" },
-  { img = "farwest", t = "Le Far West : chevaux, bisons et train à vapeur" },
-  { img = "cyber", t = "La ville futuriste : speeders, monorail et gratte-ciel" },
 ]
 +++
 

@@ -8,16 +8,16 @@ web = true
 icone = "traversee"
 code = "games/traversee"
 dossier = "traversee"
-vignette = "livraison"
-hero = "livraison"
+vignette = "livraison-hero"
+hero = "livraison-hero"
 mondes = [
-  { img = "livraison", nom = "The meadow", t = "Where it starts: roads, rivers and railways" },
-  { img = "pirates", nom = "Pirate bay", t = "Cannons, barrels and palm trees" },
-  { img = "halloween", nom = "Halloween", t = "Graveyard and undead" },
-  { img = "moyenage", nom = "The Middle Ages", t = "Siege engines and towers" },
-  { img = "espace", nom = "Space", t = "Ships, meteors and platforms" },
-  { img = "farwest", nom = "The Wild West", t = "Horses, bison and a steam train" },
-  { img = "cyber", nom = "The futuristic city", t = "Speeders, monorail and skyscrapers" },
+  { img = "livraison-hero", nom = "The meadow", t = "Where it starts: roads, rivers and railways" },
+  { img = "presse-pirates", nom = "Pirate bay", t = "Cannons, barrels and palm trees" },
+  { img = "presse-halloween", nom = "Halloween", t = "Graveyard and undead" },
+  { img = "presse-moyenage", nom = "The Middle Ages", t = "Siege engines and towers" },
+  { img = "presse-espace", nom = "Space", t = "Ships, meteors and platforms" },
+  { img = "presse-farwest", nom = "The Wild West", t = "Horses, bison and a steam train" },
+  { img = "presse-cyber", nom = "The futuristic city", t = "Speeders, monorail and skyscrapers" },
 ]
 commandes = ["Arrow keys or WASD, Space or click: hop", "Touch: swipe", "M: sound · Esc: end the run"]
 chiffres = [
@@ -37,12 +37,6 @@ captures = [
   { img = "ennemis", t = "The Collection: enemies to unlock" },
   { img = "decors", t = "The Collection: worlds" },
   { img = "personnages", t = "The Collection: characters" },
-  { img = "pirates", t = "Pirate bay: cannons, barrels and palm trees" },
-  { img = "halloween", t = "Halloween: graveyard and undead" },
-  { img = "moyenage", t = "The Middle Ages: siege engines and towers" },
-  { img = "espace", t = "Space: ships, meteors and platforms" },
-  { img = "farwest", t = "The Wild West: horses, bison and a steam train" },
-  { img = "cyber", t = "The futuristic city: speeders, monorail and skyscrapers" },
 ]
 +++
 
