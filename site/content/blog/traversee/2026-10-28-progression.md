@@ -3,7 +3,7 @@ title = "Une partie qui monte en douceur"
 date = 2026-10-28
 slug = "progression"
 [extra]
-image = "jeux/traversee/livraison-hero.jpg"
+image = "jeux/traversee/nourriture.jpg"
 +++
 
 Cross or Die démarrait fort. Désormais, une partie **se construit pas à pas** : chaque danger arrive à son heure, et la nourriture remplace les cadeaux.
@@ -27,4 +27,11 @@ Les **colis** n'arrivent plus dès les premières rangées : il faut d'abord app
 ## De la nourriture à la place des cadeaux
 Les cadeaux ramassés pour gagner des points faisaient doublon avec les colis. Place à la **nourriture** : fruits, légumes, burgers, donuts… un décor différent **selon le monde**. Chaque bonus tourne lentement et rebondit sur un ressort, dans un halo de lumière colorée, pour qu'on comprenne tout de suite qu'il rapporte des points.
 
+![La nourriture dans la prairie](/img/jeux/traversee/nourriture.jpg)
+
+![La nourriture dans la baie des pirates](/img/jeux/traversee/nourriture-pirates.jpg)
+
 Les modèles viennent du *Food Kit* de Kenney (licence CC0).
+
+## Les nouveautés s'annoncent
+Quand vous débloquez quelque chose, un pop-up sous le compteur annonce **« Nouveau modèle gagné ! »** (véhicule), **« Nouveau monde gagné ! »** ou **« Nouveau personnage gagné ! »**, et la barre *Prochain déblocage* repart de zéro. L'**aigle** se débloque à 2 000 points cumulés, puis peut apparaître à partir de la ligne 250.
