@@ -71,6 +71,18 @@ impl Enclos {
 pub struct DepartLoup {
     pub apparition: f32,
     pub bord: V2,
+    pub genre: GenreLoup,
+}
+
+/// Le caractère d'un loup.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum GenreLoup {
+    /// Il fonce sur le mouton le plus proche.
+    Solitaire,
+    /// Il contourne le chien : il vise l'arrière du mouton, du côté opposé au chien.
+    Prudent,
+    /// Plus rapide, surtout quand le chien est loin.
+    Audacieux,
 }
 
 /// Les sortes de moutons : le blanc est le mouton de base.
@@ -172,7 +184,7 @@ pub const NIVEAUX: [Niveau; 12] = [
     n((18.0, 12.0), 5, 3, 0, 0, 0, 0, 0, 60.0),
     Niveau { noirs: 1, agneaux: 0, beliers: 0, ..n((20.5, 13.0), 7, 5, 2, 0, 0, 0, 0, 70.0) },
     Niveau { noirs: 1, agneaux: 0, beliers: 0, ..n((23.0, 14.5), 8, 6, 3, 1, 0, 0, 0, 80.0) },
-    Niveau { noirs: 2, agneaux: 0, beliers: 1, ..n((24.0, 15.5), 10, 6, 4, 1, 2, 0, 0, 95.0) },
+    Niveau { noirs: 2, agneaux: 0, beliers: 1, ..n((24.0, 15.5), 10, 6, 4, 1, 2, 1, 1, 110.0) },
     Niveau { noirs: 2, agneaux: 0, beliers: 0, ..n((25.0, 15.5), 10, 7, 4, 2, 2, 1, 1, 100.0) },
     Niveau { noirs: 2, agneaux: 2, beliers: 0, ..n((26.5, 17.0), 12, 8, 5, 2, 3, 1, 1, 115.0) },
     Niveau { noirs: 2, agneaux: 2, beliers: 1, ..n((29.0, 17.0), 14, 9, 5, 2, 3, 1, 1, 130.0) },
@@ -415,7 +427,8 @@ fn essayer(nv: &Niveau, graine: u64, clairsemee: bool) -> Carte {
                 break p;
             }
         };
-        loups.push(DepartLoup { apparition: nv.loup_debut + k as f32 * nv.loup_ecart, bord });
+        let genre = [GenreLoup::Solitaire, GenreLoup::Prudent, GenreLoup::Audacieux][k as usize % 3];
+        loups.push(DepartLoup { apparition: nv.loup_debut + k as f32 * nv.loup_ecart, bord, genre });
     }
 
     // Les béliers se tiennent près du troupeau, mais pas au milieu.
@@ -442,9 +455,9 @@ fn essayer(nv: &Niveau, graine: u64, clairsemee: bool) -> Carte {
 
 /// Le niveau vitrine (niveau 4 de la campagne), dessiné à la main : l'enclos à l'ouest,
 /// une mare devant sa porte, puis une haie avec un passage étroit entre deux rochers
-/// que tout le troupeau doit franchir. Pas de loup : on apprend à conduire.
+/// que tout le troupeau doit franchir. Un bélier près du troupeau et un loup qui arrive de l'est.
 pub fn vitrine() -> (Niveau, Carte) {
-    let nv = Niveau { temps_ref: 110.0, ..NIVEAUX[3] };
+    let nv = NIVEAUX[3];
     let demi = v2(nv.demi.0, nv.demi.1);
     let eh = v2(2.55, 3.1);
     let enclos = Enclos { centre: v2(-demi.x + eh.x + 0.05, 0.0), demi: eh, cote: Cote::Est, porte: 3.2 };
@@ -476,7 +489,7 @@ pub fn vitrine() -> (Niveau, Carte) {
             moutons.push(p);
         }
     }
-    let carte = Carte { demi, obstacles, enclos, murs_enclos, clotures, depart_chien: v2(17.0, 6.5), depart_troupeau: troupeau, types: types_de(&nv, moutons.len()), moutons, beliers: vec![v2(4.0, -1.0)], loups: Vec::new(), graine: 4242 };
+    let carte = Carte { demi, obstacles, enclos, murs_enclos, clotures, depart_chien: v2(17.0, 6.5), depart_troupeau: troupeau, types: types_de(&nv, moutons.len()), moutons, beliers: vec![v2(4.0, -1.0)], loups: vec![DepartLoup { apparition: 30.0, bord: v2(demi.x + 1.0, -7.0), genre: GenreLoup::Solitaire }], graine: 4242 };
     (nv, carte)
 }
 

@@ -38,6 +38,8 @@ fn effets(mut commands: Commands, server: Res<AssetServer>, son: Res<SoundOn>, m
                 }
             }
             Evenement::Entre(_) => jouer(&mut commands, lib::EAT),
+            Evenement::Capture(_) => jouer(&mut commands, lib::CRASH),
+            Evenement::Libere(_) => jouer(&mut commands, lib::CHIME),
             Evenement::Mange(_) => jouer(&mut commands, lib::CRASH),
             Evenement::LoupArrive(_) => jouer(&mut commands, lib::WOLF_HOWL),
             Evenement::LoupFuit(_) => jouer(&mut commands, lib::HOP),

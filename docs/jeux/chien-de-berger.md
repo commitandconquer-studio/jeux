@@ -71,3 +71,24 @@ commune.
   hurlement de loup.
 - Captures automatiques (le robot joue) : `BERGER_CAPTURE=captures cargo run -p berger`.
   Menu animé par le robot : `BERGER_ROBOT=1 cargo run -p berger`.
+
+## Refonte (phase A, B et C)
+
+- **Réglages** : `berger_core::Reglages` regroupe tous les chiffres du gameplay.
+  Simulation à **pas fixe de 60 Hz** (`PAS_FIXE`), indépendante de l'affichage.
+- **Aboiement** : une vraie onde qui grandit ; chaque animal n'est touché qu'une
+  fois par onde (`Sursaut`). Le chien se tasse et ralentit en aboyant.
+- **Moutons** : états (broute, flâne, troupeau, alerte, fuit, calme, abrité) ;
+  un mouton coincé est dégagé ; l'enclos ne sécurise qu'après la porte, et le
+  mouton y reste. Trois sortes : **blanc**, **noir** (indépendant) et
+  **agneau** (petit, rapide, peureux, collé aux adultes).
+- **Bélier** (cinq phases) : vigilance, avertissement (il s'arrête, baisse la
+  tête et gratte), charge, récupération. Un aboiement avant la charge l'annule ;
+  s'il touche le chien, celui-ci recule et est sonné 0,7 s.
+- **Loups** : trois caractères (solitaire, prudent qui contourne le chien,
+  audacieux plus rapide de loin). Un loup **emporte** le mouton vers le bord :
+  le chien le lui reprend en s'approchant ou en aboyant ; sorti du champ, le
+  mouton est perdu.
+- **Caméra** : suit le chien et le troupeau (zoom doux) ; touche C pour la fixer.
+- **Niveau 4 = vitrine**, dessiné à la main : enclos à l'ouest, mare, passage
+  entre deux rochers, un bélier, un loup.

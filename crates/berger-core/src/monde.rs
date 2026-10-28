@@ -1,6 +1,6 @@
 //! La simulation : le chien, les moutons (des boids qui fuient le chien et
 //! les loups) et les loups. Un pas de temps à la fois, sans affichage.
-use crate::carte::{Carte, Niveau, TypeMouton};
+use crate::carte::{Carte, GenreLoup, Niveau, TypeMouton};
 use crate::v2::{Hasard, V2, sur_segment, v2};
 
 /// Pas de simulation fixe : le jeu se déroule pareil quelle que soit la fréquence d'affichage.
@@ -116,6 +116,8 @@ pub enum EtatMouton {
 pub struct Mouton {
     pub genre: TypeMouton,
     pub etat: EtatMouton,
+    /// Le loup qui l'emporte (il peut encore être libéré).
+    pub porte_par: Option<usize>,
     /// Temps pendant lequel il est affolé sans avancer (coincé).
     pub coince: f32,
     pub pos: V2,
@@ -142,6 +144,9 @@ pub enum EtatLoup {
 
 #[derive(Clone, Debug)]
 pub struct Loup {
+    pub genre: GenreLoup,
+    /// Le mouton qu'il emporte.
+    pub porte: Option<usize>,
     pub pos: V2,
     pub vel: V2,
     pub etat: EtatLoup,
@@ -172,6 +177,10 @@ pub enum Evenement {
     Mange(usize),
     LoupArrive(usize),
     LoupFuit(usize),
+    /// Un loup emporte un mouton : il est encore temps de le délivrer.
+    Capture(usize),
+    /// Le mouton est délivré.
+    Libere(usize),
     /// Le bélier s'arrête et baisse les cornes : la charge arrive.
     BelierAvertit(usize),
     BelierCharge(usize),
@@ -244,6 +253,7 @@ impl Monde {
                 onde_vue: 0,
                 sursaut: 0.0,
                 etat: EtatMouton::Broute,
+                porte_par: None,
                 coince: 0.0,
             })
             .collect();
@@ -256,6 +266,8 @@ impl Monde {
             .loups
             .iter()
             .map(|l| Loup {
+                genre: l.genre,
+                porte: None,
                 pos: l.bord,
                 vel: V2::ZERO,
                 etat: EtatLoup::Absent,
@@ -425,11 +437,16 @@ impl Monde {
                 self.evenements.push(Evenement::BelierCalme(i));
             }
         }
-        for (i, l) in self.loups.iter_mut().enumerate() {
-            if l.onde_vue == id || !matches!(l.etat, EtatLoup::Rode | EtatLoup::Fuit) || l.pos.dist(origine) > rayon.min(portee) {
+        for i in 0..self.loups.len() {
+            let l = &mut self.loups[i];
+            if l.onde_vue == id || !matches!(l.etat, EtatLoup::Rode | EtatLoup::Fuit | EtatLoup::Repart) || l.pos.dist(origine) > rayon.min(portee) {
                 continue;
             }
             l.onde_vue = id;
+            if l.etat == EtatLoup::Repart {
+                self.lacher(i);
+                continue;
+            }
             l.etat = EtatLoup::Fuit;
             l.timer = 4.5;
             l.cible = None;
@@ -515,7 +532,7 @@ impl Monde {
         let n = self.moutons.len();
         let pos: Vec<V2> = self.moutons.iter().map(|m| m.pos).collect();
         let vel: Vec<V2> = self.moutons.iter().map(|m| m.vel).collect();
-        let vivant: Vec<bool> = self.moutons.iter().map(|m| !m.perdu).collect();
+        let vivant: Vec<bool> = self.moutons.iter().map(|m| !m.perdu && m.porte_par.is_none()).collect();
         let chien = self.chien.pos;
         let vitesse_chien = self.chien.vel.len();
         // Le troupeau « libre » : les moutons de l'enclos n'attirent plus les égarés (ils se colleraient à la clôture).
@@ -711,7 +728,13 @@ impl Monde {
                     }
                 }
                 EtatLoup::Repart => {
+                    // Le chien qui s'approche, ou un aboiement, lui fait lâcher sa proie.
+                    if self.loups[i].pos.dist(chien) < 3.0 {
+                        self.lacher(i);
+                        continue;
+                    }
                     let carte_demi = self.carte.demi;
+                    let charge = self.loups[i].porte.is_some();
                     let l = &mut self.loups[i];
                     let sortie = if (l.pos.x.abs() - carte_demi.x).abs() < (l.pos.y.abs() - carte_demi.y).abs() {
                         v2(l.pos.x.signum() * (carte_demi.x + 3.0), l.pos.y)
@@ -719,11 +742,19 @@ impl Monde {
                         v2(l.pos.x, l.pos.y.signum() * (carte_demi.y + 3.0))
                     };
                     let dir = ((sortie - l.pos).norm() + Self::evitement(&self.carte, l.pos, 0.5, 2.0)).norm();
-                    l.vel = l.vel.lerp(dir * self.reg.vitesse_fuite_loup, (dt * 6.0).min(1.0));
+                    // Chargé d'un mouton, il va moins vite.
+                    let v = if charge { self.reg.vitesse_loup * 0.8 } else { self.reg.vitesse_fuite_loup };
+                    l.vel = l.vel.lerp(dir * v, (dt * 6.0).min(1.0));
                     if l.pos.x.abs() > carte_demi.x + 1.5 || l.pos.y.abs() > carte_demi.y + 1.5 {
                         l.etat = EtatLoup::Absent;
                         l.apparition = temps + self.niveau.loup_ecart * 0.8;
                         l.bord = l.pos.clamp_in(carte_demi + v2(1.0, 1.0));
+                        // Sorti du champ avec sa proie : le mouton est perdu.
+                        if let Some(c) = l.porte.take() {
+                            self.moutons[c].perdu = true;
+                            self.moutons[c].porte_par = None;
+                            self.evenements.push(Evenement::Mange(c));
+                        }
                     }
                 }
             }
@@ -745,7 +776,30 @@ impl Monde {
             l.pos = pos;
             l.vel = vel;
             l.phase += dt * (1.0 + vel.len() * 2.0);
+            if let Some(c) = l.porte {
+                let derriere = if vel.len() > 0.2 { vel.norm() * -0.7 } else { V2::ZERO };
+                self.moutons[c].pos = pos + derriere;
+                self.moutons[c].vel = V2::ZERO;
+            }
         }
+    }
+
+    /// Le loup lâche sa proie et s'enfuit.
+    fn lacher(&mut self, i: usize) {
+        let chien = self.chien.pos;
+        let l = &mut self.loups[i];
+        l.etat = EtatLoup::Fuit;
+        l.timer = 4.5;
+        l.cible = None;
+        l.morsure = 0.0;
+        if let Some(c) = l.porte.take() {
+            let m = &mut self.moutons[c];
+            m.porte_par = None;
+            m.panique = 1.0;
+            m.vel = (m.pos - chien).norm() * 3.0;
+            self.evenements.push(Evenement::Libere(c));
+        }
+        self.evenements.push(Evenement::LoupFuit(i));
     }
 
     fn pas_beliers(&mut self, dt: f32) {
@@ -850,7 +904,7 @@ impl Monde {
     fn loup_chasse(&mut self, i: usize, dt: f32) {
         // Il vise le mouton libre le plus proche (les moutons de l'enclos sont à l'abri).
         let lp = self.loups[i].pos;
-        let valide = |m: &Mouton| !m.perdu && !m.abrite;
+        let valide = |m: &Mouton| !m.perdu && !m.abrite && m.porte_par.is_none();
         let cible = match self.loups[i].cible {
             Some(c) if valide(&self.moutons[c]) && self.hasard.f() > dt * 0.6 => Some(c),
             _ => self
@@ -867,17 +921,28 @@ impl Monde {
             l.vel = l.vel.lerp(V2::ZERO, (dt * 4.0).min(1.0));
             return;
         };
-        let vers = self.moutons[c].pos + self.moutons[c].vel * 0.25;
+        let chien = self.chien.pos;
+        let mut vers = self.moutons[c].pos + self.moutons[c].vel * 0.25;
         let l = &mut self.loups[i];
+        if l.genre == GenreLoup::Prudent && l.pos.dist(vers) > 4.0 {
+            // Il tourne autour : il vise le côté du mouton opposé au chien.
+            vers += (self.moutons[c].pos - chien).norm() * 3.0;
+        }
         let dist = l.pos.dist(vers);
         let dir = ((vers - l.pos).norm() + Self::evitement(&self.carte, l.pos, 0.5, 1.8) * 1.4).norm();
-        let vitesse = if dist < 3.5 { self.reg.vitesse_loup * 1.15 } else { self.reg.vitesse_loup };
+        let mut vitesse = if dist < 3.5 { self.reg.vitesse_loup * 1.15 } else { self.reg.vitesse_loup };
+        if l.genre == GenreLoup::Audacieux && l.pos.dist(chien) > 10.0 {
+            vitesse *= 1.25;
+        }
         l.vel = l.vel.lerp(dir * vitesse, (dt * 5.0).min(1.0));
         if self.moutons[c].pos.dist(l.pos) < 1.0 {
             l.morsure += dt;
             if l.morsure > 0.7 {
-                self.moutons[c].perdu = true;
-                self.evenements.push(Evenement::Mange(c));
+                // Il l'attrape et l'emporte vers le bord : on peut le lui reprendre.
+                self.moutons[c].porte_par = Some(i);
+                self.moutons[c].vel = V2::ZERO;
+                self.evenements.push(Evenement::Capture(c));
+                l.porte = Some(c);
                 l.etat = EtatLoup::Repart;
                 l.cible = None;
                 l.morsure = 0.0;

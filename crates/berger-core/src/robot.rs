@@ -23,6 +23,12 @@ fn commande_de_base(m: &Monde) -> Commande {
         return Commande::default();
     }
 
+    // Un loup emporte un mouton : on court le lui reprendre.
+    if let Some(l) = m.loups.iter().find(|l| l.etat == EtatLoup::Repart && l.porte.is_some()) {
+        let d = l.pos.dist(chien);
+        return Commande { dir: chemin(&m.carte, chien, l.pos) + evite(m, chien) * 0.4, course: d > 3.0, aboyer: d < m.reg.portee_aboiement - 1.5 };
+    }
+
     // Un loup rôde près de moutons libres : on court le chasser.
     let menace = m.loups.iter().filter(|l| l.etat == EtatLoup::Rode).min_by(|a, b| a.pos.dist(chien).total_cmp(&b.pos.dist(chien)));
     if let Some(l) = menace {

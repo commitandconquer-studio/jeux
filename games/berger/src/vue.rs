@@ -3,7 +3,7 @@
 //! à couleurs unies (le style maison) assemblées à la main.
 use std::f32::consts::{FRAC_PI_2, TAU};
 
-use berger_core::{Carte, Genre, Mur, Niveau, TypeMouton};
+use berger_core::{Carte, Genre, GenreLoup, Mur, Niveau, TypeMouton};
 use bevy::light::NotShadowCaster;
 use bevy::prelude::*;
 use game_common::{Rng, flat_material, palette};
@@ -66,6 +66,7 @@ pub struct Kit {
     pub noir: Handle<StandardMaterial>,
     pub blanc: Handle<StandardMaterial>,
     pub gris: Handle<StandardMaterial>,
+    pub roux: Handle<StandardMaterial>,
     pub gris_fonce: Handle<StandardMaterial>,
     pub rouge: Handle<StandardMaterial>,
     pub bois: Handle<StandardMaterial>,
@@ -107,6 +108,7 @@ impl FromWorld for Kit {
         let noir = m(0.09, 0.09, 0.11);
         let blanc = m(0.96, 0.96, 0.95);
         let gris = m(0.52, 0.54, 0.58);
+        let roux = m(0.66, 0.46, 0.3);
         let gris_fonce = m(0.34, 0.36, 0.42);
         let rouge = m(0.86, 0.18, 0.16);
         let bois = m(0.55, 0.38, 0.24);
@@ -144,6 +146,7 @@ impl FromWorld for Kit {
             noir,
             blanc,
             gris,
+            roux,
             gris_fonce,
             rouge,
             bois,
@@ -289,18 +292,24 @@ pub fn spawn_chien(c: &mut Commands, k: &Kit) -> Entity {
 }
 
 /// Un loup : gris, plus grand, les yeux rouges et les oreilles pointues.
-pub fn spawn_loup(c: &mut Commands, k: &Kit, i: usize) -> Entity {
-    let root = racine(c, 1.1, VueLoup(i));
+pub fn spawn_loup(c: &mut Commands, k: &Kit, i: usize, genre: GenreLoup) -> Entity {
+    let (pelage, pelage_fonce) = match genre {
+        GenreLoup::Solitaire => (&k.gris, &k.gris_fonce),
+        GenreLoup::Prudent => (&k.gris_fonce, &k.noir),
+        GenreLoup::Audacieux => (&k.roux, &k.bois),
+    };
+    let taille = if genre == GenreLoup::Audacieux { 1.2 } else { 1.1 };
+    let root = racine(c, taille, VueLoup(i));
     let corps = corps(c, root, 0.54);
-    piece(c, corps, &k.boule, &k.gris, Vec3::new(0.0, 0.0, -0.04), Vec3::new(0.5, 0.46, 1.1));
-    piece(c, corps, &k.boule, &k.gris_fonce, Vec3::new(0.0, 0.12, 0.1), Vec3::new(0.46, 0.3, 0.6));
+    piece(c, corps, &k.boule, pelage, Vec3::new(0.0, 0.0, -0.04), Vec3::new(0.5, 0.46, 1.1));
+    piece(c, corps, &k.boule, pelage_fonce, Vec3::new(0.0, 0.12, 0.1), Vec3::new(0.46, 0.3, 0.6));
     piece(c, corps, &k.boule, &k.blanc, Vec3::new(0.0, -0.1, 0.36), Vec3::new(0.34, 0.26, 0.4));
     // Tête allongée, gueule, truffe.
-    piece(c, corps, &k.boule, &k.gris, Vec3::new(0.0, 0.2, 0.7), Vec3::new(0.38, 0.34, 0.4));
-    piece(c, corps, &k.cube, &k.gris_fonce, Vec3::new(0.0, 0.14, 0.94), Vec3::new(0.2, 0.16, 0.3));
+    piece(c, corps, &k.boule, pelage, Vec3::new(0.0, 0.2, 0.7), Vec3::new(0.38, 0.34, 0.4));
+    piece(c, corps, &k.cube, pelage_fonce, Vec3::new(0.0, 0.14, 0.94), Vec3::new(0.2, 0.16, 0.3));
     piece(c, corps, &k.boule, &k.noir, Vec3::new(0.0, 0.18, 1.1), Vec3::splat(0.09));
     for s in [-1.0f32, 1.0] {
-        piece_tournee(c, corps, &k.cone, &k.gris_fonce, Vec3::new(0.13 * s, 0.46, 0.62), Vec3::new(0.15, 0.3, 0.1), Quat::from_rotation_z(-0.15 * s));
+        piece_tournee(c, corps, &k.cone, pelage_fonce, Vec3::new(0.13 * s, 0.46, 0.62), Vec3::new(0.15, 0.3, 0.1), Quat::from_rotation_z(-0.15 * s));
         piece(c, corps, &k.boule, &k.rouge, Vec3::new(0.1 * s, 0.3, 0.88), Vec3::splat(0.07));
     }
     // Un anneau rouge au sol : il se repère de loin.
@@ -313,7 +322,7 @@ pub fn spawn_loup(c: &mut Commands, k: &Kit, i: usize) -> Entity {
     ));
     // La queue basse et touffue.
     let queue = c.spawn((Transform::from_xyz(0.0, 0.0, -0.55), Visibility::default(), Queue { vitesse: 3.0 }, ChildOf(corps))).id();
-    piece_tournee(c, queue, &k.cube, &k.gris_fonce, Vec3::new(0.0, -0.1, -0.22), Vec3::new(0.14, 0.14, 0.55), Quat::from_rotation_x(-0.5));
+    piece_tournee(c, queue, &k.cube, pelage_fonce, Vec3::new(0.0, -0.1, -0.22), Vec3::new(0.14, 0.14, 0.55), Quat::from_rotation_x(-0.5));
     for (x, z, d) in [(-0.18, 0.34, 0.0), (0.18, 0.34, 3.14), (-0.18, -0.34, 3.14), (0.18, -0.34, 0.0)] {
         patte(c, root, k, x, z, 0.42, 0.12, &k.gris_fonce, &k.noir, d);
     }
@@ -518,7 +527,7 @@ pub fn spawn_scene(c: &mut Commands, k: &Kit, carte: &Carte, niveau: &Niveau) {
     }
     spawn_chien(c, k);
     for i in 0..carte.loups.len() {
-        let l = spawn_loup(c, k, i);
+        let l = spawn_loup(c, k, i, carte.loups[i].genre);
         c.entity(l).insert(Visibility::Hidden);
     }
     let _ = niveau;

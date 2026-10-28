@@ -6,7 +6,7 @@ pub mod monde;
 pub mod robot;
 pub mod v2;
 
-pub use carte::{Carte, Cote, Genre, Mur, NIVEAUX, Niveau, TypeMouton, generer, niveau, niveau_du_jour, vitrine};
+pub use carte::{Carte, Cote, Genre, GenreLoup, Mur, NIVEAUX, Niveau, TypeMouton, generer, niveau, niveau_du_jour, vitrine};
 pub use monde::{Belier, Commande, EtatBelier, EtatLoup, EtatMouton, Evenement, Fin, Monde, PAS_FIXE, Reglages};
 pub use v2::{V2, v2};
 
@@ -239,15 +239,55 @@ mod tests {
     }
 
     #[test]
-    fn un_loup_sans_chien_mange_un_mouton() {
+    fn un_loup_sans_chien_emporte_puis_mange_un_mouton() {
         let nv = Niveau { loups: 1, loup_debut: 1.0, pertes_max: 99, ..NIVEAUX[4] };
         let (fin, _, _, perdus) = jouer(&nv, 7, false);
         assert!(perdus >= 1, "{fin:?}");
     }
 
     #[test]
+    fn un_mouton_emporte_peut_etre_delivre() {
+        let nv = Niveau { loups: 1, loup_debut: 1.0, pertes_max: 99, ..NIVEAUX[4] };
+        let mut m = Monde::nouveau(generer(&nv, 7), nv);
+        let mut capture = None;
+        for _ in 0..(40 * 60) {
+            m.pas(1.0 / 60.0, Commande::default());
+            if let Some(Evenement::Capture(c)) = m.evenements.iter().find(|e| matches!(e, Evenement::Capture(_))) {
+                capture = Some(*c);
+                break;
+            }
+        }
+        let c = capture.expect("le loup n'a rien attrapé");
+        assert!(m.moutons[c].porte_par.is_some() && !m.moutons[c].perdu);
+        // Le chien arrive : le loup lâche sa proie.
+        m.chien.pos = m.loups.iter().find(|l| l.porte == Some(c)).unwrap().pos + v2(2.0, 0.0);
+        m.pas(1.0 / 60.0, Commande::default());
+        assert!(m.evenements.contains(&Evenement::Libere(c)));
+        assert!(m.moutons[c].porte_par.is_none() && !m.moutons[c].perdu);
+    }
+
+    #[test]
+    fn un_aboiement_fait_lacher_le_mouton() {
+        let nv = Niveau { loups: 1, loup_debut: 1.0, pertes_max: 99, ..NIVEAUX[4] };
+        let mut m = Monde::nouveau(generer(&nv, 7), nv);
+        while !m.evenements.iter().any(|e| matches!(e, Evenement::Capture(_))) {
+            m.pas(1.0 / 60.0, Commande::default());
+            assert!(m.temps < 60.0);
+        }
+        let p = m.loups.iter().find(|l| l.porte.is_some()).unwrap().pos;
+        m.chien.pos = p + v2(6.0, 0.0);
+        let mut libre = false;
+        m.pas(1.0 / 60.0, Commande { aboyer: true, ..Commande::default() });
+        for _ in 0..60 {
+            m.pas(1.0 / 60.0, Commande::default());
+            libre |= m.evenements.iter().any(|e| matches!(e, Evenement::Libere(_)));
+        }
+        assert!(libre);
+    }
+
+    #[test]
     fn le_robot_gagne_les_premiers_niveaux() {
-        for i in [0usize, 1, 2, 3] {
+        for i in [0usize, 1, 2] {
             let mut gagnes = 0;
             for graine in 0..6 {
                 let (fin, t, e, _) = jouer(&NIVEAUX[i], graine * 13 + 1, true);

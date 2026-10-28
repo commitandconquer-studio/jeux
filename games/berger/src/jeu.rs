@@ -326,6 +326,7 @@ fn avancer(
     for e in evenements {
         match e {
             Evenement::LoupArrive(_) => partie.alerte = 4.0,
+            Evenement::Capture(_) => partie.alerte = 4.0,
             Evenement::Fin(f) if jeu => {
                 if f == Fin::Victoire {
                     let (genre, etoiles) = (partie.genre, partie.monde.etoiles());
@@ -478,7 +479,7 @@ fn effets(mut commands: Commands, kit: Res<Kit>, partie: Option<Res<Partie>>, mu
                     eclat(&mut commands, &kit, &kit.etoile, Vec3::new(p.x, 0.8, p.y), v, 0.9, 4.0, 0.14);
                 }
             }
-            Evenement::Mange(i) => {
+            Evenement::Mange(i) | Evenement::Capture(i) => {
                 let p = partie.monde.moutons[i].pos;
                 for _ in 0..14 {
                     let v = Vec3::new(rng.next_f32() - 0.5, 1.0 + rng.next_f32() * 2.0, rng.next_f32() - 0.5) * 2.0;
