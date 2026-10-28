@@ -1,11 +1,15 @@
 {% extends "base.html" %}
 {% block title %}{{ section.title }} · Commit & Conquer{% endblock %}
 {% block content %}
-<section class="page-head">
-  <h1>{{ section.title }}</h1>
+<h1 class="cache">{{ section.title }}</h1>
+{{ <cc.vitrine jeux={section.pages} lang={lang} /> }}
+<section class="band">
+  <h2>{{ section.title }}</h2>
   <div class="intro">{{ section.content | safe }}</div>
+  <div class="jeux-grid">
+  {%- for j in section.pages %}
+  {{ <cc.carte_jeu j={j} lang={lang} /> }}
+  {%- endfor %}
+  </div>
 </section>
-<div class="band-in">
-  {{ <cc.catalogue jeux={section.pages} lang={lang} /> }}
-</div>
 {% endblock %}

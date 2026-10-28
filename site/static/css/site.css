@@ -427,3 +427,84 @@ html.moment-nuit .hero-fallback { filter: brightness(.42) saturate(.75) hue-rota
 .galerie-band .galerie figure { margin: 0; border-radius: var(--radius); overflow: hidden; background: #fff; box-shadow: var(--shadow); }
 .galerie-band .galerie img { display: block; width: 100%; aspect-ratio: 16 / 9; object-fit: cover; }
 .galerie-band .galerie figcaption { padding: 10px 14px 14px; font-size: 14px; color: var(--ink-soft); }
+
+/* ---- Vitrine des jeux : plein écran façon boutique -------------------- */
+.vitrine { position: relative; min-height: calc(100vh - 76px); min-height: calc(100svh - 76px); overflow: hidden; color: #fff; background: var(--night); }
+.vitrine-slide {
+  position: absolute; inset: 0; display: flex; align-items: center; justify-content: space-between; gap: 40px;
+  padding: clamp(32px, 6vw, 72px) clamp(16px, 8vw, 120px) 120px;
+  background: radial-gradient(ellipse at 75% 40%, #1E4A6E 0%, var(--night) 65%); background-size: cover; background-position: center;
+  opacity: 0; visibility: hidden; transition: opacity .7s, visibility .7s;
+}
+.vitrine-slide.on { opacity: 1; visibility: visible; }
+.vitrine-slide::before {
+  content: ""; position: absolute; inset: 0;
+  background: linear-gradient(90deg, rgba(10, 26, 42, .88) 0%, rgba(10, 26, 42, .55) 42%, rgba(10, 26, 42, .05) 100%), linear-gradient(0deg, rgba(10, 26, 42, .8) 0%, transparent 35%);
+}
+.vitrine-texte { position: relative; z-index: 1; max-width: 600px; }
+.vitrine-texte h2 { color: #fff; font-size: clamp(2.4rem, 6vw, 4.4rem); line-height: 1.05; margin: 0 0 14px; }
+.vitrine-texte .vedette-logo { filter: drop-shadow(0 10px 24px rgba(0, 0, 0, .45)); width: min(100%, 520px); }
+.vitrine-texte .lede { color: #E8F1F8; font-size: clamp(1.05rem, 2vw, 1.3rem); text-shadow: 0 2px 12px rgba(0, 0, 0, .5); }
+.vitrine-texte .chiffres-puces { margin-top: 18px; }
+.vitrine-texte .chiffres-puces li { background: rgba(255, 255, 255, .16); color: #fff; backdrop-filter: blur(4px); }
+.vitrine-texte .chiffres-puces strong { color: #fff; }
+.vitrine-texte .btn-ghost { background: rgba(255, 255, 255, .14); color: #fff; border-color: rgba(255, 255, 255, .8); }
+.vitrine-icone { position: relative; z-index: 1; width: clamp(140px, 22vw, 260px); border-radius: 15%; box-shadow: 0 24px 60px -20px rgba(0, 0, 0, .7); }
+.vitrine-bas {
+  position: absolute; z-index: 2; left: 0; right: 0; bottom: 0; display: flex; align-items: center; gap: 8px;
+  padding: 14px clamp(8px, 3vw, 40px) 16px; background: linear-gradient(0deg, rgba(10, 26, 42, .92), rgba(10, 26, 42, .5));
+}
+.vitrine-vignettes { display: flex; flex: 1; gap: 10px; list-style: none; margin: 0; padding: 0; overflow-x: auto; justify-content: center; scrollbar-width: none; }
+.vitrine-vignette {
+  display: flex; align-items: center; gap: 10px; padding: 8px 14px 8px 8px; border-radius: 12px; border: 2px solid transparent;
+  background: rgba(255, 255, 255, .1); color: #D5E2EC; font: inherit; font-weight: 600; font-size: 14px; cursor: pointer; white-space: nowrap;
+  transition: background .2s, border-color .2s;
+}
+.vitrine-vignette img { width: 40px; height: 40px; border-radius: 10px; }
+.vitrine-vignette:hover { background: rgba(255, 255, 255, .2); }
+.vitrine-vignette.on { background: rgba(255, 255, 255, .22); border-color: var(--lemon); color: #fff; }
+.vitrine-fleche { flex: none; width: 38px; height: 38px; border-radius: 50%; border: 0; background: rgba(255, 255, 255, .16); color: #fff; font-size: 24px; line-height: 1; cursor: pointer; }
+.vitrine-fleche:hover { background: rgba(255, 255, 255, .3); }
+@media (max-width: 760px) {
+  .vitrine-slide { flex-direction: column; align-items: flex-start; justify-content: flex-end; padding-bottom: 130px; }
+  .vitrine-slide::before { background: linear-gradient(0deg, rgba(10, 26, 42, .92) 0%, rgba(10, 26, 42, .4) 100%); }
+  .vitrine-icone { display: none; }
+  .vitrine-vignette span { display: none; }
+  .vitrine-vignette { padding: 6px; }
+}
+@media (prefers-reduced-motion: reduce) { .vitrine-slide { transition: none; } }
+
+/* ---- Carrousel des mondes : flèches et points ------------------------- */
+.carrousel { position: relative; }
+.mondes-rail { scroll-behavior: smooth; }
+.monde { flex-basis: min(86vw, 760px); }
+.monde img { cursor: zoom-in; }
+.carrousel-fleche {
+  position: absolute; top: calc(50% - 30px); z-index: 2; width: 48px; height: 48px; border-radius: 50%; border: 0;
+  background: rgba(20, 44, 64, .75); color: #fff; font-size: 30px; line-height: 1; cursor: pointer; box-shadow: var(--shadow);
+}
+.carrousel-fleche:hover { background: var(--night); }
+.carrousel-fleche.prec { left: max(8px, calc((100% - 1180px) / 2)); }
+.carrousel-fleche.suiv { right: max(8px, calc((100% - 1180px) / 2)); }
+.carrousel-points { display: flex; justify-content: center; gap: 8px; margin-top: 4px; }
+.carrousel-points button { width: 11px; height: 11px; padding: 0; border-radius: 50%; border: 0; background: var(--line); cursor: pointer; }
+.carrousel-points button.on { background: var(--blue); transform: scale(1.25); }
+@media (max-width: 600px) { .carrousel-fleche { display: none; } }
+
+/* ---- Agrandissement des images ---------------------------------------- */
+.galerie-band .galerie img { cursor: zoom-in; transition: transform .25s; }
+.galerie-band .galerie figure:hover img { transform: scale(1.03); }
+.zoom { position: fixed; inset: 0; z-index: 1000; display: flex; align-items: center; justify-content: center; background: rgba(6, 14, 24, .92); padding: 24px 64px; }
+.zoom[hidden] { display: none; }
+.zoom figure { margin: 0; max-width: 100%; max-height: 100%; display: flex; flex-direction: column; align-items: center; gap: 10px; }
+.zoom img { max-width: 100%; max-height: calc(100vh - 110px); border-radius: 10px; box-shadow: 0 20px 60px rgba(0, 0, 0, .6); }
+.zoom figcaption { color: #E8F1F8; font-size: 15px; text-align: center; }
+.zoom button { position: absolute; border: 0; border-radius: 50%; background: rgba(255, 255, 255, .16); color: #fff; cursor: pointer; line-height: 1; }
+.zoom button:hover { background: rgba(255, 255, 255, .32); }
+.zoom-x { top: 16px; right: 16px; width: 44px; height: 44px; font-size: 28px; }
+.zoom-fl { top: calc(50% - 24px); width: 48px; height: 48px; font-size: 30px; }
+.zoom-fl.prec { left: 10px; }
+.zoom-fl.suiv { right: 10px; }
+.zoom-ouvert { overflow: hidden; }
+@media (max-width: 600px) { .zoom { padding: 56px 8px 16px; } .zoom-fl { top: auto; bottom: 14px; } }
+.cache { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }

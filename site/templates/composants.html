@@ -142,3 +142,43 @@
   </svg>
 </div>
 {% endcomponent cc.montagnes %}
+
+{# Vitrine plein écran façon boutique : un jeu à la fois (image, titre, accroche, boutons), vignettes en bas. #}
+{% component cc.vitrine(jeux, lang) %}
+<section class="vitrine" aria-roledescription="carousel" data-vitrine>
+  {%- for j in jeux %}
+  {%- if j.extra.hero %}{% set_global fond = j.extra.hero %}{% elif j.extra.vignette %}{% set_global fond = j.extra.vignette %}{% else %}{% set_global fond = "" %}{% endif %}
+  <article class="vitrine-slide{% if loop.first %} on{% endif %}"{% if fond %} style="background-image: url('{{ get_url(path='img/jeux/' ~ j.extra.dossier ~ '/' ~ fond ~ '.jpg') }}')"{% endif %}>
+    <div class="vitrine-texte">
+      {%- if j.extra.logo %}
+      <img class="vedette-logo" src="{{ get_url(path='img/jeux/' ~ j.extra.logo ~ '.png') }}" alt="{{ j.title }}">
+      {%- else %}
+      <h2>{{ j.title }}</h2>
+      {%- endif %}
+      <p class="lede">{{ j.description }}</p>
+      {%- if j.extra.chiffres %}
+      <ul class="chiffres-puces">{% for c in j.extra.chiffres %}<li><strong>{{ c.n }}</strong> {{ c.t }}</li>{% endfor %}</ul>
+      {%- endif %}
+      <p class="actions">
+        {%- if j.extra.web %}
+        <a class="btn btn-main jouer" href="{{ get_url(path='@/jouer/' ~ j.slug ~ '.md', lang=lang) }}">▶ {{ trans(key="jouer_maintenant", lang=lang) }}</a>
+        {%- endif %}
+        <a class="btn btn-ghost" href="{{ j.permalink }}">{{ trans(key="voir_jeu", lang=lang) }}</a>
+      </p>
+    </div>
+    {%- if not fond %}<img class="vitrine-icone" src="{{ get_url(path='img/jeux/' ~ j.extra.icone ~ '.png') }}" alt="">{% endif %}
+  </article>
+  {%- endfor %}
+  <div class="vitrine-bas">
+    <button type="button" class="vitrine-fleche" data-vitrine-prec aria-label="‹">‹</button>
+    <ul class="vitrine-vignettes">
+      {%- for j in jeux %}
+      <li><button type="button" class="vitrine-vignette{% if loop.first %} on{% endif %}" data-i="{{ loop.index0 }}">
+        <img src="{{ get_url(path='img/jeux/' ~ j.extra.icone ~ '.png') }}" alt="" width="40" height="40" loading="lazy"><span>{{ j.title }}</span>
+      </button></li>
+      {%- endfor %}
+    </ul>
+    <button type="button" class="vitrine-fleche" data-vitrine-suiv aria-label="›">›</button>
+  </div>
+</section>
+{% endcomponent cc.vitrine %}

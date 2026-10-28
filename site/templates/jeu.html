@@ -72,14 +72,14 @@
 {%- if page.extra.mondes %}
 <section class="band mondes">
   <h2>{{ trans(key="mondes_titre", lang=lang) }}</h2>
-  <div class="mondes-rail">
+  <div class="carrousel" data-carrousel><div class="mondes-rail">
     {%- for m in page.extra.mondes %}
     <figure class="monde">
-      <img src="{{ get_url(path='img/jeux/' ~ page.extra.dossier ~ '/' ~ m.img ~ '.jpg') }}" alt="{{ m.nom }}" loading="lazy">
+      <img src="{{ get_url(path='img/jeux/' ~ page.extra.dossier ~ '/' ~ m.img ~ '.jpg') }}" alt="{{ m.nom }}" loading="lazy" data-zoom tabindex="0">
       <figcaption><strong>{{ m.nom }}</strong><span>{{ m.t }}</span></figcaption>
     </figure>
     {%- endfor %}
-  </div>
+  </div></div>
 </section>
 {%- endif %}
 
@@ -87,7 +87,7 @@
 <section class="band galerie-band">
   <h2>{{ trans(key="galerie_titre", lang=lang) }}</h2>
   <div class="galerie">{% for c in page.extra.captures %}
-    <figure><img src="{{ get_url(path='img/jeux/' ~ page.extra.dossier ~ '/' ~ c.img ~ '.jpg') }}" alt="{{ c.t }}" loading="lazy"><figcaption>{{ c.t }}</figcaption></figure>{% endfor %}
+    <figure><img src="{{ get_url(path='img/jeux/' ~ page.extra.dossier ~ '/' ~ c.img ~ '.jpg') }}" alt="{{ c.t }}" loading="lazy" data-zoom tabindex="0"><figcaption>{{ c.t }}</figcaption></figure>{% endfor %}
   </div>
 </section>
 {%- endif %}
