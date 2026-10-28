@@ -1,0 +1,79 @@
+# Île des pirates — les premiers tapis roulants : des courants (planches mobiles) qu'on ne peut pas quitter.
+# Cases (nombre) : blocs, trous, teleporteurs (paires), accelerateurs, tapis.
+
+[La planche]
+lieu = pirates
+forme = carre 18
+touristes = 8
+tapis = 1
+pas = 0.33
+
+[Le courant]
+lieu = pirates
+forme = carre 18
+touristes = 10
+tapis = 2
+pas = 0.32
+
+[Les courants croisés]
+lieu = pirates
+forme = carre 16
+touristes = 14
+tapis = 3
+pas = 0.32
+
+[Courants et tonneaux]
+lieu = pirates
+forme = carre 16
+touristes = 14
+tapis = 2
+blocs = 4
+pas = 0.31
+
+[Le quai]
+lieu = pirates
+forme = rectangle 22x10
+touristes = 16
+tapis = 2
+pas = 0.31
+
+[L'embarquement]
+lieu = pirates
+forme = carre 16
+touristes = 14
+tapis = 2
+sortie = oui
+pas = 0.31
+
+[La passerelle]
+lieu = pirates
+forme = U
+touristes = 16
+tapis = 2
+sortie = oui
+pas = 0.30
+
+[La crique]
+lieu = pirates
+forme = route
+touristes = 12
+tapis = 1
+sortie = oui
+pas = 0.30
+
+[La tempête]
+lieu = pirates
+forme = carre 16
+touristes = 20
+tapis = 4
+sortie = oui
+pas = 0.24
+
+[Le trésor du capitaine]
+lieu = pirates
+forme = allees
+touristes = 24
+tapis = 3
+teleporteurs = 1
+sortie = oui
+pas = 0.28
