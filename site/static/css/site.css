@@ -574,3 +574,7 @@ html.moment-nuit .hero-fallback { filter: brightness(.42) saturate(.75) hue-rota
 .galerie-band { background: linear-gradient(180deg, var(--ivory) 0, #EEF8FF 50%, var(--ivory) 100%); }
 /* Le dernier bloc clair avant un bloc sombre : pas de biais supplémentaire. */
 .band.mondes + .galerie-band::before { display: block; }
+
+/* Petite illustration (kit du jeu) au pied de la fiche */
+.jeu-fin { position: relative; }
+.jeu-fin-deco { display: block; margin: 0 auto 8px; height: clamp(110px, 16vw, 190px); width: auto; filter: drop-shadow(0 8px 10px rgba(0,0,0,.25)); }

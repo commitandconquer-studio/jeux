@@ -96,6 +96,9 @@
 {%- endif %}
 
 <section class="band jeu-fin">
+  {%- if page.extra.deco %}
+  <img class="jeu-fin-deco" src="{{ get_url(path='img/jeux/' ~ page.extra.deco ~ '.png') }}" alt="" loading="lazy">
+  {%- endif %}
   <h2>{{ page.title }}</h2>
   <p class="actions">
     {%- if page.extra.web %}
