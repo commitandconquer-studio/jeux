@@ -1,0 +1,79 @@
+# Grottes — des éboulements : une case clignote, puis une pierre y tombe et reste (elle attend que la file ait quitté la case).
+# Cases (nombre) : blocs, trous, teleporteurs (paires), accelerateurs, tapis, barrieres, rivaux, trains, pontons, herses, eboulements (nombre total de chutes dans le niveau).
+
+[Premiers cailloux]
+lieu = grottes
+forme = carre 18
+touristes = 8
+eboulements = 3
+pas = 0.33
+
+[Le couloir]
+lieu = grottes
+forme = carre 18
+touristes = 10
+eboulements = 5
+pas = 0.32
+
+[La salle des champignons]
+lieu = grottes
+forme = carre 16
+touristes = 12
+eboulements = 6
+pas = 0.32
+
+[Les stalactites]
+lieu = grottes
+forme = carre 16
+touristes = 14
+eboulements = 8
+blocs = 3
+pas = 0.31
+
+[La galerie]
+lieu = grottes
+forme = rectangle 22x10
+touristes = 16
+eboulements = 8
+pas = 0.3
+
+[La sortie de la grotte]
+lieu = grottes
+forme = carre 16
+touristes = 14
+eboulements = 8
+sortie = oui
+pas = 0.3
+
+[Le boyau]
+lieu = grottes
+forme = u
+touristes = 18
+eboulements = 10
+pas = 0.3
+
+[La cave aux cristaux]
+lieu = grottes
+forme = carre 18
+touristes = 20
+eboulements = 10
+accelerateurs = 2
+pas = 0.29
+
+[Le grondement]
+lieu = grottes
+forme = allees
+touristes = 24
+eboulements = 12
+blocs = 3
+pas = 0.28
+
+[L'effondrement]
+lieu = grottes
+forme = carre 18
+touristes = 28
+eboulements = 14
+teleporteurs = 1
+accelerateurs = 3
+sortie = oui
+pas = 0.26

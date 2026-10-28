@@ -26,6 +26,8 @@ pub enum Tile {
     Gate(u8),
     /// Ponton fragile : un trou après le passage.
     Plank,
+    /// Une pierre va tomber ici au pas indiqué (la case clignote), puis elle restera comme un bloc.
+    Rubble(u32),
     /// Chemin du guide rival (vrai : le long de x).
     Lane(bool),
 }
@@ -47,6 +49,8 @@ pub enum Feature {
     Train,
     /// Ponton : s'effondre (devient un trou) dès que toute la file l'a quitté.
     Plank,
+    /// Éboulement programmé (nombre à venir) : des pierres tomberont une à une et resteront.
+    Cave,
 }
 
 /// Un guide rival et ses deux touristes : il traverse tout le plateau le long d'une ligne de cases, puis revient après une pause.
@@ -96,6 +100,8 @@ pub struct Board {
     /// Nombre de pas faits (rythme des barrières).
     pub clock: u32,
     pub rivals: Vec<Rival>,
+    /// Éboulements encore à venir (grottes).
+    pub falls_left: u32,
 }
 
 impl Board {
@@ -104,6 +110,7 @@ impl Board {
         self.teleports = 0;
         self.clock = 0;
         self.rivals.clear();
+        self.falls_left = 0;
     }
 
     /// Un rival occupe-t-il cette case au pas `clock` ?
@@ -132,6 +139,9 @@ impl Board {
 
     /// Nombre de cases de ce genre déjà posées.
     pub fn count(&self, f: Feature) -> usize {
+        if f == Feature::Cave {
+            return self.falls_left as usize;
+        }
         if matches!(f, Feature::Rival | Feature::Train) {
             return self.rivals.iter().filter(|r| r.train == (f == Feature::Train)).count();
         }
@@ -215,6 +225,10 @@ impl Board {
                     self.tiles.insert(d, Tile::Teleport(id));
                     return true;
                 }
+                Feature::Cave => {
+                    self.falls_left += 1;
+                    return true;
+                }
                 Feature::Plank => {
                     let dir = [IVec2::X, IVec2::Y][rng.below(2) as usize];
                     let cells: Vec<IVec2> = (0..3).map(|i| c + dir * i).collect();
@@ -242,11 +256,11 @@ impl Board {
         false
     }
 
-    fn is_free(&self, c: IVec2, busy: &[IVec2], head: IVec2) -> bool {
+    pub fn is_free(&self, c: IVec2, busy: &[IVec2], head: IVec2) -> bool {
         !self.tiles.contains_key(&c) && !busy.contains(&c) && (c - head).abs().element_sum() >= 4
     }
 
-    fn next_to_blocker(&self, c: IVec2) -> bool {
+    pub fn next_to_blocker(&self, c: IVec2) -> bool {
         (-1..=1).any(|dx| {
             (-1..=1).any(|dy| matches!(self.tiles.get(&(c + IVec2::new(dx, dy))), Some(Tile::Obstacle(_) | Tile::Hole)))
         })
@@ -265,6 +279,7 @@ pub fn obstacle_models(u: Universe) -> &'static [(&'static str, f32)] {
         Universe::Ville => &[("city-kit-suburban/tree-large", 2.0), ("city-kit-suburban/tree-small", 2.2), ("nature-kit/plant_bush", 2.0), ("nature-kit/rock_largeA", 1.8), ("special/pond", 1.0), ("special/pond", 1.0)],
         Universe::Gare => &[("city-kit-industrial/shipping-container-a", 1.0), ("city-kit-industrial/detail-tank", 1.2), ("city-kit-roads/construction-barrier", 2.0)],
         Universe::Port => &[("pirate-kit/barrel", 1.6), ("pirate-kit/crate", 1.6), ("city-kit-industrial/shipping-container-a", 1.0)],
+        Universe::Cave => &[("nature-kit/rock_largeA", 1.8), ("nature-kit/rock_largeB", 1.8), ("nature-kit/rock_largeD", 1.6), ("nature-kit/mushroom_redGroup", 2.4)],
         Universe::Medieval => &[("fantasy-town-kit/cart", 1.6), ("castle-kit/rocks-small", 1.8), ("castle-kit/tree-trunk", 1.8), ("fantasy-town-kit/planks", 1.8)],
     }
 }
@@ -329,6 +344,8 @@ pub fn sync_tiles(
     let rail_lamp = mk(Color::srgb(1.0, 0.25, 0.15), 2.0);
     let pond_edge = mk(Color::srgb(0.62, 0.60, 0.52), 0.0);
     let pond = mk(Color::srgb(0.28, 0.58, 0.82), 0.25);
+    let rubble_shadow = mk(Color::srgb(0.20, 0.17, 0.18), 0.0);
+    let rubble_warn = mk(Color::srgb(1.0, 0.35, 0.15), 1.8);
     let plank_wood = mk(Color::srgb(0.58, 0.45, 0.30), 0.0);
     let plank_dark = mk(Color::srgb(0.36, 0.30, 0.24), 0.0);
     let speed_plate = mk(Color::srgb(1.0, 0.8, 0.1), 0.6);
@@ -439,6 +456,11 @@ pub fn sync_tiles(
                 spawn(&mut commands, plate.clone(), speed_plate.clone(), at(0.0), None);
                 let core = spawn(&mut commands, cube.clone(), speed_core.clone(), at(0.06).with_scale(Vec3::new(0.34, 0.05, 0.34)).with_rotation(Quat::from_rotation_y(FRAC_PI_4)), None);
                 commands.entity(core).insert(Pulse(cell.x as f32 * 0.7));
+            }
+            Tile::Rubble(_) => {
+                spawn(&mut commands, disc.clone(), rubble_shadow.clone(), at(0.0).with_scale(Vec3::new(1.0, 1.0, 1.0)), None);
+                let core = spawn(&mut commands, cube.clone(), rubble_warn.clone(), at(0.06).with_scale(Vec3::new(0.4, 0.05, 0.4)).with_rotation(Quat::from_rotation_y(FRAC_PI_4)), None);
+                commands.entity(core).insert(Pulse(cell.x as f32 * 0.9));
             }
             Tile::Plank => {
                 // Planche pourrie : trois lattes de travers, usées, avec des jours entre elles.

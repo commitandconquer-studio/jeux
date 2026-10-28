@@ -145,6 +145,7 @@ fn cap(f: Feature) -> usize {
         Feature::Rival => 2,
         Feature::Train => 2,
         Feature::Plank => 4,
+        Feature::Cave => 1,
     }
 }
 
@@ -156,6 +157,7 @@ pub fn feature_name(f: Feature) -> &'static str {
         Feature::Teleport => tx!("Téléporteurs !", "Teleporters!", "Teleporter!", "Teletrasporti!", "¡Teletransportadores!"),
         Feature::Speeder => tx!("Accélérateurs !", "Speed pads!", "Turbo-Felder!", "Acceleratori!", "¡Aceleradores!"),
         Feature::Portal => tx!("Un portail !", "A portal!", "Ein Portal!", "Un portale!", "¡Un portal!"),
+        Feature::Cave => tx!("Éboulements !", "Rockfalls!", "Steinschlag!", "Frane!", "¡Derrumbes!"),
         Feature::Plank => tx!("Pontons fragiles !", "Fragile docks!", "Brüchige Stege!", "Moli fragili!", "¡Muelles frágiles!"),
         Feature::Train => tx!("Un train arrive !", "A train is coming!", "Ein Zug kommt!", "Arriva un treno!", "¡Llega un tren!"),
         Feature::Rival => tx!("Un guide rival !", "A rival guide!", "Ein Konkurrenzführer!", "Una guida rivale!", "¡Un guía rival!"),
@@ -489,6 +491,7 @@ fn step(
     boost.0 = boost.0.saturating_sub(1);
     // Le rythme des barrières suit les pas, sans réveiller le décor du plateau.
     board.bypass_change_detection().clock += 1;
+    rockfalls(&mut board, &conga, &layout, &mut rng, voyage.scenery.0);
     // Un tapis roulant impose sa direction (sauf à contresens).
     if let Some(Tile::Belt(d)) = board.tiles.get(&conga.cells[0])
         && *d != -conga.dir
@@ -637,6 +640,30 @@ fn step(
     if board.tiles.get(&head) == Some(&Tile::Speeder) {
         boost.0 = 5;
         sfx.write(Sfx::Boost);
+    }
+}
+
+/// Grottes : de temps en temps une case se met à clignoter, puis une pierre y tombe et reste. Elle attend que la file ait quitté la case.
+fn rockfalls(board: &mut Board, conga: &Conga, layout: &Layout, rng: &mut Rng, universe: crate::world::Universe) {
+    let clock = board.clock;
+    if board.falls_left > 0 && clock % 12 == 6 {
+        for _ in 0..40 {
+            let c = IVec2::new(rng.below(layout.w as u32) as i32, rng.below(layout.h as u32) as i32);
+            if layout.walkable(c) && board.is_free(c, &conga.cells, conga.cells[0]) && !board.next_to_blocker(c) {
+                board.tiles.insert(c, Tile::Rubble(clock + 8));
+                board.falls_left -= 1;
+                break;
+            }
+        }
+    }
+    let due: Vec<(IVec2, u32)> = board.tiles.iter().filter_map(|(c, t)| matches!(t, Tile::Rubble(w) if *w <= clock).then_some((*c, clock))).collect();
+    for (c, _) in due {
+        if conga.cells.contains(&c) {
+            board.tiles.insert(c, Tile::Rubble(clock + 2));
+        } else {
+            let n = crate::board::obstacle_models(universe).len() as u32;
+            board.tiles.insert(c, Tile::Obstacle(rng.below(n) as u8));
+        }
     }
 }
 

@@ -100,6 +100,7 @@ pub fn label(item: Item) -> &'static str {
         Item::Feature(Feature::Hole) => tx!("Trous", "Holes", "Löcher", "Buche", "Hoyos").t(),
         Item::Feature(Feature::Teleport) => tx!("Téléporteurs", "Teleporters", "Teleporter", "Teletrasporti", "Teletransportadores").t(),
         Item::Feature(Feature::Speeder) => tx!("Accélérateurs", "Speed pads", "Turbo-Felder", "Acceleratori", "Aceleradores").t(),
+        Item::Feature(Feature::Cave) => tx!("Éboulements", "Rockfalls", "Steinschlag", "Frane", "Derrumbes").t(),
         Item::Feature(Feature::Plank) => tx!("Pontons", "Docks", "Stege", "Moli", "Muelles").t(),
         Item::Feature(Feature::Train) => tx!("Trains", "Trains", "Züge", "Treni", "Trenes").t(),
         Item::Feature(Feature::Rival) => tx!("Guides rivaux", "Rival guides", "Konkurrenzführer", "Guide rivali", "Guías rivales").t(),

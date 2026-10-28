@@ -23,10 +23,11 @@ pub enum Universe {
     Gare,
     Port,
     Medieval,
+    Cave,
 }
 
 impl Universe {
-    pub const ALL: [Universe; 10] = [Universe::Prairie, Universe::Desert, Universe::Ruines, Universe::Cimetiere, Universe::Ocean, Universe::Parc, Universe::Ville, Universe::Gare, Universe::Port, Universe::Medieval];
+    pub const ALL: [Universe; 11] = [Universe::Prairie, Universe::Desert, Universe::Ruines, Universe::Cimetiere, Universe::Ocean, Universe::Parc, Universe::Ville, Universe::Gare, Universe::Port, Universe::Medieval, Universe::Cave];
 
     pub fn next(self) -> Self {
         let i = Self::ALL.iter().position(|u| *u == self).unwrap_or(0);
@@ -45,6 +46,7 @@ impl Universe {
             Universe::Gare => tx!("Gare", "Train station", "Bahnhof", "Stazione", "Estación"),
             Universe::Port => tx!("Port", "Harbour", "Hafen", "Porto", "Puerto"),
             Universe::Medieval => tx!("Village médiéval", "Medieval village", "Mittelalterdorf", "Villaggio medievale", "Aldea medieval"),
+            Universe::Cave => tx!("Grottes", "Caves", "Höhlen", "Grotte", "Cuevas"),
         }
         .t()
     }
@@ -132,6 +134,14 @@ impl Universe {
                 ground: c(0.46, 0.64, 0.34),
                 sun: (c(1.0, 0.95, 0.85), 6_800.0),
                 ambient: (c(0.56, 0.54, 0.62), 1000.0),
+            },
+            Universe::Cave => Theme {
+                sky: c(0.16, 0.14, 0.22),
+                tiles: (c(0.46, 0.42, 0.44), c(0.40, 0.36, 0.40)),
+                rim: c(0.22, 0.20, 0.24),
+                ground: c(0.22, 0.20, 0.25),
+                sun: (c(0.80, 0.86, 1.0), 3_800.0),
+                ambient: (c(0.52, 0.46, 0.70), 1200.0),
             },
         }
     }
@@ -404,6 +414,23 @@ pub fn rebuild_world(
         }
     }
 
+    // Grotte : des parois de roche tout autour du fond et des côtés (le côté caméra reste ouvert).
+    if universe == Universe::Cave {
+        let (w, h) = (l.w as f32, l.h as f32);
+        let (ex0, ey0, ex1, ey1) = (-0.5, -0.5, w - 0.5, h - 0.5);
+        let (d, piece) = (1.6, 2.8);
+        let mut x = ex0 - d;
+        while x <= ex1 + d + piece {
+            b.model("modular-cave-kit/template-wall", cell_to_world(Vec2::new(x + piece / 2.0, ey0 - d), GROUND_Y, l), 0.7, 0.0);
+            x += piece;
+        }
+        let mut y = ey0 - d;
+        while y <= ey1 + d + piece {
+            b.model("modular-cave-kit/template-wall", cell_to_world(Vec2::new(ex0 - d, y + piece / 2.0), GROUND_Y, l), 0.7, FRAC_PI_2);
+            y += piece;
+        }
+    }
+
     // Décor autour du plateau, y compris dans les creux des formes en L, en U ou en route.
     let mut rng = Rng::new(universe as u64 * 7919 + shape as u64 * 31);
     let reach_x = l.w as f32 / 2.0 + 10.0;
@@ -416,7 +443,7 @@ pub fn rebuild_world(
             let pos = Vec3::new(x, GROUND_Y, z) + jitter;
             // Position sur la grille de jeu, pour savoir à quelle distance du plateau on se trouve.
             let on_grid = Vec2::new(pos.x + (l.w - 1) as f32 / 2.0, pos.z + (l.h - 1) as f32 / 2.0);
-            let free = l.distance_to_walkable(on_grid) > if universe == Universe::Medieval { 4.2 } else { 3.0 };
+            let free = l.distance_to_walkable(on_grid) > if matches!(universe, Universe::Medieval | Universe::Cave) { 4.2 } else { 3.0 };
             if free && rng.below(10) < 6 {
                 spawn_decor(universe, &mut b, &mut rng, pos);
             }
@@ -556,6 +583,16 @@ fn decor_models(u: Universe) -> &'static [(&'static str, f32)] {
             ("fantasy-town-kit/windmill", 1.2),
             ("fantasy-town-kit/lantern", 2.2),
             ("fantasy-town-kit/fence", 1.8),
+        ],
+        Universe::Cave => &[
+            ("nature-kit/rock_largeA", 2.4),
+            ("nature-kit/rock_largeB", 2.4),
+            ("nature-kit/rock_largeC", 2.4),
+            ("nature-kit/rock_largeD", 2.4),
+            ("nature-kit/rock_smallA", 2.6),
+            ("nature-kit/mushroom_redGroup", 3.0),
+            ("nature-kit/mushroom_tanTall", 3.0),
+            ("nature-kit/mushroom_redTall", 3.0),
         ],
     }
 }
