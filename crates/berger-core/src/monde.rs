@@ -82,8 +82,30 @@ pub struct Chien {
     pub court: bool,
 }
 
+/// Ce que fait un mouton (dérivé de sa peur et de ses envies, pour l'animation et les tests).
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum EtatMouton {
+    /// Il broute, immobile.
+    Broute,
+    /// Il flâne.
+    Flane,
+    /// Il suit le troupeau, ou le rejoint.
+    Troupeau,
+    /// Il a repéré une menace et se met en garde.
+    Alerte,
+    /// Il fuit.
+    Fuit,
+    /// Il retrouve son calme.
+    Calme,
+    /// Il est dans l'enclos.
+    Abrite,
+}
+
 #[derive(Clone, Debug)]
 pub struct Mouton {
+    pub etat: EtatMouton,
+    /// Temps pendant lequel il est affolé sans avancer (coincé).
+    pub coince: f32,
     pub pos: V2,
     pub vel: V2,
     pub cap: f32,
@@ -175,6 +197,8 @@ impl Monde {
                 phase: hasard.entre(0.0, std::f32::consts::TAU),
                 onde_vue: 0,
                 sursaut: 0.0,
+                etat: EtatMouton::Broute,
+                coince: 0.0,
             })
             .collect();
         let loups = carte
@@ -488,6 +512,17 @@ impl Monde {
                 }
             }
 
+            // Dans l'enclos : moins de peur du chien (on est à l'abri), on s'éloigne de la porte et on s'étale doucement.
+            if self.moutons[i].abrite {
+                let e = self.carte.enclos;
+                acc -= d.norm() * (16.0 * (1.0 - dist / rayon_peur).max(0.0) + 2.5) * if dist < rayon_peur { 0.6 } else { 0.0 };
+                let a_la_porte = (p - e.entree()).len();
+                if a_la_porte < 2.2 {
+                    acc += (e.centre - p).norm() * (2.2 - a_la_porte) * 4.0;
+                }
+                menace *= 0.4;
+            }
+
             // Obstacles et clôtures : on les contourne.
             acc += Self::evitement(&self.carte, p, self.reg.rayon_mouton, 1.6) * 9.0;
 
@@ -519,7 +554,37 @@ impl Monde {
             m.sursaut = (m.sursaut - dt).max(0.0);
             m.phase += dt * (1.5 + vel.len() * 2.2);
 
-            let dedans = self.carte.enclos.dedans(pos, 0.1);
+            // Coincé contre un obstacle alors qu'il est affolé : un petit écart le dégage.
+            if m.panique > 0.3 && vel.len() < 0.25 {
+                m.coince += dt;
+                if m.coince > 1.2 {
+                    m.coince = 0.0;
+                    let a = self.hasard.entre(0.0, std::f32::consts::TAU);
+                    m.vel += V2::from_angle(a) * 2.5 + (self.carte.enclos.centre - m.pos).norm() * 0.5;
+                }
+            } else {
+                m.coince = 0.0;
+            }
+            m.etat = if m.abrite {
+                EtatMouton::Abrite
+            } else if m.panique > 0.55 {
+                EtatMouton::Fuit
+            } else if menace > 0.02 || m.panique > 0.3 {
+                EtatMouton::Alerte
+            } else if m.panique > 0.08 {
+                EtatMouton::Calme
+            } else if voisins == 0.0 {
+                EtatMouton::Troupeau
+            } else if m.repos > 0.0 || vel.len() < 0.2 {
+                EtatMouton::Broute
+            } else if vel.len() > 0.6 {
+                EtatMouton::Troupeau
+            } else {
+                EtatMouton::Flane
+            };
+
+            // Sécurisé quand il est bien à l'intérieur (0,7 du bord) ; il le reste tant qu'il ne ressort pas par la porte.
+            let dedans = self.carte.enclos.dedans(pos, if m.abrite { -0.4 } else { 0.7 });
             if dedans != m.abrite {
                 m.abrite = dedans;
                 self.evenements.push(if dedans { Evenement::Entre(i) } else { Evenement::Sorti(i) });

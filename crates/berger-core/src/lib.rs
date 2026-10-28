@@ -7,7 +7,7 @@ pub mod robot;
 pub mod v2;
 
 pub use carte::{Carte, Cote, Genre, Mur, NIVEAUX, Niveau, generer, niveau, niveau_du_jour};
-pub use monde::{Commande, EtatLoup, Evenement, Fin, Monde, PAS_FIXE, Reglages};
+pub use monde::{Commande, EtatLoup, EtatMouton, Evenement, Fin, Monde, PAS_FIXE, Reglages};
 pub use v2::{V2, v2};
 
 #[cfg(test)]
@@ -74,6 +74,48 @@ mod tests {
         let pos = |k: usize| touches.iter().position(|&i| i == k);
         assert_eq!(touches.iter().filter(|&&i| i == 0).count(), 1);
         assert!(pos(0).unwrap() < pos(1).unwrap(), "{touches:?}");
+    }
+
+    #[test]
+    fn les_moutons_affoles_ne_restent_pas_coinces() {
+        // Le robot joue le niveau le plus encombré ; aucun mouton ne reste affolé et immobile longtemps.
+        let nv = NIVEAUX[10];
+        let mut m = Monde::nouveau(generer(&nv, 5), nv);
+        let mut pire: f32 = 0.0;
+        for _ in 0..(90 * 60) {
+            m.pas(1.0 / 60.0, robot::commande(&m));
+            pire = pire.max(m.moutons.iter().map(|s| s.coince).fold(0.0, f32::max));
+            if m.fin.is_some() {
+                break;
+            }
+        }
+        assert!(pire < 1.3, "un mouton est resté coincé {pire:.1} s");
+    }
+
+    #[test]
+    fn un_mouton_calme_broute_ou_flane() {
+        let nv = NIVEAUX[1];
+        let mut m = Monde::nouveau(generer(&nv, 5), nv);
+        for _ in 0..(5 * 60) {
+            m.pas(1.0 / 60.0, Commande::default());
+        }
+        assert!(m.moutons.iter().all(|s| matches!(s.etat, EtatMouton::Broute | EtatMouton::Flane | EtatMouton::Troupeau)));
+    }
+
+    #[test]
+    fn un_mouton_rentre_reste_dans_l_enclos() {
+        let nv = NIVEAUX[0];
+        let mut m = Monde::nouveau(generer(&nv, 3), nv);
+        let e = m.carte.enclos;
+        for (i, s) in m.moutons.iter_mut().enumerate() {
+            s.pos = e.centre + v2(i as f32 * 0.3 - 0.6, 0.0);
+        }
+        // Le chien fonce sur la porte, dans tous les sens.
+        for t in 0..(20 * 60) {
+            m.chien.pos = e.entree() + e.cote.sortie() * (1.5 + (t as f32 * 0.02).sin() * 1.0);
+            m.pas(1.0 / 60.0, Commande { aboyer: t % 120 == 0, ..Commande::default() });
+        }
+        assert_eq!(m.abrites(), m.moutons.len());
     }
 
     #[test]
