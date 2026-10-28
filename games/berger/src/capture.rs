@@ -76,6 +76,8 @@ fn cliches(presse: bool) -> Vec<Cliche> {
             c("5-loups", GameState::Playing, 45.0, Some(Genre::Campagne(7))),
             c("6-desert", GameState::Playing, 30.0, Some(Genre::Campagne(14))),
             c("7-grand-pre", GameState::Playing, 30.0, Some(Genre::Campagne(11))),
+            // Le chien automatique finit le niveau : la photo est prise à l'écran de fin.
+            c("8-fin", GameState::Fin, 1.0, Some(Genre::Campagne(0))),
         ]
     }
 }

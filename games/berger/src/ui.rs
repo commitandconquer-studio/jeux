@@ -5,10 +5,9 @@ use bevy::prelude::*;
 use game_common::calendar::Date;
 use game_common::langue::Texte;
 use game_common::tx;
-use game_common::ui::{ButtonColor, GameHelp, PANEL, ThemedPanel, spawn_button_sized, spawn_gap, spawn_panel, spawn_panel_left, spawn_text};
+use game_common::ui::{GameHelp, PANEL, ThemedPanel, spawn_button_sized, spawn_panel_left, spawn_text};
 
 use crate::GameState;
-use crate::chiens::{CHIENS, ChienVu};
 use crate::jeu::{Commencer, Genre, Partie, Progression};
 
 /// Aide du jeu (bouton « Aide » du pied de menu).
@@ -56,13 +55,9 @@ impl Plugin for UiPlugin {
     fn build(&self, app: &mut App) {
         app.insert_resource(GameHelp(AIDE))
             .add_systems(OnEnter(GameState::Menu), spawn_menu)
-            .add_systems(OnEnter(GameState::Niveaux), spawn_niveaux)
             .add_systems(OnEnter(GameState::Playing), spawn_bandeau)
-            .add_systems(OnEnter(GameState::Fin), spawn_fin)
-            .add_systems(OnEnter(GameState::Chiens), spawn_chiens)
-            .add_systems(Update, (clavier, maj_bandeau, maj_chiens))
+            .add_systems(Update, (clavier, maj_bandeau))
             .add_observer(au_clic)
-            .add_observer(au_clic_chien)
             .add_observer(survol_entre)
             .add_observer(survol_sort);
     }
@@ -81,18 +76,6 @@ pub enum Action {
     Aboyer,
 }
 
-/// Les boutons de l'écran « Mon chien ».
-#[derive(Component, Clone, Copy, PartialEq, Eq)]
-enum ActionChien {
-    Ouvrir,
-    Precedent,
-    Suivant,
-    Choisir,
-}
-
-#[derive(Component)]
-struct EcranChiens;
-
 #[derive(Component)]
 struct TexteInfo;
 #[derive(Component)]
@@ -108,33 +91,12 @@ struct BarreSouffle;
 #[derive(Component)]
 struct BarreAboi;
 
-fn bouton(c: &mut Commands, parent: Entity, label: &str, action: Action) -> Entity {
-    let (b, _) = spawn_button_sized(c, parent, label, 340.0, 46.0, 21.0);
-    c.entity(b).insert(action);
-    b
-}
-
 pub fn temps(secs: f32) -> String {
     let s = secs as u32;
     format!("{}:{:02}", s / 60, s % 60)
 }
 
-/// Trois médailles dorées (ou grises) : les étoiles d'un niveau.
-fn medailles(c: &mut Commands, parent: Entity, gagnees: u8, taille: f32) {
-    let rangee = c.spawn((Node { column_gap: Val::Px(taille * 0.3), ..default() }, Pickable::IGNORE, ChildOf(parent))).id();
-    for i in 0..3 {
-        let (fond, bord) = if i < gagnees { (Color::srgb(0.98, 0.80, 0.16), Color::srgb(0.72, 0.52, 0.05)) } else { (Color::srgb(0.80, 0.78, 0.74), Color::srgb(0.62, 0.60, 0.58)) };
-        c.spawn((
-            Node { width: Val::Px(taille), height: Val::Px(taille), border: UiRect::all(Val::Px(2.0)), border_radius: BorderRadius::all(Val::Percent(50.0)), ..default() },
-            BackgroundColor(fond),
-            BorderColor::all(bord),
-            Pickable::IGNORE,
-            ChildOf(rangee),
-        ));
-    }
-}
-
-fn titre_partie(genre: Genre) -> String {
+pub(crate) fn titre_partie(genre: Genre) -> String {
     match genre {
         Genre::Campagne(i) => tx!("Niveau {}", "Level {}", "Level {}", "Livello {}", "Nivel {}").avec(&[&(i + 1)]),
         Genre::Jour(_) => tx!("Pré du jour", "Daily meadow", "Wiese des Tages", "Prato del giorno", "Prado del día").t().to_string(),
@@ -144,7 +106,7 @@ fn titre_partie(genre: Genre) -> String {
 
 /// Le menu façon « carte en bois » : un titre sur une planche, des planches à icône pour chaque entrée.
 #[derive(Component)]
-struct Survol;
+pub(crate) struct Survol;
 
 fn survol_entre(over: On<PointerOver>, mut q: Query<&mut UiTransform, With<Survol>>) {
     if let Ok(mut t) = q.get_mut(over.entity) {
@@ -225,7 +187,7 @@ fn spawn_menu(mut c: Commands, server: Res<AssetServer>, progression: Res<Progre
         tx!("Pré du jour", "Daily meadow", "Wiese des Tages", "Prato del giorno", "Prado del día").t()
     };
     let b = planche(&mut c, panel, &server, "chien", tx!("Mon chien", "My dog", "Mein Hund", "Il mio cane", "Mi perro").t());
-    c.entity(b).insert(ActionChien::Ouvrir);
+    c.entity(b).insert(crate::bois::ActionChien::Ouvrir);
     let b = planche(&mut c, panel, &server, "jour", jour);
     c.entity(b).insert(Action::Jour);
     let b = planche(&mut c, panel, &server, "hasard", tx!("Pré au hasard", "Random meadow", "Zufallswiese", "Prato a caso", "Prado al azar").t());
@@ -251,50 +213,6 @@ fn spawn_menu(mut c: Commands, server: Res<AssetServer>, progression: Res<Progre
     c.spawn((ImageNode::new(server.load("branding/hud/etoile.png")), Node { width: px(24), height: px(24), ..default() }, Pickable::IGNORE, ChildOf(pied)));
     spawn_text(&mut c, pied, &format!("{} / {}", progression.total(), NIVEAUX.len() * 3), 18.0);
     game_common::ui::spawn_studio_logo(&mut c, pied);
-}
-
-fn spawn_niveaux(mut c: Commands, progression: Res<Progression>) {
-    let panel = spawn_panel(&mut c, DespawnOnExit(GameState::Niveaux));
-    spawn_text(&mut c, panel, tx!("Niveaux", "Levels", "Level", "Livelli", "Niveles").t(), 36.0);
-    spawn_text(
-        &mut c,
-        panel,
-        tx!("{} étoiles sur {}", "{} stars out of {}", "{} von {} Sternen", "{} stelle su {}", "{} estrellas de {}").avec(&[&progression.total(), &(NIVEAUX.len() * 3)]),
-        16.0,
-    );
-    let grille = c.spawn((Node { width: Val::Px(4.0 * 136.0), flex_wrap: FlexWrap::Wrap, column_gap: Val::Px(10.0), row_gap: Val::Px(10.0), justify_content: JustifyContent::Center, ..default() }, ChildOf(panel))).id();
-    for i in 0..NIVEAUX.len() {
-        let ouvert = progression.ouvert(i);
-        let (b, t) = spawn_button_sized(&mut c, grille, format!("{}", i + 1), 126.0, 78.0, 28.0);
-        c.entity(b).entry::<Node>().and_modify(|mut n| {
-            n.flex_direction = FlexDirection::Column;
-            n.row_gap = Val::Px(4.0);
-        });
-        medailles(&mut c, b, progression.etoiles[i], 16.0);
-        if ouvert {
-            c.entity(b).insert(Action::Choisir(i));
-            if progression.etoiles[i] > 0 {
-                c.entity(b).insert(ButtonColor(Color::srgb(0.98, 0.93, 0.72)));
-            } else if NIVEAUX[i].desert {
-                c.entity(b).insert(ButtonColor(Color::srgb(0.95, 0.84, 0.62)));
-            }
-            if NIVEAUX[i].loups > 0 {
-                // Un point rouge : des loups rôdent sur ce niveau.
-                c.spawn((
-                    Node { position_type: PositionType::Absolute, top: Val::Px(6.0), right: Val::Px(8.0), width: Val::Px(12.0), height: Val::Px(12.0), border_radius: BorderRadius::all(Val::Percent(50.0)), ..default() },
-                    BackgroundColor(Color::srgb(0.86, 0.18, 0.16)),
-                    Pickable::IGNORE,
-                    ChildOf(b),
-                ));
-            }
-        } else {
-            c.entity(b).insert(ButtonColor(Color::srgb(0.78, 0.76, 0.74)));
-            c.entity(t).insert(TextColor(Color::srgb(0.55, 0.53, 0.52)));
-        }
-    }
-    spawn_text(&mut c, panel, tx!("Point rouge : des loups rôdent", "Red dot: wolves about", "Roter Punkt: Wölfe unterwegs", "Punto rosso: ci sono lupi", "Punto rojo: hay lobos").t(), 14.0);
-    spawn_gap(&mut c, panel, 2.0);
-    bouton(&mut c, panel, tx!("Retour", "Back", "Zurück", "Indietro", "Volver").t(), Action::Menu);
 }
 
 fn spawn_bandeau(mut c: Commands) {
@@ -448,49 +366,6 @@ fn maj_bandeau(
     }
 }
 
-fn spawn_fin(mut c: Commands, partie: Res<Partie>, progression: Res<Progression>) {
-    let m = &partie.monde;
-    let panel = spawn_panel_left(&mut c, DespawnOnExit(GameState::Fin));
-    let gagne = m.fin == Some(Fin::Victoire);
-    let titre = match m.fin {
-        Some(Fin::Victoire) => tx!("Bravo !", "Well done!", "Bravo!", "Bravo!", "¡Bravo!"),
-        Some(Fin::Pertes) => tx!("Trop de moutons perdus", "Too many sheep lost", "Zu viele Schafe verloren", "Troppe pecore perse", "Demasiadas ovejas perdidas"),
-        _ => tx!("Temps écoulé", "Time's up", "Zeit abgelaufen", "Tempo scaduto", "Se acabó el tiempo"),
-    };
-    spawn_text(&mut c, panel, titre.t(), 36.0);
-    spawn_text(&mut c, panel, titre_partie(partie.genre), 20.0);
-    if gagne {
-        medailles(&mut c, panel, m.etoiles() as u8, 38.0);
-        spawn_text(&mut c, panel, tx!("Troupeau rentré en {}", "Flock home in {}", "Herde in {} eingebracht", "Gregge dentro in {}", "Rebaño dentro en {}").avec(&[&temps(m.temps)]), 20.0);
-        let mut details = Vec::new();
-        details.push(if m.temps <= m.niveau.temps_ref { tx!("✓ Rapide", "✓ Fast", "✓ Schnell", "✓ Veloce", "✓ Rápido").t() } else { tx!("Temps de référence : {}", "Reference time: {}", "Richtzeit: {}", "Tempo di riferimento: {}", "Tiempo de referencia: {}").t() });
-        let ligne = if m.temps <= m.niveau.temps_ref {
-            tx!("Plus rapide que {}", "Faster than {}", "Schneller als {}", "Più veloce di {}", "Más rápido que {}").avec(&[&temps(m.niveau.temps_ref)])
-        } else {
-            tx!("Pour la 2ᵉ étoile : moins de {}", "For the 2nd star: under {}", "Für den 2. Stern: unter {}", "Per la 2ª stella: meno di {}", "Para la 2ª estrella: menos de {}").avec(&[&temps(m.niveau.temps_ref)])
-        };
-        spawn_text(&mut c, panel, ligne, 16.0);
-        let perte = if m.perdus() == 0 { tx!("Aucun mouton perdu", "No sheep lost", "Kein Schaf verloren", "Nessuna pecora persa", "Ninguna oveja perdida").t().to_string() } else { tx!("Pour la 3ᵉ étoile : aucun mouton perdu", "For the 3rd star: lose no sheep", "Für den 3. Stern: kein Schaf verlieren", "Per la 3ª stella: nessuna pecora persa", "Para la 3ª estrella: ninguna oveja perdida").t().to_string() };
-        spawn_text(&mut c, panel, perte, 16.0);
-        let _ = details;
-        if let Some(i) = progression.nouveau {
-            spawn_text(&mut c, panel, tx!("Nouveau chien : {} !", "New dog: {}!", "Neuer Hund: {}!", "Nuovo cane: {}!", "¡Nuevo perro: {}!").avec(&[&CHIENS[i].nom.t()]), 22.0);
-        }
-        if let Genre::Jour(_) = partie.genre {
-            spawn_text(&mut c, panel, tx!("Série : {} jours", "Streak: {} days", "Serie: {} Tage", "Serie: {} giorni", "Racha: {} días").avec(&[&progression.serie]), 18.0);
-        }
-    } else {
-        spawn_text(&mut c, panel, tx!("Essayez encore : il faut garder le troupeau groupé.", "Try again: keep the flock together.", "Versuch's nochmal: Halte die Herde zusammen.", "Riprova: tieni unito il gregge.", "Inténtalo otra vez: mantén unido el rebaño.").t(), 17.0);
-    }
-    spawn_gap(&mut c, panel, 4.0);
-    if gagne && matches!(partie.genre, Genre::Campagne(i) if i + 1 < NIVEAUX.len()) {
-        bouton(&mut c, panel, tx!("Niveau suivant", "Next level", "Nächstes Level", "Livello successivo", "Siguiente nivel").t(), Action::Suivant);
-    }
-    bouton(&mut c, panel, tx!("Rejouer", "Play again", "Nochmal", "Rigioca", "Repetir").t(), Action::Rejouer);
-    bouton(&mut c, panel, tx!("Niveaux", "Levels", "Level", "Livelli", "Niveles").t(), Action::Niveaux);
-    bouton(&mut c, panel, tx!("Menu", "Menu", "Menü", "Menu", "Menú").t(), Action::Menu);
-}
-
 /// Exécute une action (bouton ou raccourci clavier).
 fn agir(action: Action, partie: Option<&mut Partie>, progression: &Progression, commencer: &mut MessageWriter<Commencer>, next: &mut NextState<GameState>) {
     let neuve = |genre: Genre| Commencer { genre, demo: false, robot: false };
@@ -562,95 +437,4 @@ fn clavier(keys: Res<ButtonInput<KeyCode>>, partie: Option<ResMut<Partie>>, prog
         _ => return,
     };
     agir(action, partie.as_deref_mut(), &progression, &mut commencer, &mut next);
-}
-
-fn spawn_chiens(mut c: Commands, server: Res<AssetServer>, progression: Res<Progression>, vu: Res<ChienVu>) {
-    construire_chiens(&mut c, &server, &progression, vu.0);
-}
-
-/// L'écran se refait à chaque flèche ou choix.
-fn maj_chiens(mut c: Commands, server: Res<AssetServer>, progression: Res<Progression>, vu: Res<ChienVu>, state: Res<State<GameState>>, ecran: Query<Entity, With<EcranChiens>>) {
-    if *state.get() != GameState::Chiens || !(vu.is_changed() || progression.is_changed()) {
-        return;
-    }
-    for e in &ecran {
-        c.entity(e).despawn();
-    }
-    construire_chiens(&mut c, &server, &progression, vu.0);
-}
-
-fn construire_chiens(c: &mut Commands, server: &AssetServer, progression: &Progression, vu: usize) {
-    let chien = &CHIENS[vu];
-    let panel = spawn_panel_left(c, (DespawnOnExit(GameState::Chiens), EcranChiens));
-    spawn_text(c, panel, tx!("Mon chien", "My dog", "Mein Hund", "Il mio cane", "Mi perro").t(), 34.0);
-    spawn_gap(c, panel, 6.0);
-    // Flèche, nom du chien et ses deux couleurs, flèche.
-    let rangee = c.spawn((Node { align_items: AlignItems::Center, column_gap: px(14), ..default() }, ChildOf(panel))).id();
-    let fleche = |c: &mut Commands, action: ActionChien, miroir: bool| {
-        c.spawn((
-            Node { width: px(54), height: px(54), ..default() },
-            ImageNode::new(server.load("ui/suivez/fleche_precedent.png")),
-            UiTransform { scale: Vec2::new(if miroir { -1.0 } else { 1.0 }, 1.0), ..default() },
-            action,
-            ChildOf(rangee),
-        ));
-    };
-    fleche(c, ActionChien::Precedent, false);
-    let centre = c.spawn((Node { flex_direction: FlexDirection::Column, align_items: AlignItems::Center, row_gap: px(6), width: px(170), ..default() }, Pickable::IGNORE, ChildOf(rangee))).id();
-    spawn_text(c, centre, chien.nom.t(), 30.0);
-    let pastilles = c.spawn((Node { column_gap: px(8), ..default() }, Pickable::IGNORE, ChildOf(centre))).id();
-    for couleur in [chien.pelage, chien.accent] {
-        c.spawn((
-            Node { width: px(26), height: px(26), border: UiRect::all(px(2)), border_radius: BorderRadius::all(percent(50)), ..default() },
-            BackgroundColor(couleur),
-            BorderColor::all(Color::srgb(0.35, 0.25, 0.15)),
-            Pickable::IGNORE,
-            ChildOf(pastilles),
-        ));
-    }
-    spawn_text(c, centre, format!("{} / {}", vu + 1, CHIENS.len()), 16.0);
-    fleche(c, ActionChien::Suivant, true);
-    spawn_gap(c, panel, 4.0);
-    let ouvert = progression.chien_ouvert(vu);
-    if ouvert {
-        if progression.chien == vu {
-            spawn_text(c, panel, tx!("✓ C'est ton chien", "✓ This is your dog", "✓ Das ist dein Hund", "✓ È il tuo cane", "✓ Es tu perro").t(), 20.0);
-        } else {
-            let (b, _) = spawn_button_sized(c, panel, tx!("Choisir ce chien", "Pick this dog", "Diesen Hund wählen", "Scegli questo cane", "Elegir este perro").t(), 300.0, 46.0, 21.0);
-            c.entity(b).insert(ActionChien::Choisir);
-        }
-    } else {
-        let ligne = c.spawn((Node { align_items: AlignItems::Center, column_gap: px(8), ..default() }, Pickable::IGNORE, ChildOf(panel))).id();
-        c.spawn((ImageNode::new(server.load("ui/suivez/icone_cadenas.png")), Node { width: px(26), height: px(26), ..default() }, Pickable::IGNORE, ChildOf(ligne)));
-        let reste = chien.seuil - progression.total();
-        spawn_text(c, ligne, tx!("Encore {} étoiles", "{} more stars", "Noch {} Sterne", "Ancora {} stelle", "{} estrellas más").avec(&[&reste]), 20.0);
-    }
-    spawn_text(c, panel, tx!("Étoiles gagnées : {}", "Stars earned: {}", "Gewonnene Sterne: {}", "Stelle guadagnate: {}", "Estrellas ganadas: {}").avec(&[&progression.total()]), 16.0);
-    spawn_gap(c, panel, 4.0);
-    bouton(c, panel, tx!("Menu", "Menu", "Menü", "Menu", "Menú").t(), Action::Menu);
-}
-
-fn au_clic_chien(
-    clic: On<PointerClick>,
-    actions: Query<&ActionChien>,
-    mut vu: ResMut<ChienVu>,
-    mut progression: ResMut<Progression>,
-    mut next: ResMut<NextState<GameState>>,
-) {
-    let Ok(&action) = actions.get(clic.entity) else { return };
-    let n = CHIENS.len();
-    match action {
-        ActionChien::Ouvrir => {
-            vu.0 = progression.chien;
-            next.set(GameState::Chiens);
-        }
-        ActionChien::Precedent => vu.0 = (vu.0 + n - 1) % n,
-        ActionChien::Suivant => vu.0 = (vu.0 + 1) % n,
-        ActionChien::Choisir => {
-            if progression.chien_ouvert(vu.0) {
-                progression.chien = vu.0;
-                progression.enregistrer();
-            }
-        }
-    }
 }
