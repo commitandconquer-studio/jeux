@@ -144,7 +144,11 @@ impl Plugin for JeuPlugin {
 }
 
 fn setup(mut commands: Commands, mut depart: MessageWriter<Commencer>, progression: Res<Progression>) {
-    commands.spawn((iso_camera(Vec3::ZERO, 40.0, 30.0), MainCamera));
+    let mut cam = commands.spawn((iso_camera(Vec3::ZERO, 40.0, 30.0), MainCamera, bevy::core_pipeline::tonemapping::Tonemapping::AcesFitted));
+    // Flou « maquette » sur les bords de l'écran (ordinateur seulement, BERGER_FLOU=0 le coupe).
+    if crate::miniature::actif() {
+        cam.insert(crate::miniature::Miniature::default());
+    }
     // Le menu s'affiche devant un champ tranquille.
     let robot = std::env::var("BERGER_ROBOT").is_ok();
     depart.write(Commencer { genre: Genre::Campagne(progression.suivant().min(3)), demo: true, robot });
@@ -220,6 +224,7 @@ fn demarrer(
     mut demandes: MessageReader<Commencer>,
     scene: Query<Entity, With<DeScene>>,
     kit: Res<Kit>,
+    server: Res<AssetServer>,
     mut cam: Query<&mut Projection, With<MainCamera>>,
 ) {
     let Some(d) = demandes.read().last() else { return };
@@ -237,7 +242,7 @@ fn demarrer(
         Genre::Hasard(i, g) => (niveau(i), generer(&niveau(i), g)),
     };
     let carte_demi = carte.demi;
-    spawn_scene(&mut commands, &kit, &carte, &nv);
+    spawn_scene(&mut commands, &server, &kit, &carte, &nv);
     for mut p in &mut cam {
         *p = cadrage(carte.demi);
     }

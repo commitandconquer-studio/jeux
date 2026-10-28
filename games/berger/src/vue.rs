@@ -80,7 +80,6 @@ pub struct Kit {
     pub feuillage: Handle<StandardMaterial>,
     pub feuillage_fonce: Handle<StandardMaterial>,
     pub sol_foret: Handle<StandardMaterial>,
-    pub roche: [Handle<StandardMaterial>; 3],
     pub fleurs: [Handle<StandardMaterial>; 4],
     pub onde: Handle<StandardMaterial>,
     pub onde_disque: Handle<StandardMaterial>,
@@ -118,7 +117,6 @@ impl FromWorld for Kit {
         let eau = m(0.36, 0.64, 0.84);
         let eau_claire = m(0.55, 0.80, 0.93);
         let sol_foret = m(0.50, 0.70, 0.36);
-        let roche = [m(0.62, 0.62, 0.64), m(0.55, 0.55, 0.58), m(0.68, 0.66, 0.62)];
         let fleurs = [m(0.98, 0.98, 0.95), m(0.98, 0.82, 0.18), m(0.94, 0.33, 0.55), m(0.78, 0.68, 0.93)];
         // Les herbes et feuillages gardent les couleurs de la palette : les saisons les repeignent.
         let herbe = mats.add(flat_material(palette::GRASS));
@@ -160,7 +158,6 @@ impl FromWorld for Kit {
             feuillage,
             feuillage_fonce,
             sol_foret,
-            roche,
             fleurs,
             onde,
             onde_disque,
@@ -329,35 +326,20 @@ pub fn spawn_loup(c: &mut Commands, k: &Kit, i: usize, genre: GenreLoup) -> Enti
     root
 }
 
-fn arbre(c: &mut Commands, k: &Kit, pos: Vec3, rayon: f32, variante: u8, pin: bool, parent: Option<Entity>) {
-    let s = rayon / 0.95;
-    let racine = c.spawn((Transform::from_translation(pos).with_rotation(Quat::from_rotation_y(variante as f32 * 1.3)).with_scale(Vec3::splat(s)), Visibility::default(), DeScene)).id();
-    if let Some(p) = parent {
-        c.entity(racine).insert(ChildOf(p));
-    }
-    let tronc = if pin { 0.9 } else { 0.8 };
-    piece(c, racine, &k.cyl, &k.bois, Vec3::new(0.0, tronc * 0.5, 0.0), Vec3::new(0.34, tronc, 0.34));
-    if pin {
-        // Trois étages de sapin.
-        for (y, r, h) in [(1.0, 1.7, 1.2), (1.75, 1.35, 1.1), (2.45, 0.95, 1.0)] {
-            piece(c, racine, &k.cone, &k.feuillage_fonce, Vec3::new(0.0, y + h * 0.4, 0.0), Vec3::new(r, h, r));
-        }
-    } else {
-        // Un feuillage rond fait de trois boules.
-        let (a, b) = if variante % 2 == 0 { (&k.feuillage, &k.feuillage_fonce) } else { (&k.feuillage_fonce, &k.feuillage) };
-        piece(c, racine, &k.boule, a, Vec3::new(0.0, 1.55, 0.0), Vec3::new(2.0, 1.7, 2.0));
-        piece(c, racine, &k.boule, b, Vec3::new(0.55, 1.3, 0.3), Vec3::new(1.3, 1.2, 1.3));
-        piece(c, racine, &k.boule, b, Vec3::new(-0.5, 1.9, -0.2), Vec3::new(1.2, 1.1, 1.2));
-    }
+/// Un modèle de Kenney (CC0), posé au sol.
+fn modele(c: &mut Commands, server: &AssetServer, fichier: &str, pos: Vec3, rot: f32, echelle: Vec3) -> Entity {
+    let scene = server.load(GltfAssetLabel::Scene(0).from_asset(format!("kenney/{fichier}.glb")));
+    c.spawn((WorldAssetRoot(scene), Transform::from_translation(pos).with_rotation(Quat::from_rotation_y(rot)).with_scale(echelle), DeScene)).id()
 }
 
-fn rocher(c: &mut Commands, k: &Kit, pos: Vec3, rayon: f32, variante: u8) {
-    let racine = c.spawn((Transform::from_translation(pos).with_rotation(Quat::from_rotation_y(variante as f32 * 1.9)), Visibility::default(), DeScene)).id();
-    let m = &k.roche[variante as usize % 3];
-    piece(c, racine, &k.boule, m, Vec3::new(0.0, rayon * 0.45, 0.0), Vec3::new(rayon * 2.0, rayon * 1.3, rayon * 1.7));
-    piece(c, racine, &k.boule, &k.roche[(variante as usize + 1) % 3], Vec3::new(rayon * 0.6, rayon * 0.25, rayon * 0.3), Vec3::new(rayon * 1.0, rayon * 0.7, rayon * 0.9));
-    // Une touffe d'herbe au pied.
-    piece(c, racine, &k.cone, &k.feuillage, Vec3::new(-rayon * 0.8, 0.12, rayon * 0.5), Vec3::new(0.18, 0.3, 0.18));
+fn arbre(c: &mut Commands, server: &AssetServer, pos: Vec3, rayon: f32, variante: u8, pin: bool) {
+    let fichier = if pin { "mini-forest/tree-high" } else { "mini-forest/tree" };
+    modele(c, server, fichier, pos, variante as f32 * 1.3, Vec3::splat(rayon * 2.0 * (0.9 + (variante % 3) as f32 * 0.1)));
+}
+
+fn rocher(c: &mut Commands, server: &AssetServer, pos: Vec3, rayon: f32, variante: u8) {
+    let fichier = ["survival-kit/rock-sand-a", "survival-kit/rock-sand-b", "survival-kit/rock-sand-c"][variante as usize % 3];
+    modele(c, server, fichier, pos, variante as f32 * 1.9, Vec3::splat(rayon * 3.6));
 }
 
 fn mare(c: &mut Commands, k: &Kit, pos: Vec3, rayon: f32, variante: u8) {
@@ -381,8 +363,8 @@ fn mare(c: &mut Commands, k: &Kit, pos: Vec3, rayon: f32, variante: u8) {
     }
 }
 
-/// Une clôture de bois : des poteaux et deux lisses.
-fn cloture(c: &mut Commands, k: &Kit, m: &Mur) {
+/// Une clôture de bois : des éléments de clôture de Kenney bout à bout.
+fn cloture(c: &mut Commands, server: &AssetServer, m: &Mur) {
     let a = Vec3::new(m.a.x, 0.0, m.a.y);
     let b = Vec3::new(m.b.x, 0.0, m.b.y);
     let long = a.distance(b);
@@ -390,20 +372,18 @@ fn cloture(c: &mut Commands, k: &Kit, m: &Mur) {
         return;
     }
     let dir = (b - a) / long;
-    let yaw = Quat::from_rotation_y((-dir.z).atan2(dir.x));
-    let racine = c.spawn((Transform::default(), Visibility::default(), DeScene)).id();
-    let n = (long / 1.3).ceil().max(1.0) as usize;
-    for i in 0..=n {
-        let p = a + dir * (long * i as f32 / n as f32);
-        piece(c, racine, &k.cube, &k.bois, p + Vec3::Y * 0.4, Vec3::new(0.14, 0.8, 0.14));
-    }
-    for h in [0.3, 0.6] {
-        piece_tournee(c, racine, &k.cube, &k.bois_clair, (a + b) * 0.5 + Vec3::Y * h, Vec3::new(long, 0.08, 0.06), yaw);
+    let yaw = (-dir.z).atan2(dir.x);
+    // Un élément mesure 0,5 de long (hauteur 0,5) ; on en pose un tous les ~1,6.
+    let n = (long / 1.6).round().max(1.0) as usize;
+    let pas = long / n as f32;
+    for i in 0..n {
+        let milieu = a + dir * (pas * (i as f32 + 0.5));
+        modele(c, server, "survival-kit/fence", milieu, yaw, Vec3::new(pas / 0.5, 1.5, 1.5));
     }
 }
 
 /// Construit le champ : sol, herbe, décor, obstacles, enclos, animaux.
-pub fn spawn_scene(c: &mut Commands, k: &Kit, carte: &Carte, niveau: &Niveau) {
+pub fn spawn_scene(c: &mut Commands, server: &AssetServer, k: &Kit, carte: &Carte, niveau: &Niveau) {
     let (hx, hz) = (carte.demi.x, carte.demi.y);
     let mut rng = Rng::new(carte.graine ^ 0xDEC0);
 
@@ -441,7 +421,7 @@ pub fn spawn_scene(c: &mut Commands, k: &Kit, carte: &Carte, niveau: &Niveau) {
     // La clôture du champ et la forêt tout autour.
     let coins = [berger_core::v2(-hx, -hz), berger_core::v2(hx, -hz), berger_core::v2(hx, hz), berger_core::v2(-hx, hz)];
     for i in 0..4 {
-        cloture(c, k, &Mur { a: coins[i], b: coins[(i + 1) % 4] });
+        cloture(c, server, &Mur { a: coins[i], b: coins[(i + 1) % 4] });
     }
     let pas = 3.4;
     for (cote, long) in [(0, hx * 2.0), (1, hx * 2.0), (2, hz * 2.0), (3, hz * 2.0)] {
@@ -456,7 +436,7 @@ pub fn spawn_scene(c: &mut Commands, k: &Kit, carte: &Carte, niveau: &Niveau) {
             };
             let pin = rng.next_f32() < 0.55;
             let r = 0.9 + rng.next_f32() * 0.5;
-            arbre(c, k, Vec3::new(x, 0.0, z), r, rng.below(4) as u8, pin, None);
+            arbre(c, server, Vec3::new(x, 0.0, z), r, rng.below(4) as u8, pin);
             t += pas * (0.7 + rng.next_f32() * 0.7);
         }
     }
@@ -465,14 +445,14 @@ pub fn spawn_scene(c: &mut Commands, k: &Kit, carte: &Carte, niveau: &Niveau) {
     for o in &carte.obstacles {
         let p = Vec3::new(o.pos.x, 0.0, o.pos.y);
         match o.genre {
-            Genre::Arbre => arbre(c, k, p, o.rayon, o.variante, false, None),
-            Genre::Pin => arbre(c, k, p, o.rayon, o.variante, true, None),
-            Genre::Rocher => rocher(c, k, p, o.rayon, o.variante),
+            Genre::Arbre => arbre(c, server, p, o.rayon, o.variante, false),
+            Genre::Pin => arbre(c, server, p, o.rayon, o.variante, true),
+            Genre::Rocher => rocher(c, server, p, o.rayon, o.variante),
             Genre::Mare => mare(c, k, p, o.rayon, o.variante),
         }
     }
     for m in &carte.clotures {
-        cloture(c, k, m);
+        cloture(c, server, m);
     }
 
     // L'enclos : sol de paille, clôtures, poteaux de la porte, bottes de foin.
@@ -487,7 +467,7 @@ pub fn spawn_scene(c: &mut Commands, k: &Kit, carte: &Carte, niveau: &Niveau) {
         c.entity(s).insert(NotShadowCaster);
     }
     for m in &carte.murs_enclos {
-        cloture(c, k, m);
+        cloture(c, server, m);
     }
     // Les poteaux de la porte, plus hauts, avec une lanterne.
     let sortie = e.cote.sortie();

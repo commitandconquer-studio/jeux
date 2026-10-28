@@ -25,8 +25,10 @@ fn effets(mut commands: Commands, server: Res<AssetServer>, son: Res<SoundOn>, m
         if !son.0 {
             continue;
         }
+        // Chaque son varie un peu de hauteur : pas deux bêlements ou aboiements identiques.
+        let hauteur = 0.88 + ((time.elapsed_secs() * 977.0).fract()) * 0.3;
         let jouer = |commands: &mut Commands, nom: &'static str| {
-            commands.spawn((AudioPlayer::new(server.load(nom)), PlaybackSettings::DESPAWN));
+            commands.spawn((AudioPlayer::new(server.load(nom)), PlaybackSettings::DESPAWN.with_speed(hauteur)));
         };
         match e {
             Evenement::Aboiement => jouer(&mut commands, lib::DOG_BARK),
