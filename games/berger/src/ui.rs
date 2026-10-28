@@ -5,7 +5,7 @@ use bevy::prelude::*;
 use game_common::calendar::Date;
 use game_common::langue::Texte;
 use game_common::tx;
-use game_common::ui::{ButtonColor, GameHelp, PANEL, ThemedPanel, pied_de_menu, spawn_button_sized, spawn_gap, spawn_panel, spawn_panel_left, spawn_text};
+use game_common::ui::{ButtonColor, GameHelp, PANEL, ThemedPanel, spawn_button_sized, spawn_gap, spawn_panel, spawn_panel_left, spawn_text};
 
 use crate::GameState;
 use crate::jeu::{Commencer, Genre, Partie, Progression};
@@ -59,7 +59,9 @@ impl Plugin for UiPlugin {
             .add_systems(OnEnter(GameState::Playing), spawn_bandeau)
             .add_systems(OnEnter(GameState::Fin), spawn_fin)
             .add_systems(Update, (clavier, maj_bandeau))
-            .add_observer(au_clic);
+            .add_observer(au_clic)
+            .add_observer(survol_entre)
+            .add_observer(survol_sort);
     }
 }
 
@@ -125,32 +127,113 @@ fn titre_partie(genre: Genre) -> String {
     }
 }
 
+/// Le menu façon « carte en bois » : un titre sur une planche, des planches à icône pour chaque entrée.
+#[derive(Component)]
+struct Survol;
+
+fn survol_entre(over: On<PointerOver>, mut q: Query<&mut UiTransform, With<Survol>>) {
+    if let Ok(mut t) = q.get_mut(over.entity) {
+        t.scale = Vec2::splat(1.05);
+    }
+}
+
+fn survol_sort(out: On<PointerOut>, mut q: Query<&mut UiTransform, With<Survol>>) {
+    if let Ok(mut t) = q.get_mut(out.entity) {
+        t.scale = Vec2::ONE;
+    }
+}
+
+const CREME: Color = Color::srgb(1.0, 0.96, 0.84);
+const LARGEUR_PLANCHE: f32 = 290.0;
+const HAUTEUR_PLANCHE: f32 = 56.0;
+
+/// Une planche de bois avec son icône (l'image) et le texte à droite de l'icône.
+fn planche(c: &mut Commands, parent: Entity, server: &AssetServer, image: &str, texte: &str) -> Entity {
+    let b = c
+        .spawn((
+            Node { width: px(LARGEUR_PLANCHE), height: px(HAUTEUR_PLANCHE), ..default() },
+            ImageNode::new(server.load(format!("branding/berger/bouton-{image}.png"))),
+            UiTransform::default(),
+            Survol,
+            ChildOf(parent),
+        ))
+        .id();
+    let taille = if texte.chars().count() > 14 { 17.0 } else { 23.0 };
+    // Le texte occupe la planche à droite de l'icône.
+    c.spawn((
+        Node { position_type: PositionType::Absolute, left: percent(27), right: percent(9), top: px(0), bottom: px(0), justify_content: JustifyContent::Center, align_items: AlignItems::Center, ..default() },
+        Pickable::IGNORE,
+        ChildOf(b),
+        children![(
+            Text::new(texte),
+            TextFont::from_font_size(taille),
+            TextColor(CREME),
+            TextShadow { offset: Vec2::new(0.0, 2.0), color: Color::srgba(0.25, 0.1, 0.0, 0.75) },
+            TextLayout::justify(Justify::Center),
+            Pickable::IGNORE,
+        )],
+    ));
+    b
+}
+
 fn spawn_menu(mut c: Commands, server: Res<AssetServer>, progression: Res<Progression>, partie: Option<Res<Partie>>) {
     let panel = spawn_panel_left(&mut c, DespawnOnExit(GameState::Menu));
-    // Le logo (le même dans toutes les langues).
-    c.spawn((ImageNode::new(server.load("branding/berger.png")), Node { width: px(92), height: px(92), ..default() }, Pickable::IGNORE, ChildOf(panel)));
-    spawn_text(
-        &mut c,
-        panel,
-        tx!("{} étoiles sur {}", "{} stars out of {}", "{} von {} Sternen", "{} stelle su {}", "{} estrellas de {}").avec(&[&progression.total(), &(NIVEAUX.len() * 3)]),
-        16.0,
-    );
+    // Pas de panneau : les planches flottent devant le champ.
+    c.entity(panel).remove::<ThemedPanel>().insert((
+        Node { flex_direction: FlexDirection::Column, align_items: AlignItems::Center, row_gap: px(5), width: px(LARGEUR_PLANCHE + 40.0), padding: UiRect::all(px(6)), ..default() },
+        BackgroundColor(Color::NONE),
+    ));
+    // Le titre : le chien sur sa planche (le texte suit la langue).
+    let titre = c.spawn((Node { width: px(176), height: px(165), ..default() }, ImageNode::new(server.load("branding/berger/titre.png")), Pickable::IGNORE, ChildOf(panel))).id();
+    c.spawn((
+        Node { position_type: PositionType::Absolute, left: px(14), right: px(14), top: px(110), height: px(44), justify_content: JustifyContent::Center, align_items: AlignItems::Center, ..default() },
+        Pickable::IGNORE,
+        ChildOf(titre),
+        children![(
+            Text::new(tx!("Le chien de berger", "The sheepdog", "Der Schäferhund", "Il cane pastore", "El perro pastor").t()),
+            TextFont::from_font_size(21.0),
+            TextColor(CREME),
+            TextShadow { offset: Vec2::new(0.0, 2.0), color: Color::srgba(0.25, 0.1, 0.0, 0.85) },
+            TextLayout::justify(Justify::Center),
+            Pickable::IGNORE,
+        )],
+    ));
     let en_cours = partie.as_ref().is_some_and(|p| p.en_cours());
     let jouer = if en_cours { tx!("Continuer", "Continue", "Weiter", "Continua", "Continuar").t() } else { tx!("Jouer", "Play", "Spielen", "Gioca", "Jugar").t() };
-    bouton(&mut c, panel, jouer, Action::Continuer);
-    bouton(&mut c, panel, tx!("Niveaux", "Levels", "Level", "Livelli", "Niveles").t(), Action::Niveaux);
+    let b = planche(&mut c, panel, &server, "jouer", jouer);
+    c.entity(b).insert(Action::Continuer);
+    let b = planche(&mut c, panel, &server, "niveaux", tx!("Niveaux", "Levels", "Level", "Livelli", "Niveles").t());
+    c.entity(b).insert(Action::Niveaux);
     let jour = if progression.jour_reussi() {
         tx!("Pré du jour : réussi", "Daily meadow: done", "Wiese des Tages: geschafft", "Prato del giorno: fatto", "Prado del día: hecho").t()
     } else {
         tx!("Pré du jour", "Daily meadow", "Wiese des Tages", "Prato del giorno", "Prado del día").t()
     };
-    bouton(&mut c, panel, jour, Action::Jour);
-    if progression.serie > 1 && progression.jour_fait.is_some_and(|d| d + 1 >= Date::today().days()) {
-        spawn_text(&mut c, panel, tx!("Série : {} jours", "Streak: {} days", "Serie: {} Tage", "Serie: {} giorni", "Racha: {} días").avec(&[&progression.serie]), 16.0);
+    let b = planche(&mut c, panel, &server, "jour", jour);
+    c.entity(b).insert(Action::Jour);
+    let b = planche(&mut c, panel, &server, "hasard", tx!("Pré au hasard", "Random meadow", "Zufallswiese", "Prato a caso", "Prado al azar").t());
+    c.entity(b).insert(Action::Hasard);
+    let b = planche(&mut c, panel, &server, "options", tx!("Options", "Options", "Optionen", "Opzioni", "Opciones").t());
+    c.entity(b).insert(game_common::options::OptionsBouton);
+    let b = planche(&mut c, panel, &server, "aide", tx!("Aide", "Help", "Hilfe", "Aiuto", "Ayuda").t());
+    c.entity(b).insert(game_common::ui::HelpButton);
+    #[cfg(not(any(target_os = "android", target_arch = "wasm32")))]
+    {
+        let b = planche(&mut c, panel, &server, "quitter", tx!("Quitter", "Quit", "Beenden", "Esci", "Salir").t());
+        c.entity(b).insert(game_common::ui::QuitButton);
     }
-    bouton(&mut c, panel, tx!("Pré au hasard", "Random meadow", "Zufallswiese", "Prato a caso", "Prado al azar").t(), Action::Hasard);
-    // Les boutons du jeu d'abord, puis le pied commun : Options, Aide, Quitter, logo.
-    pied_de_menu(&mut c, panel);
+    // Étoiles gagnées et logo du studio, sur une petite carte crème.
+    let pied = c
+        .spawn((
+            Node { flex_direction: FlexDirection::Row, align_items: AlignItems::Center, column_gap: px(12), padding: UiRect::axes(px(12), px(2)), border_radius: BorderRadius::all(px(18)), ..default() },
+            BackgroundColor(Color::srgba(1.0, 0.97, 0.88, 0.85)),
+            Pickable::IGNORE,
+            ChildOf(panel),
+        ))
+        .id();
+    c.spawn((ImageNode::new(server.load("branding/hud/etoile.png")), Node { width: px(24), height: px(24), ..default() }, Pickable::IGNORE, ChildOf(pied)));
+    spawn_text(&mut c, pied, &format!("{} / {}", progression.total(), NIVEAUX.len() * 3), 18.0);
+    game_common::ui::spawn_studio_logo(&mut c, pied);
 }
 
 fn spawn_niveaux(mut c: Commands, progression: Res<Progression>) {
