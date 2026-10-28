@@ -85,7 +85,9 @@ fn move_camera(
         let a = (*angle + PI).rem_euclid(TAU) - PI;
         *angle = a * (1.0 - (dt * 4.0).min(1.0));
     }
-    let (w, h) = (layout.w as f32, layout.h as f32);
+    // Images de presse : caméra plus proche, le plateau remplit l'image.
+    let zoom = if std::env::var("SNAKE_PRESSE").is_ok() && *state.get() == GameState::Playing { std::env::var("SNAKE_ZOOM").ok().and_then(|v| v.parse().ok()).unwrap_or(0.95) } else { 1.0 };
+    let (w, h) = (layout.w as f32 * zoom, layout.h as f32 * zoom);
     for (mut tf, mut proj) in &mut cam {
         *tf = Transform::from_translation(Quat::from_rotation_y(*angle) * ISO_OFFSET).looking_at(Vec3::ZERO, Vec3::Y);
         if layout.is_changed() {

@@ -44,22 +44,23 @@ fn shots(press: bool) -> Vec<Shot> {
     if press {
         // Dossier de presse : le menu, la carte du Voyage et un niveau de chaque lieu (le premier niveau d'un lieu est le n°1 de sa série de 10).
         let at = |name: &'static str, state: GameState, mode: Mode, long: Option<usize>| Shot { name, state, universe: Prairie, long, features: false, shape: Shape::Medium, mode };
+        let rich = |name: &'static str, level: usize, long: usize, features: bool| Shot { name, state: Playing, universe: Prairie, long: Some(long), features, shape: Shape::Medium, mode: Mode::Voyage(level) };
         vec![
             shot("01-menu", Menu, Prairie, None, false),
             at("02-voyage", GameState::Voyage, Mode::Infinite, None),
-            at("03-jardin-public", Playing, Mode::Voyage(3), Some(22)),
-            at("04-desert", Playing, Mode::Voyage(14), Some(22)),
-            at("05-ruines-antiques", Playing, Mode::Voyage(24), Some(22)),
-            at("06-cimetiere", Playing, Mode::Voyage(34), Some(22)),
-            at("07-ile-des-pirates", Playing, Mode::Voyage(44), Some(22)),
-            at("08-parc-de-loisirs", Playing, Mode::Voyage(54), Some(22)),
-            at("09-centre-ville", Playing, Mode::Voyage(64), Some(22)),
-            at("10-gare", Playing, Mode::Voyage(74), Some(22)),
-            at("11-port", Playing, Mode::Voyage(84), Some(22)),
-            at("12-village-medieval", Playing, Mode::Voyage(94), Some(22)),
-            at("13-grottes", Playing, Mode::Voyage(104), Some(22)),
-            at("14-longue-file", Playing, Mode::Voyage(2), Some(100)),
-            shot("15-cases-speciales", Playing, Prairie, Some(6), true),
+            rich("03-jardin-public", 5, 30, true),
+            rich("04-desert", 19, 30, false),
+            rich("05-ruines-antiques", 29, 30, false),
+            rich("06-cimetiere", 39, 30, false),
+            rich("07-ile-des-pirates", 48, 30, false),
+            rich("08-parc-de-loisirs", 58, 30, false),
+            rich("09-centre-ville", 68, 26, false),
+            rich("10-gare", 78, 26, false),
+            rich("11-port", 88, 30, false),
+            rich("12-village-medieval", 98, 28, false),
+            rich("13-grottes", 108, 28, false),
+            rich("14-longue-file", 0, 90, false),
+            shot("15-cases-speciales", Playing, Prairie, Some(12), true),
         ]
     } else {
         vec![
@@ -99,7 +100,9 @@ impl Plugin for CapturePlugin {
 }
 
 /// Fenêtre en 1920×1080 exactement (échelle 1), pour des images de presse.
-fn full_hd(mut windows: Query<&mut Window, With<PrimaryWindow>>) {
+fn full_hd(mut commands: Commands, mut windows: Query<&mut Window, With<PrimaryWindow>>) {
+    // Menus lisibles en 1920×1080.
+    commands.insert_resource(UiScale(1.2));
     for mut w in &mut windows {
         w.resolution.set_scale_factor_override(Some(1.0));
         w.resolution.set(1920.0, 1080.0);

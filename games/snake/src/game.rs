@@ -22,7 +22,7 @@ pub struct GamePlugin;
 impl Plugin for GamePlugin {
     fn build(&self, app: &mut App) {
         app.insert_resource(Conga::new(&Layout::default(), 0))
-            .insert_resource(Food { cell: IVec2::ZERO, kind: 1, look: 0, spawned: true, active: true })
+            .insert_resource(Food { cell: IVec2::ZERO, kind: 1, look: 0, spawned: true, active: true, extras: Vec::new() })
             .init_resource::<Demo>()
             .insert_resource(Paused(false))
             .insert_resource(Boost(0))
@@ -213,6 +213,8 @@ struct Food {
     active: bool,
     /// `false` : son modèle reste à poser.
     spawned: bool,
+    /// Invités en plus, posés pour les images de presse (case, personnage, apparence).
+    extras: Vec<(IVec2, usize, u32)>,
 }
 
 #[derive(Resource)]
@@ -324,24 +326,6 @@ fn new_run(
             board.place(f, &busy, conga.cells[0], &layout, scenery.0, &mut rng);
         }
     }
-    // Essai : une très longue file (SNAKE_LONG=n) pour vérifier la variété des apparences.
-    if let Some(n) = demo.long {
-        let mut path = Vec::new();
-        for y in 0..layout.h {
-            let xs: Vec<i32> = if y % 2 == 0 { (0..layout.w).collect() } else { (0..layout.w).rev().collect() };
-            path.extend(xs.into_iter().map(|x| IVec2::new(x, y)).filter(|c| layout.walkable(*c)));
-        }
-        path.truncate(n.min(path.len()));
-        path.reverse();
-        let pool = progress.persons();
-        conga.cells = path.clone();
-        conga.prev = path;
-        conga.kinds = (0..conga.cells.len()).map(|_| pool[rng.below(pool.len() as u32) as usize]).collect();
-        conga.looks = (0..conga.cells.len() as u32).map(|i| i * 5 % LOOKS).collect();
-        conga.vias = vec![None; conga.cells.len()];
-        conga.dir = if conga.cells.len() > 1 { conga.cells[0] - conga.cells[1] } else { IVec2::X };
-        timer.0 = Timer::from_seconds(5.0, TimerMode::Repeating);
-    }
     debug!("nouvelle partie : plateau {}×{}, tête {}, invité {}", layout.w, layout.h, conga.cells[0], food.cell);
     paused.0 = demo.press;
     if let Mode::Voyage(i) = *mode {
@@ -370,6 +354,119 @@ fn new_run(
             }
         }
     }
+
+    // Essais et images de presse : une longue file qui serpente (SNAKE_LONG=n), des invités à ramasser, les pièges en place.
+    if demo.long.is_some() || demo.press {
+        if demo.press {
+            // Plateau bien rempli : quelques obstacles du paysage en plus.
+            let busy = conga.cells.clone();
+            for _ in 0..6 {
+                board.place(Feature::Obstacle, &busy, conga.cells[0], &layout, scenery.0, &mut rng);
+            }
+            // Éboulements : trois pierres sur le point de tomber, et quelques-unes déjà tombées.
+            if board.falls_left > 0 {
+                let mut placed = 0;
+                for _ in 0..200 {
+                    let c = IVec2::new(rng.below(layout.w as u32) as i32, rng.below(layout.h as u32) as i32);
+                    if placed < 3 && layout.walkable(c) && board.is_free(c, &conga.cells, conga.cells[0]) && !board.next_to_blocker(c) {
+                        board.tiles.insert(c, Tile::Rubble(1_000_000));
+                        placed += 1;
+                    }
+                }
+                let busy = conga.cells.clone();
+                for _ in 0..4 {
+                    board.place(Feature::Obstacle, &busy, conga.cells[0], &layout, scenery.0, &mut rng);
+                }
+                board.falls_left = 0;
+            }
+            // Le guide rival ou le train est au milieu de sa traversée.
+            if let Some(r) = board.rivals.first() {
+                let per = r.period();
+                board.clock = ((r.cells.len() as u32 / 2) + per - r.offset % per) % per;
+            }
+        }
+        if let Some(n) = demo.long {
+            let path = winding_path(&layout, &board, layout.start, n, &mut Rng::new(7 + n as u64));
+            let pool = progress.persons();
+            conga.cells = path.clone();
+            conga.prev = path;
+            conga.kinds = (0..conga.cells.len()).map(|_| pool[rng.below(pool.len() as u32) as usize]).collect();
+            conga.looks = (0..conga.cells.len() as u32).map(|i| i * 5 % LOOKS).collect();
+            conga.vias = vec![None; conga.cells.len()];
+            conga.dir = if conga.cells.len() > 1 { conga.cells[0] - conga.cells[1] } else { IVec2::X };
+            timer.0 = Timer::from_seconds(5.0, TimerMode::Repeating);
+        }
+        food.cell = free_cell(&conga.cells, &board, &layout, &mut rng);
+        food.spawned = false;
+        food.extras.clear();
+        if demo.press {
+            let pool = progress.persons();
+            let mut taken = conga.cells.clone();
+            taken.push(food.cell);
+            for _ in 0..6 {
+                let c = free_cell(&taken, &board, &layout, &mut rng);
+                taken.push(c);
+                food.extras.push((c, pool[rng.below(pool.len() as u32) as usize], rng.below(LOOKS)));
+            }
+        }
+    }
+}
+
+/// Une file de `n` personnes qui serpente (virages, sans se toucher) à partir de `start` ; la tête est la première case.
+fn winding_path(layout: &Layout, board: &Board, start: IVec2, n: usize, rng: &mut Rng) -> Vec<IVec2> {
+    fn go(layout: &Layout, board: &Board, path: &mut Vec<IVec2>, n: usize, rng: &mut Rng, budget: &mut u32, best: &mut Vec<IVec2>, strict: bool) -> bool {
+        if path.len() > best.len() {
+            *best = path.clone();
+        }
+        if path.len() >= n {
+            return true;
+        }
+        if *budget == 0 {
+            return false;
+        }
+        *budget -= 1;
+        let head = *path.last().expect("chemin non vide");
+        let before = path.len().checked_sub(2).map(|i| path[i]);
+        let mut next: Vec<(i32, IVec2)> = [IVec2::X, IVec2::NEG_X, IVec2::Y, IVec2::NEG_Y]
+            .into_iter()
+            .map(|d| head + d)
+            .filter(|c| layout.walkable(*c) && !path.contains(c) && !matches!(board.tiles.get(c), Some(Tile::Obstacle(_) | Tile::Hole | Tile::Rubble(_) | Tile::Teleport(_))))
+            // Strict : un vide d'une case entre deux tronçons de la file, pour qu'elle reste lisible.
+            .filter(|c| !strict || [IVec2::X, IVec2::NEG_X, IVec2::Y, IVec2::NEG_Y].iter().all(|d| *c + *d == head || !path.contains(&(*c + *d))))
+            .map(|c| {
+                // Les cases collées au reste de la file coûtent cher : la file reste aérée. On tourne volontiers.
+                let touching = [IVec2::X, IVec2::NEG_X, IVec2::Y, IVec2::NEG_Y].iter().filter(|d| path.contains(&(c + **d))).count() as i32 - 1;
+                let straight = before.is_some_and(|b| c - head == head - b);
+                (rng.below(100) as i32 + touching * 80 + if straight { 45 } else { 0 }, c)
+            })
+            .collect();
+        next.sort_by_key(|(score, _)| *score);
+        for (_, c) in next {
+            path.push(c);
+            if go(layout, board, path, n, rng, budget, best, strict) {
+                return true;
+            }
+            path.pop();
+        }
+        false
+    }
+    let mut best = vec![start];
+    // D'abord plusieurs essais avec des vides entre les tronçons (lisible), puis sans contrainte si la file est trop longue pour le plateau.
+    let mut found = false;
+    for _ in 0..40 {
+        let (mut path, mut budget) = (vec![start], 4_000);
+        if go(layout, board, &mut path, n, rng, &mut budget, &mut best, true) {
+            found = true;
+            break;
+        }
+    }
+    if !found {
+        best = vec![start];
+        let (mut path, mut budget) = (vec![start], 60_000);
+        go(layout, board, &mut path, n, rng, &mut budget, &mut best, false);
+    }
+    best.reverse();
+    best
 }
 
 fn clear_board(mut commands: Commands, stuff: Query<Entity, Or<(With<Segment>, With<Guest>)>>) {
@@ -822,6 +919,18 @@ fn sync_guest(
         ChildOf(root),
     ));
     people::spawn_model(&mut commands, &server, &mut graphs, root, food.kind, Pose::Wave, 1.0, food.look, false);
+    // Images de presse : d'autres invités à ramasser.
+    for (cell, kind, look) in food.extras.clone() {
+        let extra = commands
+            .spawn((
+                Transform::from_translation(cell_to_world(cell.as_vec2(), 0.05, &layout)).with_rotation(Quat::from_rotation_y(PI * 0.75)),
+                Visibility::default(),
+                Guest,
+            ))
+            .id();
+        commands.spawn((Mesh3d(assets.ring.clone()), MeshMaterial3d(assets.ring_mat.clone()), Transform::from_xyz(0.0, 0.03, 0.0), bevy::light::NotShadowCaster, ChildOf(extra)));
+        people::spawn_model(&mut commands, &server, &mut graphs, extra, kind, Pose::Wave, 1.0, look, false);
+    }
 }
 
 fn animate_guest(time: Res<Time>, mut rings: Query<&mut Transform, With<Ring>>) {
