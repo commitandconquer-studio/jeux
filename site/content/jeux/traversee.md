@@ -9,6 +9,16 @@ icone = "traversee"
 code = "games/traversee"
 dossier = "traversee"
 vignette = "livraison"
+hero = "livraison"
+mondes = [
+  { img = "livraison", nom = "La prairie", t = "Le départ : routes, rivières et voies ferrées" },
+  { img = "pirates", nom = "La baie des pirates", t = "Canons, tonneaux et palmiers" },
+  { img = "halloween", nom = "Halloween", t = "Cimetière et morts-vivants" },
+  { img = "moyenage", nom = "Le Moyen Âge", t = "Machines de siège et tours" },
+  { img = "espace", nom = "L'espace", t = "Vaisseaux, météorites et plateformes" },
+  { img = "farwest", nom = "Le Far West", t = "Chevaux, bisons et train à vapeur" },
+  { img = "cyber", nom = "La ville futuriste", t = "Speeders, monorail et gratte-ciel" },
+]
 commandes = ["Flèches ou ZQSD, Espace ou clic : avancer", "Tactile : glisser du doigt", "M : son · Échap : fin de partie"]
 chiffres = [
   { n = "7", t = "mondes" },

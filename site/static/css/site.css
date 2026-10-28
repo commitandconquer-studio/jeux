@@ -345,3 +345,85 @@ html.moment-nuit .hero-fallback { filter: brightness(.42) saturate(.75) hue-rota
 /* Logo d'un jeu (fiche) : l'image dit le titre, le h1 reste pour les lecteurs d'écran et les moteurs de recherche. */
 .jeu-logo { display: block; width: min(100%, 460px); height: auto; margin: 0 0 .6rem; }
 .jeu-hero h1.cache { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+
+
+/* ---- Fiche d'un jeu : plein écran ------------------------------------- */
+.jeu-plein {
+  position: relative; display: flex; align-items: center; color: #fff;
+  min-height: calc(100vh - 76px); min-height: calc(100svh - 76px);
+  background: radial-gradient(ellipse at 75% 40%, #1E4A6E 0%, var(--night) 65%);
+  background-size: cover; background-position: center;
+}
+.jeu-plein.avec-image::before {
+  content: ""; position: absolute; inset: 0;
+  background: linear-gradient(90deg, rgba(10, 26, 42, .88) 0%, rgba(10, 26, 42, .6) 42%, rgba(10, 26, 42, .1) 100%),
+              linear-gradient(0deg, rgba(10, 26, 42, .55) 0%, transparent 30%);
+}
+.jeu-plein-in {
+  position: relative; z-index: 1; width: 100%; max-width: 1240px; margin: 0 auto;
+  padding: clamp(32px, 6vw, 72px) clamp(16px, 6vw, 80px);
+  display: flex; align-items: center; justify-content: space-between; gap: 40px;
+}
+.jeu-plein-texte { max-width: 600px; }
+.jeu-plein .jeu-logo { display: block; width: min(100%, 520px); height: auto; margin-bottom: 14px; filter: drop-shadow(0 10px 24px rgba(0, 0, 0, .45)); }
+.jeu-plein h1 { color: #fff; font-size: clamp(2.4rem, 6vw, 4.4rem); line-height: 1.05; margin: 0 0 14px; }
+.jeu-plein .cache { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
+.jeu-plein .lede { color: #E8F1F8; font-size: clamp(1.05rem, 2vw, 1.3rem); text-shadow: 0 2px 12px rgba(0, 0, 0, .5); }
+.jeu-plein .chiffres-puces { margin-top: 18px; }
+.jeu-plein .chiffres-puces li { background: rgba(255, 255, 255, .16); color: #fff; backdrop-filter: blur(4px); }
+.jeu-plein .chiffres-puces strong { color: #fff; }
+.jeu-plein .btn-ghost { background: rgba(255, 255, 255, .14); color: #fff; border-color: rgba(255, 255, 255, .8); }
+.jeu-plein-icone { width: clamp(140px, 22vw, 260px); border-radius: 15%; box-shadow: 0 24px 60px -20px rgba(0, 0, 0, .7); }
+.badges { display: flex; flex-wrap: wrap; gap: 8px; list-style: none; padding: 0; margin: 22px 0 0; }
+.badges li { font-size: 13px; font-weight: 600; padding: 6px 12px; border-radius: 99px; background: rgba(255, 255, 255, .12); color: #C9D8E4; }
+.badges li.ok { background: rgba(216, 244, 63, .2); color: #E8FA8C; }
+.defiler {
+  position: absolute; z-index: 1; left: 50%; bottom: 14px; transform: translateX(-50%);
+  color: #fff; font-size: 34px; line-height: 1; text-decoration: none; animation: rebond 1.8s ease-in-out infinite;
+}
+@keyframes rebond { 0%, 100% { transform: translate(-50%, 0); } 50% { transform: translate(-50%, 8px); } }
+@media (prefers-reduced-motion: reduce) { .defiler { animation: none; } }
+@media (max-width: 760px) {
+  .jeu-plein-in { flex-direction: column; align-items: flex-start; }
+  .jeu-plein.avec-image::before { background: linear-gradient(0deg, rgba(10, 26, 42, .9) 0%, rgba(10, 26, 42, .45) 100%); }
+}
+#suite { scroll-margin-top: 64px; }
+.jeu-fin { text-align: center; }
+.jeu-fin .actions { justify-content: center; }
+.band h2 { margin-top: 0; }
+
+/* ---- Actualités : grande image et liste ------------------------------- */
+.actus { display: grid; grid-template-columns: 1.25fr 1fr; gap: clamp(18px, 3vw, 36px); align-items: stretch; max-width: 1180px; margin: 0 auto; }
+.actu-image { position: relative; display: block; overflow: hidden; border-radius: var(--radius); box-shadow: var(--shadow); background: var(--night); min-height: 260px; }
+.actu-image img { display: block; width: 100%; height: 100%; min-height: 260px; object-fit: cover; aspect-ratio: 16 / 9; }
+.actu-legende {
+  position: absolute; left: 0; right: 0; bottom: 0; padding: 40px 20px 16px; color: #fff; font-weight: 700; font-size: 1.1rem;
+  background: linear-gradient(0deg, rgba(10, 26, 42, .85), transparent);
+}
+.actu-liste { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; border-top: 1px solid var(--line); }
+.actu { display: block; padding: 18px 8px 16px; border-bottom: 1px solid var(--line); text-decoration: none; color: var(--ink); transition: background .2s, padding .2s; }
+.actu:hover, .actu:focus-visible, .actu.on { background: rgba(255, 255, 255, .7); padding-left: 16px; }
+.actu-titre { display: block; font-weight: 700; font-size: 1.05rem; line-height: 1.3; }
+.actu-meta { display: flex; align-items: center; gap: 10px; margin-top: 8px; font-size: 13px; color: var(--ink-soft); }
+.actu-meta .tag { background: #DDEFFF; color: #0B5DA0; }
+.actus-suite { margin: 24px auto 0; text-align: center; }
+@media (max-width: 860px) { .actus { grid-template-columns: 1fr; } }
+
+/* ---- Les mondes : carrousel ------------------------------------------- */
+.mondes-rail {
+  display: flex; gap: 18px; overflow-x: auto; scroll-snap-type: x mandatory; padding: 8px max(16px, calc((100% - 1180px) / 2)) 24px;
+  scrollbar-width: thin;
+}
+.monde { position: relative; flex: 0 0 min(80vw, 520px); margin: 0; scroll-snap-align: center; border-radius: var(--radius); overflow: hidden; box-shadow: var(--shadow); background: var(--night); }
+.monde img { display: block; width: 100%; aspect-ratio: 16 / 9; object-fit: cover; }
+.monde figcaption {
+  position: absolute; left: 0; right: 0; bottom: 0; padding: 48px 18px 16px; color: #fff;
+  background: linear-gradient(0deg, rgba(10, 26, 42, .88), transparent); display: flex; flex-direction: column; gap: 2px;
+}
+.monde figcaption span { font-size: 14px; color: #D5E2EC; }
+
+/* ---- Galerie ----------------------------------------------------------- */
+.galerie-band .galerie { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(280px, 100%), 1fr)); gap: 16px; max-width: 1180px; margin: 0 auto; }
+.galerie-band .galerie figure { margin: 0; border-radius: var(--radius); overflow: hidden; background: #fff; box-shadow: var(--shadow); }
+.galerie-band .galerie img { display: block; width: 100%; aspect-ratio: 16 / 9; object-fit: cover; }
+.galerie-band .galerie figcaption { padding: 10px 14px 14px; font-size: 14px; color: var(--ink-soft); }

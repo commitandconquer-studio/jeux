@@ -1,71 +1,104 @@
 {% extends "base.html" %}
 {% block title %}{{ page.title }} · Commit & Conquer{% endblock %}
 {% block description %}{{ page.description }}{% endblock %}
+{% block body_class %}page-jeu{% endblock %}
 {% block content %}
 {%- set suf = "" -%}{%- if lang != "fr" -%}{%- set suf = "." ~ lang -%}{%- endif -%}
 {%- set blog = get_section(path="blog/" ~ page.slug ~ "/_index" ~ suf ~ ".md") -%}
-<section class="jeu-hero">
-  <img class="jeu-icone" src="{{ get_url(path='img/jeux/' ~ page.extra.icone ~ '.png') }}" alt="" width="200" height="200">
-  <div>
-    {%- if page.extra.logo %}
-    <img class="jeu-logo" src="{{ get_url(path='img/jeux/' ~ page.extra.logo ~ '.png') }}" alt="{{ page.title }}" width="1200" height="400">
-    <h1 class="cache">{{ page.title }}</h1>
-    {%- else %}
-    <h1>{{ page.title }}</h1>
-    {%- endif %}
-    <p class="lede">{{ page.description }}</p>
-    <p class="actions">
-      {%- if page.extra.web %}
-      <a class="btn btn-main jouer" href="{{ get_url(path='@/jouer/' ~ page.slug ~ '.md', lang=lang) }}">▶ {{ trans(key="jouer_maintenant", lang=lang) }}</a>
+{%- set image_fond = "" -%}
+{%- if page.extra.hero -%}{%- set_global image_fond = page.extra.hero -%}{%- elif page.extra.vignette -%}{%- set_global image_fond = page.extra.vignette -%}{%- endif -%}
+
+<section class="jeu-plein{% if image_fond %} avec-image{% endif %}"{% if image_fond %} style="background-image: url('{{ get_url(path='img/jeux/' ~ page.extra.dossier ~ '/' ~ image_fond ~ '.jpg') }}')"{% endif %}>
+  <div class="jeu-plein-in">
+    <div class="jeu-plein-texte">
+      {%- if page.extra.logo %}
+      <img class="jeu-logo" src="{{ get_url(path='img/jeux/' ~ page.extra.logo ~ '.png') }}" alt="{{ page.title }}" width="1200" height="400">
+      <h1 class="cache">{{ page.title }}</h1>
       {%- else %}
-      <span class="btn btn-main disabled" title="{{ trans(key='a_venir', lang=lang) }}">▶ {{ trans(key="jouer_navigateur", lang=lang) }} · {{ trans(key="bientot", lang=lang) }}</span>
+      <h1>{{ page.title }}</h1>
       {%- endif %}
-      <a class="btn btn-ghost" href="{{ config.extra.github }}/tree/main/{{ page.extra.code }}">{{ trans(key="code_source", lang=lang) }}</a>
-    </p>
+      <p class="lede">{{ page.description }}</p>
+      {%- if page.extra.chiffres %}
+      <ul class="chiffres-puces">{% for c in page.extra.chiffres %}<li><strong>{{ c.n }}</strong> {{ c.t }}</li>{% endfor %}</ul>
+      {%- endif %}
+      <p class="actions">
+        {%- if page.extra.web %}
+        <a class="btn btn-main jouer" href="{{ get_url(path='@/jouer/' ~ page.slug ~ '.md', lang=lang) }}">▶ {{ trans(key="jouer_maintenant", lang=lang) }}</a>
+        {%- else %}
+        <span class="btn btn-main disabled" title="{{ trans(key='a_venir', lang=lang) }}">▶ {{ trans(key="jouer_navigateur", lang=lang) }} · {{ trans(key="bientot", lang=lang) }}</span>
+        {%- endif %}
+        <a class="btn btn-ghost" href="{{ get_url(path='@/installer.md', lang=lang) }}">🐧 {{ trans(key="linux_dl", lang=lang) }}</a>
+      </p>
+      <ul class="badges">
+        <li class="ok">🌐 {% if page.extra.web %}{{ trans(key="navigateur", lang=lang) }}{% else %}{{ trans(key="navigateur", lang=lang) }} · {{ trans(key="bientot", lang=lang) }}{% endif %}</li>
+        <li class="ok">🐧 Linux</li>
+        <li>🪟 Windows · {{ trans(key="bientot", lang=lang) }}</li>
+        <li>🍎 macOS · {{ trans(key="bientot", lang=lang) }}</li>
+        <li>🤖 Android · {{ trans(key="bientot", lang=lang) }}</li>
+      </ul>
+    </div>
+    {%- if not image_fond %}
+    <img class="jeu-plein-icone" src="{{ get_url(path='img/jeux/' ~ page.extra.icone ~ '.png') }}" alt="" width="240" height="240">
+    {%- endif %}
+  </div>
+  <a class="defiler" href="#suite" aria-label="{{ trans(key='defiler', lang=lang) }}">⌄</a>
+</section>
+
+<div id="suite"></div>
+
+{%- if blog.pages | length > 0 %}
+<section class="band blog-band" id="actus">
+  <h2>{{ trans(key="blog_titre", lang=lang) }}</h2>
+  <div class="band-in">
+    {{ <cc.actualites articles={blog.pages} lang={lang} /> }}
+    <p class="intro actus-suite"><a href="{{ blog.permalink }}">{{ trans(key="blog_tous_jeu", lang=lang) }} →</a></p>
   </div>
 </section>
+{%- endif %}
+
 <div class="jeu-corps">
   <article class="prose">
     <h2>{{ trans(key="regle", lang=lang) }}</h2>
     {{ page.content | safe }}
-    <h2>{{ trans(key="commandes", lang=lang) }}</h2>
-    <ul class="commandes">{% for c in page.extra.commandes %}<li>{{ c }}</li>{% endfor %}</ul>
   </article>
   <aside class="plateformes">
-    <h2>{{ trans(key="plateformes", lang=lang) }}</h2>
-    <ul>
-      <li class="ok">🐧 Linux <span>{{ trans(key="disponible", lang=lang) }}</span></li>
-      <li>🪟 Windows <span>{{ trans(key="a_venir", lang=lang) }}</span></li>
-      <li>🍎 macOS <span>{{ trans(key="a_venir", lang=lang) }}</span></li>
-      <li>🤖 Android <span>{{ trans(key="a_venir", lang=lang) }}</span></li>
-      <li{% if page.extra.web %} class="ok"{% endif %}>🌐 {{ trans(key="jouer_navigateur", lang=lang) }} <span>{% if page.extra.web %}{{ trans(key="disponible", lang=lang) }}{% else %}{{ trans(key="a_venir", lang=lang) }}{% endif %}</span></li>
-    </ul>
+    <h2>{{ trans(key="commandes", lang=lang) }}</h2>
+    <ul class="commandes">{% for c in page.extra.commandes %}<li>{{ c }}</li>{% endfor %}</ul>
     <p class="installer-lien"><a href="{{ get_url(path='@/installer.md', lang=lang) }}">{{ trans(key="voir_installation", lang=lang) }} →</a></p>
+    <p class="installer-lien"><a href="{{ config.extra.github }}/tree/main/{{ page.extra.code }}">{{ trans(key="code_source", lang=lang) }} →</a></p>
   </aside>
 </div>
-{%- if page.extra.chiffres %}
-<section class="jeu-chiffres">{% for c in page.extra.chiffres %}<div><strong>{{ c.n }}</strong><span>{{ c.t }}</span></div>{% endfor %}</section>
+
+{%- if page.extra.mondes %}
+<section class="band mondes">
+  <h2>{{ trans(key="mondes_titre", lang=lang) }}</h2>
+  <div class="mondes-rail">
+    {%- for m in page.extra.mondes %}
+    <figure class="monde">
+      <img src="{{ get_url(path='img/jeux/' ~ page.extra.dossier ~ '/' ~ m.img ~ '.jpg') }}" alt="{{ m.nom }}" loading="lazy">
+      <figcaption><strong>{{ m.nom }}</strong><span>{{ m.t }}</span></figcaption>
+    </figure>
+    {%- endfor %}
+  </div>
+</section>
 {%- endif %}
+
 {%- if page.extra.captures %}
-<section class="galerie">{% for c in page.extra.captures %}
-  <figure><img src="{{ get_url(path='img/jeux/' ~ page.extra.dossier ~ '/' ~ c.img ~ '.jpg') }}" alt="{{ c.t }}" loading="lazy"><figcaption>{{ c.t }}</figcaption></figure>{% endfor %}
+<section class="band galerie-band">
+  <h2>{{ trans(key="galerie_titre", lang=lang) }}</h2>
+  <div class="galerie">{% for c in page.extra.captures %}
+    <figure><img src="{{ get_url(path='img/jeux/' ~ page.extra.dossier ~ '/' ~ c.img ~ '.jpg') }}" alt="{{ c.t }}" loading="lazy"><figcaption>{{ c.t }}</figcaption></figure>{% endfor %}
+  </div>
 </section>
 {%- endif %}
-<section class="jeu-blog">
-  <h2><a href="{{ blog.permalink }}">{{ trans(key="blog_du_jeu", lang=lang) }}</a></h2>
-  {%- if blog.pages | length == 0 %}
-  <p class="muted">{{ trans(key="aucun_article", lang=lang) }}</p>
-  {%- else %}
-  <ol class="maj-liste">
-    {%- for p in blog.pages %}{% if loop.index <= 3 %}
-    <li class="maj">
-      <time datetime="{{ p.date }}">{% if lang == "fr" %}{{ p.date | date(format="%d/%m/%Y") }}{% else %}{{ p.date | date(format="%Y-%m-%d") }}{% endif %}</time>
-      <h3><a href="{{ p.permalink }}">{{ p.title }}</a></h3>
-    </li>
-    {%- endif %}{% endfor %}
-  </ol>
-  <p><a href="{{ blog.permalink }}">{{ trans(key="blog_tous_jeu", lang=lang) }} →</a></p>
-  {%- endif %}
+
+<section class="band jeu-fin">
+  <h2>{{ page.title }}</h2>
+  <p class="actions">
+    {%- if page.extra.web %}
+    <a class="btn btn-main jouer" href="{{ get_url(path='@/jouer/' ~ page.slug ~ '.md', lang=lang) }}">▶ {{ trans(key="jouer_maintenant", lang=lang) }}</a>
+    {%- endif %}
+    <a class="btn btn-ghost" href="{{ get_url(path='@/jeux/_index.md', lang=lang) }}">← {{ trans(key="retour_jeux", lang=lang) }}</a>
+  </p>
 </section>
-<p class="retour"><a href="{{ get_url(path='@/jeux/_index.md', lang=lang) }}">← {{ trans(key="retour_jeux", lang=lang) }}</a></p>
 {% endblock %}

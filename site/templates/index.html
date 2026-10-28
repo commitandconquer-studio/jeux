@@ -46,15 +46,10 @@
 
 <section class="band blog-band">
   <h2>{{ trans(key="blog_titre", lang=lang) }}</h2>
-  <ol class="maj-liste band-in">
-    {%- for p in blog.pages %}{% if loop.index <= 3 %}
-    <li class="maj">
-      <time datetime="{{ p.date }}">{% if lang == "fr" %}{{ p.date | date(format="%d/%m/%Y") }}{% else %}{{ p.date | date(format="%Y-%m-%d") }}{% endif %}</time>
-      <h3><a href="{{ p.permalink }}">{{ p.title }}</a></h3>
-    </li>
-    {%- endif %}{% endfor %}
-  </ol>
-  <p class="intro"><a href="{{ blog.permalink }}">{{ trans(key="blog_tous", lang=lang) }} →</a></p>
+  <div class="band-in">
+    {{ <cc.actualites articles={blog.pages} lang={lang} /> }}
+    <p class="intro actus-suite"><a href="{{ blog.permalink }}">{{ trans(key="blog_tous", lang=lang) }} →</a></p>
+  </div>
 </section>
 
 <section class="band libre">

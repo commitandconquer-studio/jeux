@@ -2,6 +2,8 @@
 title = "Un nouveau look : menu, écran de fin, bandeau de jeu"
 date = 2026-10-27
 slug = "nouveau-look"
+[extra]
+image = "jeux/traversee/menu.jpg"
 +++
 
 Cross or Die change de visage.

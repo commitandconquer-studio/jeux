@@ -9,6 +9,16 @@ icone = "traversee"
 code = "games/traversee"
 dossier = "traversee"
 vignette = "livraison"
+hero = "livraison"
+mondes = [
+  { img = "livraison", nom = "The meadow", t = "Where it starts: roads, rivers and railways" },
+  { img = "pirates", nom = "Pirate bay", t = "Cannons, barrels and palm trees" },
+  { img = "halloween", nom = "Halloween", t = "Graveyard and undead" },
+  { img = "moyenage", nom = "The Middle Ages", t = "Siege engines and towers" },
+  { img = "espace", nom = "Space", t = "Ships, meteors and platforms" },
+  { img = "farwest", nom = "The Wild West", t = "Horses, bison and a steam train" },
+  { img = "cyber", nom = "The futuristic city", t = "Speeders, monorail and skyscrapers" },
+]
 commandes = ["Arrow keys or WASD, Space or click: hop", "Touch: swipe", "M: sound · Esc: end the run"]
 chiffres = [
   { n = "7", t = "worlds" },

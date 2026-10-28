@@ -99,6 +99,33 @@
 </div>
 {% endcomponent cc.catalogue %}
 
+{# Actualités : une grande image à gauche, la liste des derniers articles à droite
+   (survoler un article change l'image). `articles` : pages du blog, du plus récent au plus ancien. #}
+{% component cc.actualites(articles, lang) %}
+{%- set suf = "" -%}{%- if lang != "fr" -%}{%- set suf = "." ~ lang -%}{%- endif -%}
+<div class="actus">
+  <a class="actu-image" href="{{ articles[0].permalink }}" data-actu-image>
+    <img src="{{ get_url(path='img/' ~ articles[0].extra.image | default(value='brand/paysage.webp')) }}" alt="" loading="lazy">
+    <span class="actu-legende" data-actu-legende>{{ articles[0].title }}</span>
+  </a>
+  <ol class="actu-liste">
+    {%- for p in articles %}{% if loop.index <= 4 %}
+    <li>
+      <a class="actu{% if loop.first %} on{% endif %}" href="{{ p.permalink }}"
+         data-image="{{ get_url(path='img/' ~ p.extra.image | default(value='brand/paysage.webp')) }}" data-titre="{{ p.title }}">
+        <span class="actu-titre">{{ p.title }}</span>
+        <span class="actu-meta">
+          {%- set morceaux = p.relative_path | split(pat="/") %}
+          {%- if morceaux | length == 3 %}{%- set jeu_de_l_article = get_page(path="jeux/" ~ morceaux[1] ~ suf ~ ".md") %}<span class="tag">{{ jeu_de_l_article.title }}</span>{% endif %}
+          <time datetime="{{ p.date }}">{% if lang == "fr" %}{{ p.date | date(format="%d/%m/%Y") }}{% else %}{{ p.date | date(format="%Y-%m-%d") }}{% endif %}</time>
+        </span>
+      </a>
+    </li>
+    {%- endif %}{% endfor %}
+  </ol>
+</div>
+{% endcomponent cc.actualites %}
+
 {# Trois rangées de montagnes à facettes, qui glissent en parallaxe au défilement. #}
 {% component cc.montagnes() %}
 <div class="montagnes" aria-hidden="true">
