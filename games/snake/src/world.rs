@@ -136,6 +136,24 @@ struct Theme {
     ambient: (Color, f32),
 }
 
+/// Un véhicule qui roule en boucle sur une rue au-delà du plateau (cases de la grille, pas de logique de jeu).
+#[derive(Component)]
+pub struct Traffic {
+    start: Vec2,
+    dir: Vec2,
+    len: f32,
+    speed: f32,
+    phase: f32,
+}
+
+pub fn animate_traffic(time: Res<Time>, layout: Res<Layout>, mut q: Query<(&Traffic, &mut Transform)>) {
+    let t = time.elapsed_secs();
+    for (v, mut tf) in &mut q {
+        let s = (v.phase + t * v.speed).rem_euclid(v.len);
+        tf.translation = cell_to_world(v.start + v.dir * s, 0.05, &layout);
+    }
+}
+
 /// Tout ce qui appartient au décor, supprimé quand on change d'univers.
 #[derive(Component)]
 pub struct WorldPart;
@@ -225,6 +243,36 @@ pub fn rebuild_world(
             }
         }
         let _ = line;
+        // Circulation : des voitures sur les rues autour du plateau, et un tramway sur la rue du fond.
+        let cars = ["car-kit/sedan", "car-kit/taxi", "car-kit/suv", "car-kit/van", "car-kit/hatchback-sports", "car-kit/police", "car-kit/delivery", "car-kit/truck", "car-kit/sedan-sports", "car-kit/suv-luxury"];
+        let trams = ["train-kit/train-electric-city-a", "train-kit/train-electric-subway-a", "train-kit/train-electric-subway-a", "train-kit/train-electric-city-a"];
+        let (span, from) = (l.w as f32 + 40.0, -20.0);
+        let vehicle = |b: &mut Builder, file: &str, scale: Vec3, start: Vec2, dir: Vec2, speed: f32, phase: f32| {
+            let scene = b.server.load(GltfAssetLabel::Scene(0).from_asset(format!("kenney/{file}.glb")));
+            let yaw = dir.x.atan2(dir.y);
+            b.commands.spawn((WorldAssetRoot(scene), Transform::from_rotation(Quat::from_rotation_y(yaw)).with_scale(scale), Traffic { start, dir, len: span, speed, phase }, WorldPart));
+        };
+        for k in [-1, l.blocks + 1] {
+            for lane in 0..2 {
+                let row = (k * pitch + lane) as f32;
+                let sign = if lane == 0 { 1.0 } else { -1.0 };
+                let speed = 2.5 + rng.below(20) as f32 / 10.0;
+                for horizontal in [true, false] {
+                    // Le tramway roule sur la rue du fond, dans un seul sens.
+                    if horizontal && k == -1 && lane == 0 {
+                        for (i, t) in trams.iter().enumerate() {
+                            vehicle(&mut b, t, Vec3::new(0.6, 0.5, 0.52), Vec2::new(from, row), Vec2::X, 2.2, 18.0 - i as f32 * 1.35);
+                        }
+                        continue;
+                    }
+                    let (start, dir) = if horizontal { (Vec2::new(if sign > 0.0 { from } else { from + span }, row), Vec2::new(sign, 0.0)) } else { (Vec2::new(row, if sign > 0.0 { from } else { from + span }), Vec2::new(0.0, sign)) };
+                    for i in 0..3 {
+                        let file = cars[rng.below(cars.len() as u32) as usize];
+                        vehicle(&mut b, file, Vec3::splat(0.5), start, dir, speed, i as f32 * span / 3.0 + rng.below(100) as f32 / 10.0);
+                    }
+                }
+            }
+        }
         let ring = 2;
         for by in -ring..l.blocks + ring {
             for bx in -ring..l.blocks + ring {
@@ -233,7 +281,7 @@ pub fn rebuild_world(
                 let centre = cell_to_world(Vec2::new(x0 as f32 + 1.5, y0 as f32 + 1.5), 0.0, l);
                 // Du côté de la caméra, rien de haut : on garde la vue sur la rue.
                 let front = centre.x * 0.4 + centre.z > 0.0;
-                let park = front && (inside || rng.below(2) == 0);
+                let park = front && (inside || rng.below(5) == 0);
                 let (mat, base) = (if park { lawn.clone() } else { pavement.clone() }, if inside { -0.05 } else { GROUND_Y });
                 let h = if inside { 0.1 } else { 0.25 };
                 let e = b.block_with(mat, Vec3::new(centre.x, base, centre.z), Vec3::new(3.9, h, 3.9), 0.0);
@@ -245,7 +293,12 @@ pub fn rebuild_world(
                         if rng.below(3) > 0 {
                             b.model(parks[rng.below(parks.len() as u32) as usize], at, 1.8, yaw);
                         }
-                    } else if !front && rng.below(3) == 0 {
+                    } else if !front && (dx, dy) == (0.0, 0.0) && !inside && rng.below(3) > 0 {
+                        // Quartier d'affaires : une tour par pâté, qui remplit tout le pâté.
+                        let centre = cell_to_world(Vec2::new(x0 as f32 + 1.5, y0 as f32 + 1.5), 0.05, l);
+                        b.model(towers[rng.below(towers.len() as u32) as usize], centre, 2.3, yaw);
+                        break;
+                    } else if !front && inside && rng.below(3) == 0 {
                         b.model(towers[rng.below(towers.len() as u32) as usize], at, 1.2, yaw);
                     } else {
                         b.model(low[rng.below(low.len() as u32) as usize], at, if front { 1.0 } else { 1.25 }, yaw);

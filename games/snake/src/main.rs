@@ -58,7 +58,7 @@ fn main() {
                 cam.insert(miniature::Miniature::default());
             }
         })
-        .add_systems(Update, (world::rebuild_world, move_camera))
+        .add_systems(Update, (world::rebuild_world, world::animate_traffic, move_camera))
         .run();
 }
 
