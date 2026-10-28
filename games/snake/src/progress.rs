@@ -107,7 +107,7 @@ impl Plugin for ProgressPlugin {
 
 fn load(mut p: ResMut<Progress>) {
     p.total = game_common::save::load(SAVE, "total").and_then(|v| v.parse().ok()).unwrap_or(0);
-    p.open = std::env::var("SNAKE_CAPTURE").is_ok() || std::env::var("SNAKE_TOUT").is_ok();
+    p.open = std::env::var("SNAKE_CAPTURE").is_ok() || std::env::var("SNAKE_PRESSE").is_ok() || std::env::var("SNAKE_TOUT").is_ok();
 }
 
 /// Les invités de la partie s'ajoutent au total ; on note ce qui vient de se débloquer.

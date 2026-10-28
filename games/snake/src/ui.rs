@@ -211,9 +211,9 @@ fn setup_hud(mut commands: Commands) {
     commands.entity(text).insert(HudText);
 }
 
-fn update_banner(banner: Res<Banner>, paused: Res<Paused>, state: Res<State<GameState>>, mut q: Query<(&mut Text, &mut BackgroundColor), With<BannerText>>) {
+fn update_banner(demo: Res<crate::game::Demo>, banner: Res<Banner>, paused: Res<Paused>, state: Res<State<GameState>>, mut q: Query<(&mut Text, &mut BackgroundColor), With<BannerText>>) {
     let playing = *state.get() == GameState::Playing;
-    let t = if !playing {
+    let t = if !playing || demo.press {
         String::new()
     } else if paused.0 {
         tx!("PAUSE", "PAUSED", "PAUSE", "PAUSA", "PAUSA").t().to_owned()
@@ -234,10 +234,11 @@ fn update_hud(
     score: Res<Score>,
     langue: Res<Langue>,
     state: Res<State<GameState>>,
+    demo: Res<crate::game::Demo>,
     mut hud: Query<&mut Visibility, With<Hud>>,
     mut text: Query<&mut Text, With<HudText>>,
 ) {
-    let playing = *state.get() == GameState::Playing;
+    let playing = *state.get() == GameState::Playing && !demo.press;
     for mut v in &mut hud {
         *v = if playing { Visibility::Inherited } else { Visibility::Hidden };
     }

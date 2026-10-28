@@ -21,6 +21,7 @@ impl Plugin for GamePlugin {
     fn build(&self, app: &mut App) {
         app.insert_resource(Conga::new(14, 0))
             .insert_resource(Food { cell: IVec2::ZERO, kind: 1, look: 0, spawned: true })
+            .init_resource::<Demo>()
             .insert_resource(Paused(false))
             .insert_resource(Boost(0))
             .insert_resource(Crash::default())
@@ -43,6 +44,28 @@ impl Plugin for GamePlugin {
                 )
                     .chain(),
             );
+    }
+}
+
+/// Réglages d'essai et de captures (voir `capture.rs`).
+#[derive(Resource)]
+pub struct Demo {
+    /// File de cette longueur au départ (`SNAKE_LONG=n`).
+    pub long: Option<usize>,
+    /// Cases spéciales déjà posées.
+    pub features: bool,
+    /// Dossier de presse : partie figée, sans interface.
+    pub press: bool,
+}
+
+impl Default for Demo {
+    fn default() -> Self {
+        let press = std::env::var("SNAKE_PRESSE").is_ok();
+        Self {
+            long: std::env::var("SNAKE_LONG").ok().and_then(|v| v.parse().ok()),
+            features: press || std::env::var("SNAKE_CAPTURE").is_ok(),
+            press,
+        }
     }
 }
 
@@ -215,6 +238,7 @@ fn new_game(
     mut boost: ResMut<Boost>,
     mut crash: ResMut<Crash>,
     progress: Res<Progress>,
+    demo: Res<Demo>,
     mut rng: ResMut<Rng>,
     stuff: Query<Entity, Or<(With<Segment>, With<Guest>)>>,
     mut sfx: MessageWriter<Sfx>,
@@ -233,7 +257,7 @@ fn new_game(
     food.look = rng.below(LOOKS);
     food.spawned = false;
     // Captures d'écran : tous les éléments sont déjà posés.
-    if std::env::var("SNAKE_CAPTURE").is_ok() {
+    if demo.features {
         let busy = conga.cells.clone();
         for f in [Feature::Obstacle, Feature::Obstacle, Feature::Obstacle, Feature::Hole, Feature::Teleport, Feature::Teleport, Feature::Speeder, Feature::Belt, Feature::Belt] {
             board.place(f, &busy, conga.cells[0], settings.grid(), settings.universe, &mut rng);
@@ -241,7 +265,7 @@ fn new_game(
     }
     timer.0 = Timer::from_seconds(settings.speed.step_times().0, TimerMode::Repeating);
     // Essai : une très longue file (SNAKE_LONG=n) pour vérifier la variété des apparences.
-    if let Some(n) = std::env::var("SNAKE_LONG").ok().and_then(|v| v.parse::<usize>().ok()) {
+    if let Some(n) = demo.long {
         let grid = settings.grid();
         let mut path = Vec::new();
         for y in 0..grid {
@@ -258,6 +282,7 @@ fn new_game(
         conga.dir = if conga.cells.len() > 1 { conga.cells[0] - conga.cells[1] } else { IVec2::X };
         timer.0 = Timer::from_seconds(5.0, TimerMode::Repeating);
     }
+    paused.0 = demo.press;
     score.reset();
 }
 
