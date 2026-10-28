@@ -495,7 +495,12 @@ fn step(
         head = head.rem_euclid(IVec2::new(layout.w, layout.h));
         outside = false;
     }
-    let deadly = matches!(board.tiles.get(&head), Some(Tile::Obstacle(_) | Tile::Hole));
+    // Un tapis qui va à contresens est un mur : la file s'y écrase.
+    let deadly = match board.tiles.get(&head) {
+        Some(Tile::Obstacle(_) | Tile::Hole) => true,
+        Some(Tile::Belt(d)) => *d == -conga.dir,
+        _ => false,
+    };
     let hole_at = (board.tiles.get(&head) == Some(&Tile::Hole)).then_some(head);
     let mut via = None;
     if let Some(Tile::Teleport(id)) = board.tiles.get(&head).copied()
