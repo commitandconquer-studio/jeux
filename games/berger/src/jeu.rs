@@ -36,6 +36,11 @@ pub struct Partie {
     pub bouton_aboyer: bool,
     poussiere: f32,
     phase_chien: f32,
+    /// Largeur et hauteur de zone visible qui montrent tout le champ.
+    pub cadre: (f32, f32),
+    /// Cadrage actuel : 1 = tout le champ, moins = plus près du chien et du troupeau.
+    pub zoom: f32,
+    pub centre_vue: V2,
 }
 
 impl Partie {
@@ -127,12 +132,13 @@ impl Plugin for JeuPlugin {
     fn build(&self, app: &mut App) {
         app.init_resource::<Kit>()
             .insert_resource(Progression::charger())
+            .insert_resource(CameraMobile(save::load(JEU, "camera").is_none_or(|v| v != "0")))
             .add_message::<Commencer>()
             .add_message::<Evt>()
             .add_systems(Startup, setup)
             .add_systems(
                 Update,
-                (demarrer, avancer, synchroniser, effets, crate::vue::animer_allures, crate::vue::animer_particules).chain(),
+                (demarrer, touche_camera, avancer, synchroniser, camera, effets, crate::vue::animer_allures, crate::vue::animer_particules).chain(),
             );
     }
 }
@@ -145,8 +151,68 @@ fn setup(mut commands: Commands, mut depart: MessageWriter<Commencer>, progressi
 }
 
 /// Zone de champ à garder à l'écran.
+fn cadre_plein(demi: V2) -> (f32, f32) {
+    (2.0 * (0.919 * demi.x + 0.394 * demi.y) + 9.0, 2.0 * (0.301 * demi.x + 0.701 * demi.y) + 8.0)
+}
+
 fn cadrage(demi: V2) -> Projection {
-    iso_projection(2.0 * (0.919 * demi.x + 0.394 * demi.y) + 9.0, 2.0 * (0.301 * demi.x + 0.701 * demi.y) + 8.0)
+    let (w, h) = cadre_plein(demi);
+    iso_projection(w, h)
+}
+
+/// La caméra suit le chien et le troupeau : elle s'approche quand tout est groupé et
+/// s'éloigne quand le troupeau s'étale ou qu'un loup rôde. Touche C : caméra fixe.
+#[derive(Resource)]
+pub struct CameraMobile(pub bool);
+
+fn camera(
+    time: Res<Time>,
+    partie: Option<ResMut<Partie>>,
+    mobile: Res<CameraMobile>,
+    state: Res<State<GameState>>,
+    mut cam: Query<(&mut Transform, &mut Projection), With<MainCamera>>,
+) {
+    let Some(mut partie) = partie else { return };
+    let dt = time.delta_secs().min(0.1);
+    let (zoom_voulu, centre_voulu) = if partie.demo || !mobile.0 || *state.get() == GameState::Niveaux {
+        (1.0, V2::ZERO)
+    } else {
+        let m = &partie.monde;
+        // Ce qu'il faut garder à l'écran : le chien, les moutons libres, les loups, et la porte quand le troupeau s'en approche.
+        let mut pts = vec![m.chien.pos];
+        pts.extend(m.moutons.iter().filter(|s| !s.perdu && !s.abrite).map(|s| s.pos));
+        pts.extend(m.loups.iter().filter(|l| l.etat != berger_core::EtatLoup::Absent).map(|l| l.pos));
+        let (mut mn, mut mx) = (pts[0], pts[0]);
+        for p in &pts {
+            mn = v2(mn.x.min(p.x), mn.y.min(p.y));
+            mx = v2(mx.x.max(p.x), mx.y.max(p.y));
+        }
+        let centre = (mn + mx) * 0.5;
+        let etendue = ((mx.x - mn.x) / 0.8).max((mx.y - mn.y) / 0.6) + 14.0;
+        let plein = (2.0 * m.carte.demi.x).max(2.0 * m.carte.demi.y * 1.3);
+        (((etendue / plein).clamp(0.55, 1.0)), centre)
+    };
+    let k = (dt * 1.8).min(1.0);
+    partie.zoom += (zoom_voulu - partie.zoom) * k;
+    partie.centre_vue = partie.centre_vue.lerp(centre_voulu, k);
+    let centre = partie.centre_vue;
+    // Les bords du champ ne sortent pas trop de l'écran quand on est zoomé.
+    let demi = partie.monde.carte.demi;
+    let marge = demi * (1.0 - partie.zoom);
+    let c = v2(centre.x.clamp(-marge.x, marge.x), centre.y.clamp(-marge.y, marge.y));
+    let (w, h) = partie.cadre;
+    for (mut t, mut p) in &mut cam {
+        let cible = Vec3::new(c.x, 0.0, c.y);
+        *t = Transform::from_translation(cible + game_common::ISO_OFFSET).looking_at(cible, Vec3::Y);
+        *p = iso_projection(w * partie.zoom, h * partie.zoom);
+    }
+}
+
+fn touche_camera(keys: Res<ButtonInput<KeyCode>>, mut mobile: ResMut<CameraMobile>) {
+    if keys.just_pressed(KeyCode::KeyC) {
+        mobile.0 = !mobile.0;
+        save::store(JEU, "camera", if mobile.0 { "1" } else { "0" });
+    }
 }
 
 fn demarrer(
@@ -166,6 +232,7 @@ fn demarrer(
         Genre::Hasard(i, g) => (niveau(i), g),
     };
     let carte = generer(&nv, graine);
+    let carte_demi = carte.demi;
     spawn_scene(&mut commands, &kit, &carte, &nv);
     for mut p in &mut cam {
         *p = cadrage(carte.demi);
@@ -180,6 +247,9 @@ fn demarrer(
         bouton_aboyer: false,
         poussiere: 0.0,
         phase_chien: 0.0,
+        cadre: cadre_plein(carte_demi),
+        zoom: 1.0,
+        centre_vue: V2::ZERO,
     });
 }
 

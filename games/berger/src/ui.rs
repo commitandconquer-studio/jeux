@@ -17,35 +17,35 @@ const AIDE: Texte = tx!(
      Flèches ou ZQSD : courir · Maj : sprint (le souffle s'épuise)\n\
      Souris ou doigt : le chien va vers le pointeur\n\
      Espace, B ou clic droit : aboyer (affole les moutons et fait fuir les loups)\n\
-     Échap : menu · R : recommencer · M : son\n\n\
+     Échap : menu · R : recommencer · M : son · C : caméra fixe ou mobile\n\n\
      Les loups attaquent les moutons loin de l'enclos : fonce les faire fuir ! Trois étoiles : rentrer tout le troupeau, sans en perdre, avant le temps de référence.",
     "You are the sheepdog: gather the sheep and bring them into the pen.\n\n\
      Sheep run from the dog and stay together. Get behind them, on the side away from the pen, and move forward: they will head the other way.\n\n\
      Arrow keys or WASD: run · Shift: sprint (you run out of breath)\n\
      Mouse or finger: the dog goes to the pointer\n\
      Space, B or right click: bark (scares the sheep and drives wolves away)\n\
-     Esc: menu · R: restart · M: sound\n\n\
+     Esc: menu · R: restart · M: sound · C: fixed or moving camera\n\n\
      Wolves attack sheep far from the pen: rush over and scare them off! Three stars: bring in the whole flock, losing none, before the reference time.",
     "Du bist der Schäferhund: Treibe die Schafe zusammen und ins Gehege.\n\n\
      Die Schafe laufen vor dem Hund weg und bleiben beisammen. Stell dich hinter sie, auf die vom Gehege abgewandte Seite, und geh vor: Sie laufen in die andere Richtung.\n\n\
      Pfeiltasten oder WASD: rennen · Umschalt: Sprint (der Atem geht aus)\n\
      Maus oder Finger: Der Hund läuft zum Zeiger\n\
      Leertaste, B oder Rechtsklick: bellen (erschreckt die Schafe und vertreibt Wölfe)\n\
-     Esc: Menü · R: neu starten · M: Ton\n\n\
+     Esc: Menü · R: neu starten · M: Ton · C: feste oder bewegte Kamera\n\n\
      Wölfe greifen Schafe fern vom Gehege an: Lauf hin und jage sie fort! Drei Sterne: die ganze Herde einbringen, ohne Verluste, vor der Richtzeit.",
     "Sei il cane pastore: raduna le pecore e portale nel recinto.\n\n\
      Le pecore scappano dal cane e restano unite. Mettiti dietro di loro, dal lato opposto al recinto, e avanza: andranno dall'altra parte.\n\n\
      Frecce o WASD: correre · Maiusc: scatto (il fiato finisce)\n\
      Mouse o dito: il cane va verso il puntatore\n\
      Spazio, B o clic destro: abbaiare (spaventa le pecore e mette in fuga i lupi)\n\
-     Esc: menu · R: ricomincia · M: audio\n\n\
+     Esc: menu · R: ricomincia · M: audio · C: camera fissa o mobile\n\n\
      I lupi attaccano le pecore lontano dal recinto: corri a farli fuggire! Tre stelle: portare dentro tutto il gregge, senza perderne, prima del tempo di riferimento.",
     "Eres el perro pastor: reúne las ovejas y llévalas al corral.\n\n\
      Las ovejas huyen del perro y se mantienen juntas. Colócate detrás de ellas, en el lado opuesto al corral, y avanza: irán hacia el otro lado.\n\n\
      Flechas o WASD: correr · Mayús: sprint (se acaba el aliento)\n\
      Ratón o dedo: el perro va hacia el puntero\n\
      Espacio, B o clic derecho: ladrar (asusta a las ovejas y ahuyenta a los lobos)\n\
-     Esc: menú · R: reiniciar · M: sonido\n\n\
+     Esc: menú · R: reiniciar · M: sonido · C: cámara fija o móvil\n\n\
      Los lobos atacan a las ovejas lejos del corral: ¡corre a espantarlos! Tres estrellas: meter todo el rebaño, sin perder ninguna, antes del tiempo de referencia.",
 );
 
