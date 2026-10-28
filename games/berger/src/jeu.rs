@@ -8,7 +8,7 @@ use game_common::calendar::Date;
 use game_common::{Rng, iso_camera, iso_projection, save};
 
 use crate::GameState;
-use crate::vue::{Allure, DeScene, Kit, OndeVue, VueChien, VueLoup, VueMouton, eclat, spawn_scene};
+use crate::vue::{Allure, DeScene, Kit, OndeVue, VueBelier, VueChien, VueLoup, VueMouton, eclat, spawn_scene};
 
 pub const JEU: &str = "berger";
 
@@ -357,10 +357,11 @@ fn synchroniser(
     mut commands: Commands,
     kit: Res<Kit>,
     mut mats: ResMut<Assets<StandardMaterial>>,
-    mut moutons: Query<(&VueMouton, &mut Transform, &mut Visibility, &mut Allure), (Without<VueLoup>, Without<VueChien>, Without<OndeVue>)>,
-    mut loups: Query<(&VueLoup, &mut Transform, &mut Visibility, &mut Allure), (Without<VueMouton>, Without<VueChien>, Without<OndeVue>)>,
-    mut chien: Query<(&mut Transform, &mut Allure), (With<VueChien>, Without<VueMouton>, Without<VueLoup>, Without<OndeVue>)>,
-    mut onde: Query<(&mut Transform, &mut Visibility), (With<OndeVue>, Without<VueMouton>, Without<VueLoup>, Without<VueChien>)>,
+    mut moutons: Query<(&VueMouton, &mut Transform, &mut Visibility, &mut Allure), (Without<VueLoup>, Without<VueChien>, Without<OndeVue>, Without<VueBelier>)>,
+    mut loups: Query<(&VueLoup, &mut Transform, &mut Visibility, &mut Allure), (Without<VueMouton>, Without<VueChien>, Without<OndeVue>, Without<VueBelier>)>,
+    mut chien: Query<(&mut Transform, &mut Allure), (With<VueChien>, Without<VueMouton>, Without<VueLoup>, Without<OndeVue>, Without<VueBelier>)>,
+    mut onde: Query<(&mut Transform, &mut Visibility), (With<OndeVue>, Without<VueMouton>, Without<VueLoup>, Without<VueChien>, Without<VueBelier>)>,
+    mut beliers: Query<(&VueBelier, &mut Transform, &mut Allure), (Without<VueMouton>, Without<VueLoup>, Without<VueChien>, Without<OndeVue>)>,
 ) {
     let Some(mut partie) = partie else { return };
     let dt = time.delta_secs();
@@ -389,6 +390,21 @@ fn synchroniser(
         a.phase = l.phase * 2.0;
         a.mouvement = (l.vel.len() / 3.5).min(1.0);
         a.agite = if l.etat == berger_core::EtatLoup::Rode { 1.0 } else { 0.0 };
+    }
+    for (v, mut t, mut a) in &mut beliers {
+        let Some(b) = partie.monde.beliers.get(v.0) else { continue };
+        t.translation = Vec3::new(b.pos.x, 0.0, b.pos.y);
+        a.cap = tourner(a.cap, b.cap, (dt * 14.0).min(1.0));
+        t.rotation = Quat::from_rotation_y(a.cap);
+        a.phase = b.phase * 2.0;
+        a.mouvement = (b.vel.len() / 3.0).min(1.0);
+        let avertit = b.etat == berger_core::EtatBelier::Avertit;
+        // La tête se baisse en prévenant et le bélier gratte le sol (le corps tremble).
+        a.tete += ((if avertit || b.etat == berger_core::EtatBelier::Charge { 1.0 } else { 0.0 }) - a.tete) * (dt * 10.0).min(1.0);
+        a.agite = if avertit { 1.0 } else { 0.0 };
+        if avertit {
+            t.translation.x += (time.elapsed_secs() * 60.0).sin() * 0.03;
+        }
     }
     let c = partie.monde.chien.clone();
     let vitesse = c.vel.len();
@@ -467,6 +483,20 @@ fn effets(mut commands: Commands, kit: Res<Kit>, partie: Option<Res<Partie>>, mu
                 for _ in 0..14 {
                     let v = Vec3::new(rng.next_f32() - 0.5, 1.0 + rng.next_f32() * 2.0, rng.next_f32() - 0.5) * 2.0;
                     eclat(&mut commands, &kit, &kit.laine[0], Vec3::new(p.x, 0.5, p.y), v, 1.0, 6.0, 0.3);
+                }
+            }
+            Evenement::BelierAvertit(i) | Evenement::BelierCharge(i) => {
+                let p = partie.monde.beliers[i].pos;
+                for _ in 0..8 {
+                    let v = Vec3::new(rng.next_f32() - 0.5, 0.6 + rng.next_f32(), rng.next_f32() - 0.5);
+                    eclat(&mut commands, &kit, &kit.poussiere, Vec3::new(p.x, 0.15, p.y), v, 0.6, 0.0, 0.3);
+                }
+            }
+            Evenement::ChienPercute => {
+                let p = partie.monde.chien.pos;
+                for _ in 0..10 {
+                    let v = Vec3::new(rng.next_f32() - 0.5, 1.5 + rng.next_f32() * 1.5, rng.next_f32() - 0.5) * 1.5;
+                    eclat(&mut commands, &kit, &kit.etoile, Vec3::new(p.x, 0.9, p.y), v, 0.8, 5.0, 0.15);
                 }
             }
             Evenement::Fin(Fin::Victoire) => {

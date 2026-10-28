@@ -17,6 +17,8 @@ pub struct VueMouton(pub usize);
 #[derive(Component)]
 pub struct VueLoup(pub usize);
 #[derive(Component)]
+pub struct VueBelier(pub usize);
+#[derive(Component)]
 pub struct VueChien;
 #[derive(Component)]
 pub struct OndeVue;
@@ -30,6 +32,8 @@ pub struct Allure {
     pub agite: f32,
     /// De 0 à 1 : petit saut de surprise.
     pub saut: f32,
+    /// De 0 à 1 : la tête se baisse (le bélier prépare sa charge).
+    pub tete: f32,
 }
 
 #[derive(Component)]
@@ -56,6 +60,7 @@ pub struct Kit {
     pub disque: Handle<Mesh>,
     pub laine: [Handle<StandardMaterial>; 3],
     pub laine_noire: Handle<StandardMaterial>,
+    pub laine_belier: Handle<StandardMaterial>,
     pub peau: Handle<StandardMaterial>,
     pub fonce: Handle<StandardMaterial>,
     pub noir: Handle<StandardMaterial>,
@@ -96,6 +101,7 @@ impl FromWorld for Kit {
         let mut m = |r: f32, g: f32, b: f32| mats.add(flat_material(Color::srgb(r, g, b)));
         let laine = [m(0.97, 0.95, 0.88), m(0.93, 0.91, 0.84), m(0.99, 0.98, 0.94)];
         let laine_noire = m(0.2, 0.19, 0.22);
+        let laine_belier = m(0.62, 0.5, 0.38);
         let peau = m(0.28, 0.24, 0.24);
         let fonce = m(0.16, 0.14, 0.16);
         let noir = m(0.09, 0.09, 0.11);
@@ -132,6 +138,7 @@ impl FromWorld for Kit {
             disque,
             laine,
             laine_noire,
+            laine_belier,
             peau,
             fonce,
             noir,
@@ -221,6 +228,33 @@ pub fn spawn_mouton(c: &mut Commands, k: &Kit, i: usize, genre: TypeMouton) -> E
     piece(c, corps, &k.boule, laine, Vec3::new(0.0, 0.1, -0.5), Vec3::splat(0.18));
     for (x, z, d) in [(-0.2, 0.3, 0.0), (0.2, 0.3, 3.14), (-0.2, -0.28, 3.14), (0.2, -0.28, 0.0)] {
         patte(c, root, k, x, z, 0.3, 0.1, &k.peau, &k.fonce, d);
+    }
+    root
+}
+
+/// Un bélier : plus gros que les moutons, laine brune, tête sombre, grandes cornes enroulées.
+pub fn spawn_belier(c: &mut Commands, k: &Kit, i: usize) -> Entity {
+    let root = racine(c, 1.35, VueBelier(i));
+    let corps = corps(c, root, 0.46);
+    let laine = &k.laine_belier;
+    piece(c, corps, &k.boule, laine, Vec3::ZERO, Vec3::new(0.84, 0.7, 1.0));
+    for (x, y, z, s) in [(-0.26, 0.14, 0.2, 0.46), (0.26, 0.14, 0.2, 0.46), (-0.24, 0.16, -0.24, 0.46), (0.24, 0.16, -0.24, 0.46), (0.0, 0.28, 0.0, 0.5), (0.0, 0.18, -0.42, 0.4)] {
+        piece(c, corps, &k.boule, laine, Vec3::new(x, y, z), Vec3::splat(s));
+    }
+    // La tête, large, avec le museau.
+    piece(c, corps, &k.boule, &k.fonce, Vec3::new(0.0, 0.12, 0.54), Vec3::new(0.34, 0.34, 0.42));
+    piece(c, corps, &k.boule, &k.peau, Vec3::new(0.0, 0.06, 0.72), Vec3::new(0.2, 0.18, 0.2));
+    for s in [-1.0f32, 1.0] {
+        piece(c, corps, &k.boule, &k.blanc, Vec3::new(0.09 * s, 0.2, 0.68), Vec3::splat(0.07));
+        piece(c, corps, &k.boule, &k.noir, Vec3::new(0.09 * s, 0.2, 0.71), Vec3::splat(0.04));
+        // Les cornes : une spirale de boules qui s'écartent, montent puis reviennent devant.
+        for (j, (x, y, z, r)) in [(0.2, 0.2, 0.46, 0.12), (0.3, 0.24, 0.42, 0.11), (0.38, 0.18, 0.34, 0.1), (0.4, 0.08, 0.3, 0.09), (0.34, 0.0, 0.36, 0.08)].into_iter().enumerate() {
+            let _ = j;
+            piece(c, corps, &k.boule, &k.bois_clair, Vec3::new(x * s, y, z), Vec3::splat(r * 2.0));
+        }
+    }
+    for (x, z, d) in [(-0.24, 0.32, 0.0), (0.24, 0.32, 3.14), (-0.24, -0.3, 3.14), (0.24, -0.3, 0.0)] {
+        patte(c, root, k, x, z, 0.32, 0.12, &k.fonce, &k.noir, d);
     }
     root
 }
@@ -479,6 +513,9 @@ pub fn spawn_scene(c: &mut Commands, k: &Kit, carte: &Carte, niveau: &Niveau) {
     for i in 0..carte.moutons.len() {
         spawn_mouton(c, k, i, carte.types[i]);
     }
+    for i in 0..carte.beliers.len() {
+        spawn_belier(c, k, i);
+    }
     spawn_chien(c, k);
     for i in 0..carte.loups.len() {
         let l = spawn_loup(c, k, i);
@@ -541,7 +578,7 @@ pub fn animer_allures(
             }
             if let Some(c) = corps {
                 tr.translation.y = c.base + (a.phase * 2.0).sin().abs() * 0.07 * a.mouvement + (t * 2.0 + a.phase).sin() * 0.004 + (a.saut * std::f32::consts::PI).sin() * 0.28;
-                tr.rotation = Quat::from_rotation_x((a.phase).sin() * 0.05 * a.mouvement) * Quat::from_rotation_z((a.phase).cos() * 0.04 * a.mouvement);
+                tr.rotation = Quat::from_rotation_x((a.phase).sin() * 0.05 * a.mouvement + a.tete * 0.32) * Quat::from_rotation_z((a.phase).cos() * 0.04 * a.mouvement);
             }
             if let Some(q) = queue {
                 tr.rotation = Quat::from_rotation_y((t * q.vitesse).sin() * (0.35 + 0.5 * a.agite));

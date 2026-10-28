@@ -7,7 +7,7 @@ pub mod robot;
 pub mod v2;
 
 pub use carte::{Carte, Cote, Genre, Mur, NIVEAUX, Niveau, TypeMouton, generer, niveau, niveau_du_jour, vitrine};
-pub use monde::{Commande, EtatLoup, EtatMouton, Evenement, Fin, Monde, PAS_FIXE, Reglages};
+pub use monde::{Belier, Commande, EtatBelier, EtatLoup, EtatMouton, Evenement, Fin, Monde, PAS_FIXE, Reglages};
 pub use v2::{V2, v2};
 
 #[cfg(test)]
@@ -147,6 +147,61 @@ mod tests {
                 assert_eq!(c.beliers.len() as u32, nv.beliers, "niveau {} : béliers", i + 1);
             }
         }
+    }
+
+    fn monde_avec_belier() -> Monde {
+        let (nv, c) = vitrine();
+        let mut m = Monde::nouveau(c, nv);
+        m.chien.pos = v2(10.0, 8.0);
+        for s in m.moutons.iter_mut() {
+            s.pos = v2(14.0, 8.0);
+        }
+        m.beliers[0].pos = m.chien.pos + v2(5.0, 0.0);
+        m.beliers[0].repos = 0.0;
+        m
+    }
+
+    #[test]
+    fn le_belier_previent_puis_charge_puis_se_repose() {
+        let mut m = monde_avec_belier();
+        let mut vu = Vec::new();
+        for _ in 0..(8 * 60) {
+            m.pas(1.0 / 60.0, Commande::default());
+            for e in &m.evenements {
+                if matches!(e, Evenement::BelierAvertit(_) | Evenement::BelierCharge(_) | Evenement::ChienPercute) {
+                    vu.push(*e);
+                }
+            }
+        }
+        assert_eq!(vu[0], Evenement::BelierAvertit(0), "{vu:?}");
+        assert_eq!(vu[1], Evenement::BelierCharge(0), "{vu:?}");
+        // Une charge de plus par 8 s serait un harcèlement : une seule, puis du repos.
+        assert!(vu.iter().filter(|e| **e == Evenement::BelierCharge(0)).count() <= 2, "{vu:?}");
+    }
+
+    #[test]
+    fn un_aboiement_annule_la_charge() {
+        let mut m = monde_avec_belier();
+        let mut calme = false;
+        for t in 0..(4 * 60) {
+            let aboyer = m.beliers[0].etat == EtatBelier::Avertit && t > 0;
+            m.pas(1.0 / 60.0, Commande { aboyer, ..Commande::default() });
+            calme |= m.evenements.contains(&Evenement::BelierCalme(0));
+            assert!(!m.evenements.contains(&Evenement::BelierCharge(0)), "il a chargé malgré l'aboiement");
+        }
+        assert!(calme);
+    }
+
+    #[test]
+    fn la_charge_du_belier_se_deconseille_quand_on_reste_immobile() {
+        let mut m = monde_avec_belier();
+        let mut touche = false;
+        for _ in 0..(6 * 60) {
+            m.pas(1.0 / 60.0, Commande::default());
+            touche |= m.evenements.contains(&Evenement::ChienPercute);
+        }
+        assert!(touche);
+        assert!(m.chien.pos.dist(v2(10.0, 8.0)) > 0.3, "le chien n'a pas reculé");
     }
 
     #[test]

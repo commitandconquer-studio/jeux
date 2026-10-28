@@ -30,6 +30,11 @@ pub struct Reglages {
     // Les loups.
     pub vitesse_loup: f32,
     pub vitesse_fuite_loup: f32,
+    // Les béliers.
+    pub belier_vigilance_r: f32,
+    pub belier_vitesse_charge: f32,
+    pub belier_avertissement: f32,
+    pub belier_charge: f32,
 }
 
 impl Default for Reglages {
@@ -51,6 +56,10 @@ impl Default for Reglages {
             peur_loup_r: 8.0,
             vitesse_loup: 5.4,
             vitesse_fuite_loup: 6.4,
+            belier_vigilance_r: 7.0,
+            belier_vitesse_charge: 9.5,
+            belier_avertissement: 1.0,
+            belier_charge: 0.7,
         }
     }
 }
@@ -80,6 +89,8 @@ pub struct Chien {
     /// Temps restant de l'aboiement : le chien se plante sur ses pattes et ralentit.
     pub aboie: f32,
     pub court: bool,
+    /// Temps restant où le chien est sonné (après un coup de bélier).
+    pub etourdi: f32,
 }
 
 /// Ce que fait un mouton (dérivé de sa peur et de ses envies, pour l'animation et les tests).
@@ -161,7 +172,38 @@ pub enum Evenement {
     Mange(usize),
     LoupArrive(usize),
     LoupFuit(usize),
+    /// Le bélier s'arrête et baisse les cornes : la charge arrive.
+    BelierAvertit(usize),
+    BelierCharge(usize),
+    /// Un aboiement a calmé le bélier.
+    BelierCalme(usize),
+    /// Le bélier a touché le chien.
+    ChienPercute,
     Fin(Fin),
+}
+
+/// Les phases d'un bélier : calme, vigilance, avertissement (il baisse les cornes), charge, récupération.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum EtatBelier {
+    Calme,
+    Vigilance,
+    Avertit,
+    Charge,
+    Recupere,
+}
+
+#[derive(Clone, Debug)]
+pub struct Belier {
+    pub pos: V2,
+    pub vel: V2,
+    pub cap: f32,
+    pub etat: EtatBelier,
+    pub timer: f32,
+    /// Temps avant qu'il puisse s'énerver de nouveau.
+    pub repos: f32,
+    pub direction: V2,
+    pub phase: f32,
+    pub onde_vue: u32,
 }
 
 pub struct Monde {
@@ -170,6 +212,7 @@ pub struct Monde {
     pub chien: Chien,
     pub moutons: Vec<Mouton>,
     pub loups: Vec<Loup>,
+    pub beliers: Vec<Belier>,
     pub temps: f32,
     pub fin: Option<Fin>,
     pub evenements: Vec<Evenement>,
@@ -204,6 +247,11 @@ impl Monde {
                 coince: 0.0,
             })
             .collect();
+        let beliers = carte
+            .beliers
+            .iter()
+            .map(|&p| Belier { pos: p, vel: V2::ZERO, cap: 0.0, etat: EtatBelier::Calme, timer: 0.0, repos: 2.0, direction: V2::ZERO, phase: 0.0, onde_vue: 0 })
+            .collect();
         let loups = carte
             .loups
             .iter()
@@ -220,8 +268,8 @@ impl Monde {
                 onde_vue: 0,
             })
             .collect();
-        let chien = Chien { pos: carte.depart_chien, vel: V2::ZERO, cap: 0.0, endurance: 1.0, essouffle: false, recharge: 0.0, onde: 0.0, onde_origine: V2::ZERO, onde_id: 0, aboie: 0.0, court: false };
-        Monde { carte, niveau, chien, moutons, loups, temps: 0.0, fin: None, evenements: Vec::new(), reg: Reglages::default(), tenu: 0.0, reste: 0.0, hasard }
+        let chien = Chien { pos: carte.depart_chien, vel: V2::ZERO, cap: 0.0, endurance: 1.0, essouffle: false, recharge: 0.0, onde: 0.0, onde_origine: V2::ZERO, onde_id: 0, aboie: 0.0, court: false, etourdi: 0.0 };
+        Monde { carte, niveau, chien, moutons, loups, beliers, temps: 0.0, fin: None, evenements: Vec::new(), reg: Reglages::default(), tenu: 0.0, reste: 0.0, hasard }
     }
 
     pub fn abrites(&self) -> usize {
@@ -269,6 +317,7 @@ impl Monde {
         self.temps += dt;
         self.pas_chien(dt, cmd);
         self.pas_loups(dt);
+        self.pas_beliers(dt);
         self.pas_moutons(dt);
         self.verifier_fin(dt);
     }
@@ -302,6 +351,7 @@ impl Monde {
         c.court = court;
         let vitesse = if court { self.reg.vitesse_course } else { self.reg.vitesse_chien };
         let vitesse = if c.aboie > 0.0 { vitesse * 0.45 } else { vitesse };
+        let vitesse = if c.etourdi > 0.0 { vitesse * 0.35 } else { vitesse };
         c.vel = c.vel.lerp(veut * vitesse, (dt * self.reg.reactivite_chien).min(1.0));
         c.pos += c.vel * dt;
         if court {
@@ -320,6 +370,7 @@ impl Monde {
         }
         c.recharge = (c.recharge - dt).max(0.0);
         c.aboie = (c.aboie - dt).max(0.0);
+        c.etourdi = (c.etourdi - dt).max(0.0);
         if c.onde > 0.0 {
             c.onde += dt * self.reg.vitesse_onde;
             if c.onde > self.reg.portee_aboiement + 2.0 {
@@ -360,6 +411,19 @@ impl Monde {
             m.vel += (m.pos - origine).norm() * (1.5 + 3.5 * t);
             m.panique = m.panique.max(0.5 + 0.5 * t);
             self.evenements.push(Evenement::Sursaut(i));
+        }
+        for (i, b) in self.beliers.iter_mut().enumerate() {
+            if b.onde_vue == id || b.pos.dist(origine) > rayon.min(portee) {
+                continue;
+            }
+            b.onde_vue = id;
+            // Une charge déjà lancée ne s'arrête pas ; avant, l'aboiement la fait avorter.
+            if b.etat != EtatBelier::Charge {
+                b.etat = EtatBelier::Calme;
+                b.repos = 5.0;
+                b.vel = (b.pos - origine).norm() * 3.5;
+                self.evenements.push(Evenement::BelierCalme(i));
+            }
         }
         for (i, l) in self.loups.iter_mut().enumerate() {
             if l.onde_vue == id || !matches!(l.etat, EtatLoup::Rode | EtatLoup::Fuit) || l.pos.dist(origine) > rayon.min(portee) {
@@ -681,6 +745,105 @@ impl Monde {
             l.pos = pos;
             l.vel = vel;
             l.phase += dt * (1.0 + vel.len() * 2.0);
+        }
+    }
+
+    fn pas_beliers(&mut self, dt: f32) {
+        let chien = self.chien.pos;
+        let libres: Vec<V2> = self.moutons.iter().filter(|m| !m.perdu && !m.abrite).map(|m| m.pos).collect();
+        let centre = if libres.is_empty() { None } else { Some(libres.iter().fold(V2::ZERO, |s, &p| s + p) / libres.len() as f32) };
+        for i in 0..self.beliers.len() {
+            let reg = self.reg;
+            let b = &mut self.beliers[i];
+            b.repos = (b.repos - dt).max(0.0);
+            let d = b.pos.dist(chien);
+            let vers_chien = (chien - b.pos).norm();
+            match b.etat {
+                EtatBelier::Calme => {
+                    // Il reste avec le troupeau, sans le mener.
+                    let voulu = match centre {
+                        Some(c) if c.dist(b.pos) > 3.5 => (c - b.pos).norm() * 1.1,
+                        _ => V2::ZERO,
+                    };
+                    let evite = Self::evitement(&self.carte, b.pos, 0.6, 1.8);
+                    b.vel = b.vel.lerp(voulu + evite * 1.5, (dt * 3.0).min(1.0));
+                    if d < reg.belier_vigilance_r && b.repos <= 0.0 {
+                        b.etat = EtatBelier::Vigilance;
+                        b.timer = 1.0;
+                    }
+                }
+                EtatBelier::Vigilance => {
+                    b.vel = b.vel.lerp(V2::ZERO, (dt * 6.0).min(1.0));
+                    b.direction = vers_chien;
+                    b.timer -= dt;
+                    if d > reg.belier_vigilance_r + 2.0 {
+                        b.etat = EtatBelier::Calme;
+                    } else if b.timer <= 0.0 {
+                        b.etat = EtatBelier::Avertit;
+                        b.timer = reg.belier_avertissement;
+                        self.evenements.push(Evenement::BelierAvertit(i));
+                    }
+                }
+                EtatBelier::Avertit => {
+                    b.vel = V2::ZERO;
+                    b.direction = vers_chien;
+                    b.timer -= dt;
+                    if b.timer <= 0.0 {
+                        // Il fonce là où le chien se trouve maintenant : on peut l'éviter en bougeant.
+                        b.etat = EtatBelier::Charge;
+                        b.timer = reg.belier_charge;
+                        self.evenements.push(Evenement::BelierCharge(i));
+                    }
+                }
+                EtatBelier::Charge => {
+                    b.vel = b.direction * reg.belier_vitesse_charge;
+                    b.timer -= dt;
+                    if d < 1.0 {
+                        let dir = b.direction;
+                        self.chien.vel += dir * 9.0;
+                        self.chien.etourdi = 0.7;
+                        self.evenements.push(Evenement::ChienPercute);
+                        b.etat = EtatBelier::Recupere;
+                        b.timer = 1.6;
+                    } else if b.timer <= 0.0 {
+                        b.etat = EtatBelier::Recupere;
+                        b.timer = 1.6;
+                    }
+                    // Les moutons sur son passage s'écartent.
+                    let (bp, bd) = (b.pos, b.direction);
+                    for m in self.moutons.iter_mut().filter(|m| !m.perdu && !m.abrite) {
+                        let dm = m.pos.dist(bp);
+                        if dm < 2.5 {
+                            m.vel += (m.pos - bp).norm() * 2.0 + bd * 1.0;
+                            m.panique = m.panique.max(0.8);
+                        }
+                    }
+                }
+                EtatBelier::Recupere => {
+                    b.vel = b.vel.lerp(V2::ZERO, (dt * 5.0).min(1.0));
+                    b.timer -= dt;
+                    if b.timer <= 0.0 {
+                        b.etat = EtatBelier::Calme;
+                        b.repos = 3.5;
+                    }
+                }
+            }
+            let b = &mut self.beliers[i];
+            let (mut pos, mut vel) = (b.pos + b.vel * dt, b.vel);
+            let avant = vel.len();
+            Self::collisions(&self.carte, &mut pos, &mut vel, 0.6, 0.5);
+            if b.etat == EtatBelier::Charge && vel.len() < avant * 0.5 {
+                // Contre un arbre ou une clôture : la charge s'arrête.
+                b.etat = EtatBelier::Recupere;
+                b.timer = 1.6;
+            }
+            b.pos = pos;
+            b.vel = vel;
+            if vel.len() > 0.3 || matches!(b.etat, EtatBelier::Vigilance | EtatBelier::Avertit) {
+                let v = if vel.len() > 0.3 { vel } else { b.direction };
+                b.cap = v.x.atan2(v.y);
+            }
+            b.phase += dt * (1.0 + vel.len() * 1.6);
         }
     }
 

@@ -1,10 +1,20 @@
 //! Un chien automatique : il sert aux tests (chaque niveau a une solution) et
 //! aux captures d'écran. Il se place derrière le mouton le plus loin de la
 //! porte et le pousse, en chassant les loups quand ils menacent.
-use crate::monde::{Commande, EtatLoup, Monde};
+use crate::monde::{Commande, EtatBelier, EtatLoup, Monde};
 use crate::v2::{V2, v2};
 
 pub fn commande(m: &Monde) -> Commande {
+    let mut c = commande_de_base(m);
+    // Un bélier qui baisse les cornes : un aboiement au bon moment annule la charge.
+    let chien = m.chien.pos;
+    if m.beliers.iter().any(|b| matches!(b.etat, EtatBelier::Vigilance | EtatBelier::Avertit) && b.pos.dist(chien) < m.reg.portee_aboiement - 2.0) {
+        c.aboyer = true;
+    }
+    c
+}
+
+fn commande_de_base(m: &Monde) -> Commande {
     let chien = m.chien.pos;
     let porte = m.carte.enclos.entree();
     let dehors = m.carte.enclos.cote.sortie();
