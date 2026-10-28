@@ -145,6 +145,11 @@ impl Plugin for VoyagePlugin {
 
 fn load(mut p: ResMut<VoyageProgress>, mut progress: ResMut<Progress>, mut mode: ResMut<Mode>, mut next: ResMut<NextState<GameState>>) {
     // Essai : `SNAKE_NIVEAU=n` ouvre directement le niveau n.
+    let preview = std::env::var("SNAKE_FICHIER").is_ok();
+    if preview {
+        *mode = Mode::Voyage(0);
+        next.set(GameState::Playing);
+    }
     if let Some(n) = std::env::var("SNAKE_NIVEAU").ok().and_then(|v| v.parse::<usize>().ok()) {
         *mode = Mode::Voyage(n.saturating_sub(1));
         next.set(GameState::Playing);
@@ -152,7 +157,7 @@ fn load(mut p: ResMut<VoyageProgress>, mut progress: ResMut<Progress>, mut mode:
     if let Some(text) = game_common::save::load(SAVE, "voyage") {
         p.stars = text.split(',').filter_map(|s| s.trim().parse().ok()).collect();
     }
-    p.open = std::env::var("SNAKE_TOUT").is_ok() || std::env::var("SNAKE_PRESSE").is_ok();
+    p.open = preview || std::env::var("SNAKE_TOUT").is_ok() || std::env::var("SNAKE_PRESSE").is_ok();
     progress.places = Place::ALL.iter().filter(|pl| p.place_done(**pl)).map(|pl| pl.scenery()).collect();
 }
 

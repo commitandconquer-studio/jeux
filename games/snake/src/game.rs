@@ -351,6 +351,12 @@ fn new_run(
             let mut level_rng = Rng::new(0xC0FFEE + i as u64 * 7919);
             // La position de l'invité ne compte pas ici : elle est tirée au sort, et le niveau doit toujours être le même.
             let busy = conga.cells.clone();
+            // Carte dessinée : ses cases sont posées telles quelles.
+            if let Some(g) = &level.grid {
+                let (tiles, pairs) = g.tiles();
+                board.tiles.extend(tiles);
+                board.teleports = pairs;
+            }
             for (feature, n) in &level.cases {
                 for _ in 0..*n {
                     board.place(*feature, &busy, conga.cells[0], &layout, scenery.0, &mut level_rng);
@@ -577,7 +583,7 @@ fn step(
             if voyage.run.recruited >= level.tourists {
                 food.active = false;
                 if level.exit {
-                    let spots = crate::levels::exit_candidates(&layout, head);
+                    let spots = level.grid.as_ref().and_then(|g| g.exit()).map_or_else(|| crate::levels::exit_candidates(&layout, head), |e| vec![e]);
                     let spot = spots.into_iter().find(|c| !conga.cells.contains(c) && !board.tiles.contains_key(c));
                     if let Some(c) = spot {
                         board.tiles.insert(c, Tile::Exit);

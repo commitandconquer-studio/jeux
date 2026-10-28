@@ -27,6 +27,11 @@ impl Layout {
         Layout { w, h, mask: vec![true; (w * h) as usize], start: IVec2::new(w / 2, h / 2), dir: IVec2::X, id: 0 }
     }
 
+    /// Forme dessinée case par case (ligne après ligne).
+    pub fn from_mask(w: i32, h: i32, mask: Vec<bool>, start: IVec2, dir: IVec2) -> Self {
+        Layout { w, h, mask, start, dir, id: 0 }
+    }
+
     /// Union de rectangles `(x0, y0, x1, y1)` (bornes comprises).
     pub fn from_rects(w: i32, h: i32, rects: &[(i32, i32, i32, i32)], start: IVec2) -> Self {
         let mut l = Layout { w, h, mask: vec![false; (w * h) as usize], start, dir: IVec2::X, id: 0 };

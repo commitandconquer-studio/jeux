@@ -1,0 +1,332 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Éditeur de niveaux — À la queue leu leu</title>
+<style>
+  :root { --bg:#1d2230; --panel:#262c3d; --line:#3a4259; --text:#e8ecf5; --dim:#9aa4bd; --accent:#ffd34d; --bad:#ff7a7a; --ok:#7be09a; }
+  * { box-sizing: border-box; }
+  body { margin:0; background:var(--bg); color:var(--text); font:14px/1.4 system-ui, sans-serif; display:grid; grid-template-columns: 250px 1fr 270px; grid-template-rows: auto 1fr; height:100vh; }
+  header { grid-column:1/4; display:flex; gap:8px; align-items:center; padding:8px 12px; background:var(--panel); border-bottom:1px solid var(--line); flex-wrap:wrap; }
+  header h1 { font-size:15px; margin:0 12px 0 0; }
+  button, select, input { background:#323a52; color:var(--text); border:1px solid var(--line); border-radius:6px; padding:5px 9px; font:inherit; }
+  button { cursor:pointer; } button:hover { background:#3d4766; } button.on { background:var(--accent); color:#222; border-color:var(--accent); }
+  input[type=number] { width:64px; } input[type=text] { width:100%; }
+  aside { background:var(--panel); padding:10px; overflow:auto; border-right:1px solid var(--line); }
+  aside.right { border-right:0; border-left:1px solid var(--line); }
+  h2 { font-size:12px; text-transform:uppercase; letter-spacing:.06em; color:var(--dim); margin:14px 0 6px; }
+  h2:first-child { margin-top:0; }
+  #levels button { display:block; width:100%; text-align:left; margin-bottom:4px; }
+  #levels button.sel { outline:2px solid var(--accent); }
+  .row { display:flex; gap:6px; align-items:center; margin-bottom:6px; flex-wrap:wrap; } .row label { color:var(--dim); min-width:78px; }
+  main { overflow:auto; padding:12px; position:relative; }
+  canvas { background:#11151f; border:1px solid var(--line); cursor:crosshair; image-rendering:pixelated; touch-action:none; }
+  #palette { display:grid; grid-template-columns: repeat(4, 1fr); gap:5px; }
+  #palette button { padding:4px 2px; font-size:12px; display:flex; flex-direction:column; align-items:center; gap:2px; }
+  #palette i { display:block; width:26px; height:26px; border-radius:4px; border:1px solid #0006; font-style:normal; font-weight:700; color:#fff; text-align:center; line-height:26px; text-shadow:0 1px 2px #000a; }
+  .tools { display:flex; gap:5px; flex-wrap:wrap; }
+  #msgs div { padding:3px 0; } .bad { color:var(--bad); } .ok { color:var(--ok); } .info { color:var(--dim); }
+  .hint { color:var(--dim); font-size:12px; }
+</style>
+</head>
+<body>
+<header>
+  <h1>Éditeur de niveaux</h1>
+  <button id="open">Ouvrir un fichier…</button>
+  <button id="save">Enregistrer (.txt)</button>
+  <button id="undo" title="Ctrl+Z">Annuler</button>
+  <button id="redo" title="Ctrl+Y">Rétablir</button>
+  <span class="hint" id="fileinfo">Aucun fichier : nouveau niveau.</span>
+  <input id="file" type="file" accept=".txt,text/plain" hidden>
+</header>
+
+<aside>
+  <h2>Niveaux du fichier</h2>
+  <div id="levels"></div>
+  <div class="row" style="margin-top:8px"><button id="add">+ Nouveau</button><button id="dup">Dupliquer</button><button id="del">Supprimer</button></div>
+  <div class="row"><button id="up">↑</button><button id="down">↓</button></div>
+
+  <h2>Réglages du niveau</h2>
+  <div class="row"><label>Nom</label><input id="name" type="text"></div>
+  <div class="row"><label>Lieu</label><select id="place"></select></div>
+  <div class="row"><label>Touristes</label><input id="tourists" type="number" min="1" max="200"></div>
+  <div class="row"><label>Pas (s)</label><input id="pace" type="number" min="0.1" max="1" step="0.01"></div>
+  <div class="row"><label>Temps 2★</label><input id="par" type="number" min="0" step="1"><span class="hint">0 = auto</span></div>
+  <div class="row"><label>Sortie</label><input id="exit" type="checkbox"><span class="hint">place « E » sinon automatique</span></div>
+  <div class="row"><label>Départ vers</label><select id="dir"><option value="est">l'est →</option><option value="ouest">l'ouest ←</option><option value="nord">le nord ↑</option><option value="sud">le sud ↓</option></select></div>
+  <div class="row"><label>Rivaux</label><input id="rivaux" type="number" min="0" max="6"></div>
+  <div class="row"><label>Trains</label><input id="trains" type="number" min="0" max="6"></div>
+  <div class="row"><label>Éboulements</label><input id="eboulements" type="number" min="0" max="40"></div>
+  <div class="row"><label>Taille</label><input id="gw" type="number" min="6" max="64"> × <input id="gh" type="number" min="6" max="64"><button id="resize">Appliquer</button></div>
+</aside>
+
+<main><canvas id="cv"></canvas></main>
+
+<aside class="right">
+  <h2>Outil</h2>
+  <div class="tools" id="tools"></div>
+  <div class="row" style="margin-top:8px"><label>Symétrie</label><button id="symx">gauche/droite</button><button id="symy">haut/bas</button></div>
+  <div class="row"><label>Zoom</label><input id="zoom" type="range" min="10" max="48" value="28"></div>
+  <h2>Case à poser</h2>
+  <div id="palette"></div>
+  <p class="hint">Clic gauche : poser. Clic droit : effacer (vide). Les rectangles et disques se tracent en glissant.</p>
+  <h2>Contrôles</h2>
+  <div id="msgs"></div>
+  <h2>Tester dans le jeu</h2>
+  <p class="hint">Enregistrez le fichier, puis :<br><code>SNAKE_FICHIER=chemin/niveaux.txt cargo run -p snake</code></p>
+</aside>
+
+<script>
+const PLACES = { jardin:'Jardin public', desert:'Désert', ruines:'Ruines antiques', cimetiere:'Cimetière', pirates:'Île des pirates', parc:'Parc de loisirs', ville:'Centre-ville', gare:'Gare', port:'Port', medieval:'Village médiéval', grottes:'Grottes' };
+// Légende : identique à celle du jeu (games/snake/src/grid.rs).
+const CELLS = [
+  ['0','Vide','#11151f',''], ['1','Libre','#5e8f4a',''],
+  ['2','Bloc 1','#8a8f99','1'], ['3','Bloc 2','#7d6a55','2'], ['4','Bloc 3','#6f8576','3'], ['5','Bloc 4','#9a7f8f','4'], ['6','Bloc 5','#5f7391','5'], ['7','Bloc 6','#9a8a5a','6'],
+  ['o','Trou','#050507',''], ['p','Ponton','#a37b4a',''], ['z','Accél.','#f1c40f','⚡'], ['S','Départ','#ffffff','★'],
+  ['E','Sortie','#2ecc71','⏏'], ['h','Herse A','#e0584d','▥'], ['H','Herse B','#e08a3d','▥'], ['>','Tapis →','#3d7ac4','→'],
+  ['<','Tapis ←','#3d7ac4','←'], ['^','Tapis ↑','#3d7ac4','↑'], ['v','Tapis ↓','#3d7ac4','↓'], ['A','Télép. A','#3498db','A'],
+  ['B','Télép. B','#e67e22','B'], ['C','Télép. C','#27ae60','C'], ['D','Télép. D','#9b59b6','D'],
+];
+const BY = Object.fromEntries(CELLS.map(c => [c[0], c]));
+const LEGEND = CELLS.map(c => c[0]).join('');
+const KEYS = ['rivaux','trains','eboulements'];
+
+let levels = [], cur = 0, brush = '1', tool = 'pinceau', symx = false, symy = false, cell = 28;
+let undo = [], redo = [], drag = null, hover = null;
+const $ = id => document.getElementById(id);
+const cv = $('cv'), ctx = cv.getContext('2d');
+
+function newLevel(w = 18, h = 18) {
+  const rows = Array.from({length:h}, () => Array(w).fill('1'));
+  rows[Math.floor(h/2)][Math.floor(w/2)] = 'S';
+  return { name:'Nouveau niveau', lieu:'jardin', touristes:8, pas:0.33, temps:0, sortie:false, depart:'est', rivaux:0, trains:0, eboulements:0, rows };
+}
+
+// ---------- fichier ----------
+function parse(text) {
+  const out = []; let l = null, inMap = false;
+  text.split(/\r?\n/).forEach((raw, i) => {
+    const line = raw.trim();
+    if (!line || line.startsWith('#')) { inMap = false; return; }
+    const m = line.match(/^\[(.*)\]$/);
+    if (m) { l = { name:m[1], lieu:'jardin', touristes:6, pas:0.3, temps:0, sortie:false, depart:'est', rivaux:0, trains:0, eboulements:0, rows:[], other:[] }; out.push(l); inMap = false; return; }
+    if (line === 'carte:') { inMap = true; return; }
+    if (!l) throw new Error(`ligne ${i+1} : contenu avant le premier [niveau]`);
+    if (inMap) { l.rows.push([...line]); return; }
+    const [k, ...rest] = line.split('='); const key = k.trim(), v = rest.join('=').trim();
+    if (key === 'lieu') l.lieu = v; else if (key === 'touristes') l.touristes = +v; else if (key === 'pas') l.pas = +v;
+    else if (key === 'temps') l.temps = +v; else if (key === 'sortie') l.sortie = v === 'oui'; else if (key === 'depart') l.depart = v;
+    else if (KEYS.includes(key)) l[key] = +v;
+    else if (key === 'forme') throw new Error(`« ${l.name} » n'a pas de carte (forme = ${v}). Générez d'abord les cartes : SNAKE_EXPORT=dossier cargo run -p snake`);
+    else l.other.push(line);   // autres réglages (blocs, tapis…) conservés tels quels
+  });
+  return out.filter(x => x.rows.length);
+}
+function serialize() {
+  let s = '# Niveaux — carte dessinée avec tools/editeur-niveaux.html\n# 0 vide, 1 libre, 2-7 blocs, o trou, p ponton, z accélérateur, h/H herses, > < ^ v tapis, A-D téléporteurs (par deux), S départ, E sortie.\n';
+  for (const l of levels) {
+    s += `\n[${l.name}]\nlieu = ${l.lieu}\ntouristes = ${l.touristes}\npas = ${l.pas}\n`;
+    if (l.sortie) s += 'sortie = oui\n';
+    if (l.temps > 0) s += `temps = ${l.temps}\n`;
+    s += `depart = ${l.depart}\n`;
+    for (const k of KEYS) if (l[k] > 0) s += `${k} = ${l[k]}\n`;
+    for (const o of (l.other || [])) s += o + '\n';
+    s += 'carte:\n' + l.rows.map(r => r.join('')).join('\n') + '\n';
+  }
+  return s;
+}
+
+// ---------- état / historique ----------
+const L = () => levels[cur];
+const snap = () => JSON.stringify(L());
+function push() { undo.push(snap()); if (undo.length > 200) undo.shift(); redo = []; }
+function restore(s) { levels[cur] = JSON.parse(s); sync(); }
+$('undo').onclick = () => { if (undo.length) { redo.push(snap()); restore(undo.pop()); } };
+$('redo').onclick = () => { if (redo.length) { undo.push(snap()); restore(redo.pop()); } };
+addEventListener('keydown', e => {
+  if ((e.ctrlKey || e.metaKey) && e.key === 'z') { e.preventDefault(); $('undo').click(); }
+  if ((e.ctrlKey || e.metaKey) && (e.key === 'y' || (e.shiftKey && e.key === 'Z'))) { e.preventDefault(); $('redo').click(); }
+});
+
+// ---------- interface ----------
+function buildUI() {
+  $('place').innerHTML = Object.entries(PLACES).map(([k, v]) => `<option value="${k}">${v}</option>`).join('');
+  $('palette').innerHTML = CELLS.map(c => `<button data-c="${c[0]}" title="${c[1]}"><i style="background:${c[2]};${c[0]==='S'||c[0]==='1'?'color:#222;text-shadow:none':''}">${c[3]}</i>${c[1]}</button>`).join('');
+  $('palette').onclick = e => { const b = e.target.closest('button'); if (b) { brush = b.dataset.c; if (tool === 'pipette') tool = 'pinceau'; sync(false); } };
+  const tools = [['pinceau','Pinceau'],['ligne','Ligne'],['rect','Rectangle'],['contour','Contour'],['disque','Disque'],['ellipse','Ellipse'],['remplir','Remplir'],['pipette','Pipette']];
+  $('tools').innerHTML = tools.map(t => `<button data-t="${t[0]}">${t[1]}</button>`).join('');
+  $('tools').onclick = e => { const b = e.target.closest('button'); if (b) { tool = b.dataset.t; sync(false); } };
+  $('symx').onclick = () => { symx = !symx; sync(false); }; $('symy').onclick = () => { symy = !symy; sync(false); };
+  $('zoom').oninput = e => { cell = +e.target.value; draw(); };
+  const bind = (id, key, num) => $(id).addEventListener('change', e => { push(); const el = e.target; L()[key] = el.type === 'checkbox' ? el.checked : (num ? +el.value : el.value); sync(); });
+  bind('name','name'); bind('place','lieu'); bind('tourists','touristes',1); bind('pace','pas',1); bind('par','temps',1); bind('exit','sortie'); bind('dir','depart');
+  KEYS.forEach(k => bind(k, k, 1));
+  $('resize').onclick = () => resize(+$('gw').value, +$('gh').value);
+  $('add').onclick = () => { levels.push(newLevel()); cur = levels.length - 1; undo = []; redo = []; sync(); };
+  $('dup').onclick = () => { const c = JSON.parse(snap()); c.name += ' (copie)'; levels.splice(cur + 1, 0, c); cur++; sync(); };
+  $('del').onclick = () => { if (levels.length > 1 && confirm('Supprimer ce niveau ?')) { levels.splice(cur, 1); cur = Math.max(0, cur - 1); undo = []; redo = []; sync(); } };
+  $('up').onclick = () => { if (cur > 0) { [levels[cur-1], levels[cur]] = [levels[cur], levels[cur-1]]; cur--; sync(); } };
+  $('down').onclick = () => { if (cur < levels.length - 1) { [levels[cur+1], levels[cur]] = [levels[cur], levels[cur+1]]; cur++; sync(); } };
+  $('open').onclick = () => $('file').click();
+  $('file').onchange = async e => {
+    const f = e.target.files[0]; if (!f) return;
+    try { const lv = parse(await f.text()); if (!lv.length) throw new Error('aucun niveau avec une carte dans ce fichier'); levels = lv; cur = 0; undo = []; redo = []; $('fileinfo').textContent = `${f.name} — ${lv.length} niveau(x)`; fname = f.name; sync(); }
+    catch (err) { alert(err.message); }
+    e.target.value = '';
+  };
+  $('save').onclick = () => { const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([serialize()], { type:'text/plain' })); a.download = fname; a.click(); URL.revokeObjectURL(a.href); };
+}
+let fname = 'niveaux.txt';
+
+function resize(w, h) {
+  if (!(w >= 6 && w <= 64 && h >= 6 && h <= 64)) return alert('Taille entre 6 et 64.');
+  push();
+  const old = L().rows; const rows = Array.from({length:h}, (_, y) => Array.from({length:w}, (_, x) => (old[y] && old[y][x]) || '1'));
+  L().rows = rows; sync();
+}
+
+function sync(full = true) {
+  const l = L();
+  if (full) {
+    $('levels').innerHTML = levels.map((x, i) => `<button data-i="${i}" class="${i === cur ? 'sel' : ''}">${i + 1}. ${x.name} <span class="hint">${x.rows[0].length}×${x.rows.length}</span></button>`).join('');
+    $('levels').onclick = e => { const b = e.target.closest('button'); if (b) { cur = +b.dataset.i; undo = []; redo = []; sync(); } };
+    $('name').value = l.name; $('place').value = l.lieu; $('tourists').value = l.touristes; $('pace').value = l.pas; $('par').value = l.temps;
+    $('exit').checked = l.sortie; $('dir').value = l.depart; KEYS.forEach(k => $(k).value = l[k] || 0);
+    $('gw').value = l.rows[0].length; $('gh').value = l.rows.length;
+  }
+  document.querySelectorAll('#tools button').forEach(b => b.classList.toggle('on', b.dataset.t === tool));
+  document.querySelectorAll('#palette button').forEach(b => b.classList.toggle('on', b.dataset.c === brush));
+  $('symx').classList.toggle('on', symx); $('symy').classList.toggle('on', symy);
+  draw(); check();
+}
+
+// ---------- dessin ----------
+function draw(preview) {
+  const rows = preview || L().rows, h = rows.length, w = rows[0].length;
+  cv.width = w * cell; cv.height = h * cell;
+  for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) {
+    const c = BY[rows[y][x]] || BY['0'];
+    ctx.fillStyle = c[0] === '1' && (x + y) % 2 ? '#548243' : c[2];
+    ctx.fillRect(x * cell, y * cell, cell, cell);
+    if (c[3]) { ctx.fillStyle = c[0] === 'S' || c[0] === 'z' ? '#222' : '#fff'; ctx.font = `bold ${cell * .55}px system-ui`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText(c[3], x * cell + cell / 2, y * cell + cell / 2 + 1); }
+  }
+  ctx.strokeStyle = '#ffffff1a'; ctx.lineWidth = 1; ctx.beginPath();
+  for (let x = 0; x <= w; x++) { ctx.moveTo(x * cell + .5, 0); ctx.lineTo(x * cell + .5, h * cell); }
+  for (let y = 0; y <= h; y++) { ctx.moveTo(0, y * cell + .5); ctx.lineTo(w * cell, y * cell + .5); }
+  ctx.stroke();
+  // Marque l'axe de symétrie.
+  ctx.strokeStyle = '#ffd34d99'; ctx.setLineDash([4, 4]);
+  if (symx) { ctx.beginPath(); ctx.moveTo(w * cell / 2, 0); ctx.lineTo(w * cell / 2, h * cell); ctx.stroke(); }
+  if (symy) { ctx.beginPath(); ctx.moveTo(0, h * cell / 2); ctx.lineTo(w * cell, h * cell / 2); ctx.stroke(); }
+  ctx.setLineDash([]);
+  if (hover) { ctx.strokeStyle = '#ffd34d'; ctx.lineWidth = 2; ctx.strokeRect(hover[0] * cell + 1, hover[1] * cell + 1, cell - 2, cell - 2); }
+}
+
+function pos(e) { const r = cv.getBoundingClientRect(); return [Math.floor((e.clientX - r.left) / cell), Math.floor((e.clientY - r.top) / cell)]; }
+const inside = (x, y, rows) => y >= 0 && y < rows.length && x >= 0 && x < rows[0].length;
+
+// Pose une case (et ses reflets si la symétrie est active). « S » et « E » restent uniques.
+function put(rows, x, y, ch) {
+  const w = rows[0].length, h = rows.length, pts = [[x, y]];
+  if (symx) pts.push([w - 1 - x, y]); if (symy) pts.push([x, h - 1 - y]); if (symx && symy) pts.push([w - 1 - x, h - 1 - y]);
+  for (const [px, py] of pts) {
+    if (!inside(px, py, rows)) continue;
+    if (ch === 'S' || ch === 'E') { for (const r of rows) r.forEach((c, i) => { if (c === ch) r[i] = '1'; }); rows[py][px] = ch; return; }
+    rows[py][px] = ch;
+  }
+}
+function shapePoints(a, b, kind) {
+  const [x0, y0] = [Math.min(a[0], b[0]), Math.min(a[1], b[1])], [x1, y1] = [Math.max(a[0], b[0]), Math.max(a[1], b[1])], pts = [];
+  const cx = (x0 + x1) / 2, cy = (y0 + y1) / 2, rx = (x1 - x0 + 1) / 2, ry = (y1 - y0 + 1) / 2;
+  if (kind === 'ligne') { let [x, y] = a; const dx = Math.abs(b[0] - x), dy = -Math.abs(b[1] - y), sx = x < b[0] ? 1 : -1, sy = y < b[1] ? 1 : -1; let err = dx + dy;
+    for (;;) { pts.push([x, y]); if (x === b[0] && y === b[1]) break; const e2 = 2 * err; if (e2 >= dy) { err += dy; x += sx; } if (e2 <= dx) { err += dx; y += sy; } } return pts; }
+  for (let y = y0; y <= y1; y++) for (let x = x0; x <= x1; x++) {
+    if (kind === 'rect') pts.push([x, y]);
+    else if (kind === 'contour') { if (x === x0 || x === x1 || y === y0 || y === y1) pts.push([x, y]); }
+    else { const dx = (x - cx) / rx, dy = (y - cy) / ry; if (dx * dx + dy * dy <= 1) pts.push([x, y]); }   // disque et ellipse remplie
+  }
+  return pts;
+}
+function flood(rows, x, y, ch) {
+  const from = rows[y][x]; if (from === ch || ch === 'S' || ch === 'E') return;
+  const st = [[x, y]];
+  while (st.length) { const [px, py] = st.pop(); if (!inside(px, py, rows) || rows[py][px] !== from) continue; rows[py][px] = ch; st.push([px+1,py],[px-1,py],[px,py+1],[px,py-1]); }
+}
+
+cv.addEventListener('contextmenu', e => e.preventDefault());
+cv.addEventListener('pointerdown', e => {
+  cv.setPointerCapture(e.pointerId);
+  const p = pos(e), erase = e.button === 2, ch = erase ? '0' : brush, rows = L().rows;
+  if (!inside(p[0], p[1], rows)) return;
+  if (tool === 'pipette') { brush = rows[p[1]][p[0]]; tool = 'pinceau'; return sync(false); }
+  push();
+  if (tool === 'remplir') { flood(rows, p[0], p[1], ch); return sync(false); }
+  if (tool === 'pinceau') { drag = { kind:'pinceau', ch, last:p }; put(rows, p[0], p[1], ch); draw(); }
+  else drag = { kind:tool, ch, start:p, cur:p };
+});
+cv.addEventListener('pointermove', e => {
+  const p = pos(e); hover = p;
+  if (!drag) return draw();
+  const rows = L().rows;
+  if (drag.kind === 'pinceau') {
+    // Relie le point précédent au point courant, pour ne pas laisser de trous si on va vite.
+    for (const [x, y] of shapePoints(drag.last, p, 'ligne')) if (inside(x, y, rows)) put(rows, x, y, drag.ch);
+    drag.last = p; draw();
+  } else {
+    drag.cur = p;
+    const copy = rows.map(r => r.slice());
+    for (const [x, y] of shapePoints(drag.start, p, drag.kind)) if (inside(x, y, copy)) put(copy, x, y, drag.ch);
+    draw(copy);
+  }
+});
+cv.addEventListener('pointerup', () => {
+  if (drag && drag.kind !== 'pinceau') { const rows = L().rows; for (const [x, y] of shapePoints(drag.start, drag.cur, drag.kind)) if (inside(x, y, rows)) put(rows, x, y, drag.ch); }
+  drag = null; sync(false);
+});
+cv.addEventListener('pointerleave', () => { hover = null; if (!drag) draw(); });
+
+// ---------- contrôles ----------
+function check() {
+  const l = L(), rows = l.rows, h = rows.length, w = rows[0].length, msgs = [];
+  const add = (cls, t) => msgs.push(`<div class="${cls}">${t}</div>`);
+  let s = null, e = null, free = 0; const count = {};
+  rows.forEach((r, y) => r.forEach((c, x) => { count[c] = (count[c] || 0) + 1; if (c === 'S') s = [x, y]; if (c === 'E') e = [x, y]; if (c !== '0') free++; }));
+  const dir = { est:[1,0], ouest:[-1,0], nord:[0,-1], sud:[0,1] }[l.depart];
+  const walk = (x, y) => inside(x, y, rows) && rows[y][x] !== '0';
+  if (!s) add('bad', 'Pas de départ (S).');
+  else {
+    const back = [0, 1, 2].every(i => walk(s[0] - dir[0] * i, s[1] - dir[1] * i));
+    add(back ? 'ok' : 'bad', back ? 'Départ : OK (2 cases libres derrière).' : 'Le départ a besoin de 2 cases libres derrière lui (sens opposé au départ).');
+    if (!walk(s[0] + dir[0], s[1] + dir[1])) add('bad', 'Un mur juste devant le départ.');
+  }
+  ['A','B','C','D'].forEach(t => { if (count[t] && count[t] !== 2) add('bad', `Téléporteur ${t} : ${count[t]} case(s), il en faut exactement 2.`); });
+  if (l.sortie && !e) add('info', 'Sortie : placée automatiquement (loin du départ). Posez « E » pour la choisir.');
+  if (!l.sortie && e) add('bad', 'Une sortie « E » est posée mais « Sortie » n’est pas cochée.');
+  // Les cases franchissables : tout sauf vide, blocs et trous.
+  const solid = c => c === '0' || '234567o'.includes(c);
+  const open = rows.map(r => r.map(c => !solid(c)));
+  const total = open.flat().filter(Boolean).length;
+  add(total > l.touristes + 13 ? 'ok' : 'bad', `Cases libres : ${total} (il en faut plus de ${l.touristes + 13} pour ${l.touristes} touristes).`);
+  if (s) {
+    const seen = rows.map(r => r.map(() => false)), st = [[s[0], s[1]]]; let n = 0;
+    while (st.length) { const [x, y] = st.pop(); if (!inside(x, y, rows) || seen[y][x] || !open[y][x]) continue; seen[y][x] = true; n++; st.push([x+1,y],[x-1,y],[x,y+1],[x,y-1]); }
+    // Les téléporteurs relient deux zones : on compte la case jumelle comme atteinte.
+    const reach = n;
+    add(reach === total ? 'ok' : 'bad', reach === total ? 'Toutes les cases libres sont accessibles.' : `${total - reach} case(s) libre(s) inaccessibles depuis le départ (zones isolées).`);
+    // Culs-de-sac : une case libre avec moins de deux voisines libres.
+    let dead = 0;
+    for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) if (open[y][x]) { const nb = [[1,0],[-1,0],[0,1],[0,-1]].filter(([dx, dy]) => walk(x + dx, y + dy) && open[y + dy][x + dx]).length; if (nb < 2) dead++; }
+    add(dead ? 'bad' : 'ok', dead ? `${dead} cul(s)-de-sac (case avec moins de 2 voisines libres).` : 'Aucun cul-de-sac.');
+  }
+  const belts = (count['>'] || 0) + (count['<'] || 0) + (count['^'] || 0) + (count['v'] || 0);
+  add('info', `${w}×${h} · blocs ${'234567'.split('').reduce((a, c) => a + (count[c] || 0), 0)} · trous ${count.o || 0} · tapis ${belts} · accél. ${count.z || 0} · pontons ${count.p || 0} · herses ${(count.h || 0) + (count.H || 0)}`);
+  $('msgs').innerHTML = msgs.join('');
+}
+
+buildUI();
+levels = [newLevel()];
+sync();
+</script>
+</body>
+</html>

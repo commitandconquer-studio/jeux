@@ -3,6 +3,7 @@ mod audio;
 mod board;
 mod capture;
 mod dress;
+mod grid;
 mod game;
 mod layout;
 mod levels;
@@ -33,6 +34,12 @@ pub enum GameState {
 }
 
 fn main() {
+    // Outil : `SNAKE_EXPORT=dossier` écrit tous les niveaux en cartes retouchables (voir l'éditeur), sans lancer le jeu.
+    if let Ok(dir) = std::env::var("SNAKE_EXPORT") {
+        levels::export(&dir).expect("export des niveaux");
+        println!("niveaux écrits dans {dir}");
+        return;
+    }
     App::new()
         .add_plugins(
             DefaultPlugins
