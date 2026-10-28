@@ -38,16 +38,55 @@
 </svg>
 {% endcomponent cc.pilier %}
 
-{# Carte d'un jeu (accueil, catalogue). #}
+{# Carte d'un jeu (accueil, catalogue) : icône, titre, accroche, chiffres clés et dernière mise à jour. #}
 {% component cc.carte_jeu(j, lang) %}
 <a class="jeu-card" href="{{ j.permalink }}">
   <img src="{{ get_url(path='img/jeux/' ~ j.extra.icone ~ '.png') }}" alt="" width="96" height="96" loading="lazy">
   <div>
     <h3>{{ j.title }}</h3>
     <p>{{ j.description }}</p>
+    {%- if j.extra.chiffres %}
+    <ul class="chiffres-puces">{% for c in j.extra.chiffres %}<li><strong>{{ c.n }}</strong> {{ c.t }}</li>{% endfor %}</ul>
+    {%- endif %}
+    {%- if j.updated %}
+    <p class="maj-jeu">{{ trans(key="maj_le", lang=lang) }} {% if lang == "fr" %}{{ j.updated | date(format="%d/%m/%Y") }}{% else %}{{ j.updated | date(format="%Y-%m-%d") }}{% endif %}</p>
+    {%- endif %}
   </div>
 </a>
 {% endcomponent cc.carte_jeu %}
+
+{# Jeu à la une : grande image, titre ou logo, accroche, chiffres clés et boutons. #}
+{% component cc.jeu_vedette(j, lang) %}
+<article class="jeu-vedette">
+  <a class="vedette-image" href="{{ j.permalink }}" tabindex="-1" aria-hidden="true">
+    {%- if j.extra.vignette %}
+    <img src="{{ get_url(path='img/jeux/' ~ j.extra.dossier ~ '/' ~ j.extra.vignette ~ '.jpg') }}" alt="" loading="lazy">
+    {%- else %}
+    <img class="icone" src="{{ get_url(path='img/jeux/' ~ j.extra.icone ~ '.png') }}" alt="" loading="lazy">
+    {%- endif %}
+  </a>
+  <div class="vedette-texte">
+    {%- if j.extra.logo %}
+    <img class="vedette-logo" src="{{ get_url(path='img/jeux/' ~ j.extra.logo ~ '.png') }}" alt="{{ j.title }}" loading="lazy">
+    {%- else %}
+    <h2>{{ j.title }}</h2>
+    {%- endif %}
+    <p class="lede">{{ j.description }}</p>
+    {%- if j.extra.chiffres %}
+    <ul class="chiffres-puces">{% for c in j.extra.chiffres %}<li><strong>{{ c.n }}</strong> {{ c.t }}</li>{% endfor %}</ul>
+    {%- endif %}
+    <p class="actions">
+      {%- if j.extra.web %}
+      <a class="btn btn-main jouer" href="{{ get_url(path='@/jouer/' ~ j.slug ~ '.md', lang=lang) }}">▶ {{ trans(key="jouer_maintenant", lang=lang) }}</a>
+      {%- endif %}
+      <a class="btn btn-ghost" href="{{ j.permalink }}">{{ trans(key="voir_jeu", lang=lang) }}</a>
+    </p>
+    {%- if j.updated %}
+    <p class="maj-jeu">{{ trans(key="maj_le", lang=lang) }} {% if lang == "fr" %}{{ j.updated | date(format="%d/%m/%Y") }}{% else %}{{ j.updated | date(format="%Y-%m-%d") }}{% endif %}</p>
+    {%- endif %}
+  </div>
+</article>
+{% endcomponent cc.jeu_vedette %}
 
 {# Trois rangées de montagnes à facettes, qui glissent en parallaxe au défilement. #}
 {% component cc.montagnes() %}

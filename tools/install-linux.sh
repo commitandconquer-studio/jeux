@@ -16,14 +16,10 @@ APPS="$DATA/applications"
 
 # identifiant | nom affiché | description
 GAMES=(
-  "snake|Snake|Le serpent classique en 3D low-poly, dans 5 univers"
-  "traversee|Traversée|Aidez le crapaud à traverser routes, rivières et voies ferrées"
+  "snake|À la queue leu leu|Une chenille de personnages qui grandit, dans 4 paysages"
+  "traversee|Cross or Die|Livrez vos colis et survivez aux routes, aux trains et aux aigles"
   "tour|Tour de blocs|Empilez les blocs le plus haut possible"
-  "nova|NOVA — Le Dernier Rempart|Bâtissez le bouclier de Nova et abattez le croiseur de l'Hégémonie"
   "eureka-2048|2048 — Eurêka|Fusionnez les puissances de 2 jusqu'à 2048"
-  "concile|Le Concile des Évêques|Un évêque par diocèse, par rangée et par colonne, et jamais de voisin"
-  "parsecs|12 Parsecs|Traversez la ceinture d'astéroïdes et gagnez de nouveaux vaisseaux"
-  "observatoire|L'Observatoire|Soleils et lunes sur la carte du ciel : un jeu de logique"
   "berger|Le Chien de berger|Rassemblez le troupeau et rentrez-le dans l'enclos, loups en vue"
 )
 

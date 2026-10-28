@@ -1,6 +1,6 @@
 +++
 title = "Tour de blocs"
-weight = 3
+updated = 2026-10-16T10:29:15+02:00
 description = "Empilez les blocs le plus haut possible, au bon moment."
 [extra]
 web = true

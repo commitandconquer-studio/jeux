@@ -1,6 +1,6 @@
 +++
 title = "Le Chien de berger"
-weight = 10
+updated = 2026-10-24T16:12:21+02:00
 description = "Rassemblez le troupeau et rentrez-le dans l'enclos, avant que les loups n'arrivent."
 [extra]
 web = true

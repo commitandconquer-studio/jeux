@@ -6,7 +6,7 @@
 #   site/static/jouer/assets/                          (bibliothèque commune)
 #
 #   tools/build-web.sh                 tous les jeux
-#   tools/build-web.sh concile 2048    seulement ceux-là (noms de la page /jouer/…)
+#   tools/build-web.sh tour 2048       seulement ceux-là (noms de la page /jouer/…)
 #
 # Prérequis : rustup target add wasm32-unknown-unknown
 #             cargo install wasm-bindgen-cli --version <celle de Cargo.lock>
@@ -17,7 +17,7 @@ CARGO="$(command -v cargo || echo "$HOME/.cargo/bin/cargo")"
 BINDGEN="$(command -v wasm-bindgen || echo "$HOME/.cargo/bin/wasm-bindgen")"
 
 # nom de la page | paquet cargo
-JEUX=(snake\|snake traversee\|traversee tour\|tour nova\|nova 2048\|eureka-2048 concile\|concile parsecs\|parsecs observatoire\|observatoire berger\|berger)
+JEUX=(snake\|snake traversee\|traversee tour\|tour 2048\|eureka-2048 berger\|berger)
 voulus=("$@")
 
 mkdir -p "$OUT"

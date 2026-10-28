@@ -1,6 +1,6 @@
 +++
 title = "Cross or Die"
-weight = 2
+updated = 2026-10-27T22:11:17+01:00
 description = "Le pire service de livraison du multivers : ramassez vos colis, livrez-les au bon destinataire… et survivez aux routes, aux trains et aux aigles."
 [extra]
 logo = "traversee/logo"
@@ -8,6 +8,7 @@ web = true
 icone = "traversee"
 code = "games/traversee"
 dossier = "traversee"
+vignette = "livraison"
 commandes = ["Flèches ou ZQSD, Espace ou clic : avancer", "Tactile : glisser du doigt", "M : son · Échap : fin de partie"]
 chiffres = [
   { n = "7", t = "mondes" },

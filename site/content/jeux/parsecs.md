@@ -1,4 +1,5 @@
 +++
+draft = true
 title = "12 Parsecs"
 weight = 8
 description = "Traversez les 12 parsecs d'une ceinture d'astéroïdes et gagnez de nouveaux vaisseaux."

@@ -1,6 +1,6 @@
 +++
 title = "The Sheepdog"
-weight = 10
+updated = 2026-10-24T16:12:21+02:00
 description = "Gather the flock and bring it into the pen before the wolves arrive."
 [extra]
 web = true

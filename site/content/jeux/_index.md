@@ -1,6 +1,6 @@
 +++
 title = "Les jeux"
-sort_by = "weight"
+sort_by = "update_date"
 template = "jeux.html"
 page_template = "jeu.html"
 +++

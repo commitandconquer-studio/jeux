@@ -1,6 +1,6 @@
 +++
 title = "Block Tower"
-weight = 3
+updated = 2026-10-16T10:29:15+02:00
 description = "Stack the blocks as high as you can, with perfect timing."
 [extra]
 web = true

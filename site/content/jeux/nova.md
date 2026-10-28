@@ -1,4 +1,5 @@
 +++
+draft = true
 title = "NOVA — Le Dernier Rempart"
 weight = 5
 description = "Bâtissez le bouclier de Nova bloc par bloc et abattez le croiseur de l'Hégémonie."

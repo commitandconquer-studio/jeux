@@ -170,6 +170,26 @@ h3 { font-size: 1.25rem; }
 .plateformes li.ok span { color: #3D6B10; font-weight: 700; }
 @media (max-width: 860px) { .jeu-corps { grid-template-columns: 1fr; } }
 
+/* ---- Catalogue : jeu à la une et cartes ------------------------------ */
+.chiffres-puces { display: flex; flex-wrap: wrap; gap: 6px; list-style: none; padding: 0; margin: 10px 0 0; }
+.chiffres-puces li { background: var(--ivory); border-radius: 99px; padding: 4px 10px; font-size: 13px; color: var(--ink-soft); }
+.chiffres-puces strong { color: var(--ink); }
+.maj-jeu { margin: 10px 0 0; font-size: 13px; color: var(--ink-soft); }
+.jeu-vedette {
+  display: grid; grid-template-columns: 1.3fr 1fr; gap: clamp(20px, 4vw, 48px); align-items: center;
+  margin: 0 auto 40px; padding: clamp(16px, 3vw, 28px); border-radius: calc(var(--radius) * 1.4);
+  background: var(--card); box-shadow: var(--shadow);
+}
+.vedette-image { display: block; overflow: hidden; border-radius: var(--radius); }
+.vedette-image img { display: block; width: 100%; height: auto; transition: transform .4s; }
+.vedette-image:hover img { transform: scale(1.03); }
+.vedette-image img.icone { width: 60%; margin: 0 auto; padding: 8%; }
+.vedette-logo { display: block; width: min(100%, 420px); height: auto; margin-bottom: 8px; }
+.vedette-texte h2 { margin: 0 0 8px; font-size: clamp(2rem, 4vw, 3rem); }
+.vedette-texte .lede { margin: 0; }
+.vedette-texte .actions { margin-top: 20px; }
+@media (max-width: 860px) { .jeu-vedette { grid-template-columns: 1fr; } }
+
 /* ---- Fiche d'un jeu --------------------------------------------------- */
 .jeu-hero { background: linear-gradient(180deg, #E5F5D2, var(--ivory)); }
 .jeu-blog { max-width: 760px; margin: 32px auto 0; padding: 0 16px; }

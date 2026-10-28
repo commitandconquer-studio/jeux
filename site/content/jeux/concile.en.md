@@ -1,4 +1,5 @@
 +++
+draft = true
 title = "The Council of Bishops"
 weight = 7
 description = "One bishop per diocese, row and column, and never side by side."

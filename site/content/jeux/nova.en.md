@@ -1,4 +1,5 @@
 +++
+draft = true
 title = "NOVA — The Last Bulwark"
 weight = 5
 description = "Build Nova's shield block by block and bring down the Hegemony's cruiser."

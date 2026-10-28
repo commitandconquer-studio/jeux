@@ -1,4 +1,5 @@
 +++
+draft = true
 title = "Le Concile des Évêques"
 weight = 7
 description = "Un évêque par diocèse, par rangée et par colonne, et jamais de voisin."
