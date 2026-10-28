@@ -2,7 +2,7 @@
 //! joueur, mise à jour des animaux, effets, progression).
 use std::f32::consts::{PI, TAU};
 
-use berger_core::{Commande, Evenement, Fin, Monde, NIVEAUX, V2, generer, niveau, niveau_du_jour, robot, v2};
+use berger_core::{Commande, Evenement, Fin, Monde, NIVEAUX, V2, generer, niveau, niveau_du_jour, robot, v2, vitrine};
 use bevy::prelude::*;
 use game_common::calendar::Date;
 use game_common::{Rng, iso_camera, iso_projection, save};
@@ -226,12 +226,16 @@ fn demarrer(
     for e in &scene {
         commands.entity(e).despawn();
     }
-    let (nv, graine) = match d.genre {
-        Genre::Campagne(i) => (niveau(i), 1000 + i as u64 * 77),
-        Genre::Jour(j) => niveau_du_jour(j),
-        Genre::Hasard(i, g) => (niveau(i), g),
+    let (nv, carte) = match d.genre {
+        // Le niveau 4 est la vitrine, dessinée à la main.
+        Genre::Campagne(3) => vitrine(),
+        Genre::Campagne(i) => (niveau(i), generer(&niveau(i), 1000 + i as u64 * 77)),
+        Genre::Jour(j) => {
+            let (nv, graine) = niveau_du_jour(j);
+            (nv, generer(&nv, graine))
+        }
+        Genre::Hasard(i, g) => (niveau(i), generer(&niveau(i), g)),
     };
-    let carte = generer(&nv, graine);
     let carte_demi = carte.demi;
     spawn_scene(&mut commands, &kit, &carte, &nv);
     for mut p in &mut cam {

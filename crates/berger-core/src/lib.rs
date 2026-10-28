@@ -6,7 +6,7 @@ pub mod monde;
 pub mod robot;
 pub mod v2;
 
-pub use carte::{Carte, Cote, Genre, Mur, NIVEAUX, Niveau, generer, niveau, niveau_du_jour};
+pub use carte::{Carte, Cote, Genre, Mur, NIVEAUX, Niveau, generer, niveau, niveau_du_jour, vitrine};
 pub use monde::{Commande, EtatLoup, EtatMouton, Evenement, Fin, Monde, PAS_FIXE, Reglages};
 pub use v2::{V2, v2};
 
@@ -116,6 +116,23 @@ mod tests {
             m.pas(1.0 / 60.0, Commande { aboyer: t % 120 == 0, ..Commande::default() });
         }
         assert_eq!(m.abrites(), m.moutons.len());
+    }
+
+    #[test]
+    fn la_vitrine_est_jouable_et_le_robot_en_rentre_la_majorite() {
+        let (nv, c) = vitrine();
+        assert!(c.accessible());
+        assert_eq!(c.moutons.len(), nv.moutons as usize);
+        assert!(!c.bloque(c.depart_chien, 0.45));
+        let mut m = Monde::nouveau(c, nv);
+        let mut t = 0.0;
+        while m.fin.is_none() && t < 270.0 {
+            m.pas(1.0 / 60.0, robot::commande(&m));
+            t += 1.0 / 60.0;
+        }
+        println!("vitrine : {:?} en {:.0} s", m.fin, m.temps);
+        // Le chien automatique est maladroit près des clôtures de l'enclos : on lui demande la majorité du troupeau.
+        assert!(m.abrites() >= 7, "{} moutons seulement à l'abri", m.abrites());
     }
 
     #[test]

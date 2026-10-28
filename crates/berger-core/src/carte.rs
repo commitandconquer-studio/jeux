@@ -356,6 +356,46 @@ fn essayer(nv: &Niveau, graine: u64, clairsemee: bool) -> Carte {
     Carte { demi, obstacles, enclos, murs_enclos, clotures, depart_chien: chien, depart_troupeau: troupeau, moutons, loups, graine }
 }
 
+/// Le niveau vitrine (niveau 4 de la campagne), dessiné à la main : l'enclos à l'ouest,
+/// une mare devant sa porte, puis une haie avec un passage étroit entre deux rochers
+/// que tout le troupeau doit franchir. Pas de loup : on apprend à conduire.
+pub fn vitrine() -> (Niveau, Carte) {
+    let nv = Niveau { temps_ref: 110.0, ..NIVEAUX[3] };
+    let demi = v2(nv.demi.0, nv.demi.1);
+    let eh = v2(2.55, 3.1);
+    let enclos = Enclos { centre: v2(-demi.x + eh.x + 0.05, 0.0), demi: eh, cote: Cote::Est, porte: 3.2 };
+    let murs_enclos = murs_de_enclos(&enclos, true);
+    let ob = |x: f32, y: f32, rayon: f32, genre: Genre, variante: u8| Obstacle { pos: v2(x, y), rayon, genre, variante };
+    let obstacles = vec![
+        // Le passage : deux gros rochers, une haie de chaque côté.
+        ob(-7.0, -3.4, 1.3, Genre::Rocher, 0),
+        ob(-7.0, 3.4, 1.2, Genre::Rocher, 1),
+        // La mare à côté de la porte.
+        ob(-13.0, -8.0, 2.3, Genre::Mare, 0),
+        ob(-14.0, 9.0, 1.2, Genre::Rocher, 2),
+        // Quelques arbres pour contourner.
+        ob(-1.0, -9.5, 1.0, Genre::Arbre, 1),
+        ob(3.5, 8.5, 1.0, Genre::Pin, 2),
+        ob(12.0, -7.5, 1.0, Genre::Arbre, 3),
+        ob(17.0, 2.0, 0.9, Genre::Pin, 0),
+        ob(5.0, -4.0, 0.8, Genre::Rocher, 1),
+        ob(0.0, 3.0, 0.7, Genre::Rocher, 0),
+    ];
+    let clotures = vec![Mur { a: v2(-7.0, -4.7), b: v2(-7.0, -10.5) }, Mur { a: v2(-7.0, 4.6), b: v2(-7.0, 10.5) }];
+    let troupeau = v2(10.0, 0.0);
+    let mut h = Hasard::new(4242);
+    let mut moutons: Vec<V2> = Vec::new();
+    while moutons.len() < nv.moutons as usize {
+        let p = troupeau + V2::from_angle(h.entre(0.0, std::f32::consts::TAU)) * (2.6 * h.f().sqrt());
+        let libre = !obstacles.iter().any(|o| o.pos.dist(p) < o.rayon + 0.8);
+        if libre && moutons.iter().all(|q| q.dist(p) > 0.9) {
+            moutons.push(p);
+        }
+    }
+    let carte = Carte { demi, obstacles, enclos, murs_enclos, clotures, depart_chien: v2(17.0, 6.5), depart_troupeau: troupeau, moutons, loups: Vec::new(), graine: 4242 };
+    (nv, carte)
+}
+
 /// Les quatre côtés de l'enclos, la porte ouverte, et l'entonnoir qui guide
 /// les moutons vers elle.
 fn murs_de_enclos(e: &Enclos, entonnoir: bool) -> Vec<Mur> {

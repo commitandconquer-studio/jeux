@@ -521,6 +521,9 @@ impl Monde {
                     acc += (e.centre - p).norm() * (2.2 - a_la_porte) * 4.0;
                 }
                 menace *= 0.4;
+            } else if self.carte.enclos.dedans(p, -0.15) {
+                // Sur le seuil : un mouton qui vient d'entrer s'avance tout seul à l'intérieur.
+                acc += (self.carte.enclos.centre - p).norm() * 2.5;
             }
 
             // Obstacles et clôtures : on les contourne.
@@ -583,8 +586,11 @@ impl Monde {
                 EtatMouton::Flane
             };
 
-            // Sécurisé quand il est bien à l'intérieur (0,7 du bord) ; il le reste tant qu'il ne ressort pas par la porte.
-            let dedans = self.carte.enclos.dedans(pos, if m.abrite { -0.4 } else { 0.7 });
+            // Sécurisé quand il a passé la porte d'au moins 0,7 ; il le reste tant qu'il ne ressort pas.
+            // (Contre les clôtures, un mouton ne peut pas être plus près que 0,3 : la marge latérale est petite.)
+            let e = self.carte.enclos;
+            let passe = (e.entree() - pos).dot(e.cote.sortie());
+            let dedans = if m.abrite { e.dedans(pos, -0.4) } else { e.dedans(pos, 0.25) && passe >= 0.7 };
             if dedans != m.abrite {
                 m.abrite = dedans;
                 self.evenements.push(if dedans { Evenement::Entre(i) } else { Evenement::Sorti(i) });
