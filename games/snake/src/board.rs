@@ -21,6 +21,7 @@ pub enum Tile {
     Belt(IVec2),
     /// La sortie d'un niveau du Voyage.
     Exit,
+    Portal,
 }
 
 /// Ce que le jeu sait poser sur le plateau.
@@ -31,6 +32,8 @@ pub enum Feature {
     Teleport,
     Speeder,
     Belt,
+    /// Portail de paysage (mode infini) : change le décor, pas le plateau.
+    Portal,
 }
 
 #[derive(Resource, Default)]
@@ -61,6 +64,7 @@ impl Board {
                         | (Feature::Teleport, Tile::Teleport(_))
                         | (Feature::Speeder, Tile::Speeder)
                         | (Feature::Belt, Tile::Belt(_))
+                        | (Feature::Portal, Tile::Portal)
                 )
             })
             .count()
@@ -85,6 +89,10 @@ impl Board {
                 }
                 Feature::Speeder => {
                     self.tiles.insert(c, Tile::Speeder);
+                    return true;
+                }
+                Feature::Portal => {
+                    self.tiles.insert(c, Tile::Portal);
                     return true;
                 }
                 Feature::Teleport => {
@@ -166,7 +174,7 @@ pub fn sync_tiles(
     old: Query<Entity, With<TileVisual>>,
     mut count: Local<usize>,
 ) {
-    if !board.is_changed() {
+    if !board.is_changed() && !scenery.is_changed() {
         return;
     }
     for e in &old {
@@ -211,6 +219,14 @@ pub fn sync_tiles(
                     at(0.0).with_scale(Vec3::splat(scale)).with_rotation(Quat::from_rotation_y(yaw)),
                     TileVisual,
                 ));
+            }
+            Tile::Portal => {
+                let m = mk(Color::srgb(0.7, 0.35, 1.0), 1.8);
+                spawn(&mut commands, disc.clone(), m.clone(), at(0.01).with_scale(Vec3::new(1.1, 1.0, 1.1)), None);
+                let ring = spawn(&mut commands, torus.clone(), mk(Color::WHITE, 1.6), at(0.45).with_scale(Vec3::splat(1.5)).with_rotation(Quat::from_rotation_x(FRAC_PI_2)), None);
+                commands.entity(ring).insert(Pulse(1.0));
+                let gem = spawn(&mut commands, cube.clone(), m, at(0.5).with_scale(Vec3::splat(0.3)), None);
+                commands.entity(gem).insert(Spin(2.5));
             }
             Tile::Exit => {
                 let m = mk(Color::srgb(0.2, 0.85, 0.4), 1.4);

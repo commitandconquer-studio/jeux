@@ -96,6 +96,7 @@ impl Progress {
 pub fn label(item: Item) -> &'static str {
     match item {
         Item::Feature(Feature::Obstacle) => tx!("Obstacles", "Obstacles", "Hindernisse", "Ostacoli", "Obstáculos").t(),
+        Item::Feature(Feature::Portal) => tx!("Portails", "Portals", "Portale", "Portali", "Portales").t(),
         Item::Feature(Feature::Hole) => tx!("Trous", "Holes", "Löcher", "Buche", "Hoyos").t(),
         Item::Feature(Feature::Teleport) => tx!("Téléporteurs", "Teleporters", "Teleporter", "Teletrasporti", "Teletransportadores").t(),
         Item::Feature(Feature::Speeder) => tx!("Accélérateurs", "Speed pads", "Turbo-Felder", "Acceleratori", "Aceleradores").t(),

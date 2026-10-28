@@ -38,7 +38,7 @@ impl Plugin for GamePlugin {
                 Update,
                 (
                     (crate::board::sync_tiles, crate::board::animate_tiles),
-                    (read_input, autopilot, step, exit_sequence, finish_crash).chain().run_if(in_state(GameState::Playing)),
+                    (read_input, autopilot, step, apply_portal, exit_sequence, finish_crash).chain().run_if(in_state(GameState::Playing)),
                     (sync_guest, sync_segments).run_if(|s: Res<State<GameState>>| {
                         matches!(s.get(), GameState::Playing | GameState::GameOver)
                     }),
@@ -97,6 +97,8 @@ struct Boost(u32);
 pub struct Banner {
     pub text: String,
     pub left: f32,
+    /// La tête vient de passer un portail de paysage.
+    pub portal: bool,
 }
 
 /// Ordre dans lequel les éléments arrivent, tous les `LEVEL_EVERY` invités.
@@ -127,6 +129,7 @@ fn cap(f: Feature) -> usize {
         Feature::Teleport => 6,
         Feature::Speeder => 4,
         Feature::Belt => 8,
+        Feature::Portal => 1,
     }
 }
 
@@ -137,6 +140,7 @@ pub fn feature_name(f: Feature) -> &'static str {
         Feature::Hole => tx!("Attention aux trous !", "Mind the holes!", "Vorsicht, Löcher!", "Attenzione alle buche!", "¡Cuidado con los hoyos!"),
         Feature::Teleport => tx!("Téléporteurs !", "Teleporters!", "Teleporter!", "Teletrasporti!", "¡Teletransportadores!"),
         Feature::Speeder => tx!("Accélérateurs !", "Speed pads!", "Turbo-Felder!", "Acceleratori!", "¡Aceleradores!"),
+        Feature::Portal => tx!("Un portail !", "A portal!", "Ein Portal!", "Un portale!", "¡Un portal!"),
         Feature::Belt => tx!("Tapis roulants !", "Conveyor belts!", "Förderbänder!", "Nastri trasportatori!", "¡Cintas transportadoras!"),
     }
     .t()
@@ -533,6 +537,16 @@ fn step(
                 }
             }
         } else {
+            // Un portail de paysage de temps en temps, s'il y a où aller.
+            if score.current % 12 == 6 && board.count(Feature::Portal) == 0 && crate::world::Universe::ALL.iter().filter(|u| progress.has(crate::progress::Item::World(**u))).count() > 1 {
+                let mut busy = conga.cells.clone();
+                busy.push(food.cell);
+                if board.place(Feature::Portal, &busy, head, &layout, settings.universe, &mut rng) {
+                    banner.text = feature_name(Feature::Portal).to_owned();
+                    banner.left = 3.0;
+                    sfx.write(Sfx::Spawn);
+                }
+            }
             if score.current % LEVEL_EVERY == 0 {
                 level_up(&mut board, &progress, &conga, food.cell, &settings, &layout, &mut banner, &mut sfx, &mut rng, score.current / LEVEL_EVERY);
             }
@@ -544,10 +558,30 @@ fn step(
         conga.cells.pop();
         conga.vias.pop();
     }
+    if board.tiles.get(&head) == Some(&Tile::Portal) {
+        board.tiles.remove(&head);
+        banner.portal = true;
+        sfx.write(Sfx::Teleport);
+    }
     if board.tiles.get(&head) == Some(&Tile::Speeder) {
         boost.0 = 5;
         sfx.write(Sfx::Boost);
     }
+}
+
+/// Le portail change de paysage : le suivant que le joueur a débloqué. Le plateau reste le même.
+fn apply_portal(mut banner: ResMut<Banner>, mut settings: ResMut<Settings>, progress: Res<Progress>) {
+    if !banner.portal {
+        return;
+    }
+    banner.portal = false;
+    let mut u = settings.universe.next();
+    while !progress.has(crate::progress::Item::World(u)) {
+        u = u.next();
+    }
+    settings.universe = u;
+    banner.text = game_common::tx!("Nouveau paysage : {}", "New scenery: {}", "Neue Landschaft: {}", "Nuovo paesaggio: {}", "Nuevo paisaje: {}").avec(&[&u.label()]);
+    banner.left = 3.0;
 }
 
 /// Défilé de sortie : à chaque case, le premier de la file passe la porte et les autres avancent.

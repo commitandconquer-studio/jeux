@@ -18,7 +18,7 @@ pub enum Universe {
 }
 
 impl Universe {
-    const ALL: [Universe; 4] = [Universe::Prairie, Universe::Desert, Universe::Cimetiere, Universe::Ocean];
+    pub const ALL: [Universe; 4] = [Universe::Prairie, Universe::Desert, Universe::Cimetiere, Universe::Ocean];
 
     pub fn next(self) -> Self {
         let i = Self::ALL.iter().position(|u| *u == self).unwrap_or(0);
