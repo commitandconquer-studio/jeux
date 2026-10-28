@@ -45,6 +45,8 @@ pub struct Progress {
     pub total: u32,
     /// Déblocages obtenus pendant la dernière partie.
     pub fresh: Vec<Item>,
+    /// Paysages débloqués en finissant un lieu du Voyage.
+    pub places: Vec<Universe>,
     /// Tout est ouvert (captures d'écran, essais).
     open: bool,
 }
@@ -55,7 +57,16 @@ impl Progress {
     }
 
     pub fn has(&self, item: Item) -> bool {
-        self.open || self.total >= Self::needed(item)
+        if self.open {
+            return true;
+        }
+        // Un paysage dont le lieu existe dans le Voyage s'y gagne ; les autres suivent le total.
+        if let Item::World(u) = item
+            && crate::levels::LEVELS.iter().any(|l| l.place.scenery() == u)
+        {
+            return u == Universe::Prairie || self.places.contains(&u);
+        }
+        self.total >= Self::needed(item)
     }
 
     pub fn allows(&self, f: Feature) -> bool {

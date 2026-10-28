@@ -11,6 +11,8 @@ pub struct Layout {
     /// Case de la tête au départ et direction ; le corps s'étend derrière.
     pub start: IVec2,
     pub dir: IVec2,
+    /// Identifie la forme (pour savoir quand reconstruire le décor).
+    pub id: u32,
 }
 
 impl Default for Layout {
@@ -22,12 +24,12 @@ impl Default for Layout {
 impl Layout {
     /// Rectangle plein ; départ au centre, vers l'est.
     pub fn rect(w: i32, h: i32) -> Self {
-        Layout { w, h, mask: vec![true; (w * h) as usize], start: IVec2::new(w / 2, h / 2), dir: IVec2::X }
+        Layout { w, h, mask: vec![true; (w * h) as usize], start: IVec2::new(w / 2, h / 2), dir: IVec2::X, id: 0 }
     }
 
     /// Union de rectangles `(x0, y0, x1, y1)` (bornes comprises).
     pub fn from_rects(w: i32, h: i32, rects: &[(i32, i32, i32, i32)], start: IVec2) -> Self {
-        let mut l = Layout { w, h, mask: vec![false; (w * h) as usize], start, dir: IVec2::X };
+        let mut l = Layout { w, h, mask: vec![false; (w * h) as usize], start, dir: IVec2::X, id: 0 };
         for &(x0, y0, x1, y1) in rects {
             for y in y0..=y1 {
                 for x in x0..=x1 {
@@ -124,6 +126,12 @@ impl Shape {
     }
 
     pub fn layout(self) -> Layout {
+        let mut l = self.build();
+        l.id = self as u32 + 1;
+        l
+    }
+
+    fn build(self) -> Layout {
         let at = IVec2::new;
         match self {
             Shape::Small => Layout::rect(10, 10),

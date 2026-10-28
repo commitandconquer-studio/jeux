@@ -1,0 +1,67 @@
+# Jardin public — on apprend à recruter, sur un grand terrain d'abord, puis il se resserre.
+# Chaque niveau n'apporte qu'une seule nouveauté.
+# Clés : lieu, forme (carre N | rectangle LxH | L | U | route | allees), touristes, sortie (oui/non),
+#        pas (secondes par case), temps (secondes pour la 2e étoile ; la 3e demande 25 % de moins).
+
+[Premiers pas]
+lieu = jardin
+forme = carre 20
+touristes = 6
+pas = 0.34
+
+[La file s'allonge]
+lieu = jardin
+forme = carre 20
+touristes = 10
+pas = 0.34
+
+[Plus de monde]
+lieu = jardin
+forme = carre 18
+touristes = 14
+pas = 0.34
+
+[Le rassemblement]
+lieu = jardin
+forme = carre 18
+touristes = 20
+pas = 0.33
+
+[La pelouse se resserre]
+lieu = jardin
+forme = carre 16
+touristes = 24
+pas = 0.32
+
+[Le grand cortège]
+lieu = jardin
+forme = carre 14
+touristes = 30
+pas = 0.32
+
+[La pelouse allongée]
+lieu = jardin
+forme = rectangle 22x10
+touristes = 20
+pas = 0.31
+
+[Le car de visite]
+lieu = jardin
+forme = carre 16
+touristes = 12
+sortie = oui
+pas = 0.31
+
+[Le pas rapide]
+lieu = jardin
+forme = carre 16
+touristes = 20
+sortie = oui
+pas = 0.24
+
+[Le sentier]
+lieu = jardin
+forme = L
+touristes = 20
+sortie = oui
+pas = 0.28

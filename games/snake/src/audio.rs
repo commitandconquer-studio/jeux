@@ -4,7 +4,6 @@ use bevy::prelude::*;
 use game_common::audio::{Musique, Mutable, SoundOn};
 use game_common::sounds as lib;
 
-use crate::settings::Settings;
 use crate::world::Universe;
 
 pub struct AudioPlugin;
@@ -25,6 +24,7 @@ pub enum Sfx {
     Teleport,
     Boost,
     Spawn,
+    Win,
     Start,
     GameOver,
     Click,
@@ -45,16 +45,16 @@ fn music_for(universe: Universe) -> &'static str {
 /// Une musique par univers : on change de morceau quand l'univers change.
 fn switch_music(
     mut commands: Commands,
-    settings: Res<Settings>,
+    scenery: Res<crate::voyage::Scenery>,
     server: Res<AssetServer>,
     sound: Res<SoundOn>,
     mut playing: Local<Option<Universe>>,
     current: Query<Entity, With<Music>>,
 ) {
-    if *playing == Some(settings.universe) {
+    if *playing == Some(scenery.0) {
         return;
     }
-    *playing = Some(settings.universe);
+    *playing = Some(scenery.0);
     for e in &current {
         commands.entity(e).despawn();
     }
@@ -79,6 +79,7 @@ fn play_sfx(mut commands: Commands, mut reader: MessageReader<Sfx>, server: Res<
             Sfx::Turn => (lib::TURN, 0.25, 1.0),
             Sfx::Teleport => (lib::BLIP, 0.6, 0.8),
             Sfx::Boost => (lib::CHARGE, 0.5, 1.2),
+            Sfx::Win => (lib::WIN, 0.8, 1.0),
             Sfx::Spawn => (lib::CLUNK, 0.5, 1.0),
             Sfx::Start => (lib::START, 0.6, 1.0),
             Sfx::GameOver => (lib::GAME_OVER, 0.8, 1.0),

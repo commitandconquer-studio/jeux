@@ -5,11 +5,13 @@ mod capture;
 mod dress;
 mod game;
 mod layout;
+mod levels;
 mod miniature;
 mod people;
 mod progress;
 mod settings;
 mod ui;
+mod voyage;
 mod world;
 
 use std::f32::consts::{PI, TAU};
@@ -25,6 +27,7 @@ pub enum GameState {
     #[default]
     Menu,
     Options,
+    Voyage,
     Playing,
     GameOver,
 }
@@ -42,13 +45,12 @@ fn main() {
         .init_state::<GameState>()
         .add_plugins(StudioPlugin::new(Univers::Croa, game_common::ambiance::AmbiancePlugin::exterieur()))
         .add_plugins(miniature::MiniaturePlugin)
-        .add_plugins((progress::ProgressPlugin, game::GamePlugin, ui::UiPlugin, audio::AudioPlugin, capture::CapturePlugin))
+        .add_plugins((progress::ProgressPlugin, voyage::VoyagePlugin, game::GamePlugin, ui::UiPlugin, audio::AudioPlugin, capture::CapturePlugin))
         .add_systems(Update, game_common::langue::rebatir_menu(GameState::Menu))
         .insert_resource(Rng::from_time())
         .insert_resource(bevy::light::DirectionalLightShadowMap { size: 2048 })
         .init_resource::<Settings>()
         .init_resource::<layout::Layout>()
-        .add_systems(PreUpdate, sync_layout)
         .init_resource::<Score>()
         .add_systems(Startup, |mut commands: Commands| {
             let mut cam = commands.spawn((iso_camera(Vec3::ZERO, 24.0, 18.0), bevy::core_pipeline::tonemapping::Tonemapping::AcesFitted));
@@ -70,7 +72,7 @@ fn move_camera(
     mut cam: Query<(&mut Transform, &mut Projection), With<Camera3d>>,
 ) {
     let dt = time.delta_secs();
-    if matches!(state.get(), GameState::Menu | GameState::Options) {
+    if matches!(state.get(), GameState::Menu | GameState::Options | GameState::Voyage) {
         *angle = (*angle + dt * 0.12) % TAU;
     } else {
         let a = (*angle + PI).rem_euclid(TAU) - PI;
@@ -82,12 +84,5 @@ fn move_camera(
         if layout.is_changed() {
             *proj = iso_projection(w * 1.2 + h * 0.5, h * 0.8 + w * 0.5);
         }
-    }
-}
-
-/// La forme du plateau suit le réglage choisi.
-fn sync_layout(settings: Res<Settings>, mut layout: ResMut<layout::Layout>) {
-    if settings.is_changed() {
-        *layout = settings.layout();
     }
 }

@@ -7,7 +7,6 @@ use bevy::prelude::*;
 use game_common::{Rng, flat_material};
 
 use crate::layout::Layout;
-use crate::settings::Settings;
 use crate::world::{Universe, cell_to_world};
 
 #[derive(Clone, Copy, PartialEq, Debug)]
@@ -20,6 +19,8 @@ pub enum Tile {
     Speeder,
     /// Pousse vers la direction indiquée.
     Belt(IVec2),
+    /// La sortie d'un niveau du Voyage.
+    Exit,
 }
 
 /// Ce que le jeu sait poser sur le plateau.
@@ -157,7 +158,7 @@ pub struct Pulse(f32);
 pub fn sync_tiles(
     mut commands: Commands,
     board: Res<Board>,
-    settings: Res<Settings>,
+    scenery: Res<crate::voyage::Scenery>,
     layout: Res<Layout>,
     server: Res<AssetServer>,
     mut meshes: ResMut<Assets<Mesh>>,
@@ -201,7 +202,7 @@ pub fn sync_tiles(
         };
         match tile {
             Tile::Obstacle(v) => {
-                let models = obstacle_models(settings.universe);
+                let models = obstacle_models(scenery.0);
                 let (file, scale) = models[v as usize % models.len()];
                 let scene = server.load(GltfAssetLabel::Scene(0).from_asset(format!("kenney/{file}.glb")));
                 let yaw = (cell.x * 7 + cell.y * 13) as f32 * 0.9;
@@ -210,6 +211,14 @@ pub fn sync_tiles(
                     at(0.0).with_scale(Vec3::splat(scale)).with_rotation(Quat::from_rotation_y(yaw)),
                     TileVisual,
                 ));
+            }
+            Tile::Exit => {
+                let m = mk(Color::srgb(0.2, 0.85, 0.4), 1.4);
+                spawn(&mut commands, disc.clone(), m.clone(), at(0.01).with_scale(Vec3::new(1.15, 1.0, 1.15)), None);
+                let post = spawn(&mut commands, cube.clone(), m.clone(), at(0.55).with_scale(Vec3::new(0.12, 1.1, 0.12)), None);
+                commands.entity(post).insert(Pulse(0.0));
+                let sign = spawn(&mut commands, cube.clone(), mk(Color::WHITE, 1.0), at(1.15).with_scale(Vec3::new(0.7, 0.35, 0.1)), None);
+                commands.entity(sign).insert(Spin(1.2));
             }
             Tile::Hole => {
                 spawn(&mut commands, disc.clone(), hole_rim.clone(), at(0.0).with_scale(Vec3::new(1.08, 1.0, 1.08)), None);

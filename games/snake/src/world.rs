@@ -4,7 +4,6 @@ use bevy::prelude::*;
 use game_common::{Rng, flat_material, tx};
 
 use crate::layout::Layout;
-use crate::settings::Settings;
 
 /// Hauteur du dessus du sol extérieur.
 const GROUND_Y: f32 = -0.2;
@@ -98,9 +97,9 @@ pub fn cell_to_world(c: Vec2, y: f32, l: &Layout) -> Vec3 {
 #[allow(clippy::too_many_arguments)]
 pub fn rebuild_world(
     mut commands: Commands,
-    settings: Res<Settings>,
     layout: Res<Layout>,
-    mut built: Local<Option<(Universe, crate::layout::Shape)>>,
+    scenery: Res<crate::voyage::Scenery>,
+    mut built: Local<Option<(Universe, u32)>>,
     old: Query<Entity, With<WorldPart>>,
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<StandardMaterial>>,
@@ -109,7 +108,7 @@ pub fn rebuild_world(
     mut suns: Query<&mut DirectionalLight>,
     server: Res<AssetServer>,
 ) {
-    let key = (settings.universe, settings.shape);
+    let key = (scenery.0, layout.id);
     if *built == Some(key) {
         return;
     }
@@ -118,7 +117,7 @@ pub fn rebuild_world(
         commands.entity(e).despawn();
     }
 
-    let (universe, shape) = key;
+    let (universe, shape) = (key.0, key.1);
     let l = &*layout;
     let theme = universe.theme();
     clear.0 = theme.sky;

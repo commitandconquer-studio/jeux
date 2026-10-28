@@ -10,6 +10,7 @@ use crate::GameState;
 use crate::game::Demo;
 use crate::layout::Shape;
 use crate::settings::Settings;
+use crate::voyage::Mode;
 use crate::world::Universe;
 
 struct Shot {
@@ -21,15 +22,27 @@ struct Shot {
     /// Cases spéciales déjà posées.
     features: bool,
     shape: Shape,
+    mode: Mode,
 }
 
 const fn shot(name: &'static str, state: GameState, universe: Universe, long: Option<usize>, features: bool) -> Shot {
-    Shot { name, state, universe, long, features, shape: Shape::Medium }
+    Shot { name, state, universe, long, features, shape: Shape::Medium, mode: Mode::Infinite }
 }
 
 fn shots(press: bool) -> Vec<Shot> {
+    if std::env::var("SNAKE_VOYAGE").is_ok() {
+        let at = |name: &'static str, state: GameState, mode: Mode| Shot { name, state, universe: Universe::Prairie, long: None, features: false, shape: Shape::Medium, mode };
+        return vec![
+            at("voyage-carte", GameState::Voyage, Mode::Infinite),
+            at("voyage-niveau-1", GameState::Playing, Mode::Voyage(0)),
+            at("voyage-niveau-6", GameState::Playing, Mode::Voyage(5)),
+            at("voyage-niveau-7", GameState::Playing, Mode::Voyage(6)),
+            at("voyage-niveau-10", GameState::Playing, Mode::Voyage(9)),
+            at("voyage-fin", GameState::GameOver, Mode::Voyage(0)),
+        ];
+    }
     if std::env::var("SNAKE_FORMES").is_ok() {
-        return Shape::ALL.iter().map(|s| Shot { name: Box::leak(format!("forme-{s:?}").into_boxed_str()), state: GameState::Playing, universe: Universe::Prairie, long: Some(12), features: true, shape: *s }).collect();
+        return Shape::ALL.iter().map(|s| Shot { name: Box::leak(format!("forme-{s:?}").into_boxed_str()), state: GameState::Playing, universe: Universe::Prairie, long: Some(12), features: true, shape: *s, mode: Mode::Infinite }).collect();
     }
     use GameState::{Menu, Options, Playing};
     use Universe::{Cimetiere, Desert, Ocean, Prairie};
@@ -70,7 +83,7 @@ pub struct CapturePlugin;
 impl Plugin for CapturePlugin {
     fn build(&self, app: &mut App) {
         let press = std::env::var("SNAKE_PRESSE").ok();
-        if let Some(dir) = press.clone().or_else(|| std::env::var("SNAKE_CAPTURE").ok()).or_else(|| std::env::var("SNAKE_FORMES").ok()) {
+        if let Some(dir) = press.clone().or_else(|| std::env::var("SNAKE_CAPTURE").ok()).or_else(|| std::env::var("SNAKE_FORMES").ok()).or_else(|| std::env::var("SNAKE_VOYAGE").ok()) {
             app.insert_resource(Capture { dir, shots: shots(press.is_some()), index: 0, since: 0.0, started: false, shot: false })
                 .add_systems(Update, run_capture);
             if press.is_some() {
@@ -95,6 +108,7 @@ fn run_capture(
     mut cap: ResMut<Capture>,
     mut settings: ResMut<Settings>,
     mut demo: ResMut<Demo>,
+    mut run_mode: ResMut<Mode>,
     mut next: ResMut<NextState<GameState>>,
     mut exit: MessageWriter<AppExit>,
 ) {
@@ -105,7 +119,7 @@ fn run_capture(
         }
         return;
     };
-    let (name, state, universe, long, features, shape) = (s.name, s.state, s.universe, s.long, s.features, s.shape);
+    let (name, state, universe, long, features, shape, mode) = (s.name, s.state, s.universe, s.long, s.features, s.shape, s.mode);
     // Laisse le temps au décor, à la caméra et au serpent de se mettre en place
     // (plus longtemps au démarrage, le temps de compiler les shaders).
     let shoot = if cap.index == 0 { 4.0 } else { 1.5 };
@@ -114,6 +128,9 @@ fn run_capture(
         cap.started = true;
         settings.universe = universe;
         settings.shape = shape;
+        if state != GameState::Menu {
+            *run_mode = mode;
+        }
         demo.long = long;
         demo.features = features;
         next.set(state);

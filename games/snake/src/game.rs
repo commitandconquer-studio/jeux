@@ -14,6 +14,7 @@ use crate::people::{self, Pose};
 use crate::progress::Progress;
 use crate::settings::Settings;
 use crate::layout::Layout;
+use crate::voyage::{Mode, Outcome, Run, Scenery, Voyage, stars_for};
 use crate::world::cell_to_world;
 
 pub struct GamePlugin;
@@ -21,7 +22,7 @@ pub struct GamePlugin;
 impl Plugin for GamePlugin {
     fn build(&self, app: &mut App) {
         app.insert_resource(Conga::new(&Layout::default(), 0))
-            .insert_resource(Food { cell: IVec2::ZERO, kind: 1, look: 0, spawned: true })
+            .insert_resource(Food { cell: IVec2::ZERO, kind: 1, look: 0, spawned: true, active: true })
             .init_resource::<Demo>()
             .insert_resource(Paused(false))
             .insert_resource(Boost(0))
@@ -30,14 +31,14 @@ impl Plugin for GamePlugin {
             .init_resource::<Board>()
             .insert_resource(StepTimer(Timer::from_seconds(0.16, TimerMode::Repeating)))
             .add_systems(Startup, (setup, load_best, crate::dress::setup))
-            .add_systems(OnEnter(GameState::Playing), new_game)
+            .add_systems(OnEnter(GameState::Playing), (new_game, new_run).chain())
             .add_systems(OnEnter(GameState::Menu), clear_board)
             .add_systems(OnEnter(GameState::GameOver), (people::all_die, save_best))
             .add_systems(
                 Update,
                 (
                     (crate::board::sync_tiles, crate::board::animate_tiles),
-                    (read_input, step, finish_crash).chain().run_if(in_state(GameState::Playing)),
+                    (read_input, autopilot, step, exit_sequence, finish_crash).chain().run_if(in_state(GameState::Playing)),
                     (sync_guest, sync_segments).run_if(|s: Res<State<GameState>>| {
                         matches!(s.get(), GameState::Playing | GameState::GameOver)
                     }),
@@ -57,6 +58,8 @@ pub struct Demo {
     pub features: bool,
     /// Dossier de presse : partie figée, sans interface.
     pub press: bool,
+    /// Pilote automatique (`SNAKE_AUTO=n` : n fois plus vite), pour essayer les niveaux.
+    pub auto: Option<f32>,
 }
 
 impl Default for Demo {
@@ -66,6 +69,7 @@ impl Default for Demo {
             long: std::env::var("SNAKE_LONG").ok().and_then(|v| v.parse().ok()),
             features: press || std::env::var("SNAKE_CAPTURE").is_ok(),
             press,
+            auto: std::env::var("SNAKE_AUTO").ok().and_then(|v| v.parse().ok()),
         }
     }
 }
@@ -178,6 +182,8 @@ struct Food {
     cell: IVec2,
     kind: usize,
     look: u32,
+    /// `false` : plus d'invité à attraper (objectif atteint).
+    active: bool,
     /// `false` : son modèle reste à poser.
     spawned: bool,
 }
@@ -239,7 +245,6 @@ fn new_game(
     mut boost: ResMut<Boost>,
     mut crash: ResMut<Crash>,
     progress: Res<Progress>,
-    demo: Res<Demo>,
     mut rng: ResMut<Rng>,
     stuff: Query<Entity, Or<(With<Segment>, With<Guest>)>>,
     mut sfx: MessageWriter<Sfx>,
@@ -257,14 +262,40 @@ fn new_game(
     food.kind = guest_kind(&mut rng, &progress);
     food.look = rng.below(LOOKS);
     food.spawned = false;
+    timer.0 = Timer::from_seconds(settings.speed.step_times().0, TimerMode::Repeating);
+    score.reset();
+}
+
+/// Démarre le niveau (Voyage) ou la partie infinie : rythme, objectif, cases du niveau.
+#[allow(clippy::too_many_arguments)]
+fn new_run(
+    mode: Res<Mode>,
+    mut run: ResMut<Run>,
+    mut outcome: ResMut<Outcome>,
+    mut timer: ResMut<StepTimer>,
+    mut food: ResMut<Food>,
+    progress: Res<crate::voyage::VoyageProgress>,
+    unlocked: Res<Progress>,
+    layout: Res<Layout>,
+    scenery: Res<Scenery>,
+    demo: Res<Demo>,
+    mut conga: ResMut<Conga>,
+    mut board: ResMut<Board>,
+    mut paused: ResMut<Paused>,
+    mut rng: ResMut<Rng>,
+) {
+    let progress_v = progress;
+    let progress = unlocked;
+    *run = Run::default();
+    *outcome = Outcome::default();
+    food.active = true;
     // Captures d'écran : tous les éléments sont déjà posés.
     if demo.features {
         let busy = conga.cells.clone();
         for f in [Feature::Obstacle, Feature::Obstacle, Feature::Obstacle, Feature::Hole, Feature::Teleport, Feature::Teleport, Feature::Speeder, Feature::Belt, Feature::Belt] {
-            board.place(f, &busy, conga.cells[0], &layout, settings.universe, &mut rng);
+            board.place(f, &busy, conga.cells[0], &layout, scenery.0, &mut rng);
         }
     }
-    timer.0 = Timer::from_seconds(settings.speed.step_times().0, TimerMode::Repeating);
     // Essai : une très longue file (SNAKE_LONG=n) pour vérifier la variété des apparences.
     if let Some(n) = demo.long {
         let mut path = Vec::new();
@@ -283,7 +314,12 @@ fn new_game(
         timer.0 = Timer::from_seconds(5.0, TimerMode::Repeating);
     }
     paused.0 = demo.press;
-    score.reset();
+    if let Mode::Voyage(i) = *mode {
+        outcome.best_before = progress_v.stars(i);
+        if let Some(level) = mode.level() {
+            timer.0 = Timer::from_seconds(level.pace / demo.auto.unwrap_or(1.0), TimerMode::Repeating);
+        }
+    }
 }
 
 fn clear_board(mut commands: Commands, stuff: Query<Entity, Or<(With<Segment>, With<Guest>)>>) {
@@ -299,6 +335,33 @@ fn guest_kind(rng: &mut Rng, progress: &Progress) -> usize {
 }
 
 /// Clavier, manette, glissement du doigt ; pause avec P, Espace ou la manette.
+/// Pilote automatique de test : va vers l'invité (ou la sortie) en évitant murs, corps et obstacles.
+fn autopilot(
+    demo: Res<Demo>,
+    layout: Res<Layout>,
+    board: Res<Board>,
+    food: Res<Food>,
+    run: Res<Run>,
+    mut conga: ResMut<Conga>,
+) {
+    if demo.auto.is_none() || !conga.queued.is_empty() {
+        return;
+    }
+    let target = run.exit.unwrap_or(food.cell);
+    let head = conga.cells[0];
+    let body = &conga.cells[..conga.cells.len() - 1];
+    let safe = |c: IVec2| layout.walkable(c) && !body.contains(&c) && !matches!(board.tiles.get(&c), Some(Tile::Obstacle(_) | Tile::Hole));
+    let best = [IVec2::X, IVec2::NEG_X, IVec2::Y, IVec2::NEG_Y]
+        .into_iter()
+        .filter(|d| *d != -conga.dir && safe(head + *d))
+        .min_by_key(|d| ((head + *d) - target).abs().element_sum());
+    if let Some(d) = best
+        && d != conga.dir
+    {
+        conga.queued.push_back(d);
+    }
+}
+
 fn read_input(
     keys: Res<ButtonInput<KeyCode>>,
     pads: Query<&Gamepad>,
@@ -362,15 +425,23 @@ fn step(
     mut banner: ResMut<Banner>,
     progress: Res<Progress>,
     mut crash: ResMut<Crash>,
+    mut voyage: Voyage,
     mut sfx: MessageWriter<Sfx>,
 ) {
     banner.left = (banner.left - time.delta_secs()).max(0.0);
     if paused.0 || crash.active {
         return;
     }
+    voyage.run.elapsed += time.delta_secs();
+    voyage.run.stepped = false;
     // L'élan d'un accélérateur fait avancer le temps deux fois plus vite.
     let dt = if boost.0 > 0 { time.delta() * 2 } else { time.delta() };
     if !timer.0.tick(dt).just_finished() {
+        return;
+    }
+    voyage.run.stepped = true;
+    // Défilé de sortie : `exit_sequence` fait avancer la file.
+    if voyage.run.exiting {
         return;
     }
     boost.0 = boost.0.saturating_sub(1);
@@ -407,8 +478,13 @@ fn step(
 
     conga.prev = conga.cells.clone();
     conga.cells.insert(0, head);
-    if head == food.cell {
+    if voyage.run.exit == Some(head) {
+        voyage.run.exiting = true;
+        info!("voyage : la file passe la sortie ({} personnes)", conga.cells.len());
+    }
+    if food.active && head == food.cell {
         score.add(1);
+        voyage.run.recruited += 1;
         sfx.write(Sfx::Eat(score.current));
         let tail = *conga.prev.last().unwrap();
         conga.prev.push(tail);
@@ -420,18 +496,78 @@ fn step(
         food.kind = guest_kind(&mut rng, &progress);
         food.look = rng.below(LOOKS);
         food.spawned = false;
-        if score.current % LEVEL_EVERY == 0 {
-            level_up(&mut board, &progress, &conga, food.cell, &settings, &layout, &mut banner, &mut sfx, &mut rng, score.current / LEVEL_EVERY);
+        if let Some(level) = voyage.mode.level() {
+            // Voyage : objectif atteint → la sortie s'ouvre (ou c'est gagné tout de suite).
+            if voyage.run.recruited >= level.tourists {
+                food.active = false;
+                if level.exit {
+                    let spots = crate::levels::exit_candidates(&layout, head);
+                    let spot = spots.into_iter().find(|c| !conga.cells.contains(c) && !board.tiles.contains_key(c));
+                    if let Some(c) = spot {
+                        board.tiles.insert(c, Tile::Exit);
+                        voyage.run.exit = Some(c);
+                        banner.text = game_common::tx!("La sortie est ouverte !", "The exit is open!", "Der Ausgang ist offen!", "L'uscita è aperta!", "¡La salida está abierta!").t().to_owned();
+                        banner.left = 4.0;
+                        sfx.write(Sfx::Spawn);
+                    }
+                } else {
+                    let time = voyage.run.elapsed;
+                    *voyage.outcome = Outcome { won: true, stars: stars_for(level, time), time, best_before: voyage.outcome.best_before };
+                    voyage.next.set(GameState::GameOver);
+                    sfx.write(Sfx::Win);
+                }
+            }
+        } else {
+            if score.current % LEVEL_EVERY == 0 {
+                level_up(&mut board, &progress, &conga, food.cell, &settings, &layout, &mut banner, &mut sfx, &mut rng, score.current / LEVEL_EVERY);
+            }
+            let min = settings.speed.step_times().1;
+            let faster = (timer.0.duration().as_secs_f32() * 0.96).max(min);
+            timer.0.set_duration(Duration::from_secs_f32(faster));
         }
-        let min = settings.speed.step_times().1;
-        let faster = (timer.0.duration().as_secs_f32() * 0.96).max(min);
-        timer.0.set_duration(Duration::from_secs_f32(faster));
     } else {
         conga.cells.pop();
     }
     if board.tiles.get(&head) == Some(&Tile::Speeder) {
         boost.0 = 5;
         sfx.write(Sfx::Boost);
+    }
+}
+
+/// Défilé de sortie : à chaque case, le premier de la file passe la porte et les autres avancent.
+#[allow(clippy::too_many_arguments)]
+fn exit_sequence(
+    mut commands: Commands,
+    mut conga: ResMut<Conga>,
+    mut voyage: Voyage,
+    mut segments: Query<(Entity, &mut Segment)>,
+    mut sfx: MessageWriter<Sfx>,
+) {
+    if !voyage.run.exiting || !voyage.run.stepped {
+        return;
+    }
+    voyage.run.stepped = false;
+    let old = conga.cells.clone();
+    conga.cells.pop();
+    conga.kinds.remove(0);
+    conga.looks.remove(0);
+    conga.prev = old[1..].to_vec();
+    for (e, mut seg) in &mut segments {
+        if seg.index == 0 {
+            commands.entity(e).despawn();
+        } else {
+            seg.index -= 1;
+        }
+    }
+    if conga.cells.is_empty() {
+        if let Some(level) = voyage.mode.level() {
+            let time = voyage.run.elapsed;
+            *voyage.outcome = Outcome { won: true, stars: stars_for(level, time), time, best_before: voyage.outcome.best_before };
+        }
+        voyage.next.set(GameState::GameOver);
+        sfx.write(Sfx::Win);
+    } else {
+        sfx.write(Sfx::Turn);
     }
 }
 
@@ -491,6 +627,9 @@ fn sync_guest(
     food.spawned = true;
     for e in &old {
         commands.entity(e).despawn();
+    }
+    if !food.active {
+        return;
     }
     let root = commands
         .spawn((

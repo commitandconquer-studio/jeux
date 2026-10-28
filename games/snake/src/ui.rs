@@ -8,7 +8,9 @@ use crate::GameState;
 use crate::audio::Sfx;
 use crate::game::{Banner, Paused};
 use crate::progress::{Progress, label};
+use crate::levels::LEVELS;
 use crate::settings::{OptionKind, Settings};
+use crate::voyage::{Mode, Outcome, Run, VoyageProgress};
 
 pub struct UiPlugin;
 
@@ -89,6 +91,7 @@ paisajes y casillas desbloqueas."
             )))
             .add_systems(OnEnter(GameState::Menu), spawn_menu)
             .add_systems(OnEnter(GameState::Options), spawn_options)
+            .add_systems(OnEnter(GameState::Voyage), spawn_voyage)
             .add_systems(OnEnter(GameState::GameOver), spawn_game_over)
             .add_systems(Update, (update_hud, update_banner, refresh_option_texts, keyboard_shortcuts))
             .add_observer(on_click);
@@ -98,7 +101,15 @@ paisajes y casillas desbloqueas."
 /// Ce que fait un bouton quand on clique dessus.
 #[derive(Component, Clone, Copy)]
 enum UiAction {
+    /// Mode infini.
     Play,
+    /// Recommencer le niveau en cours.
+    Replay,
+    /// Carte du Voyage.
+    Voyage,
+    Level(usize),
+    Locked,
+    Next,
     Settings,
     Back,
     Menu,
@@ -125,7 +136,8 @@ fn spawn_menu(mut commands: Commands, settings: Res<Settings>, progress: Res<Pro
     let panel = spawn_panel(&mut commands, DespawnOnExit(GameState::Menu));
     spawn_text(&mut commands, panel, tx!("À LA QUEUE LEU LEU", "CONGA LINE", "POLONÄSE", "TRENINO", "TRENECITO").t(), 46.0);
     spawn_gap(&mut commands, panel, 10.0);
-    button(&mut commands, panel, tx!("Jouer", "Play", "Spielen", "Gioca", "Jugar").t(), UiAction::Play);
+    button(&mut commands, panel, tx!("Voyage", "Journey", "Reise", "Viaggio", "Viaje").t(), UiAction::Voyage);
+    button(&mut commands, panel, tx!("Mode infini", "Endless mode", "Endlos-Modus", "Modalità infinita", "Modo infinito").t(), UiAction::Play);
     let t = button(
         &mut commands,
         panel,
@@ -152,6 +164,54 @@ fn spawn_menu(mut commands: Commands, settings: Res<Settings>, progress: Res<Pro
     pied_de_menu(&mut commands, panel);
 }
 
+fn stars_text(n: u8) -> String {
+    (0..3).map(|i| if i < n { '*' } else { '-' }).collect()
+}
+
+/// La carte du Voyage : les niveaux, leurs étoiles, ceux qui sont encore fermés.
+fn spawn_voyage(mut commands: Commands, voyage: Res<VoyageProgress>) {
+    let panel = spawn_panel(&mut commands, DespawnOnExit(GameState::Voyage));
+    spawn_text(&mut commands, panel, tx!("Voyage", "Journey", "Reise", "Viaggio", "Viaje").t(), 44.0);
+    spawn_text(
+        &mut commands,
+        panel,
+        tx!("Étoiles : {}", "Stars: {}", "Sterne: {}", "Stelle: {}", "Estrellas: {}").avec(&[&voyage.total_stars()]),
+        20.0,
+    );
+    let mut place = None;
+    let mut grid = None;
+    for (i, level) in LEVELS.iter().enumerate() {
+        if place != Some(level.place) {
+            place = Some(level.place);
+            spawn_text(&mut commands, panel, level.place.label(), 26.0);
+            grid = Some(
+                commands
+                    .spawn((
+                        Node {
+                            flex_wrap: FlexWrap::Wrap,
+                            justify_content: JustifyContent::Center,
+                            column_gap: Val::Px(8.0),
+                            row_gap: Val::Px(2.0),
+                            max_width: Val::Px(900.0),
+                            ..default()
+                        },
+                        ChildOf(panel),
+                    ))
+                    .id(),
+            );
+        }
+        let open = voyage.unlocked(i);
+        let label = if open {
+            format!("{} · {}  {}", i + 1, level.name, stars_text(voyage.stars(i)))
+        } else {
+            format!("{} · ?", i + 1)
+        };
+        button(&mut commands, grid.unwrap_or(panel), label, if open { UiAction::Level(i) } else { UiAction::Locked });
+    }
+    spawn_gap(&mut commands, panel, 6.0);
+    button(&mut commands, panel, tx!("Retour", "Back", "Zurück", "Indietro", "Volver").t(), UiAction::Menu);
+}
+
 fn spawn_options(mut commands: Commands, settings: Res<Settings>, progress: Res<Progress>) {
     let panel = spawn_panel(&mut commands, DespawnOnExit(GameState::Options));
     spawn_text(&mut commands, panel, tx!("Réglages", "Settings", "Einstellungen", "Impostazioni", "Ajustes").t(), 48.0);
@@ -163,8 +223,41 @@ fn spawn_options(mut commands: Commands, settings: Res<Settings>, progress: Res<
     button(&mut commands, panel, tx!("Retour", "Back", "Zurück", "Indietro", "Volver").t(), UiAction::Back);
 }
 
-fn spawn_game_over(mut commands: Commands, score: Res<Score>, progress: Res<Progress>) {
+fn spawn_game_over(mut commands: Commands, score: Res<Score>, progress: Res<Progress>, mode: Res<Mode>, outcome: Res<Outcome>, run: Res<Run>) {
     let panel = spawn_panel(&mut commands, DespawnOnExit(GameState::GameOver));
+    if let Mode::Voyage(i) = *mode {
+        let level = &LEVELS[i];
+        if outcome.won {
+            spawn_text(&mut commands, panel, tx!("Niveau réussi !", "Level complete!", "Geschafft!", "Livello superato!", "¡Nivel superado!").t(), 48.0);
+            spawn_text(&mut commands, panel, format!("{}  {}", level.name, stars_text(outcome.stars)), 28.0);
+            spawn_text(
+                &mut commands,
+                panel,
+                tx!("Temps : {} s    Objectif des 2 étoiles : {} s", "Time: {} s    2-star goal: {} s", "Zeit: {} s    Ziel für 2 Sterne: {} s", "Tempo: {} s    Obiettivo 2 stelle: {} s", "Tiempo: {} s    Objetivo 2 estrellas: {} s")
+                    .avec(&[&(outcome.time.round() as u32), &(level.par.round() as u32)]),
+                20.0,
+            );
+            if outcome.stars > outcome.best_before && outcome.best_before > 0 {
+                spawn_text(&mut commands, panel, tx!("Nouveau meilleur résultat !", "New best!", "Neue Bestleistung!", "Nuovo record!", "¡Nuevo récord!").t(), 22.0);
+            }
+        } else {
+            spawn_text(&mut commands, panel, tx!("Raté !", "Missed!", "Verpasst!", "Mancato!", "¡Fallaste!").t(), 56.0);
+            spawn_text(
+                &mut commands,
+                panel,
+                tx!("Touristes recrutés : {} sur {}", "Tourists recruited: {} of {}", "Touristen gewonnen: {} von {}", "Turisti reclutati: {} su {}", "Turistas reclutados: {} de {}")
+                    .avec(&[&run.recruited, &level.tourists]),
+                24.0,
+            );
+        }
+        spawn_gap(&mut commands, panel, 6.0);
+        if outcome.won && i + 1 < LEVELS.len() {
+            button(&mut commands, panel, tx!("Niveau suivant", "Next level", "Nächstes Level", "Livello successivo", "Siguiente nivel").t(), UiAction::Next);
+        }
+        button(&mut commands, panel, tx!("Rejouer", "Play again", "Nochmal", "Rigioca", "Otra vez").t(), UiAction::Replay);
+        button(&mut commands, panel, tx!("Voyage", "Journey", "Reise", "Viaggio", "Viaje").t(), UiAction::Voyage);
+        return;
+    }
     spawn_text(&mut commands, panel, tx!("Perdu !", "Game over!", "Verloren!", "Hai perso!", "¡Has perdido!").t(), 56.0);
     spawn_text(
         &mut commands,
@@ -230,11 +323,14 @@ fn update_banner(demo: Res<crate::game::Demo>, banner: Res<Banner>, paused: Res<
     }
 }
 
+#[allow(clippy::too_many_arguments)]
 fn update_hud(
     score: Res<Score>,
     langue: Res<Langue>,
     state: Res<State<GameState>>,
     demo: Res<crate::game::Demo>,
+    mode: Res<Mode>,
+    run: Res<Run>,
     mut hud: Query<&mut Visibility, With<Hud>>,
     mut text: Query<&mut Text, With<HudText>>,
 ) {
@@ -242,16 +338,34 @@ fn update_hud(
     for mut v in &mut hud {
         *v = if playing { Visibility::Inherited } else { Visibility::Hidden };
     }
-    if score.is_changed() || langue.is_changed() {
-        let hud = tx!(
+    if !playing {
+        return;
+    }
+    let s = if let (Mode::Voyage(i), Some(level)) = (*mode, mode.level()) {
+        let secs = run.elapsed as u32;
+        let clock = format!("{}:{:02}", secs / 60, secs % 60);
+        tx!(
+            "Niveau {} · Touristes {}/{} · {} · P : pause",
+            "Level {} · Tourists {}/{} · {} · P: pause",
+            "Level {} · Touristen {}/{} · {} · P: Pause",
+            "Livello {} · Turisti {}/{} · {} · P: pausa",
+            "Nivel {} · Turistas {}/{} · {} · P: pausa"
+        )
+        .avec(&[&(i + 1), &run.recruited.min(level.tourists), &level.tourists, &clock])
+    } else {
+        tx!(
             "Score : {}    Record : {}    Échap : menu    P : pause",
-            "Score: {}    Best: {}    Esc: menu    M: sound",
-            "Punkte: {}    Rekord: {}    Esc: Menü    M: Ton",
-            "Punti: {}    Record: {}    Esc: menu    M: audio",
-            "Puntos: {}    Récord: {}    Esc: menú    M: sonido"
-        );
-        for mut t in &mut text {
-            t.0 = hud.avec(&[&score.current, &score.best]);
+            "Score: {}    Best: {}    Esc: menu    P: pause",
+            "Punkte: {}    Rekord: {}    Esc: Menü    P: Pause",
+            "Punti: {}    Record: {}    Esc: menu    P: pausa",
+            "Puntos: {}    Récord: {}    Esc: menú    P: pausa"
+        )
+        .avec(&[&score.current, &score.best])
+    };
+    let _ = &langue;
+    for mut t in &mut text {
+        if t.0 != s {
+            t.0 = s.clone();
         }
     }
 }
@@ -268,15 +382,17 @@ fn keyboard_shortcuts(
     keys: Res<ButtonInput<KeyCode>>,
     state: Res<State<GameState>>,
     mut next: ResMut<NextState<GameState>>,
+    mode: Res<Mode>,
 ) {
     let confirm = keys.just_pressed(KeyCode::Enter) || keys.just_pressed(KeyCode::Space);
     let back = keys.just_pressed(KeyCode::Escape);
     match state.get() {
         GameState::Menu if confirm => next.set(GameState::Playing),
         GameState::Options if back => next.set(GameState::Menu),
-        GameState::Playing if back => next.set(GameState::Menu),
+        GameState::Voyage if back => next.set(GameState::Menu),
+        GameState::Playing if back => next.set(if matches!(*mode, Mode::Voyage(_)) { GameState::Voyage } else { GameState::Menu }),
         GameState::GameOver if confirm => next.set(GameState::Playing),
-        GameState::GameOver if back => next.set(GameState::Menu),
+        GameState::GameOver if back => next.set(if matches!(*mode, Mode::Voyage(_)) { GameState::Voyage } else { GameState::Menu }),
         _ => {}
     }
 }
@@ -286,6 +402,7 @@ fn on_click(
     actions: Query<&UiAction>,
     mut settings: ResMut<Settings>,
     progress: Res<Progress>,
+    mut mode: ResMut<Mode>,
     mut next: ResMut<NextState<GameState>>,
     mut sfx: MessageWriter<Sfx>,
 ) {
@@ -294,7 +411,23 @@ fn on_click(
     };
     sfx.write(Sfx::Click);
     match *action {
-        UiAction::Play => next.set(GameState::Playing),
+        UiAction::Play => {
+            *mode = Mode::Infinite;
+            next.set(GameState::Playing);
+        }
+        UiAction::Replay => next.set(GameState::Playing),
+        UiAction::Voyage => next.set(GameState::Voyage),
+        UiAction::Level(i) => {
+            *mode = Mode::Voyage(i);
+            next.set(GameState::Playing);
+        }
+        UiAction::Next => {
+            if let Mode::Voyage(i) = *mode {
+                *mode = Mode::Voyage(i + 1);
+            }
+            next.set(GameState::Playing);
+        }
+        UiAction::Locked => {}
         UiAction::Settings => next.set(GameState::Options),
         UiAction::Back | UiAction::Menu => next.set(GameState::Menu),
         UiAction::Cycle(kind) => kind.cycle(&mut settings, &progress),
