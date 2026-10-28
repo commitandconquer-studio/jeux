@@ -1,15 +1,30 @@
 +++
 title = "À la queue leu leu"
 updated = 2026-10-27T22:04:58+01:00
-description = "Une chenille de petits personnages qui grandit à chaque invité attrapé… et des cases spéciales qui compliquent la balade."
+description = "Menez la chenille comme dans un bal populaire : attrapez les invités, ils s'accrochent derrière vous."
 [extra]
 web = true
 icone = "snake"
 code = "games/snake"
 commandes = ["Flèches ou ZQSD : diriger", "P ou Espace : pause", "Tactile : glisser du doigt · manette acceptée", "M : couper le son · Échap : menu"]
+dossier = "snake"
+hero = "2-prairie"
+vignette = "2-prairie"
+mondes = [
+  { img = "2-prairie", nom = "La prairie", t = "Forêt, tentes et fleurs" },
+  { img = "3-desert", nom = "Le désert", t = "Cactus, rochers et campement de sable" },
+  { img = "4-cimetiere", nom = "Le cimetière", t = "Pins, tombes, cryptes et citrouilles, de nuit" },
+  { img = "5-ile-des-pirates", nom = "L'île des pirates", t = "Palmiers, tonneaux, coffres et bateaux" },
+]
 chiffres = [
+  { n = "19", t = "personnages" },
   { n = "4", t = "paysages" },
   { n = "5", t = "cases spéciales" },
+]
+captures = [
+  { img = "1-menu", t = "Le menu : votre record et votre prochain déblocage" },
+  { img = "6-longue-file", t = "Une très longue file de personnages" },
+  { img = "7-cases-speciales", t = "Téléporteurs, tapis roulants, accélérateurs, obstacles et trous" },
 ]
 +++
 

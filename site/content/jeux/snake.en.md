@@ -1,15 +1,30 @@
 +++
 title = "Conga Line"
 updated = 2026-10-27T22:04:58+01:00
-description = "A caterpillar of little characters that grows with every guest you catch… and special tiles that make the stroll harder."
+description = "Lead the conga line: catch the guests and they join in right behind you."
 [extra]
 web = true
 icone = "snake"
 code = "games/snake"
 commandes = ["Arrow keys or WASD: steer", "P or Space: pause", "Touch: swipe · gamepad supported", "M: mute · Esc: menu"]
+dossier = "snake"
+hero = "2-prairie"
+vignette = "2-prairie"
+mondes = [
+  { img = "2-prairie", nom = "The meadow", t = "Forest, tents and flowers" },
+  { img = "3-desert", nom = "The desert", t = "Cacti, rocks and a sandy camp" },
+  { img = "4-cimetiere", nom = "The graveyard", t = "Pines, tombs, crypts and pumpkins, at night" },
+  { img = "5-ile-des-pirates", nom = "Pirate island", t = "Palms, barrels, chests and boats" },
+]
 chiffres = [
+  { n = "19", t = "characters" },
   { n = "4", t = "landscapes" },
   { n = "5", t = "special tiles" },
+]
+captures = [
+  { img = "1-menu", t = "The menu: your record and your next unlock" },
+  { img = "6-longue-file", t = "A very long line of characters" },
+  { img = "7-cases-speciales", t = "Teleporters, conveyors, boosters, obstacles and holes" },
 ]
 +++
 
