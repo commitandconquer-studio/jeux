@@ -76,6 +76,31 @@ impl Pose {
     }
 }
 
+/// Un accessoire (modèles « aid » de Mini Characters) accroché à un os du personnage (les cannes et béquilles se posent au sol à côté de lui, sur l'os « root »).
+pub struct Acc {
+    /// Nom dans les fichiers de scène (`accessoires = lunettes+canne`).
+    pub key: &'static str,
+    pub file: &'static str,
+    /// Os où il s'accroche : « head » ou « root » (les pieds).
+    pub bone: &'static str,
+    /// Décalage (dans l'espace du modèle) et rotation (degrés) par rapport à l'os.
+    pub pos: [f32; 3],
+    pub rot: [f32; 3],
+}
+
+pub const ACCESSORIES: [Acc; 10] = [
+    Acc { key: "lunettes", file: "aid-glasses", bone: "head", pos: [0.0, 0.13, 0.08], rot: [0.0, 0.0, 0.0] },
+    Acc { key: "lunettes-soleil", file: "aid-sunglasses", bone: "head", pos: [0.0, 0.13, 0.08], rot: [0.0, 0.0, 0.0] },
+    Acc { key: "masque", file: "aid-mask", bone: "head", pos: [0.0, 0.08, -0.02], rot: [0.0, 0.0, 0.0] },
+    Acc { key: "appareil-auditif", file: "aid_hearing", bone: "head", pos: [0.24, 0.12, 0.0], rot: [0.0, 0.0, 0.0] },
+    Acc { key: "canne", file: "aid-cane", bone: "root", pos: [-0.36, 0.0, 0.06], rot: [0.0, 0.0, 0.0] },
+    Acc { key: "canne-blanche", file: "aid-cane-blind", bone: "root", pos: [-0.36, 0.0, 0.06], rot: [0.0, 0.0, 0.0] },
+    Acc { key: "canne-malvoyant", file: "aid-cane-low-vision", bone: "root", pos: [-0.36, 0.0, 0.06], rot: [0.0, 0.0, 0.0] },
+    Acc { key: "bequille", file: "aid-crutch", bone: "root", pos: [0.36, 0.0, 0.06], rot: [0.0, 0.0, 0.0] },
+    Acc { key: "defibrillateur-vert", file: "aid-defibrillator-green", bone: "root", pos: [0.36, 0.0, 0.06], rot: [0.0, 0.0, 0.0] },
+    Acc { key: "defibrillateur-rouge", file: "aid-defibrillator-red", bone: "root", pos: [0.36, 0.0, 0.06], rot: [0.0, 0.0, 0.0] },
+];
+
 /// Graphe d'animation d'un personnage (clips des GLB : 1 repos, 2 marche, 9 mort, 11 « oui »).
 #[derive(Component)]
 pub struct Person {
@@ -91,6 +116,8 @@ pub struct Person {
     look: Option<(usize, u32)>,
     /// Le guide porte une casquette et un drapeau.
     guide: bool,
+    /// Accessoires portés (indices dans `ACCESSORIES`).
+    acc: Vec<u8>,
 }
 
 impl Person {
@@ -117,6 +144,23 @@ pub fn spawn_model(
     look: u32,
     guide: bool,
 ) {
+    spawn_model_with(commands, server, graphs, parent, kind, pose, size, look, guide, &[]);
+}
+
+/// Comme `spawn_model`, avec des accessoires (indices dans `ACCESSORIES`).
+#[allow(clippy::too_many_arguments)]
+pub fn spawn_model_with(
+    commands: &mut Commands,
+    server: &AssetServer,
+    graphs: &mut Assets<AnimationGraph>,
+    parent: Entity,
+    kind: usize,
+    pose: Pose,
+    size: f32,
+    look: u32,
+    guide: bool,
+    acc: &[u8],
+) {
     let k = &KINDS[kind % KINDS.len()];
     let file = format!("kenney/{}/{}.glb", k.pack, k.file);
     let scene = server.load(GltfAssetLabel::Scene(0).from_asset(file.clone()));
@@ -136,7 +180,7 @@ pub fn spawn_model(
     commands.spawn((
         WorldAssetRoot(scene),
         Transform::from_scale(Vec3::splat(k.scale * size)),
-        Person { graph: graphs.add(graph), walk, wave, idle, extra, die, pose, look: base_model(kind % KINDS.len()).map(|m| (m, look)), guide },
+        Person { graph: graphs.add(graph), walk, wave, idle, extra, die, pose, look: base_model(kind % KINDS.len()).map(|m| (m, look)), guide, acc: acc.to_vec() },
         ChildOf(parent),
     ));
 }
@@ -217,6 +261,31 @@ pub fn name(kind: usize) -> &'static str {
         _ => tx!("Sam", "Sam", "Sam", "Sam", "Sam"),
     }
     .t()
+}
+
+/// Accroche les accessoires aux os de la tête et des bras dès que le squelette est chargé.
+pub fn attach_accessories(
+    mut commands: Commands,
+    server: Res<AssetServer>,
+    bones: Query<(Entity, &Name), Added<Name>>,
+    parents: Query<&ChildOf>,
+    persons: Query<&Person>,
+) {
+    for (bone, name) in &bones {
+        if !matches!(name.as_str(), "head" | "root") {
+            continue;
+        }
+        let Some(p) = person_of(bone, &parents, &persons) else { continue };
+        for &i in &p.acc {
+            let a = &ACCESSORIES[i as usize];
+            if a.bone != name.as_str() {
+                continue;
+            }
+            let scene = server.load(GltfAssetLabel::Scene(0).from_asset(format!("kenney/mini-characters/{}.glb", a.file)));
+            let rot = Quat::from_euler(EulerRot::XYZ, a.rot[0].to_radians(), a.rot[1].to_radians(), a.rot[2].to_radians());
+            commands.spawn((WorldAssetRoot(scene), Transform::from_translation(Vec3::from(a.pos)).with_rotation(rot), ChildOf(bone)));
+        }
+    }
 }
 
 /// Casquette rouge et petit drapeau jaune : ce qui fait le guide, sur n'importe quel personnage.

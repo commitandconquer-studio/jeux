@@ -108,7 +108,7 @@ fn spawn_scene(
             ))
             .id();
         let pose = if a.pose == Pose::Walk { Pose::Walk } else { a.pose };
-        people::spawn_model(&mut commands, &server, &mut graphs, root, a.kind, pose, 1.0, a.look, a.guide);
+        people::spawn_model_with(&mut commands, &server, &mut graphs, root, a.kind, pose, 1.0, a.look, a.guide, &a.acc);
     }
     // Lumière d'appoint de face, sans ombre : sinon, avec le soleil dans le dos, les visages restent sombres.
     commands.spawn((

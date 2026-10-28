@@ -75,6 +75,8 @@ pub struct Actor {
     pub z: f32,
     pub pose: crate::people::Pose,
     pub guide: bool,
+    /// Accessoires (indices dans `people::ACCESSORIES`).
+    pub acc: Vec<u8>,
 }
 
 /// Une réplique, affichée en sous-titre.
@@ -336,7 +338,13 @@ pub fn parse_file(text: &str) -> Result<(Meta, Vec<Level>), String> {
                             Some(n) => n,
                         })
                         .ok_or_else(|| err("animation inconnue (repos, salut, marche, court, saute, mort… voir l'éditeur)"))?;
-                        scene.actors.push(Actor { name: f[0].to_owned(), kind, look, x, z, pose, guide: f.get(5).copied() == Some("guide") });
+                        // Accessoires : lunettes+canne (septième champ).
+                        let mut acc = Vec::new();
+                        for a in f.get(6).copied().unwrap_or("").split('+').map(str::trim).filter(|a| !a.is_empty()) {
+                            let i = crate::people::ACCESSORIES.iter().position(|x| x.key == a).ok_or_else(|| err("accessoire inconnu (lunettes, canne, bequille, masque…)"))?;
+                            acc.push(i as u8);
+                        }
+                        scene.actors.push(Actor { name: f[0].to_owned(), kind, look, x, z, pose, guide: f.get(5).copied() == Some("guide"), acc });
                     }
                     _ => {
                         // Qui | texte [| caméra]
@@ -571,6 +579,10 @@ mod tests {
         let l = &parse("[X]\ntype = scene\npersonnage = A | 1 | 3.5.2.1.0 | centre").unwrap()[0];
         assert_eq!(l.scene.as_ref().unwrap().actors[0].look, 1000 + (((3 * 12 + 5) * 16 + 2) * 8 + 1) as u32 * 4);
         assert!(parse("[X]\ntype = scene\npersonnage = A | 1 | 9.0.0.0.0 | centre").is_err());
+        // Accessoires.
+        let l = &parse("[X]\ntype = scene\npersonnage = A | 1 | 5 | centre | repos | - | lunettes+canne").unwrap()[0];
+        assert_eq!(l.scene.as_ref().unwrap().actors[0].acc.len(), 2);
+        assert!(parse("[X]\ntype = scene\npersonnage = A | 1 | 5 | centre | repos | - | chapeau-magique").is_err());
     }
 
     #[test]

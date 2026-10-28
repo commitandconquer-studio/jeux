@@ -45,7 +45,7 @@ impl Plugin for GamePlugin {
                     (sync_guest, sync_segments).run_if(|s: Res<State<GameState>>| {
                         matches!(s.get(), GameState::Playing | GameState::GameOver)
                     }),
-                    (animate_guest, animate_pop, people::start_animations, crate::dress::dress, people::attach_guide),
+                    (animate_guest, animate_pop, people::start_animations, crate::dress::dress, people::attach_guide, people::attach_accessories),
                 )
                     .chain(),
             );

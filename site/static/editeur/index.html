@@ -30,8 +30,14 @@
   #scenepanel h3 { margin:14px 0 6px; font-size:13px; color:var(--dim); text-transform:uppercase; letter-spacing:.05em; }
   #scenepanel .carte { background:#2d3550; border:1px solid var(--line); border-radius:8px; padding:8px; margin-bottom:8px; display:grid; gap:6px; }
   #scenepanel .ligne { display:flex; gap:6px; align-items:center; flex-wrap:wrap; }
+  dialog#perso { background:var(--panel); color:var(--text); border:1px solid var(--line); border-radius:12px; padding:16px; width:min(640px, 94vw); }
+  dialog#perso::backdrop { background:#000a; }
+  dialog#perso h2 { margin:0 0 10px; }
+  .acc-grille { display:grid; grid-template-columns:1fr 1fr; gap:4px 12px; }
+  .acc-grille label { display:flex; gap:6px; align-items:center; }
+  .mini { display:inline-block; width:12px; height:12px; border-radius:3px; border:1px solid #0006; }
   .puces-bloc { display:grid; gap:3px; }
-  .puces-lab { width:78px; color:var(--dim); font-size:12px; }
+  .puces-lab { flex:0 0 78px; width:78px; color:var(--dim); font-size:12px; }
   .puce { width:20px; height:20px; border-radius:5px; border:2px solid #0006; cursor:pointer; display:inline-block; }
   .puce.sel { outline:2px solid var(--accent); outline-offset:1px; }
   #scenepanel textarea { width:100%; min-height:54px; background:#323a52; color:var(--text); border:1px solid var(--line); border-radius:6px; padding:6px; font:inherit; }
@@ -116,6 +122,8 @@
   <p class="hint">Enregistrez le fichier, puis :<br><code>SNAKE_FICHIER=chemin/niveaux.txt cargo run -p snake</code></p>
 </aside>
 
+<dialog id="perso"></dialog>
+
 <script>
 const PLACES = { special:'★ Niveau spécial (tout est permis)',  jardin:'Jardin public', desert:'Désert', ruines:'Ruines antiques', cimetiere:'Cimetière', pirates:'Île des pirates', parc:'Parc de loisirs', ville:'Centre-ville', gare:'Gare', port:'Port', medieval:'Village médiéval', grottes:'Grottes' };
 // Ordre des lieux du Voyage : chaque lieu apporte une nouveauté, et garde celles des précédents.
@@ -168,6 +176,8 @@ function lookParts(code) {
 const randomLook = () => [SKINS, HAIRS, TOPS, BOTTOMS, SHOES].map(a => Math.floor(Math.random() * a.length)).join('.');
 let meta = { titre:'', description:'' };
 const isScene = l => l && l.type === 'scene';
+const ACC = [['lunettes','Lunettes'],['lunettes-soleil','Lunettes de soleil'],['masque','Masque'],['appareil-auditif','Appareil auditif'],['canne','Canne'],['canne-blanche','Canne blanche'],['canne-malvoyant','Canne (malvoyant)'],['bequille','Béquille'],['defibrillateur-vert','Défibrillateur (vert)'],['defibrillateur-rouge','Défibrillateur (rouge)']];
+let editing = -1;   // personnage ouvert dans l'éditeur de personnage
 
 let levels = [], cur = 0, brush = '1', tool = 'pinceau', symx = false, symy = false, cell = 28;
 let undo = [], redo = [], drag = null, hover = null;
@@ -176,7 +186,7 @@ const cv = $('cv'), ctx = cv.getContext('2d');
 
 function newScene() {
   return { type:'scene', name:'Nouvelle scène', lieu:'jardin', paysage:'jardin', touristes:1, pas:0.3, temps:0, sortie:false, depart:'est', rivaux:0, trains:0, eboulements:0, rows:[], other:[],
-    decor:'jardin', camera:'moyen', actors:[{ name:'Léa', kind:1, look:12, pos:'centre', pose:'salut', guide:true }], lines:[{ who:'Léa', text:'Bonjour !', camera:'' }] };
+    decor:'jardin', camera:'moyen', actors:[{ name:'Léa', kind:1, look:12, pos:'centre', pose:'salut', guide:true, acc:[] }], lines:[{ who:'Léa', text:'Bonjour !', camera:'' }] };
 }
 function newLevel(w = 18, h = 18) {
   const rows = Array.from({length:h}, () => Array(w).fill('1'));
@@ -203,7 +213,7 @@ function parse(text) {
     const [k, ...rest] = line.split('='); const key = k.trim(), v = rest.join('=').trim();
     if (key === 'type') { l.type = v === 'scene' ? 'scene' : 'niveau'; if (l.type === 'scene') Object.assign(l, { decor:'jardin', camera:'moyen', actors:[], lines:[] }); }
     else if (key === 'decor') l.decor = v; else if (key === 'camera') l.camera = v;
-    else if (key === 'personnage') { const f = v.split('|').map(x => x.trim()); l.actors.push({ name:f[0] || '', kind:+f[1] || 0, look:(f[2] || '').includes('.') ? f[2] : (+f[2] || 0), pos:f[3] || 'centre', pose:f[4] || 'repos', guide:f[5] === 'guide' }); }
+    else if (key === 'personnage') { const f = v.split('|').map(x => x.trim()); l.actors.push({ name:f[0] || '', kind:+f[1] || 0, look:(f[2] || '').includes('.') ? f[2] : (+f[2] || 0), pos:f[3] || 'centre', pose:f[4] || 'repos', guide:f[5] === 'guide', acc:(f[6] || '').split('+').map(x => x.trim()).filter(Boolean) }); }
     else if (key === 'replique') { const f = v.split('|').map(x => x.trim()); l.lines.push({ who:f[0] || '', text:f[1] || '', camera:f[2] || '' }); }
     else if (key === 'lieu') l.lieu = v; else if (key === 'paysage') l.paysage = v; else if (key === 'touristes') l.touristes = +v; else if (key === 'pas') l.pas = +v;
     else if (key === 'temps') l.temps = +v; else if (key === 'sortie') l.sortie = v === 'oui'; else if (key === 'depart') l.depart = v;
@@ -221,7 +231,7 @@ function serialize() {
   for (const l of levels) {
     if (isScene(l)) {
       s += `\n[${l.name}]\ntype = scene\ndecor = ${l.decor}\ncamera = ${l.camera}\n`;
-      for (const a of l.actors) s += `personnage = ${clean(a.name)} | ${a.kind} | ${a.look} | ${clean(a.pos)} | ${a.pose}${a.guide ? ' | guide' : ''}\n`;
+      for (const a of l.actors) s += `personnage = ${clean(a.name)} | ${a.kind} | ${a.look} | ${clean(a.pos)} | ${a.pose}${a.guide || (a.acc || []).length ? ' | ' + (a.guide ? 'guide' : '-') : ''}${(a.acc || []).length ? ' | ' + a.acc.join('+') : ''}\n`;
       for (const r of l.lines) s += `replique = ${clean(r.who)} | ${clean(r.text)}${r.camera ? ' | ' + r.camera : ''}\n`;
       continue;
     }
@@ -486,14 +496,10 @@ function renderScene() {
       <b>Caméra</b><select data-p="camera">${opts(CAMS, l.camera)}</select></div></div>
     <h3>Personnages (${l.actors.length})</h3>
     ${l.actors.map((a, i) => `<div class="carte"><div class="ligne">
-        <input type="text" data-p="actors.${i}.name" value="${a.name.replace(/"/g, '&quot;')}" placeholder="Nom">
-        <select data-p="actors.${i}.kind" data-t="num">${opts(kinds, a.kind)}</select>
-        <button data-act="rand:${i}" title="Apparence au hasard">🎲 au hasard</button></div>
-      <div class="puces-bloc">${[['Peau', SKINS], ['Cheveux', HAIRS], ['Haut', TOPS], ['Bas', BOTTOMS], ['Chaussures', SHOES]].map(([lab, pal], part) => `<div class="ligne"><span class="puces-lab">${lab}</span>${pal.map((c, k) => `<span class="puce ${lookParts(a.look)[part] === k ? 'sel' : ''}" style="background:rgb(${c})" data-actor="${i}" data-part="${part}" data-v="${k}" title="${lab} ${k + 1}"></span>`).join('')}</div>`).join('')}</div>
-      <div class="ligne"><label>place <input type="text" list="positions" data-p="actors.${i}.pos" value="${a.pos}"></label>
-        <select data-p="actors.${i}.pose">${opts(POSES, a.pose)}</select>
-        <label><input type="checkbox" data-p="actors.${i}.guide" data-t="bool" ${a.guide ? 'checked' : ''}> guide (casquette et drapeau)</label>
-        <button data-act="delactor:${i}">Retirer</button></div></div>`).join('')}
+        <b>${a.name || '(sans nom)'}</b>
+        <span class="hint">${KINDS[a.kind] || ''} · ${(POSES.find(p => p[0] === a.pose) || [0, a.pose])[1]}${(a.acc || []).length ? ' · ' + a.acc.map(k => (ACC.find(x => x[0] === k) || [0, k])[1]).join(', ') : ''}${a.guide ? ' · guide' : ''}</span>
+        ${lookParts(a.look).map((k, part) => `<span class="mini" style="background:rgb(${[SKINS, HAIRS, TOPS, BOTTOMS, SHOES][part][k]})"></span>`).join('')}
+        <button data-act="edit:${i}">Éditer le personnage…</button><button data-act="delactor:${i}">Retirer</button></div></div>`).join('')}
     <datalist id="positions">${POSITIONS.map(p => `<option value="${p}">`).join('')}</datalist>
     <button data-act="addactor" ${l.actors.length >= 5 ? 'disabled' : ''}>+ Personnage</button>
     <h3>Répliques (${l.lines.length})</h3>
@@ -507,32 +513,67 @@ function renderScene() {
     <button data-act="addline">+ Réplique</button>`;
 }
 function setPath(obj, path, val) { const k = path.split('.'); let o = obj; for (let i = 0; i < k.length - 1; i++) o = o[k[i]]; o[k[k.length - 1]] = val; }
-$('scenepanel').addEventListener('change', e => {
-  const t = e.target; if (!t.dataset.p) return;
+// L'éditeur de personnage : une fenêtre avec le nom, le modèle, les couleurs une à une, les accessoires, la place et l'animation.
+function renderPerso() {
+  const l = L(), a = l.actors[editing], dlg = $('perso');
+  if (!a) { if (dlg.open) dlg.close(); return; }
+  const opts = (arr, sel) => arr.map(([v, t]) => `<option value="${v}" ${String(v) === String(sel) ? 'selected' : ''}>${t}</option>`).join('');
+  const i = editing, parts = lookParts(a.look);
+  dlg.innerHTML = `<h2>Personnage « ${a.name || '…'} »</h2>
+    <div class="carte"><div class="ligne">
+      <input type="text" data-p="actors.${i}.name" value="${a.name.replace(/"/g, '&quot;')}" placeholder="Nom">
+      <select data-p="actors.${i}.kind" data-t="num">${opts(KINDS.map((n, k) => [k, `${k} — ${n}`]), a.kind)}</select>
+      <button data-act="rand:${i}">🎲 couleurs au hasard</button></div></div>
+    <h3>Couleurs</h3><div class="carte puces-bloc">${[['Peau', SKINS], ['Cheveux', HAIRS], ['Haut', TOPS], ['Bas', BOTTOMS], ['Chaussures', SHOES]].map(([lab, pal], part) => `<div class="ligne"><span class="puces-lab">${lab}</span>${pal.map((c, k) => `<span class="puce ${parts[part] === k ? 'sel' : ''}" style="background:rgb(${c})" data-actor="${i}" data-part="${part}" data-v="${k}" title="${lab} ${k + 1}"></span>`).join('')}</div>`).join('')}</div>
+    <h3>Accessoires</h3><div class="carte acc-grille">${ACC.map(([k, t]) => `<label><input type="checkbox" data-acc="${k}" ${(a.acc || []).includes(k) ? 'checked' : ''}> ${t}</label>`).join('')}
+      <label><input type="checkbox" data-p="actors.${i}.guide" data-t="bool" ${a.guide ? 'checked' : ''}> Casquette et drapeau (guide)</label></div>
+    <h3>Place et animation</h3><div class="carte"><div class="ligne">
+      <label>place <input type="text" list="positions" data-p="actors.${i}.pos" value="${a.pos}"></label>
+      <select data-p="actors.${i}.pose">${opts(POSES, a.pose)}</select></div></div>
+    <div class="ligne" style="margin-top:10px;justify-content:flex-end"><button data-act="closeperso">Terminé</button></div>`;
+  if (!dlg.open) dlg.showModal();
+}
+function onSceneChange(e) {
+  const t = e.target;
+  if (t.dataset.acc !== undefined && editing >= 0) {
+    push();
+    const a = L().actors[editing], set = new Set(a.acc || []);
+    t.checked ? set.add(t.dataset.acc) : set.delete(t.dataset.acc);
+    a.acc = ACC.map(x => x[0]).filter(k => set.has(k));
+    sync(false); renderPerso(); return;
+  }
+  if (!t.dataset.p) return;
   push();
   setPath(L(), t.dataset.p, t.dataset.t === 'bool' ? t.checked : t.dataset.t === 'num' ? +t.value : t.value);
-  sync(false); renderScene();
-});
-$('scenepanel').addEventListener('click', e => {
+  sync(false); renderPerso();
+}
+function onSceneClick(e) {
   const pc = e.target.closest('.puce');
   if (pc) {
     push();
     const a = L().actors[+pc.dataset.actor], parts = lookParts(a.look);
     parts[+pc.dataset.part] = +pc.dataset.v; a.look = parts.join('.');
-    sync(false); return;
+    sync(false); renderPerso(); return;
   }
   const b = e.target.closest('button[data-act]'); if (!b) return;
   const [act, arg] = b.dataset.act.split(':'), i = +arg, l = L();
+  if (act === 'edit') { editing = i; renderPerso(); return; }
+  if (act === 'closeperso') { editing = -1; $('perso').close(); return; }
   push();
-  if (act === 'addactor') l.actors.push({ name:'Nouveau', kind:0, look:randomLook(), pos:'centre', pose:'repos', guide:false });
-  else if (act === 'delactor') l.actors.splice(i, 1);
+  if (act === 'addactor') l.actors.push({ name:'Nouveau', kind:0, look:randomLook(), pos:'centre', pose:'repos', guide:false, acc:[] });
+  else if (act === 'delactor') { l.actors.splice(i, 1); editing = -1; }
   else if (act === 'rand') l.actors[i].look = randomLook();
   else if (act === 'addline') l.lines.push({ who:(l.actors[0] || {}).name || '', text:'', camera:'' });
   else if (act === 'delline') l.lines.splice(i, 1);
   else if (act === 'upline' && i > 0) [l.lines[i - 1], l.lines[i]] = [l.lines[i], l.lines[i - 1]];
   else if (act === 'downline' && i < l.lines.length - 1) [l.lines[i + 1], l.lines[i]] = [l.lines[i], l.lines[i + 1]];
-  sync(false);
-});
+  sync(false); renderPerso();
+}
+$('scenepanel').addEventListener('change', onSceneChange);
+$('scenepanel').addEventListener('click', onSceneClick);
+$('perso').addEventListener('change', onSceneChange);
+$('perso').addEventListener('click', onSceneClick);
+$('perso').addEventListener('close', () => { editing = -1; });
 $('mtitle').onchange = e => { meta.titre = e.target.value; schedulePreview(true); };
 $('mdesc').onchange = e => { meta.description = e.target.value; schedulePreview(true); };
 $('addscene').onclick = () => { levels.splice(cur + 1, 0, newScene()); cur++; undo = []; redo = []; sync(); };
