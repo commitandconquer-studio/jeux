@@ -25,6 +25,7 @@
   #grille { flex:1; overflow:auto; min-width:0; }
   #apercu { display:none; flex:1; min-width:0; flex-direction:column; gap:6px; }
   body.preview #apercu { display:flex; }
+  body.large #grille { display:none; }
   #apercu iframe { flex:1; border:1px solid var(--line); border-radius:8px; background:#000; width:100%; }
   #apercu .barre { display:flex; gap:8px; align-items:center; flex-wrap:wrap; }
   canvas { background:#11151f; border:1px solid var(--line); cursor:crosshair; image-rendering:pixelated; touch-action:none; }
@@ -74,10 +75,12 @@
   <section id="apercu">
     <div class="barre">
       <button id="refresh">Actualiser</button>
+      <button id="large" title="Cache la grille pour agrandir l’aperçu">Agrandir</button>
+      <button id="fs">Plein écran</button>
       <label><input type="checkbox" id="auto" checked> mise à jour automatique</label>
       <span class="hint" id="aperçuinfo"></span>
     </div>
-    <iframe id="jeu" title="Aperçu 3D" allow="autoplay"></iframe>
+    <iframe id="jeu" title="Aperçu 3D" allow="autoplay; fullscreen" allowfullscreen></iframe>
   </section>
 </main>
 
@@ -362,11 +365,26 @@ function check() {
   const total = open.flat().filter(Boolean).length;
   add(total > l.touristes + 13 ? 'ok' : 'bad', `Cases libres : ${total} (il en faut plus de ${l.touristes + 13} pour ${l.touristes} touristes).`);
   if (s) {
-    const seen = rows.map(r => r.map(() => false)), st = [[s[0], s[1]]]; let n = 0;
-    while (st.length) { const [x, y] = st.pop(); if (!inside(x, y, rows) || seen[y][x] || !open[y][x]) continue; seen[y][x] = true; n++; st.push([x+1,y],[x-1,y],[x,y+1],[x,y-1]); }
-    // Les téléporteurs relient deux zones : on compte la case jumelle comme atteinte.
-    const reach = n;
-    add(reach === total ? 'ok' : 'bad', reach === total ? 'Toutes les cases libres sont accessibles.' : `${total - reach} case(s) libre(s) inaccessibles depuis le départ (zones isolées).`);
+    // Accessibilité : on marche de case en case, et un téléporteur mène à son jumeau (les îlots sont reliés par des téléporteurs).
+    const tele = {};
+    rows.forEach((r, y) => r.forEach((c, x) => { if ('ABCD'.includes(c)) (tele[c] = tele[c] || []).push([x, y]); }));
+    const flood = (start, withTele) => {
+      const seen = rows.map(r => r.map(() => false)), st = [start]; let n = 0;
+      while (st.length) {
+        const [x, y] = st.pop();
+        if (!inside(x, y, rows) || seen[y][x] || !open[y][x]) continue;
+        seen[y][x] = true; n++;
+        st.push([x+1,y],[x-1,y],[x,y+1],[x,y-1]);
+        if (withTele && 'ABCD'.includes(rows[y][x])) for (const t of tele[rows[y][x]]) st.push(t);
+      }
+      return { n, seen };
+    };
+    const reach = flood([s[0], s[1]], true).n;
+    // Nombre d'îlots (zones séparées sans téléporteur).
+    const marked = rows.map(r => r.map(() => false)); let islands = 0;
+    for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) if (open[y][x] && !marked[y][x]) { islands++; const f = flood([x, y], false); f.seen.forEach((r, yy) => r.forEach((v, xx) => { if (v) marked[yy][xx] = true; })); }
+    if (reach === total) add('ok', islands > 1 ? `Toutes les cases libres sont accessibles (${islands} îlots reliés par téléporteurs).` : 'Toutes les cases libres sont accessibles.');
+    else add('bad', `${total - reach} case(s) libre(s) inaccessibles depuis le départ : reliez les îlots par des téléporteurs (une case de chaque côté).`);
     // Culs-de-sac : une case libre avec moins de deux voisines libres.
     let dead = 0;
     for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) if (open[y][x]) { const nb = [[1,0],[-1,0],[0,1],[0,-1]].filter(([dx, dy]) => walk(x + dx, y + dy) && open[y + dy][x + dx]).length; if (nb < 2) dead++; }
@@ -406,6 +424,8 @@ $('preview').onclick = () => {
   if (on) refreshPreview(); else $('jeu').src = 'about:blank';
 };
 $('refresh').onclick = () => refreshPreview();
+$('large').onclick = () => { document.body.classList.toggle('large'); $('large').classList.toggle('on'); };
+$('fs').onclick = () => { const f = $('jeu'); (f.requestFullscreen || f.webkitRequestFullscreen || (() => {})).call(f); };
 
 buildUI();
 levels = [newLevel()];

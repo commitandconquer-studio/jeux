@@ -165,6 +165,17 @@ mod tests {
     }
 
     #[test]
+    fn islands_linked_by_teleporters_are_valid() {
+        // Deux îlots séparés par du vide ; seuls les téléporteurs A les relient.
+        let g = Grid::from_rows(&rows("01111000001111\n11S111A0A11111\n01111000001111\n01111000001111"), IVec2::X).unwrap();
+        let l = g.layout();
+        assert!(!l.walkable(IVec2::new(7, 1)) && l.walkable(IVec2::new(6, 1)) && l.walkable(IVec2::new(8, 1)));
+        let (tiles, pairs) = g.tiles();
+        assert_eq!(pairs, 1);
+        assert_eq!(tiles.iter().filter(|(_, t)| matches!(t, Tile::Teleport(0))).count(), 2);
+    }
+
+    #[test]
     fn rejects_bad_maps() {
         assert!(Grid::from_rows(&rows("111\n11"), IVec2::X).is_err());
         assert!(Grid::from_rows(&rows("1x1"), IVec2::X).is_err());
