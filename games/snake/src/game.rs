@@ -257,7 +257,9 @@ fn load_best(mut score: ResMut<Score>) {
 }
 
 fn save_best(score: Res<Score>) {
-    game_common::save::store("snake", "best", &score.best.to_string());
+    if !crate::levels::preview_active() {
+        game_common::save::store("snake", "best", &score.best.to_string());
+    }
 }
 
 #[allow(clippy::too_many_arguments)]
@@ -327,7 +329,8 @@ fn new_run(
         }
     }
     debug!("nouvelle partie : plateau {}×{}, tête {}, invité {}", layout.w, layout.h, conga.cells[0], food.cell);
-    paused.0 = demo.press;
+    // Aperçu de l'éditeur : la partie attend la première flèche, pour voir tout le plateau avant de jouer.
+    paused.0 = demo.press || crate::levels::preview_active();
     if let Mode::Voyage(i) = *mode {
         outcome.best_before = progress_v.stars(i);
         if let Some(level) = mode.level() {
@@ -552,6 +555,10 @@ fn read_input(
         }
     }
     swiped.retain(|id| touches.get_pressed(*id).is_some());
+    // Aperçu de l'éditeur : la première flèche lance la partie.
+    if paused.0 && crate::levels::preview_active() && !wanted.is_empty() {
+        paused.0 = false;
+    }
     if paused.0 {
         return;
     }

@@ -83,7 +83,9 @@ impl VoyageProgress {
         let text: Vec<String> = self.stars.iter().map(|s| s.to_string()).collect();
         // Les essais automatiques ne touchent pas à la vraie sauvegarde.
         if std::env::var("SNAKE_AUTO").is_err() {
-            game_common::save::store(SAVE, "voyage", &text.join(","));
+            if !crate::levels::preview_active() {
+                game_common::save::store(SAVE, "voyage", &text.join(","));
+            }
         }
     }
 
@@ -145,9 +147,10 @@ impl Plugin for VoyagePlugin {
 
 fn load(mut p: ResMut<VoyageProgress>, mut progress: ResMut<Progress>, mut mode: ResMut<Mode>, mut next: ResMut<NextState<GameState>>) {
     // Essai : `SNAKE_NIVEAU=n` ouvre directement le niveau n.
-    let preview = std::env::var("SNAKE_FICHIER").is_ok();
+    let preview = crate::levels::preview_active();
     if preview {
-        *mode = Mode::Voyage(0);
+        // Aperçu d'un fichier (SNAKE_FICHIER) ou de l'éditeur en ligne (?editeur=N) : on ouvre directement le niveau demandé.
+        *mode = Mode::Voyage(crate::levels::editor_request().map_or(0, |n| n - 1).min(LEVELS.len() - 1));
         next.set(GameState::Playing);
     }
     if let Some(n) = std::env::var("SNAKE_NIVEAU").ok().and_then(|v| v.parse::<usize>().ok()) {
@@ -175,7 +178,7 @@ pub fn sync_layout(
         Some(level) => {
             let Mode::Voyage(i) = *mode else { return };
             *layout = level.layout(i as u32);
-            scenery.0 = level.place.scenery();
+            scenery.0 = level.scenery();
         }
         None => {
             *layout = settings.layout();

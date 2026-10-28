@@ -1,5 +1,5 @@
 //! Niveaux dessinés à la main : une carte de caractères (un par case), lue depuis un fichier texte.
-//! Légende (aussi celle de l'éditeur `tools/editeur-niveaux.html`) :
+//! Légende (aussi celle de l'éditeur `site/static/editeur/index.html`) :
 //! `0` vide (non jouable), `1` case libre, `2`…`7` blocs (modèle 0…5 du paysage), `o` trou, `p` ponton,
 //! `z` accélérateur, `h`/`H` herse (deux phases), `>` `<` `^` `v` tapis, `A`…`D` téléporteurs (deux de chaque),
 //! `S` départ, `E` sortie (si le niveau a une sortie).

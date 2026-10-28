@@ -49,3 +49,19 @@ pub fn store(game: &str, key: &str, value: &str) {
         let _ = std::fs::write(p, value);
     }
 }
+
+/// Paramètre de l'adresse de la page (`?nom=valeur`) dans le navigateur ; toujours `None` ailleurs.
+#[cfg(target_arch = "wasm32")]
+pub fn url_param(name: &str) -> Option<String> {
+    let search = web_sys::window()?.location().search().ok()?;
+    search.trim_start_matches('?').split('&').find_map(|kv| {
+        let (k, v) = kv.split_once('=').unwrap_or((kv, ""));
+        (k == name).then(|| v.to_owned())
+    })
+}
+
+/// Paramètre de l'adresse de la page (`?nom=valeur`) dans le navigateur ; toujours `None` ailleurs.
+#[cfg(not(target_arch = "wasm32"))]
+pub fn url_param(_name: &str) -> Option<String> {
+    None
+}

@@ -2,7 +2,7 @@
 //! Un niveau = un lieu, une forme de plateau, un objectif et un rythme.
 use std::sync::LazyLock;
 
-use bevy::prelude::IVec2;
+use bevy::prelude::{IVec2, warn};
 
 use crate::board::Feature;
 use crate::grid::{self, Grid};
@@ -28,6 +28,14 @@ pub struct Level {
     pub grid: Option<Grid>,
     /// Direction du départ (utile pour les cartes dessinées).
     pub dir: IVec2,
+    /// Paysage choisi (`paysage = …`) ; sinon celui du lieu.
+    pub universe: Option<Universe>,
+}
+
+impl Level {
+    pub fn scenery(&self) -> Universe {
+        self.universe.unwrap_or_else(|| self.place.scenery())
+    }
 }
 
 #[derive(Clone, Copy, PartialEq, Eq, Debug)]
@@ -51,6 +59,8 @@ pub enum Place {
     Harbour,
     Medieval,
     Cave,
+    /// Niveaux spéciaux (éditeur) : tout est permis, le paysage se choisit (`paysage = …`). Absent des onglets du Voyage.
+    Special,
 }
 
 impl Place {
@@ -69,6 +79,7 @@ impl Place {
             Place::Harbour => Universe::Port,
             Place::Medieval => Universe::Medieval,
             Place::Cave => Universe::Cave,
+            Place::Special => Universe::Prairie,
         }
     }
 
@@ -86,6 +97,7 @@ impl Place {
             Place::Harbour => "port",
             Place::Medieval => "medieval",
             Place::Cave => "grottes",
+            Place::Special => "special",
         }
     }
 
@@ -103,6 +115,7 @@ impl Place {
             Place::Harbour => tx!("Port", "Harbour", "Hafen", "Porto", "Puerto"),
             Place::Medieval => tx!("Village médiéval", "Medieval village", "Mittelalterdorf", "Villaggio medievale", "Aldea medieval"),
             Place::Cave => tx!("Grottes", "Caves", "Höhlen", "Grotte", "Cuevas"),
+            Place::Special => tx!("Niveaux spéciaux", "Special levels", "Spezielle Level", "Livelli speciali", "Niveles especiales"),
         }
         .t()
     }
@@ -154,6 +167,7 @@ fn parse_place(v: &str) -> Option<Place> {
         "port" => Place::Harbour,
         "medieval" => Place::Medieval,
         "grottes" => Place::Cave,
+        "special" => Place::Special,
         _ => return None,
     })
 }
@@ -172,7 +186,7 @@ pub fn parse(text: &str) -> Result<Vec<Level>, String> {
         }
         let err = |m: &str| format!("ligne {} : {m}", n + 1);
         if let Some(name) = line.strip_prefix('[').and_then(|l| l.strip_suffix(']')) {
-            levels.push(Level { name: name.to_owned(), place: Place::Garden, shape: Form::Square(14), tourists: 6, exit: false, pace: 0.3, par: 0.0, cases: Vec::new(), grid: None, dir: IVec2::X });
+            levels.push(Level { name: name.to_owned(), place: Place::Garden, shape: Form::Square(14), tourists: 6, exit: false, pace: 0.3, par: 0.0, cases: Vec::new(), grid: None, dir: IVec2::X, universe: None });
             maps.push(Vec::new());
             in_map = false;
             continue;
@@ -196,6 +210,7 @@ pub fn parse(text: &str) -> Result<Vec<Level>, String> {
             "forme" => level.shape = parse_shape(value).ok_or_else(|| err("forme inconnue"))?,
             "touristes" => level.tourists = value.parse().map_err(|_| err("nombre attendu"))?,
             "sortie" => level.exit = value == "oui",
+            "paysage" => level.universe = Some(parse_place(value).ok_or_else(|| err("paysage inconnu (jardin, desert, ruines…)"))?.scenery()),
             "depart" => level.dir = grid::parse_dir(value).ok_or_else(|| err("direction attendue : est, ouest, nord ou sud"))?,
             "pas" => level.pace = value.parse().map_err(|_| err("nombre attendu"))?,
             "temps" => level.par = value.parse().map_err(|_| err("nombre attendu"))?,
@@ -232,8 +247,29 @@ pub fn parse(text: &str) -> Result<Vec<Level>, String> {
     Ok(levels)
 }
 
+/// Niveau demandé par l'éditeur en ligne : `?editeur=N` dans l'adresse de la page (ou `SNAKE_EDITEUR=N` en natif). 1 = premier niveau du fichier.
+pub fn editor_request() -> Option<usize> {
+    static R: LazyLock<Option<usize>> = LazyLock::new(|| {
+        game_common::save::url_param("editeur").or_else(|| std::env::var("SNAKE_EDITEUR").ok()).and_then(|v| v.parse().ok()).map(|n: usize| n.max(1))
+    });
+    *R
+}
+
+/// Aperçu d'un fichier de niveaux (éditeur) : rien ne doit être enregistré (étoiles, records, total).
+pub fn preview_active() -> bool {
+    editor_request().is_some() || std::env::var("SNAKE_FICHIER").is_ok()
+}
+
 /// Tous les niveaux, dans l'ordre du Voyage.
 pub static LEVELS: LazyLock<Vec<Level>> = LazyLock::new(|| {
+    // Aperçu depuis l'éditeur en ligne : les niveaux sont dans le stockage local de la page.
+    if editor_request().is_some() {
+        match game_common::save::load("snake", "editeur").map(|t| parse(&t)) {
+            Some(Ok(levels)) if !levels.is_empty() => return levels,
+            Some(Err(e)) => warn!("éditeur : niveaux illisibles : {e}"),
+            _ => warn!("éditeur : aucun niveau reçu"),
+        }
+    }
     // Aperçu d'un fichier de niveaux : `SNAKE_FICHIER=chemin` remplace tous les niveaux.
     if let Ok(path) = std::env::var("SNAKE_FICHIER") {
         let text = std::fs::read_to_string(&path).unwrap_or_else(|e| panic!("{path} : {e}"));
@@ -350,6 +386,17 @@ mod tests {
         assert!(!layout.walkable(IVec2::new(0, 0)));
         assert_eq!(l.grid.as_ref().unwrap().exit(), Some(IVec2::new(9, 2)));
         assert!(parse("[X]\ncarte:\n111\n111").is_err(), "pas de départ");
+    }
+
+    #[test]
+    fn special_levels_choose_their_scenery() {
+        let text = "[À moi]\nlieu = special\npaysage = grottes\ntouristes = 3\ncarte:\n0011111100\n11S1111111\n1111A11A11\n0011111100\n";
+        let l = &parse(text).unwrap()[0];
+        assert_eq!((l.place, l.scenery()), (Place::Special, Universe::Cave));
+        // Sans « paysage », un niveau normal prend le paysage de son lieu.
+        let l = &parse("[X]\nlieu = ruines\ncarte:\n0011111100\n11S1111111\n0011111100\n").unwrap()[0];
+        assert_eq!(l.scenery(), Universe::Ruines);
+        assert!(parse("[X]\npaysage = mars").is_err());
     }
 
     #[test]

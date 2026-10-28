@@ -3,6 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
 <title>Éditeur de niveaux — À la queue leu leu</title>
 <style>
   :root { --bg:#1d2230; --panel:#262c3d; --line:#3a4259; --text:#e8ecf5; --dim:#9aa4bd; --accent:#ffd34d; --bad:#ff7a7a; --ok:#7be09a; }
@@ -20,7 +21,12 @@
   #levels button { display:block; width:100%; text-align:left; margin-bottom:4px; }
   #levels button.sel { outline:2px solid var(--accent); }
   .row { display:flex; gap:6px; align-items:center; margin-bottom:6px; flex-wrap:wrap; } .row label { color:var(--dim); min-width:78px; }
-  main { overflow:auto; padding:12px; position:relative; }
+  main { display:flex; gap:12px; overflow:hidden; padding:12px; position:relative; }
+  #grille { flex:1; overflow:auto; min-width:0; }
+  #apercu { display:none; flex:1; min-width:0; flex-direction:column; gap:6px; }
+  body.preview #apercu { display:flex; }
+  #apercu iframe { flex:1; border:1px solid var(--line); border-radius:8px; background:#000; width:100%; }
+  #apercu .barre { display:flex; gap:8px; align-items:center; flex-wrap:wrap; }
   canvas { background:#11151f; border:1px solid var(--line); cursor:crosshair; image-rendering:pixelated; touch-action:none; }
   #palette { display:grid; grid-template-columns: repeat(4, 1fr); gap:5px; }
   #palette button { padding:4px 2px; font-size:12px; display:flex; flex-direction:column; align-items:center; gap:2px; }
@@ -37,6 +43,7 @@
   <button id="save">Enregistrer (.txt)</button>
   <button id="undo" title="Ctrl+Z">Annuler</button>
   <button id="redo" title="Ctrl+Y">Rétablir</button>
+  <button id="preview">Aperçu 3D</button>
   <span class="hint" id="fileinfo">Aucun fichier : nouveau niveau.</span>
   <input id="file" type="file" accept=".txt,text/plain" hidden>
 </header>
@@ -50,18 +57,29 @@
   <h2>Réglages du niveau</h2>
   <div class="row"><label>Nom</label><input id="name" type="text"></div>
   <div class="row"><label>Lieu</label><select id="place"></select></div>
+  <div class="row" id="rowpaysage"><label>Paysage</label><select id="paysage"></select></div>
   <div class="row"><label>Touristes</label><input id="tourists" type="number" min="1" max="200"></div>
   <div class="row"><label>Pas (s)</label><input id="pace" type="number" min="0.1" max="1" step="0.01"></div>
   <div class="row"><label>Temps 2★</label><input id="par" type="number" min="0" step="1"><span class="hint">0 = auto</span></div>
   <div class="row"><label>Sortie</label><input id="exit" type="checkbox"><span class="hint">place « E » sinon automatique</span></div>
   <div class="row"><label>Départ vers</label><select id="dir"><option value="est">l'est →</option><option value="ouest">l'ouest ←</option><option value="nord">le nord ↑</option><option value="sud">le sud ↓</option></select></div>
-  <div class="row"><label>Rivaux</label><input id="rivaux" type="number" min="0" max="6"></div>
-  <div class="row"><label>Trains</label><input id="trains" type="number" min="0" max="6"></div>
-  <div class="row"><label>Éboulements</label><input id="eboulements" type="number" min="0" max="40"></div>
+  <div class="row" id="rowrivaux"><label>Rivaux</label><input id="rivaux" type="number" min="0" max="6"></div>
+  <div class="row" id="rowtrains"><label>Trains</label><input id="trains" type="number" min="0" max="6"></div>
+  <div class="row" id="roweboulements"><label>Éboulements</label><input id="eboulements" type="number" min="0" max="40"></div>
   <div class="row"><label>Taille</label><input id="gw" type="number" min="6" max="64"> × <input id="gh" type="number" min="6" max="64"><button id="resize">Appliquer</button></div>
 </aside>
 
-<main><canvas id="cv"></canvas></main>
+<main>
+  <div id="grille"><canvas id="cv"></canvas></div>
+  <section id="apercu">
+    <div class="barre">
+      <button id="refresh">Actualiser</button>
+      <label><input type="checkbox" id="auto" checked> mise à jour automatique</label>
+      <span class="hint" id="aperçuinfo"></span>
+    </div>
+    <iframe id="jeu" title="Aperçu 3D" allow="autoplay"></iframe>
+  </section>
+</main>
 
 <aside class="right">
   <h2>Outil</h2>
@@ -78,7 +96,21 @@
 </aside>
 
 <script>
-const PLACES = { jardin:'Jardin public', desert:'Désert', ruines:'Ruines antiques', cimetiere:'Cimetière', pirates:'Île des pirates', parc:'Parc de loisirs', ville:'Centre-ville', gare:'Gare', port:'Port', medieval:'Village médiéval', grottes:'Grottes' };
+const PLACES = { special:'★ Niveau spécial (tout est permis)',  jardin:'Jardin public', desert:'Désert', ruines:'Ruines antiques', cimetiere:'Cimetière', pirates:'Île des pirates', parc:'Parc de loisirs', ville:'Centre-ville', gare:'Gare', port:'Port', medieval:'Village médiéval', grottes:'Grottes' };
+// Ordre des lieux du Voyage : chaque lieu apporte une nouveauté, et garde celles des précédents.
+const ORDER = ['jardin','desert','ruines','cimetiere','pirates','parc','ville','gare','port','medieval','grottes'];
+const FEATURE_FROM = { blocs:'desert', trous:'ruines', teleporteurs:'cimetiere', tapis:'pirates', accel:'parc', rivaux:'ville', trains:'gare', pontons:'port', herses:'medieval', eboulements:'grottes' };
+// Les blocs (chiffres 2…) du paysage, dans l'ordre des modèles du jeu (board.rs : obstacle_models).
+const BLOCS = {
+  jardin:['Rocher','Rocher 2','Souche','Buisson'], desert:['Cactus','Grand cactus','Rocher de sable','Rocher de sable 2'],
+  ruines:['Colonne cassée','Colonne basse','Rocher','Briques'], cimetiere:['Croix','Rochers','Citrouille','Tombe cassée'],
+  pirates:['Tonneau','Rocher','Tronc'], parc:['Banc','Poubelle','Fleurs','Banc de stand'],
+  ville:['Grand arbre','Petit arbre','Buisson','Rocher','Étang','Étang 2'], gare:['Conteneur','Citerne','Barrière'],
+  port:['Tonneau','Caisse','Conteneur'], medieval:['Chariot','Rochers','Tronc','Planches'], grottes:['Rocher','Rocher 2','Rocher 3','Champignons'],
+};
+const FEATURE_CELLS = { trous:['o'], pontons:['p'], accel:['z'], herses:['h','H'], tapis:['>','<','^','v'], teleporteurs:['A','B','C','D'] };
+const paysageOf = l => l.lieu === 'special' ? (l.paysage || 'jardin') : l.lieu;
+const available = (l, f) => l.lieu === 'special' || ORDER.indexOf(l.lieu) >= ORDER.indexOf(FEATURE_FROM[f]);
 // Légende : identique à celle du jeu (games/snake/src/grid.rs).
 const CELLS = [
   ['0','Vide','#11151f',''], ['1','Libre','#5e8f4a',''],
@@ -100,7 +132,7 @@ const cv = $('cv'), ctx = cv.getContext('2d');
 function newLevel(w = 18, h = 18) {
   const rows = Array.from({length:h}, () => Array(w).fill('1'));
   rows[Math.floor(h/2)][Math.floor(w/2)] = 'S';
-  return { name:'Nouveau niveau', lieu:'jardin', touristes:8, pas:0.33, temps:0, sortie:false, depart:'est', rivaux:0, trains:0, eboulements:0, rows };
+  return { name:'Nouveau niveau', lieu:'jardin', paysage:'jardin', touristes:8, pas:0.33, temps:0, sortie:false, depart:'est', rivaux:0, trains:0, eboulements:0, rows };
 }
 
 // ---------- fichier ----------
@@ -110,12 +142,12 @@ function parse(text) {
     const line = raw.trim();
     if (!line || line.startsWith('#')) { inMap = false; return; }
     const m = line.match(/^\[(.*)\]$/);
-    if (m) { l = { name:m[1], lieu:'jardin', touristes:6, pas:0.3, temps:0, sortie:false, depart:'est', rivaux:0, trains:0, eboulements:0, rows:[], other:[] }; out.push(l); inMap = false; return; }
+    if (m) { l = { name:m[1], lieu:'jardin', paysage:'jardin', touristes:6, pas:0.3, temps:0, sortie:false, depart:'est', rivaux:0, trains:0, eboulements:0, rows:[], other:[] }; out.push(l); inMap = false; return; }
     if (line === 'carte:') { inMap = true; return; }
     if (!l) throw new Error(`ligne ${i+1} : contenu avant le premier [niveau]`);
     if (inMap) { l.rows.push([...line]); return; }
     const [k, ...rest] = line.split('='); const key = k.trim(), v = rest.join('=').trim();
-    if (key === 'lieu') l.lieu = v; else if (key === 'touristes') l.touristes = +v; else if (key === 'pas') l.pas = +v;
+    if (key === 'lieu') l.lieu = v; else if (key === 'paysage') l.paysage = v; else if (key === 'touristes') l.touristes = +v; else if (key === 'pas') l.pas = +v;
     else if (key === 'temps') l.temps = +v; else if (key === 'sortie') l.sortie = v === 'oui'; else if (key === 'depart') l.depart = v;
     else if (KEYS.includes(key)) l[key] = +v;
     else if (key === 'forme') throw new Error(`« ${l.name} » n'a pas de carte (forme = ${v}). Générez d'abord les cartes : SNAKE_EXPORT=dossier cargo run -p snake`);
@@ -124,9 +156,9 @@ function parse(text) {
   return out.filter(x => x.rows.length);
 }
 function serialize() {
-  let s = '# Niveaux — carte dessinée avec tools/editeur-niveaux.html\n# 0 vide, 1 libre, 2-7 blocs, o trou, p ponton, z accélérateur, h/H herses, > < ^ v tapis, A-D téléporteurs (par deux), S départ, E sortie.\n';
+  let s = '# Niveaux — carte dessinée avec site/static/editeur/index.html\n# 0 vide, 1 libre, 2-7 blocs, o trou, p ponton, z accélérateur, h/H herses, > < ^ v tapis, A-D téléporteurs (par deux), S départ, E sortie.\n';
   for (const l of levels) {
-    s += `\n[${l.name}]\nlieu = ${l.lieu}\ntouristes = ${l.touristes}\npas = ${l.pas}\n`;
+    s += `\n[${l.name}]\nlieu = ${l.lieu}\n${l.lieu === 'special' ? `paysage = ${l.paysage || 'jardin'}\n` : ''}touristes = ${l.touristes}\npas = ${l.pas}\n`;
     if (l.sortie) s += 'sortie = oui\n';
     if (l.temps > 0) s += `temps = ${l.temps}\n`;
     s += `depart = ${l.depart}\n`;
@@ -152,7 +184,7 @@ addEventListener('keydown', e => {
 // ---------- interface ----------
 function buildUI() {
   $('place').innerHTML = Object.entries(PLACES).map(([k, v]) => `<option value="${k}">${v}</option>`).join('');
-  $('palette').innerHTML = CELLS.map(c => `<button data-c="${c[0]}" title="${c[1]}"><i style="background:${c[2]};${c[0]==='S'||c[0]==='1'?'color:#222;text-shadow:none':''}">${c[3]}</i>${c[1]}</button>`).join('');
+  $('paysage').innerHTML = ORDER.map(k => `<option value="${k}">${PLACES[k]}</option>`).join('');
   $('palette').onclick = e => { const b = e.target.closest('button'); if (b) { brush = b.dataset.c; if (tool === 'pipette') tool = 'pinceau'; sync(false); } };
   const tools = [['pinceau','Pinceau'],['ligne','Ligne'],['rect','Rectangle'],['contour','Contour'],['disque','Disque'],['ellipse','Ellipse'],['remplir','Remplir'],['pipette','Pipette']];
   $('tools').innerHTML = tools.map(t => `<button data-t="${t[0]}">${t[1]}</button>`).join('');
@@ -160,7 +192,7 @@ function buildUI() {
   $('symx').onclick = () => { symx = !symx; sync(false); }; $('symy').onclick = () => { symy = !symy; sync(false); };
   $('zoom').oninput = e => { cell = +e.target.value; draw(); };
   const bind = (id, key, num) => $(id).addEventListener('change', e => { push(); const el = e.target; L()[key] = el.type === 'checkbox' ? el.checked : (num ? +el.value : el.value); sync(); });
-  bind('name','name'); bind('place','lieu'); bind('tourists','touristes',1); bind('pace','pas',1); bind('par','temps',1); bind('exit','sortie'); bind('dir','depart');
+  bind('name','name'); bind('place','lieu'); bind('paysage','paysage'); bind('tourists','touristes',1); bind('pace','pas',1); bind('par','temps',1); bind('exit','sortie'); bind('dir','depart');
   KEYS.forEach(k => bind(k, k, 1));
   $('resize').onclick = () => resize(+$('gw').value, +$('gh').value);
   $('add').onclick = () => { levels.push(newLevel()); cur = levels.length - 1; undo = []; redo = []; sync(); };
@@ -179,6 +211,23 @@ function buildUI() {
 }
 let fname = 'niveaux.txt';
 
+// La palette ne propose que ce qui existe dans le lieu (pas de téléporteur au jardin public…).
+function buildPalette() {
+  const l = L(), names = BLOCS[paysageOf(l)] || BLOCS.jardin;
+  const keep = new Set(['0','1','S','E']);
+  if (available(l, 'blocs')) names.forEach((_, i) => keep.add(String.fromCharCode(50 + i)));
+  for (const [f, chars] of Object.entries(FEATURE_CELLS)) if (available(l, f)) chars.forEach(c => keep.add(c));
+  $('palette').innerHTML = CELLS.filter(c => keep.has(c[0])).map(c => {
+    const bloc = c[0] >= '2' && c[0] <= '7' && c[0].length === 1 && !isNaN(c[0]);
+    const label = bloc ? names[c[0].charCodeAt(0) - 50] : c[1];
+    return `<button data-c="${c[0]}" title="${label}"><i style="background:${c[2]};${c[0]==='S'||c[0]==='1'?'color:#222;text-shadow:none':''}">${c[3]}</i>${label}</button>`;
+  }).join('');
+  if (!keep.has(brush)) brush = '1';
+  // Les réglages qui n'existent pas dans ce lieu disparaissent.
+  for (const k of ['rivaux','trains','eboulements']) $('row' + k).style.display = available(l, k) ? '' : 'none';
+  $('rowpaysage').style.display = l.lieu === 'special' ? '' : 'none';
+}
+
 function resize(w, h) {
   if (!(w >= 6 && w <= 64 && h >= 6 && h <= 64)) return alert('Taille entre 6 et 64.');
   push();
@@ -194,11 +243,14 @@ function sync(full = true) {
     $('name').value = l.name; $('place').value = l.lieu; $('tourists').value = l.touristes; $('pace').value = l.pas; $('par').value = l.temps;
     $('exit').checked = l.sortie; $('dir').value = l.depart; KEYS.forEach(k => $(k).value = l[k] || 0);
     $('gw').value = l.rows[0].length; $('gh').value = l.rows.length;
+    $('paysage').value = l.paysage || 'jardin';
+    buildPalette();
   }
   document.querySelectorAll('#tools button').forEach(b => b.classList.toggle('on', b.dataset.t === tool));
   document.querySelectorAll('#palette button').forEach(b => b.classList.toggle('on', b.dataset.c === brush));
   $('symx').classList.toggle('on', symx); $('symy').classList.toggle('on', symy);
-  draw(); check();
+  draw(); const ok = check();
+  schedulePreview(ok);
 }
 
 // ---------- dessin ----------
@@ -289,7 +341,8 @@ cv.addEventListener('pointerleave', () => { hover = null; if (!drag) draw(); });
 // ---------- contrôles ----------
 function check() {
   const l = L(), rows = l.rows, h = rows.length, w = rows[0].length, msgs = [];
-  const add = (cls, t) => msgs.push(`<div class="${cls}">${t}</div>`);
+  let blocking = false;
+  const add = (cls, t) => { if (cls === 'bad') blocking = true; msgs.push(`<div class="${cls}">${t}</div>`); };
   let s = null, e = null, free = 0; const count = {};
   rows.forEach((r, y) => r.forEach((c, x) => { count[c] = (count[c] || 0) + 1; if (c === 'S') s = [x, y]; if (c === 'E') e = [x, y]; if (c !== '0') free++; }));
   const dir = { est:[1,0], ouest:[-1,0], nord:[0,-1], sud:[0,1] }[l.depart];
@@ -319,10 +372,40 @@ function check() {
     for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) if (open[y][x]) { const nb = [[1,0],[-1,0],[0,1],[0,-1]].filter(([dx, dy]) => walk(x + dx, y + dy) && open[y + dy][x + dx]).length; if (nb < 2) dead++; }
     add(dead ? 'bad' : 'ok', dead ? `${dead} cul(s)-de-sac (case avec moins de 2 voisines libres).` : 'Aucun cul-de-sac.');
   }
+  // Des cases qui n'existent pas dans ce lieu (carte copiée d'un autre lieu, par exemple).
+  const nb = (paysageOf(l) && BLOCS[paysageOf(l)] || BLOCS.jardin).length;
+  for (const [f, chars] of Object.entries(FEATURE_CELLS)) if (!available(l, f) && chars.some(c => count[c])) add('bad', `Cette carte contient des cases (${f}) qui n'existent pas dans ce lieu.`);
+  if (!available(l, 'blocs') && [...'234567'].some(c => count[c])) add('bad', 'Les blocs n’existent pas encore dans ce lieu (ils arrivent avec le désert).');
+  else if ([...'234567'].slice(nb).some(c => count[c])) add('bad', `Bloc inexistant dans ce paysage (il y a ${nb} blocs).`);
   const belts = (count['>'] || 0) + (count['<'] || 0) + (count['^'] || 0) + (count['v'] || 0);
   add('info', `${w}×${h} · blocs ${'234567'.split('').reduce((a, c) => a + (count[c] || 0), 0)} · trous ${count.o || 0} · tapis ${belts} · accél. ${count.z || 0} · pontons ${count.p || 0} · herses ${(count.h || 0) + (count.H || 0)}`);
   $('msgs').innerHTML = msgs.join('');
+  return !blocking;
 }
+
+// ---------- aperçu 3D (le vrai jeu, dans la page) ----------
+let previewTimer = null;
+const GAME = new URLSearchParams(location.search).get('jeu') || '/jouer/snake/';
+function schedulePreview(ok) {
+  if (!document.body.classList.contains('preview') || !$('auto').checked) return;
+  clearTimeout(previewTimer);
+  previewTimer = setTimeout(() => refreshPreview(ok), 900);
+}
+function refreshPreview(ok = check()) {
+  const info = $('aperçuinfo');
+  if (location.protocol === 'file:') { info.textContent = 'L’aperçu 3D ne marche que depuis le site (page ouverte en http/https), pas depuis un fichier local.'; return; }
+  if (!ok) { info.textContent = 'Corrigez d’abord les erreurs rouges (à droite) : l’aperçu garde la dernière version valide.'; return; }
+  try { localStorage.setItem('cc-save-snake-editeur', serialize()); }
+  catch (e) { info.textContent = 'Impossible d’enregistrer pour l’aperçu (stockage du navigateur bloqué).'; return; }
+  info.textContent = `Niveau ${cur + 1} : « ${L().name} » — le jeu se recharge ; jouez avec les flèches.`;
+  $('jeu').src = `${GAME}?editeur=${cur + 1}&t=${Date.now()}`;
+}
+$('preview').onclick = () => {
+  const on = document.body.classList.toggle('preview');
+  $('preview').classList.toggle('on', on);
+  if (on) refreshPreview(); else $('jeu').src = 'about:blank';
+};
+$('refresh').onclick = () => refreshPreview();
 
 buildUI();
 levels = [newLevel()];

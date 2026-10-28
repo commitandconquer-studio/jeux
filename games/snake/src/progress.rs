@@ -62,7 +62,7 @@ impl Progress {
         }
         // Un paysage dont le lieu existe dans le Voyage s'y gagne ; les autres suivent le total.
         if let Item::World(u) = item
-            && crate::levels::LEVELS.iter().any(|l| l.place.scenery() == u)
+            && crate::levels::LEVELS.iter().any(|l| l.scenery() == u)
         {
             return u == Universe::Prairie || self.places.contains(&u);
         }
@@ -131,6 +131,8 @@ fn load(mut p: ResMut<Progress>) {
 fn bank(mut p: ResMut<Progress>, score: Res<Score>) {
     let before = p.total;
     p.total += score.current;
-    game_common::save::store(SAVE, "total", &p.total.to_string());
+    if !crate::levels::preview_active() {
+        game_common::save::store(SAVE, "total", &p.total.to_string());
+    }
     p.fresh = UNLOCKS.iter().filter(|(n, _)| *n > before && *n <= p.total).map(|(_, i)| *i).collect();
 }
