@@ -42,14 +42,24 @@ fn shots(press: bool) -> Vec<Shot> {
     use GameState::{Menu, Options, Playing};
     use Universe::{Cimetiere, Desert, Ocean, Prairie};
     if press {
+        // Dossier de presse : le menu, la carte du Voyage et un niveau de chaque lieu (le premier niveau d'un lieu est le n°1 de sa série de 10).
+        let at = |name: &'static str, state: GameState, mode: Mode, long: Option<usize>| Shot { name, state, universe: Prairie, long, features: false, shape: Shape::Medium, mode };
         vec![
-            shot("1-menu", Menu, Prairie, None, false),
-            shot("2-prairie", Playing, Prairie, Some(22), true),
-            shot("3-desert", Playing, Desert, Some(22), true),
-            shot("4-cimetiere", Playing, Cimetiere, Some(22), true),
-            shot("5-ile-des-pirates", Playing, Ocean, Some(22), true),
-            shot("6-longue-file", Playing, Prairie, Some(100), false),
-            shot("7-cases-speciales", Playing, Prairie, Some(6), true),
+            shot("01-menu", Menu, Prairie, None, false),
+            at("02-voyage", GameState::Voyage, Mode::Infinite, None),
+            at("03-jardin-public", Playing, Mode::Voyage(3), Some(22)),
+            at("04-desert", Playing, Mode::Voyage(14), Some(22)),
+            at("05-ruines-antiques", Playing, Mode::Voyage(24), Some(22)),
+            at("06-cimetiere", Playing, Mode::Voyage(34), Some(22)),
+            at("07-ile-des-pirates", Playing, Mode::Voyage(44), Some(22)),
+            at("08-parc-de-loisirs", Playing, Mode::Voyage(54), Some(22)),
+            at("09-centre-ville", Playing, Mode::Voyage(64), Some(22)),
+            at("10-gare", Playing, Mode::Voyage(74), Some(22)),
+            at("11-port", Playing, Mode::Voyage(84), Some(22)),
+            at("12-village-medieval", Playing, Mode::Voyage(94), Some(22)),
+            at("13-grottes", Playing, Mode::Voyage(104), Some(22)),
+            at("14-longue-file", Playing, Mode::Voyage(2), Some(100)),
+            shot("15-cases-speciales", Playing, Prairie, Some(6), true),
         ]
     } else {
         vec![
