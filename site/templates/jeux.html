@@ -6,12 +6,6 @@
   <div class="intro">{{ section.content | safe }}</div>
 </section>
 <div class="band-in">
-  {%- for j in section.pages %}{% if loop.first %}
-  {{ <cc.jeu_vedette j={j} lang={lang} /> }}
-  <div class="jeux-grid">
-  {%- else %}
-  {{ <cc.carte_jeu j={j} lang={lang} /> }}
-  {%- endif %}{% endfor %}
-  </div>
+  {{ <cc.catalogue jeux={section.pages} lang={lang} /> }}
 </div>
 {% endblock %}

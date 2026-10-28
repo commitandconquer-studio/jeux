@@ -88,6 +88,17 @@
 </article>
 {% endcomponent cc.jeu_vedette %}
 
+{# Le catalogue : le premier jeu en vitrine, puis les autres en cartes (page des jeux et accueil). #}
+{% component cc.catalogue(jeux, lang) %}
+{%- for j in jeux %}{% if loop.first %}
+{{ <cc.jeu_vedette j={j} lang={lang} /> }}
+<div class="jeux-grid">
+{%- else %}
+{{ <cc.carte_jeu j={j} lang={lang} /> }}
+{%- endif %}{% endfor %}
+</div>
+{% endcomponent cc.catalogue %}
+
 {# Trois rangées de montagnes à facettes, qui glissent en parallaxe au défilement. #}
 {% component cc.montagnes() %}
 <div class="montagnes" aria-hidden="true">

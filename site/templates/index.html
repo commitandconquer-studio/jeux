@@ -39,10 +39,8 @@
 <section class="band jeux-band">
   <h2>{{ trans(key="jeux_titre", lang=lang) }}</h2>
   <p class="intro">{{ trans(key="jeux_intro", lang=lang) }}</p>
-  <div class="jeux-grid">
-    {%- for j in jeux.pages %}
-    {{ <cc.carte_jeu j={j} lang={lang} /> }}
-    {%- endfor %}
+  <div class="band-in">
+    {{ <cc.catalogue jeux={jeux.pages} lang={lang} /> }}
   </div>
 </section>
 
