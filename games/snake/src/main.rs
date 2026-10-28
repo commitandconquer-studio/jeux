@@ -44,7 +44,7 @@ fn main() {
         .add_plugins(
             DefaultPlugins
                 .set(WindowPlugin {
-                    primary_window: Some(game_common::fenetre("À la queue leu leu — Commit & Conquer")),
+                    primary_window: Some(game_common::fenetre("Suivez le guide ! — Commit & Conquer")),
                     ..default()
                 })
                 .set(game_common::shared_assets()),

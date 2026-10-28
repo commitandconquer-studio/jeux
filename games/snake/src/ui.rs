@@ -1,7 +1,7 @@
 //! Écrans : accueil, réglages, fin de partie, et affichage du score.
 use bevy::prelude::*;
 use game_common::langue::Langue;
-use game_common::ui::{ButtonColor, GameHelp, spawn_button_sized, pied_de_menu, spawn_button, spawn_gap, spawn_hud, spawn_panel, spawn_text};
+use game_common::ui::{ButtonColor, GameHelp, spawn_button_sized, spawn_button, spawn_gap, spawn_hud, spawn_panel, spawn_text};
 use game_common::{Score, tx};
 
 use crate::GameState;
@@ -94,6 +94,8 @@ paisajes y casillas desbloqueas."
             .insert_resource(VoyageTab { selected: Place::Garden, built: None })
             .add_systems(OnEnter(GameState::Voyage), (pick_tab, spawn_voyage).chain())
             .add_systems(Update, redraw_voyage)
+            .add_observer(plank_over)
+            .add_observer(plank_out)
             .add_systems(OnEnter(GameState::GameOver), spawn_game_over)
             .add_systems(Update, (update_hud, update_banner, refresh_option_texts, keyboard_shortcuts))
             .add_observer(on_click);
@@ -135,36 +137,94 @@ fn button(commands: &mut Commands, parent: Entity, label: impl Into<String>, act
     text
 }
 
-fn spawn_menu(mut commands: Commands, settings: Res<Settings>, progress: Res<Progress>) {
-    let panel = spawn_panel(&mut commands, DespawnOnExit(GameState::Menu));
-    spawn_text(&mut commands, panel, tx!("À LA QUEUE LEU LEU", "CONGA LINE", "POLONÄSE", "TRENINO", "TRENECITO").t(), 46.0);
-    spawn_gap(&mut commands, panel, 10.0);
-    button(&mut commands, panel, tx!("Voyage", "Journey", "Reise", "Viaggio", "Viaje").t(), UiAction::Voyage);
-    button(&mut commands, panel, tx!("Mode infini", "Endless mode", "Endlos-Modus", "Modalità infinita", "Modo infinito").t(), UiAction::Play);
-    let t = button(
-        &mut commands,
-        panel,
-        OptionKind::Universe.text(&settings, &progress),
-        UiAction::Cycle(OptionKind::Universe),
-    );
-    commands.entity(t).insert(OptionText(OptionKind::Universe));
-    button(
-        &mut commands,
-        panel,
-        tx!("Réglages", "Settings", "Einstellungen", "Impostazioni", "Ajustes").t(),
-        UiAction::Settings,
-    );
-    spawn_gap(&mut commands, panel, 4.0);
-    spawn_text(
-        &mut commands,
-        panel,
-        tx!("Invités attrapés au total : {}", "Guests caught in total: {}", "Gefangene Gäste insgesamt: {}", "Invitati presi in totale: {}", "Invitados atrapados en total: {}").avec(&[&progress.total]),
-        18.0,
-    );
-    if let Some(t) = progress.next_text() {
-        spawn_text(&mut commands, panel, t, 18.0);
+/// Un panneau de bois du menu (image du kit UI) : icône à gauche, titre et sous-titre à droite.
+#[derive(Component)]
+struct Plank;
+
+/// Pose un panneau cliquable ; renvoie `(panneau, texte du titre)`.
+#[allow(clippy::too_many_arguments)]
+fn plank(commands: &mut Commands, server: &AssetServer, parent: Entity, board: &str, icon: &str, width: f32, label: impl Into<String>, subtitle: Option<&str>) -> (Entity, Entity) {
+    let cream = Color::srgb(1.0, 0.96, 0.84);
+    let b = commands
+        .spawn((
+            Node { width: Val::Px(width), height: Val::Px(width * 0.26), align_items: AlignItems::Center, padding: UiRect::axes(Val::Px(width * 0.07), Val::Px(0.0)), column_gap: Val::Px(width * 0.035), ..default() },
+            ImageNode::new(server.load(format!("ui/suivez/{board}.png"))).with_color(Color::srgb(0.93, 0.93, 0.93)),
+            Plank,
+            ChildOf(parent),
+        ))
+        .id();
+    commands.spawn((Node { width: Val::Px(width * 0.14), height: Val::Px(width * 0.14), ..default() }, ImageNode::new(server.load(format!("ui/suivez/{icon}.png"))), Pickable::IGNORE, ChildOf(b)));
+    let col = commands.spawn((Node { flex_direction: FlexDirection::Column, ..default() }, Pickable::IGNORE, ChildOf(b))).id();
+    let t = spawn_text(commands, col, label, (width * 0.075).clamp(16.0, 27.0));
+    commands.entity(t).insert((TextColor(cream), TextShadow { offset: Vec2::splat(2.0), color: Color::srgba(0.12, 0.07, 0.04, 0.9) }, TextLayout::justify(Justify::Left)));
+    if let Some(sub) = subtitle {
+        let st = spawn_text(commands, col, sub, (width * 0.042).clamp(12.0, 15.0));
+        commands.entity(st).insert((TextColor(Color::srgb(1.0, 0.92, 0.74)), TextLayout::justify(Justify::Left)));
     }
-    pied_de_menu(&mut commands, panel);
+    (b, t)
+}
+
+/// Les panneaux s'éclaircissent sous la souris.
+fn plank_over(over: On<PointerOver>, mut q: Query<&mut ImageNode, With<Plank>>) {
+    if let Ok(mut img) = q.get_mut(over.entity) {
+        img.color = Color::WHITE;
+    }
+}
+
+fn plank_out(out: On<PointerOut>, mut q: Query<&mut ImageNode, With<Plank>>) {
+    if let Ok(mut img) = q.get_mut(out.entity) {
+        img.color = Color::srgb(0.93, 0.93, 0.93);
+    }
+}
+
+fn spawn_menu(mut commands: Commands, settings: Res<Settings>, progress: Res<Progress>, server: Res<AssetServer>) {
+    let root = commands
+        .spawn((
+            Node { width: Val::Percent(100.0), height: Val::Percent(100.0), flex_direction: FlexDirection::Column, align_items: AlignItems::Center, justify_content: JustifyContent::Center, row_gap: Val::Px(8.0), padding: UiRect::all(Val::Px(16.0)), ..default() },
+            DespawnOnExit(GameState::Menu),
+        ))
+        .id();
+    commands.spawn((Node { width: Val::Px(380.0), height: Val::Px(191.0), margin: UiRect::bottom(Val::Px(6.0)), ..default() }, ImageNode::new(server.load("ui/suivez/logo_complet.png")), Pickable::IGNORE, ChildOf(root)));
+    let (b, _) = plank(&mut commands, &server, root, "panneau_bois_dore_large", "icone_carte", 340.0, tx!("Voyage", "Journey", "Reise", "Viaggio", "Viaje").t(), Some(tx!("Niveaux à découvrir", "Levels to discover", "Level zu entdecken", "Livelli da scoprire", "Niveles por descubrir").t()));
+    commands.entity(b).insert(UiAction::Voyage);
+    let (b, _) = plank(&mut commands, &server, root, "panneau_bois_fonce_large", "icone_infini", 340.0, tx!("Mode infini", "Endless mode", "Endlos-Modus", "Modalità infinita", "Modo infinito").t(), Some(tx!("Toujours plus nombreux !", "More and more guests!", "Immer mehr Gäste!", "Sempre più numerosi!", "¡Cada vez más!").t()));
+    commands.entity(b).insert(UiAction::Play);
+    let (b, t) = plank(&mut commands, &server, root, "panneau_bois_fonce_large", "icone_jumelles", 340.0, OptionKind::Universe.text(&settings, &progress), None);
+    commands.entity(b).insert(UiAction::Cycle(OptionKind::Universe));
+    commands.entity(t).insert(OptionText(OptionKind::Universe));
+    // Petits panneaux deux par deux : Réglages / Options, puis Aide / Quitter.
+    let row = |commands: &mut Commands| commands.spawn((Node { column_gap: Val::Px(10.0), ..default() }, ChildOf(root))).id();
+    let r1 = row(&mut commands);
+    let (b, _) = plank(&mut commands, &server, r1, "panneau_bois_fonce_large", "icone_reglages", 230.0, tx!("Réglages", "Settings", "Einstellungen", "Impostazioni", "Ajustes").t(), None);
+    commands.entity(b).insert(UiAction::Settings);
+    let (b, _) = plank(&mut commands, &server, r1, "panneau_bois_fonce_large", "icone_boussole", 230.0, tx!("Options", "Options", "Optionen", "Opzioni", "Opciones").t(), None);
+    commands.entity(b).insert(game_common::options::OptionsBouton);
+    let r2 = row(&mut commands);
+    let (b, _) = plank(&mut commands, &server, r2, "panneau_bois_fonce_large", "icone_aide", 230.0, tx!("Aide", "Help", "Hilfe", "Aiuto", "Ayuda").t(), None);
+    commands.entity(b).insert(game_common::ui::HelpButton);
+    #[cfg(not(any(target_os = "android", target_arch = "wasm32")))]
+    {
+        let (b, _) = plank(&mut commands, &server, r2, "panneau_bois_fonce_large", "icone_quitter", 230.0, tx!("Quitter", "Quit", "Beenden", "Esci", "Salir").t(), None);
+        commands.entity(b).insert(game_common::ui::QuitButton);
+    }
+    // Total d'invités et prochain déblocage, en bas à gauche.
+    let tag = commands
+        .spawn((
+            Node { position_type: PositionType::Absolute, left: Val::Px(20.0), bottom: Val::Px(20.0), flex_direction: FlexDirection::Column, padding: UiRect::axes(Val::Px(18.0), Val::Px(10.0)), border_radius: BorderRadius::all(Val::Px(16.0)), ..default() },
+            BackgroundColor(Color::srgba(0.16, 0.18, 0.24, 0.85)),
+            ChildOf(root),
+        ))
+        .id();
+    let light = |commands: &mut Commands, t: Entity| {
+        commands.entity(t).insert((TextColor(Color::srgb(0.97, 0.97, 0.97)), TextLayout::justify(Justify::Left)));
+    };
+    let t = spawn_text(&mut commands, tag, tx!("Invités attrapés : {}", "Guests caught: {}", "Gefangene Gäste: {}", "Invitati presi: {}", "Invitados atrapados: {}").avec(&[&progress.total]), 20.0);
+    light(&mut commands, t);
+    if let Some(next) = progress.next_text() {
+        let t = spawn_text(&mut commands, tag, next, 15.0);
+        light(&mut commands, t);
+    }
+    game_common::ui::spawn_studio_logo(&mut commands, root);
 }
 
 fn stars_text(n: u8) -> String {
