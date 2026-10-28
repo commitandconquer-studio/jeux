@@ -125,10 +125,10 @@ fn titre_partie(genre: Genre) -> String {
     }
 }
 
-fn spawn_menu(mut c: Commands, progression: Res<Progression>, partie: Option<Res<Partie>>) {
+fn spawn_menu(mut c: Commands, server: Res<AssetServer>, progression: Res<Progression>, partie: Option<Res<Partie>>) {
     let panel = spawn_panel_left(&mut c, DespawnOnExit(GameState::Menu));
-    spawn_text(&mut c, panel, tx!("LE CHIEN DE BERGER", "THE SHEEPDOG", "DER SCHÄFERHUND", "IL CANE PASTORE", "EL PERRO PASTOR").t(), 40.0);
-    spawn_text(&mut c, panel, tx!("Rassemblez le troupeau", "Gather the flock", "Treibe die Herde zusammen", "Raduna il gregge", "Reúne el rebaño").t(), 22.0);
+    // Le logo (le même dans toutes les langues).
+    c.spawn((ImageNode::new(server.load("branding/berger.png")), Node { width: px(92), height: px(92), ..default() }, Pickable::IGNORE, ChildOf(panel)));
     spawn_text(
         &mut c,
         panel,
