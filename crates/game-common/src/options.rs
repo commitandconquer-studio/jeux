@@ -22,6 +22,14 @@ pub fn spawn_options_button(commands: &mut Commands, parent: Entity) -> Entity {
 #[derive(Resource)]
 pub struct StyleMortOption;
 
+/// À insérer par un jeu qui veut une ligne « oui / non » à lui dans les Options
+/// (le jeu lit et enregistre `actif`).
+#[derive(Resource)]
+pub struct OptionBascule {
+    pub titre: crate::langue::Texte,
+    pub actif: bool,
+}
+
 #[derive(Component)]
 struct Panneau;
 
@@ -35,6 +43,7 @@ enum Choix {
     EffetsMoins,
     EffetsPlus,
     StyleMort,
+    Bascule,
     Ambiance,
     Fermer,
 }
@@ -55,10 +64,10 @@ impl Plugin for OptionsPlugin {
 }
 
 /// Test : `CC_OPEN_OPTIONS=1` ouvre les Options au bout de 2 secondes (captures).
-fn ouvrir_pour_test(time: Res<Time>, mut fait: Local<bool>, mut commands: Commands, l: Res<Langue>, son: Res<SoundOn>, r: Res<Reglages>, style: Option<Res<StyleMortOption>>) {
+fn ouvrir_pour_test(time: Res<Time>, mut fait: Local<bool>, mut commands: Commands, l: Res<Langue>, son: Res<SoundOn>, r: Res<Reglages>, style: Option<Res<StyleMortOption>>, bascule: Option<Res<OptionBascule>>) {
     if !*fait && time.elapsed_secs() > 2.0 {
         *fait = true;
-        ouvrir(&mut commands, *l, son.0, &r, style.is_some());
+        ouvrir(&mut commands, *l, son.0, &r, style.is_some(), bascule.as_deref());
     }
 }
 
@@ -66,7 +75,7 @@ fn etat(oui: bool) -> &'static str {
     if oui { tx!("activée", "on", "an", "attiva", "activada").t() } else { tx!("désactivée", "off", "aus", "disattivata", "desactivada").t() }
 }
 
-fn ouvrir(commands: &mut Commands, l: Langue, son: bool, r: &Reglages, style_mort: bool) {
+fn ouvrir(commands: &mut Commands, l: Langue, son: bool, r: &Reglages, style_mort: bool, bascule: Option<&OptionBascule>) {
     let panel = spawn_panel(commands, (Panneau, BackgroundColor(Color::srgba(0.0, 0.0, 0.0, 0.35)), GlobalZIndex(50)));
     commands.entity(panel).insert(crate::ui::PanneauOpaque);
     commands.entity(panel).insert(Node {
@@ -96,6 +105,9 @@ fn ouvrir(commands: &mut Commands, l: Langue, son: bool, r: &Reglages, style_mor
             _ => tx!("Normal", "Normal", "Normal", "Normale", "Normal"),
         };
         ligne(commands, format!("{}{}{}", tx!("Mort", "Death", "Tod", "Morte", "Muerte").t(), crate::langue::deux_points(), nom.t()), Choix::StyleMort);
+    }
+    if let Some(b) = bascule {
+        ligne(commands, format!("{}{}{}", b.titre.t(), crate::langue::deux_points(), etat(b.actif)), Choix::Bascule);
     }
     ligne(commands, format!("{}…", tx!("Ambiance", "Atmosphere", "Stimmung", "Atmosfera", "Ambiente").t()), Choix::Ambiance);
     spawn_gap(commands, panel, 2.0);
@@ -128,12 +140,13 @@ fn au_clic(
     mut ouverture: ResMut<LangueOuverture>,
     mut changee: MessageWriter<LangueChangee>,
     style: Option<Res<StyleMortOption>>,
+    mut bascule: Option<ResMut<OptionBascule>>,
 ) {
     let fermer = |commands: &mut Commands| panneaux.iter().for_each(|e| commands.entity(e).despawn());
     if boutons.contains(clic.entity) {
         if panneaux.is_empty() {
             ouverture.0 = *langue;
-            ouvrir(&mut commands, *langue, son.0, &r, style.is_some());
+            ouvrir(&mut commands, *langue, son.0, &r, style.is_some(), bascule.as_deref());
         }
         return;
     }
@@ -156,6 +169,11 @@ fn au_clic(
             crate::langue::definir_maintenant(*langue);
         }
         Choix::Son => son.0 = !son.0,
+        Choix::Bascule => {
+            if let Some(b) = bascule.as_mut() {
+                b.actif = !b.actif;
+            }
+        }
         Choix::StyleMort => r.style_mort = (r.style_mort + 1) % 3,
         Choix::Musique => r.musique = !r.musique,
         Choix::MusiqueMoins => r.volume_musique = r.volume_musique.saturating_sub(1),
@@ -164,5 +182,5 @@ fn au_clic(
         Choix::EffetsPlus => r.volume_effets = (r.volume_effets + 1).min(10),
     }
     fermer(&mut commands);
-    ouvrir(&mut commands, *langue, son.0, &r, style.is_some());
+    ouvrir(&mut commands, *langue, son.0, &r, style.is_some(), bascule.as_deref());
 }

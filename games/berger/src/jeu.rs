@@ -8,6 +8,8 @@ use game_common::calendar::Date;
 use game_common::{Rng, iso_camera, iso_projection, save};
 
 use crate::GameState;
+use game_common::options::OptionBascule;
+use game_common::tx;
 use crate::chiens::CHIENS;
 use crate::vue::{Allure, DeScene, Kit, OndeVue, VueBelier, VueChien, VueLoup, VueMouton, eclat, spawn_scene};
 
@@ -150,6 +152,10 @@ impl Plugin for JeuPlugin {
     fn build(&self, app: &mut App) {
         app.init_resource::<Kit>()
             .insert_resource(Progression::charger())
+            .insert_resource(OptionBascule {
+                titre: tx!("Le chien suit la souris (clic = aboyer)", "Dog follows the mouse (click = bark)", "Hund folgt der Maus (Klick = bellen)", "Il cane segue il mouse (clic = abbaia)", "El perro sigue el ratón (clic = ladrar)"),
+                actif: save::load(JEU, "souris").is_some_and(|v| v == "1"),
+            })
             .insert_resource(CameraMobile(save::load(JEU, "camera").is_none_or(|v| v != "0")))
             .add_message::<Commencer>()
             .add_message::<Evt>()
@@ -230,7 +236,17 @@ fn camera(
     }
 }
 
-fn touche_camera(keys: Res<ButtonInput<KeyCode>>, mut mobile: ResMut<CameraMobile>) {
+fn touche_camera(keys: Res<ButtonInput<KeyCode>>, mut mobile: ResMut<CameraMobile>, mut souris: ResMut<OptionBascule>, mut enregistre: Local<Option<bool>>) {
+    if keys.just_pressed(KeyCode::KeyV) {
+        souris.actif = !souris.actif;
+    }
+    // Le réglage change par la touche V ou par les Options : on l'enregistre.
+    if *enregistre != Some(souris.actif) {
+        if enregistre.is_some() {
+            save::store(JEU, "souris", if souris.actif { "1" } else { "0" });
+        }
+        *enregistre = Some(souris.actif);
+    }
     if keys.just_pressed(KeyCode::KeyC) {
         mobile.0 = !mobile.0;
         save::store(JEU, "camera", if mobile.0 { "1" } else { "0" });
@@ -295,6 +311,7 @@ fn avancer(
     time: Res<Time>,
     keys: Res<ButtonInput<KeyCode>>,
     mouse: Res<ButtonInput<MouseButton>>,
+    mode: Res<OptionBascule>,
     touches: Res<Touches>,
     windows: Query<&Window>,
     cam: Query<(&Camera, &GlobalTransform), With<MainCamera>>,
@@ -328,7 +345,12 @@ fn avancer(
         cmd.course = keys.any_pressed([KeyCode::ShiftLeft, KeyCode::ShiftRight]);
         cmd.aboyer = keys.any_just_pressed([KeyCode::Space, KeyCode::KeyB]) ||mouse.just_pressed(MouseButton::Right);
         // Souris ou doigt : le chien va vers le pointeur, et court quand il est loin.
-        let pointe = mouse.pressed(MouseButton::Left) || touches.iter().next().is_some();
+        // En mode souris, le chien suit le pointeur sans cliquer, et le clic gauche aboie.
+        let souris = mode.actif && touches.iter().next().is_none();
+        if souris && mouse.just_pressed(MouseButton::Left) {
+            cmd.aboyer = true;
+        }
+        let pointe = souris || mouse.pressed(MouseButton::Left) || touches.iter().next().is_some();
         if pointe && cmd.dir == V2::ZERO {
             if let Some(p) = point_vise(&touches, &windows, &cam) {
                 let d = p - partie.monde.chien.pos;
