@@ -349,12 +349,17 @@ fn new_run(
             timer.0 = Timer::from_seconds(level.pace / demo.auto.unwrap_or(1.0), TimerMode::Repeating);
             // Les cases du niveau : toujours à la même place pour un niveau donné.
             let mut level_rng = Rng::new(0xC0FFEE + i as u64 * 7919);
-            let mut busy = conga.cells.clone();
-            busy.push(food.cell);
+            // La position de l'invité ne compte pas ici : elle est tirée au sort, et le niveau doit toujours être le même.
+            let busy = conga.cells.clone();
             for (feature, n) in &level.cases {
                 for _ in 0..*n {
                     board.place(*feature, &busy, conga.cells[0], &layout, scenery.0, &mut level_rng);
                 }
+            }
+            // Si une case spéciale est tombée sur l'invité (ou s'il est hors du plateau), on le déplace.
+            if !layout.walkable(food.cell) || board.tiles.contains_key(&food.cell) {
+                food.cell = free_cell(&conga.cells, &board, &layout, &mut rng);
+                food.spawned = false;
             }
         }
     }
@@ -484,6 +489,11 @@ fn step(
         return;
     }
     voyage.run.stepped = true;
+    // Un invité hors du plateau ou sous une case spéciale serait introuvable : on le remet ailleurs.
+    if food.active && (!layout.walkable(food.cell) || board.tiles.contains_key(&food.cell)) {
+        food.cell = free_cell(&conga.cells, &board, &layout, &mut rng);
+        food.spawned = false;
+    }
     // Défilé de sortie : `exit_sequence` fait avancer la file.
     if voyage.run.exiting {
         return;
@@ -550,6 +560,7 @@ fn step(
     if food.active && head == food.cell {
         score.add(1);
         voyage.run.recruited += 1;
+        debug!("recruté {} à {head}", voyage.run.recruited);
         sfx.write(Sfx::Eat(score.current));
         let tail = *conga.prev.last().unwrap();
         conga.prev.push(tail);
