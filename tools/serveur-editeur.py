@@ -42,6 +42,10 @@ if __name__ == "__main__":
     if not os.path.exists(os.path.join(RACINE, "jouer", "snake", "snake_bg.wasm")):
         sys.exit("Le jeu n'est pas compilé pour le navigateur : lancez d'abord tools/build-web.sh snake")
     socketserver.TCPServer.allow_reuse_address = True
-    with socketserver.TCPServer(("127.0.0.1", port), Gestionnaire) as serveur:
+    try:
+        serveur = socketserver.TCPServer(("127.0.0.1", port), Gestionnaire)
+    except OSError:
+        sys.exit(f"Le port {port} est déjà utilisé (le serveur tourne peut-être déjà : ouvrez http://127.0.0.1:{port}/editeur/, ou essayez un autre port : tools/serveur-editeur.py 8800)")
+    with serveur:
         print(f"Éditeur : http://127.0.0.1:{port}/editeur/  (Ctrl+C pour arrêter)")
         serveur.serve_forever()
