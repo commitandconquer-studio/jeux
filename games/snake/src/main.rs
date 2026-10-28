@@ -4,6 +4,7 @@ mod board;
 mod capture;
 mod dress;
 mod game;
+mod layout;
 mod miniature;
 mod people;
 mod progress;
@@ -46,6 +47,8 @@ fn main() {
         .insert_resource(Rng::from_time())
         .insert_resource(bevy::light::DirectionalLightShadowMap { size: 2048 })
         .init_resource::<Settings>()
+        .init_resource::<layout::Layout>()
+        .add_systems(PreUpdate, sync_layout)
         .init_resource::<Score>()
         .add_systems(Startup, |mut commands: Commands| {
             let mut cam = commands.spawn((iso_camera(Vec3::ZERO, 24.0, 18.0), bevy::core_pipeline::tonemapping::Tonemapping::AcesFitted));
@@ -62,7 +65,7 @@ fn main() {
 fn move_camera(
     time: Res<Time>,
     state: Res<State<GameState>>,
-    settings: Res<Settings>,
+    layout: Res<layout::Layout>,
     mut angle: Local<f32>,
     mut cam: Query<(&mut Transform, &mut Projection), With<Camera3d>>,
 ) {
@@ -73,11 +76,18 @@ fn move_camera(
         let a = (*angle + PI).rem_euclid(TAU) - PI;
         *angle = a * (1.0 - (dt * 4.0).min(1.0));
     }
-    let g = settings.grid() as f32;
+    let (w, h) = (layout.w as f32, layout.h as f32);
     for (mut tf, mut proj) in &mut cam {
         *tf = Transform::from_translation(Quat::from_rotation_y(*angle) * ISO_OFFSET).looking_at(Vec3::ZERO, Vec3::Y);
-        if settings.is_changed() {
-            *proj = iso_projection(g * 1.7, g * 1.3);
+        if layout.is_changed() {
+            *proj = iso_projection(w * 1.2 + h * 0.5, h * 0.8 + w * 0.5);
         }
+    }
+}
+
+/// La forme du plateau suit le réglage choisi.
+fn sync_layout(settings: Res<Settings>, mut layout: ResMut<layout::Layout>) {
+    if settings.is_changed() {
+        *layout = settings.layout();
     }
 }

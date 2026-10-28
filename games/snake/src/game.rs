@@ -13,13 +13,14 @@ use crate::dress::LOOKS;
 use crate::people::{self, Pose};
 use crate::progress::Progress;
 use crate::settings::Settings;
+use crate::layout::Layout;
 use crate::world::cell_to_world;
 
 pub struct GamePlugin;
 
 impl Plugin for GamePlugin {
     fn build(&self, app: &mut App) {
-        app.insert_resource(Conga::new(14, 0))
+        app.insert_resource(Conga::new(&Layout::default(), 0))
             .insert_resource(Food { cell: IVec2::ZERO, kind: 1, look: 0, spawned: true })
             .init_resource::<Demo>()
             .insert_resource(Paused(false))
@@ -152,13 +153,12 @@ struct Conga {
 }
 
 impl Conga {
-    fn new(grid: i32, leader: usize) -> Self {
+    fn new(layout: &Layout, leader: usize) -> Self {
         let pal = |k: usize| (k + 1) % 6;
-        let c = grid / 2;
-        let cells = vec![IVec2::new(c, c), IVec2::new(c - 1, c), IVec2::new(c - 2, c)];
+        let cells = layout.start_cells();
         let kinds = vec![leader, pal(leader), pal(pal(leader) + 2)];
         let looks = vec![leader as u32 * 7 + 3, 11, 58];
-        Self { prev: cells.clone(), cells, kinds, looks, dir: IVec2::X, queued: VecDeque::new() }
+        Self { prev: cells.clone(), cells, kinds, looks, dir: layout.dir, queued: VecDeque::new() }
     }
 
     /// Mémorise un virage ; renvoie `true` s'il est accepté.
@@ -229,6 +229,7 @@ fn save_best(score: Res<Score>) {
 fn new_game(
     mut commands: Commands,
     settings: Res<Settings>,
+    layout: Res<Layout>,
     mut conga: ResMut<Conga>,
     mut food: ResMut<Food>,
     mut timer: ResMut<StepTimer>,
@@ -251,8 +252,8 @@ fn new_game(
     board.clear();
     boost.0 = 0;
     *crash = Crash::default();
-    *conga = Conga::new(settings.grid(), settings.leader);
-    food.cell = free_cell(&conga.cells, &board, settings.grid(), &mut rng);
+    *conga = Conga::new(&layout, settings.leader);
+    food.cell = free_cell(&conga.cells, &board, &layout, &mut rng);
     food.kind = guest_kind(&mut rng, &progress);
     food.look = rng.below(LOOKS);
     food.spawned = false;
@@ -260,17 +261,16 @@ fn new_game(
     if demo.features {
         let busy = conga.cells.clone();
         for f in [Feature::Obstacle, Feature::Obstacle, Feature::Obstacle, Feature::Hole, Feature::Teleport, Feature::Teleport, Feature::Speeder, Feature::Belt, Feature::Belt] {
-            board.place(f, &busy, conga.cells[0], settings.grid(), settings.universe, &mut rng);
+            board.place(f, &busy, conga.cells[0], &layout, settings.universe, &mut rng);
         }
     }
     timer.0 = Timer::from_seconds(settings.speed.step_times().0, TimerMode::Repeating);
     // Essai : une très longue file (SNAKE_LONG=n) pour vérifier la variété des apparences.
     if let Some(n) = demo.long {
-        let grid = settings.grid();
         let mut path = Vec::new();
-        for y in 0..grid {
-            let xs: Vec<i32> = if y % 2 == 0 { (0..grid).collect() } else { (0..grid).rev().collect() };
-            path.extend(xs.into_iter().map(|x| IVec2::new(x, y)));
+        for y in 0..layout.h {
+            let xs: Vec<i32> = if y % 2 == 0 { (0..layout.w).collect() } else { (0..layout.w).rev().collect() };
+            path.extend(xs.into_iter().map(|x| IVec2::new(x, y)).filter(|c| layout.walkable(*c)));
         }
         path.truncate(n.min(path.len()));
         path.reverse();
@@ -350,6 +350,7 @@ fn read_input(
 fn step(
     time: Res<Time>,
     settings: Res<Settings>,
+    layout: Res<Layout>,
     paused: Res<Paused>,
     mut timer: ResMut<StepTimer>,
     mut conga: ResMut<Conga>,
@@ -373,7 +374,6 @@ fn step(
         return;
     }
     boost.0 = boost.0.saturating_sub(1);
-    let grid = settings.grid();
     // Un tapis roulant impose sa direction (sauf à contresens).
     if let Some(Tile::Belt(d)) = board.tiles.get(&conga.cells[0])
         && *d != -conga.dir
@@ -384,9 +384,11 @@ fn step(
         conga.dir = d;
     }
     let mut head = conga.cells[0] + conga.dir;
-    let outside = head.x < 0 || head.y < 0 || head.x >= grid || head.y >= grid;
-    if outside && settings.wrap {
-        head = head.rem_euclid(IVec2::splat(grid));
+    // Hors de la forme du plateau (bord ou case bloquée) : mur, ou passage de l'autre côté si les bords sont traversables.
+    let mut outside = !layout.walkable(head);
+    if outside && settings.wrap && layout.is_full() {
+        head = head.rem_euclid(IVec2::new(layout.w, layout.h));
+        outside = false;
     }
     let deadly = matches!(board.tiles.get(&head), Some(Tile::Obstacle(_) | Tile::Hole));
     if let Some(Tile::Teleport(id)) = board.tiles.get(&head).copied()
@@ -414,12 +416,12 @@ fn step(
         conga.kinds.push(kind);
         let look = food.look;
         conga.looks.push(look);
-        food.cell = free_cell(&conga.cells, &board, grid, &mut rng);
+        food.cell = free_cell(&conga.cells, &board, &layout, &mut rng);
         food.kind = guest_kind(&mut rng, &progress);
         food.look = rng.below(LOOKS);
         food.spawned = false;
         if score.current % LEVEL_EVERY == 0 {
-            level_up(&mut board, &progress, &conga, food.cell, &settings, &mut banner, &mut sfx, &mut rng, score.current / LEVEL_EVERY);
+            level_up(&mut board, &progress, &conga, food.cell, &settings, &layout, &mut banner, &mut sfx, &mut rng, score.current / LEVEL_EVERY);
         }
         let min = settings.speed.step_times().1;
         let faster = (timer.0.duration().as_secs_f32() * 0.96).max(min);
@@ -435,7 +437,7 @@ fn step(
 
 /// Un nouvel élément arrive sur le plateau (le premier de la liste que le joueur a débloqué et qui a encore de la place).
 #[allow(clippy::too_many_arguments)]
-fn level_up(board: &mut Board, progress: &Progress, conga: &Conga, food: IVec2, settings: &Settings, banner: &mut Banner, sfx: &mut MessageWriter<Sfx>, rng: &mut Rng, level: u32) {
+fn level_up(board: &mut Board, progress: &Progress, conga: &Conga, food: IVec2, settings: &Settings, layout: &Layout, banner: &mut Banner, sfx: &mut MessageWriter<Sfx>, rng: &mut Rng, level: u32) {
     let mut busy = conga.cells.clone();
     busy.push(food);
     for k in 0..SEQUENCE.len() {
@@ -443,7 +445,7 @@ fn level_up(board: &mut Board, progress: &Progress, conga: &Conga, food: IVec2, 
         if !progress.allows(f) || board.count(f) >= cap(f) {
             continue;
         }
-        if board.place(f, &busy, conga.cells[0], settings.grid(), settings.universe, rng) {
+        if board.place(f, &busy, conga.cells[0], layout, settings.universe, rng) {
             banner.text = format!("{} · {}", game_common::tx!("Niveau {}", "Level {}", "Level {}", "Livello {}", "Nivel {}").avec(&[&(level + 1)]), feature_name(f));
             banner.left = 3.0;
             sfx.write(Sfx::Spawn);
@@ -464,10 +466,10 @@ fn finish_crash(time: Res<Time>, mut crash: ResMut<Crash>, mut next: ResMut<Next
     }
 }
 
-fn free_cell(occupied: &[IVec2], board: &Board, grid: i32, rng: &mut Rng) -> IVec2 {
+fn free_cell(occupied: &[IVec2], board: &Board, layout: &Layout, rng: &mut Rng) -> IVec2 {
     loop {
-        let c = IVec2::new(rng.below(grid as u32) as i32, rng.below(grid as u32) as i32);
-        if !occupied.contains(&c) && !board.tiles.contains_key(&c) {
+        let c = IVec2::new(rng.below(layout.w as u32) as i32, rng.below(layout.h as u32) as i32);
+        if layout.walkable(c) && !occupied.contains(&c) && !board.tiles.contains_key(&c) {
             return c;
         }
     }
@@ -477,7 +479,7 @@ fn free_cell(occupied: &[IVec2], board: &Board, grid: i32, rng: &mut Rng) -> IVe
 fn sync_guest(
     mut commands: Commands,
     mut food: ResMut<Food>,
-    settings: Res<Settings>,
+    layout: Res<Layout>,
     server: Res<AssetServer>,
     assets: Res<GuestAssets>,
     mut graphs: ResMut<Assets<AnimationGraph>>,
@@ -492,7 +494,7 @@ fn sync_guest(
     }
     let root = commands
         .spawn((
-            Transform::from_translation(cell_to_world(food.cell.as_vec2(), 0.05, settings.grid()))
+            Transform::from_translation(cell_to_world(food.cell.as_vec2(), 0.05, &layout))
                 .with_rotation(Quat::from_rotation_y(PI * 0.75))
                 .with_scale(Vec3::splat(0.01)),
             Visibility::default(),
@@ -541,14 +543,14 @@ fn sync_segments(
     time: Res<Time>,
     conga: Res<Conga>,
     timer: Res<StepTimer>,
-    settings: Res<Settings>,
+    layout: Res<Layout>,
     state: Res<State<GameState>>,
     crash: Res<Crash>,
     server: Res<AssetServer>,
     mut graphs: ResMut<Assets<AnimationGraph>>,
     mut segments: Query<(Entity, &mut Segment, &mut Transform)>,
 ) {
-    let grid = settings.grid();
+    let grid = &*layout;
     let t = if *state.get() == GameState::Playing && !crash.active { timer.0.fraction() } else { 1.0 };
     // Choc : la tête avance d'une demi-case, jusqu'au mur.
     let nudge = if crash.active { crash.dir.as_vec2() * 0.5 * (1.0 - crash.left / CRASH_TIME).clamp(0.0, 1.0) } else { Vec2::ZERO };

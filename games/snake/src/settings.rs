@@ -2,6 +2,7 @@
 use bevy::prelude::*;
 use game_common::tx;
 
+use crate::layout::{Layout, Shape};
 use crate::progress::{Item, Progress};
 use crate::world::Universe;
 
@@ -9,18 +10,13 @@ use crate::world::Universe;
 pub struct Settings {
     pub universe: Universe,
     pub speed: Speed,
-    pub size: BoardSize,
+    pub shape: Shape,
     /// `true` : on traverse les bords ; `false` : les bords tuent.
     pub wrap: bool,
     /// Personnage qui mène la chenille (indice dans `people::KINDS`).
     pub leader: usize,
 }
 
-impl Settings {
-    pub fn grid(&self) -> i32 {
-        self.size.cells()
-    }
-}
 
 #[derive(Clone, Copy, PartialEq, Eq, Default)]
 pub enum Speed {
@@ -41,21 +37,10 @@ impl Speed {
     }
 }
 
-#[derive(Clone, Copy, PartialEq, Eq, Default)]
-pub enum BoardSize {
-    Petit,
-    #[default]
-    Moyen,
-    Grand,
-}
-
-impl BoardSize {
-    pub fn cells(self) -> i32 {
-        match self {
-            BoardSize::Petit => 10,
-            BoardSize::Moyen => 14,
-            BoardSize::Grand => 18,
-        }
+impl Settings {
+    /// La forme du plateau choisie.
+    pub fn layout(&self) -> Layout {
+        self.shape.layout()
     }
 }
 
@@ -87,10 +72,15 @@ impl OptionKind {
             ),
             OptionKind::Size => (
                 tx!("Plateau :", "Board:", "Spielfeld:", "Campo:", "Tablero:"),
-                match s.size {
-                    BoardSize::Petit => tx!("Petit", "Small", "Klein", "Piccolo", "Pequeño"),
-                    BoardSize::Moyen => tx!("Moyen", "Medium", "Mittel", "Medio", "Mediano"),
-                    BoardSize::Grand => tx!("Grand", "Large", "Groß", "Grande", "Grande"),
+                match s.shape {
+                    Shape::Small => tx!("Petit", "Small", "Klein", "Piccolo", "Pequeño"),
+                    Shape::Medium => tx!("Moyen", "Medium", "Mittel", "Medio", "Mediano"),
+                    Shape::Large => tx!("Grand", "Large", "Groß", "Grande", "Grande"),
+                    Shape::Rectangle => tx!("Rectangle", "Rectangle", "Rechteck", "Rettangolo", "Rectángulo"),
+                    Shape::L => tx!("En L", "L-shaped", "L-förmig", "A L", "En L"),
+                    Shape::U => tx!("En U", "U-shaped", "U-förmig", "A U", "En U"),
+                    Shape::Route => tx!("Route sinueuse", "Winding road", "Kurvige Straße", "Strada tortuosa", "Camino sinuoso"),
+                    Shape::Alleys => tx!("Allées", "Alleys", "Alleen", "Viali", "Paseos"),
                 }
                 .t(),
             ),
@@ -129,13 +119,7 @@ impl OptionKind {
                     Speed::Rapide => Speed::Lente,
                 }
             }
-            OptionKind::Size => {
-                s.size = match s.size {
-                    BoardSize::Petit => BoardSize::Moyen,
-                    BoardSize::Moyen => BoardSize::Grand,
-                    BoardSize::Grand => BoardSize::Petit,
-                }
-            }
+            OptionKind::Size => s.shape = s.shape.next(),
             OptionKind::Edges => s.wrap = !s.wrap,
         }
     }

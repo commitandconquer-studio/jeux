@@ -6,6 +6,7 @@ use bevy::light::NotShadowCaster;
 use bevy::prelude::*;
 use game_common::{Rng, flat_material};
 
+use crate::layout::Layout;
 use crate::settings::Settings;
 use crate::world::{Universe, cell_to_world};
 
@@ -65,11 +66,11 @@ impl Board {
     }
 
     /// Pose un élément à un endroit libre, loin de la tête. `false` si aucune place n'a été trouvée.
-    pub fn place(&mut self, f: Feature, busy: &[IVec2], head: IVec2, grid: i32, universe: Universe, rng: &mut Rng) -> bool {
-        let pick = |rng: &mut Rng| IVec2::new(rng.below(grid as u32) as i32, rng.below(grid as u32) as i32);
+    pub fn place(&mut self, f: Feature, busy: &[IVec2], head: IVec2, layout: &Layout, universe: Universe, rng: &mut Rng) -> bool {
+        let pick = |rng: &mut Rng| IVec2::new(rng.below(layout.w as u32) as i32, rng.below(layout.h as u32) as i32);
         for _ in 0..80 {
             let c = pick(rng);
-            if !self.is_free(c, busy, head) {
+            if !layout.walkable(c) || !self.is_free(c, busy, head) {
                 continue;
             }
             match f {
@@ -87,7 +88,7 @@ impl Board {
                 }
                 Feature::Teleport => {
                     let d = pick(rng);
-                    if d == c || !self.is_free(d, busy, head) || c.as_vec2().distance(d.as_vec2()) < 4.0 {
+                    if d == c || !layout.walkable(d) || !self.is_free(d, busy, head) || c.as_vec2().distance(d.as_vec2()) < 4.0 {
                         continue;
                     }
                     let id = self.teleports;
@@ -100,8 +101,7 @@ impl Board {
                     let dir = [IVec2::X, IVec2::NEG_X, IVec2::Y, IVec2::NEG_Y][rng.below(4) as usize];
                     let cells: Vec<IVec2> = (0..4).map(|i| c + dir * i).collect();
                     let beyond = c + dir * 4;
-                    let inside = |p: IVec2| p.x >= 0 && p.y >= 0 && p.x < grid && p.y < grid;
-                    if cells.iter().all(|p| inside(*p) && self.is_free(*p, busy, head)) && inside(beyond) {
+                    if cells.iter().all(|p| layout.walkable(*p) && self.is_free(*p, busy, head)) && layout.walkable(beyond) {
                         for p in cells {
                             self.tiles.insert(p, Tile::Belt(dir));
                         }
@@ -158,6 +158,7 @@ pub fn sync_tiles(
     mut commands: Commands,
     board: Res<Board>,
     settings: Res<Settings>,
+    layout: Res<Layout>,
     server: Res<AssetServer>,
     mut meshes: ResMut<Assets<Mesh>>,
     mut mats: ResMut<Assets<StandardMaterial>>,
@@ -170,7 +171,7 @@ pub fn sync_tiles(
     for e in &old {
         commands.entity(e).despawn();
     }
-    let grid = settings.grid();
+    let grid = &*layout;
     let disc = meshes.add(Cylinder::new(0.46, 0.05));
     let plate = meshes.add(Cuboid::new(0.94, 0.06, 0.94));
     let cube = meshes.add(Cuboid::new(1.0, 1.0, 1.0));

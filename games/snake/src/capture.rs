@@ -8,6 +8,7 @@ use bevy::window::PrimaryWindow;
 
 use crate::GameState;
 use crate::game::Demo;
+use crate::layout::Shape;
 use crate::settings::Settings;
 use crate::world::Universe;
 
@@ -19,13 +20,17 @@ struct Shot {
     long: Option<usize>,
     /// Cases spéciales déjà posées.
     features: bool,
+    shape: Shape,
 }
 
 const fn shot(name: &'static str, state: GameState, universe: Universe, long: Option<usize>, features: bool) -> Shot {
-    Shot { name, state, universe, long, features }
+    Shot { name, state, universe, long, features, shape: Shape::Medium }
 }
 
 fn shots(press: bool) -> Vec<Shot> {
+    if std::env::var("SNAKE_FORMES").is_ok() {
+        return Shape::ALL.iter().map(|s| Shot { name: Box::leak(format!("forme-{s:?}").into_boxed_str()), state: GameState::Playing, universe: Universe::Prairie, long: Some(12), features: true, shape: *s }).collect();
+    }
     use GameState::{Menu, Options, Playing};
     use Universe::{Cimetiere, Desert, Ocean, Prairie};
     if press {
@@ -65,7 +70,7 @@ pub struct CapturePlugin;
 impl Plugin for CapturePlugin {
     fn build(&self, app: &mut App) {
         let press = std::env::var("SNAKE_PRESSE").ok();
-        if let Some(dir) = press.clone().or_else(|| std::env::var("SNAKE_CAPTURE").ok()) {
+        if let Some(dir) = press.clone().or_else(|| std::env::var("SNAKE_CAPTURE").ok()).or_else(|| std::env::var("SNAKE_FORMES").ok()) {
             app.insert_resource(Capture { dir, shots: shots(press.is_some()), index: 0, since: 0.0, started: false, shot: false })
                 .add_systems(Update, run_capture);
             if press.is_some() {
@@ -100,7 +105,7 @@ fn run_capture(
         }
         return;
     };
-    let (name, state, universe, long, features) = (s.name, s.state, s.universe, s.long, s.features);
+    let (name, state, universe, long, features, shape) = (s.name, s.state, s.universe, s.long, s.features, s.shape);
     // Laisse le temps au décor, à la caméra et au serpent de se mettre en place
     // (plus longtemps au démarrage, le temps de compiler les shaders).
     let shoot = if cap.index == 0 { 4.0 } else { 1.5 };
@@ -108,6 +113,7 @@ fn run_capture(
     if !cap.started {
         cap.started = true;
         settings.universe = universe;
+        settings.shape = shape;
         demo.long = long;
         demo.features = features;
         next.set(state);

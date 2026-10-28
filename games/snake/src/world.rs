@@ -3,6 +3,7 @@ use bevy::light::NotShadowCaster;
 use bevy::prelude::*;
 use game_common::{Rng, flat_material, tx};
 
+use crate::layout::Layout;
 use crate::settings::Settings;
 
 /// Hauteur du dessus du sol extérieur.
@@ -89,9 +90,8 @@ struct Theme {
 pub struct WorldPart;
 
 /// Case de la grille → position dans le monde (grille centrée sur l'origine).
-pub fn cell_to_world(c: Vec2, y: f32, grid: i32) -> Vec3 {
-    let off = (grid - 1) as f32 / 2.0;
-    Vec3::new(c.x - off, y, c.y - off)
+pub fn cell_to_world(c: Vec2, y: f32, l: &Layout) -> Vec3 {
+    Vec3::new(c.x - (l.w - 1) as f32 / 2.0, y, c.y - (l.h - 1) as f32 / 2.0)
 }
 
 /// Reconstruit le décor quand l'univers ou la taille du plateau change.
@@ -99,7 +99,8 @@ pub fn cell_to_world(c: Vec2, y: f32, grid: i32) -> Vec3 {
 pub fn rebuild_world(
     mut commands: Commands,
     settings: Res<Settings>,
-    mut built: Local<Option<(Universe, i32)>>,
+    layout: Res<Layout>,
+    mut built: Local<Option<(Universe, crate::layout::Shape)>>,
     old: Query<Entity, With<WorldPart>>,
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<StandardMaterial>>,
@@ -108,7 +109,7 @@ pub fn rebuild_world(
     mut suns: Query<&mut DirectionalLight>,
     server: Res<AssetServer>,
 ) {
-    let key = (settings.universe, settings.grid());
+    let key = (settings.universe, settings.shape);
     if *built == Some(key) {
         return;
     }
@@ -117,7 +118,8 @@ pub fn rebuild_world(
         commands.entity(e).despawn();
     }
 
-    let (universe, grid) = key;
+    let (universe, shape) = key;
+    let l = &*layout;
     let theme = universe.theme();
     clear.0 = theme.sky;
     ambient.color = theme.ambient.0;
@@ -137,32 +139,31 @@ pub fn rebuild_world(
 
     // Socle et damier du plateau. Ces pièces plates ne projettent pas d'ombre :
     // sinon elles s'ombrent elles-mêmes et des rayures apparaissent.
-    let g = grid as f32;
-    // Le socle s'arrête sous le dessus des cases (sinon les deux surfaces se
-    // superposent et scintillent).
-    let e = b.block(theme.rim, Vec3::new(0.0, GROUND_Y, 0.0), Vec3::new(g + 0.3, 0.2, g + 0.3));
-    b.flat(e);
-    for x in 0..grid {
-        for z in 0..grid {
-            let color = if (x + z) % 2 == 0 { theme.tiles.0 } else { theme.tiles.1 };
-            let p = cell_to_world(Vec2::new(x as f32, z as f32), -0.05, grid);
-            let e = b.block(color, p, Vec3::new(0.96, 0.1, 0.96));
-            b.flat(e);
-        }
+    // Le socle (sous chaque case praticable) s'arrête sous le dessus des cases
+    // (sinon les deux surfaces se superposent et scintillent).
+    for c in l.cells() {
+        let color = if (c.x + c.y) % 2 == 0 { theme.tiles.0 } else { theme.tiles.1 };
+        let p = cell_to_world(c.as_vec2(), -0.05, l);
+        let e = b.block(color, p, Vec3::new(0.96, 0.1, 0.96));
+        b.flat(e);
+        let e = b.block(theme.rim, Vec3::new(p.x, GROUND_Y, p.z), Vec3::new(1.2, 0.2, 1.2));
+        b.flat(e);
     }
 
-    // Décor sur un anneau autour du plateau
-    let mut rng = Rng::new(universe as u64 * 7919 + grid as u64);
-    let half = g / 2.0;
-    let reach = half + 10.0;
-    let mut x = -reach;
-    while x <= reach {
-        let mut z = -reach;
-        while z <= reach {
+    // Décor autour du plateau, y compris dans les creux des formes en L, en U ou en route.
+    let mut rng = Rng::new(universe as u64 * 7919 + shape as u64 * 31);
+    let reach_x = l.w as f32 / 2.0 + 10.0;
+    let reach_z = l.h as f32 / 2.0 + 10.0;
+    let mut x = -reach_x;
+    while x <= reach_x {
+        let mut z = -reach_z;
+        while z <= reach_z {
             let jitter = Vec3::new(rng.below(100) as f32 / 100.0 - 0.5, 0.0, rng.below(100) as f32 / 100.0 - 0.5);
             let pos = Vec3::new(x, GROUND_Y, z) + jitter;
-            let inside = pos.x.abs() < half + 3.2 && pos.z.abs() < half + 3.2;
-            if !inside && rng.below(10) < 6 {
+            // Position sur la grille de jeu, pour savoir à quelle distance du plateau on se trouve.
+            let on_grid = Vec2::new(pos.x + (l.w - 1) as f32 / 2.0, pos.z + (l.h - 1) as f32 / 2.0);
+            let free = l.distance_to_walkable(on_grid) > 3.0;
+            if free && rng.below(10) < 6 {
                 spawn_decor(universe, &mut b, &mut rng, pos);
             }
             z += 3.0;
