@@ -508,3 +508,50 @@ html.moment-nuit .hero-fallback { filter: brightness(.42) saturate(.75) hue-rota
 .zoom-ouvert { overflow: hidden; }
 @media (max-width: 600px) { .zoom { padding: 56px 8px 16px; } .zoom-fl { top: auto; bottom: 14px; } }
 .cache { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+
+/* ---- Fiche : onglets illustrés ---------------------------------------- */
+.onglets-band { padding-top: clamp(40px, 6vw, 72px); background: linear-gradient(180deg, var(--ivory), #fff); }
+.onglets-source { max-width: 760px; margin: 0 auto; }
+.onglets-band.pret { padding-left: clamp(16px, 5vw, 64px); padding-right: clamp(16px, 5vw, 64px); }
+.onglets-barre { display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; max-width: 1180px; margin: 0 auto 28px; }
+.onglet {
+  font: inherit; font-weight: 700; font-size: 15px; padding: 10px 20px; border-radius: 99px; cursor: pointer;
+  border: 2px solid var(--line); background: #fff; color: var(--ink-soft); transition: background .2s, color .2s, border-color .2s, transform .2s;
+}
+.onglet:hover { border-color: var(--blue); color: var(--blue); }
+.onglet.on { background: var(--night); border-color: var(--night); color: #fff; transform: translateY(-2px); }
+.onglets-scene { max-width: 1180px; margin: 0 auto; }
+.onglet-panneau {
+  display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.15fr); gap: clamp(20px, 4vw, 48px); align-items: center;
+  background: #fff; border-radius: 26px; padding: clamp(20px, 3.5vw, 40px); box-shadow: var(--shadow); animation: apparait .35s ease;
+}
+.onglet-panneau[hidden] { display: none; }
+.onglet-panneau.sans-visuel { grid-template-columns: minmax(0, 760px); justify-content: center; }
+@keyframes apparait { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+.onglet-texte h3 { margin: 0 0 .5em; font-size: clamp(1.5rem, 3vw, 2.1rem); }
+.onglet-texte h2 { margin: 0 0 .5em; font-size: clamp(1.5rem, 3vw, 2.1rem); }
+.onglet-texte p { font-size: 1.05rem; line-height: 1.65; }
+.onglet-visuel { display: block; width: 100%; aspect-ratio: 16 / 9; object-fit: cover; border-radius: 18px; cursor: zoom-in; box-shadow: 0 14px 34px -14px rgba(20, 44, 64, .5); }
+.onglet-texte .commandes { display: grid; gap: 10px; margin: 0; }
+.onglet-texte .commandes li { margin: 0; padding: 14px 18px; font-weight: 600; background: var(--sky-soft); box-shadow: none; border-left: 5px solid var(--blue); }
+@media (max-width: 860px) { .onglet-panneau { grid-template-columns: 1fr; } .onglet { padding: 8px 14px; font-size: 14px; } }
+@media (prefers-reduced-motion: reduce) { .onglet-panneau { animation: none; } }
+
+/* ---- Les mondes : bandeau pleine largeur, défilement automatique ------ */
+.band.mondes { padding: clamp(40px, 6vw, 72px) 0 0; background: var(--night); color: #fff; }
+.band.mondes > h2 { color: #fff; margin-bottom: 24px; padding: 0 16px; }
+.mondes .mondes-rail { padding: 0; gap: 0; }
+.mondes .monde { flex: 0 0 100%; border-radius: 0; box-shadow: none; }
+.mondes .monde img { width: 100%; height: min(56.25vw, 82vh); aspect-ratio: auto; object-fit: cover; }
+.mondes .monde figcaption { padding: 90px clamp(20px, 6vw, 90px) clamp(34px, 5vw, 56px); }
+.mondes .monde figcaption strong { font-size: clamp(1.4rem, 3.4vw, 2.6rem); font-family: var(--title); }
+.mondes .monde figcaption span { font-size: clamp(.95rem, 1.6vw, 1.2rem); }
+.mondes .carrousel-points { position: absolute; left: 0; right: 0; bottom: 14px; margin: 0; }
+.mondes .carrousel-points button { background: rgba(255, 255, 255, .45); }
+.mondes .carrousel-points button.on { background: #fff; }
+.mondes .carrousel-fleche.prec { left: 14px; }
+.mondes .carrousel-fleche.suiv { right: 14px; }
+@media (max-width: 600px) {
+  .onglets-barre { flex-wrap: nowrap; overflow-x: auto; justify-content: flex-start; scrollbar-width: none; padding-bottom: 4px; }
+  .onglet { flex: none; white-space: nowrap; }
+}

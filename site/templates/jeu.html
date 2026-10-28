@@ -56,18 +56,21 @@
 </section>
 {%- endif %}
 
-<div class="jeu-corps">
-  <article class="prose">
-    <h2>{{ trans(key="regle", lang=lang) }}</h2>
-    {{ page.content | safe }}
-  </article>
-  <aside class="plateformes">
-    <h2>{{ trans(key="commandes", lang=lang) }}</h2>
-    <ul class="commandes">{% for c in page.extra.commandes %}<li>{{ c }}</li>{% endfor %}</ul>
-    <p class="installer-lien"><a href="{{ get_url(path='@/installer.md', lang=lang) }}">{{ trans(key="voir_installation", lang=lang) }} →</a></p>
-    <p class="installer-lien"><a href="{{ config.extra.github }}/tree/main/{{ page.extra.code }}">{{ trans(key="code_source", lang=lang) }} →</a></p>
-  </aside>
-</div>
+<section class="band onglets-band" data-onglets data-intro="{{ trans(key='regle', lang=lang) }}"
+  data-visuels='[{% if page.extra.visuels %}{% for v in page.extra.visuels %}"{{ get_url(path='img/jeux/' ~ page.extra.dossier ~ '/' ~ v ~ '.jpg') }}"{% if not loop.last %},{% endif %}{% endfor %}{% endif %}]'>
+  <div class="onglets-source">
+    <article class="prose">
+      <h2>{{ trans(key="regle", lang=lang) }}</h2>
+      {{ page.content | safe }}
+    </article>
+    <aside class="onglets-commandes">
+      <h2>{{ trans(key="commandes", lang=lang) }}</h2>
+      <ul class="commandes">{% for c in page.extra.commandes %}<li>{{ c }}</li>{% endfor %}</ul>
+      <p class="installer-lien"><a href="{{ get_url(path='@/installer.md', lang=lang) }}">{{ trans(key="voir_installation", lang=lang) }} →</a>
+      · <a href="{{ config.extra.github }}/tree/main/{{ page.extra.code }}">{{ trans(key="code_source", lang=lang) }} →</a></p>
+    </aside>
+  </div>
+</section>
 
 {%- if page.extra.mondes %}
 <section class="band mondes">

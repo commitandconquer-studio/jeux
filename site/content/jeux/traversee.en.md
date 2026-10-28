@@ -26,6 +26,7 @@ chiffres = [
   { n = "34", t = "enemies to unlock" },
   { n = "6", t = "achievements" },
 ]
+visuels = ["livraison-hero", "livraison", "ennemis", "ecrase", "menu", "personnages", "presse-espace", "presse-farwest"]
 captures = [
   { img = "menu", t = "The menu: your best score, your next unlock, your achievements" },
   { img = "livraison", t = "A parcel on your back: the arrow shows where to deliver" },

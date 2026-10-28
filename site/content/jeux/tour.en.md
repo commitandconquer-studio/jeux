@@ -13,6 +13,7 @@ vignette = "2-parfaits"
 chiffres = [
   { n = "3", t = "perfects in a row" },
 ]
+visuels = ["2-parfaits", "3-coupes"]
 captures = [
   { img = "1-menu", t = "The menu" },
   { img = "2-parfaits", t = "A tower of “Perfect” drops on its little island" },

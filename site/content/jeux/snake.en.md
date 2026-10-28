@@ -21,6 +21,7 @@ chiffres = [
   { n = "4", t = "landscapes" },
   { n = "5", t = "special tiles" },
 ]
+visuels = ["2-prairie", "7-cases-speciales", "1-menu", "3-desert", "5-ile-des-pirates", "6-longue-file"]
 captures = [
   { img = "1-menu", t = "The menu: your record and your next unlock" },
   { img = "6-longue-file", t = "A very long line of characters" },

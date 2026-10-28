@@ -26,6 +26,7 @@ chiffres = [
   { n = "34", t = "ennemis à débloquer" },
   { n = "6", t = "exploits" },
 ]
+visuels = ["livraison-hero", "livraison", "ennemis", "ecrase", "menu", "personnages", "presse-espace", "presse-farwest"]
 captures = [
   { img = "menu", t = "Le menu : votre record, votre prochain déblocage, vos exploits" },
   { img = "livraison", t = "Un colis sur le dos : la flèche montre où livrer" },

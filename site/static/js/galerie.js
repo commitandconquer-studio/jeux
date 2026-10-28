@@ -61,9 +61,66 @@
       });
       points.querySelectorAll("button").forEach(function (p, k) { p.classList.toggle("on", k === best); });
     }
+    var tempo = null, pause = false;
+    function suivant() {
+      var fin = rail.scrollLeft + rail.clientWidth >= rail.scrollWidth - 4;
+      rail.scrollTo({ left: fin ? 0 : rail.scrollLeft + pas(), behavior: "smooth" });
+    }
+    if (!reduit) {
+      tempo = setInterval(function () { if (!pause && !document.hidden) suivant(); }, 5000);
+      ["mouseenter", "focusin", "touchstart"].forEach(function (e) { c.addEventListener(e, function () { pause = true; }, { passive: true }); });
+      ["mouseleave", "focusout", "touchend"].forEach(function (e) { c.addEventListener(e, function () { pause = false; }, { passive: true }); });
+    }
     rail.addEventListener("scroll", function () { requestAnimationFrame(maj); }, { passive: true });
     window.addEventListener("resize", maj);
     maj();
+  });
+
+
+  // Onglets de la fiche : chaque titre du texte devient un onglet, avec son image ; les commandes ferment la marche.
+  document.querySelectorAll("[data-onglets]").forEach(function (sec) {
+    var src = sec.querySelector(".onglets-source");
+    var prose = src.querySelector(".prose");
+    var visuels = []; try { visuels = JSON.parse(sec.dataset.visuels || "[]"); } catch (e) {}
+    var panneaux = [], cur = null;
+    Array.prototype.slice.call(prose.children).forEach(function (el) {
+      if (el.tagName === "H2" && !el.dataset.fait) {
+        if (cur && !cur.corps.length && !panneaux.length) { cur.titre = el.textContent; return; }
+        cur = { titre: el.textContent, corps: [] }; panneaux.push(cur);
+      } else if (cur) { cur.corps.push(el); }
+    });
+    // Le premier titre (« La règle ») est celui de l'introduction : il garde son texte, sans doublon.
+    var cmd = src.querySelector(".onglets-commandes");
+    var titreCmd = cmd.querySelector("h2").textContent;
+    var barre = document.createElement("div"); barre.className = "onglets-barre"; barre.setAttribute("role", "tablist");
+    var scene = document.createElement("div"); scene.className = "onglets-scene";
+    var tout = panneaux.map(function (p) { return { titre: p.titre, corps: p.corps }; });
+    tout.push({ titre: titreCmd, commandes: cmd });
+    var btns = [], pans = [];
+    function choisir(i) {
+      btns.forEach(function (b, k) { b.classList.toggle("on", k === i); b.setAttribute("aria-selected", k === i); });
+      pans.forEach(function (x, k) { x.hidden = k !== i; });
+    }
+    tout.forEach(function (t, i) {
+      var b = document.createElement("button");
+      b.type = "button"; b.className = "onglet"; b.setAttribute("role", "tab"); b.textContent = t.titre;
+      b.addEventListener("click", function () { choisir(i); });
+      barre.appendChild(b); btns.push(b);
+      var pan = document.createElement("div"); pan.className = "onglet-panneau"; pan.setAttribute("role", "tabpanel");
+      var txt = document.createElement("div"); txt.className = "onglet-texte";
+      if (t.commandes) { while (t.commandes.firstChild) txt.appendChild(t.commandes.firstChild); }
+      else { var h = document.createElement("h3"); h.textContent = t.titre; txt.appendChild(h); t.corps.forEach(function (e) { txt.appendChild(e); }); }
+      pan.appendChild(txt);
+      if (visuels[i]) {
+        var im = document.createElement("img"); im.src = visuels[i]; im.alt = t.titre; im.loading = "lazy";
+        im.className = "onglet-visuel"; im.setAttribute("data-zoom", ""); im.tabIndex = 0;
+        pan.appendChild(im);
+      } else { pan.classList.add("sans-visuel"); }
+      scene.appendChild(pan); pans.push(pan);
+    });
+    sec.innerHTML = ""; sec.appendChild(barre); sec.appendChild(scene);
+    sec.classList.add("pret");
+    choisir(0);
   });
 
   // Agrandissement : un clic sur une capture ou un monde l'ouvre en grand.
