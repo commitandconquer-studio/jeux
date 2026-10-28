@@ -37,7 +37,7 @@ struct Music;
 fn music_for(universe: Universe) -> &'static str {
     match universe {
         Universe::Prairie | Universe::Parc | Universe::Ville | Universe::Gare => lib::MUSIC_PRAIRIE,
-        Universe::Desert | Universe::Ruines => lib::MUSIC_DESERT,
+        Universe::Desert | Universe::Ruines | Universe::Medieval => lib::MUSIC_DESERT,
         Universe::Cimetiere => lib::MUSIC_NOCTURNE,
         Universe::Ocean | Universe::Port => lib::MUSIC_OCEAN,
     }

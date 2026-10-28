@@ -22,10 +22,11 @@ pub enum Universe {
     Ville,
     Gare,
     Port,
+    Medieval,
 }
 
 impl Universe {
-    pub const ALL: [Universe; 9] = [Universe::Prairie, Universe::Desert, Universe::Ruines, Universe::Cimetiere, Universe::Ocean, Universe::Parc, Universe::Ville, Universe::Gare, Universe::Port];
+    pub const ALL: [Universe; 10] = [Universe::Prairie, Universe::Desert, Universe::Ruines, Universe::Cimetiere, Universe::Ocean, Universe::Parc, Universe::Ville, Universe::Gare, Universe::Port, Universe::Medieval];
 
     pub fn next(self) -> Self {
         let i = Self::ALL.iter().position(|u| *u == self).unwrap_or(0);
@@ -43,6 +44,7 @@ impl Universe {
             Universe::Ville => tx!("Centre-ville", "Downtown", "Innenstadt", "Centro città", "Centro urbano"),
             Universe::Gare => tx!("Gare", "Train station", "Bahnhof", "Stazione", "Estación"),
             Universe::Port => tx!("Port", "Harbour", "Hafen", "Porto", "Puerto"),
+            Universe::Medieval => tx!("Village médiéval", "Medieval village", "Mittelalterdorf", "Villaggio medievale", "Aldea medieval"),
         }
         .t()
     }
@@ -122,6 +124,14 @@ impl Universe {
                 ground: c(0.18, 0.42, 0.58),
                 sun: (Color::WHITE, 6_800.0),
                 ambient: (c(0.55, 0.60, 0.70), 1000.0),
+            },
+            Universe::Medieval => Theme {
+                sky: c(0.80, 0.84, 0.90),
+                tiles: (c(0.74, 0.70, 0.62), c(0.68, 0.64, 0.56)),
+                rim: c(0.40, 0.34, 0.28),
+                ground: c(0.46, 0.64, 0.34),
+                sun: (c(1.0, 0.95, 0.85), 6_800.0),
+                ambient: (c(0.56, 0.54, 0.62), 1000.0),
             },
         }
     }
@@ -347,6 +357,53 @@ pub fn rebuild_world(
         return;
     }
 
+    // Village médiéval : une cour pavée, des remparts et des tours aux côtés du fond (le côté caméra reste ouvert), des étals devant.
+    if universe == Universe::Medieval {
+        let (w, h) = (l.w as f32, l.h as f32);
+        let (ex0, ey0, ex1, ey1) = (-0.5, -0.5, w - 0.5, h - 0.5);
+        let (d, piece) = (1.4, 1.8);
+        let cobble = b.mat(Color::srgb(0.66, 0.62, 0.55));
+        let at = cell_to_world(Vec2::new((ex0 + ex1) / 2.0, (ey0 + ey1) / 2.0), GROUND_Y, l);
+        let e = b.block_with(cobble, at, Vec3::new(w + 2.0 * d, 0.2, h + 2.0 * d), 0.0);
+        b.flat(e);
+        // Rempart : des pans de mur le long des deux côtés du fond.
+        let mut x = ex0 - d;
+        while x <= ex1 + d {
+            b.model("castle-kit/wall", cell_to_world(Vec2::new(x, ey0 - d), GROUND_Y + 0.2, l), piece, 0.0);
+            x += piece;
+        }
+        let mut y = ey0 - d;
+        while y <= ey1 + d {
+            b.model("castle-kit/wall", cell_to_world(Vec2::new(ex0 - d, y), GROUND_Y + 0.2, l), piece, FRAC_PI_2);
+            y += piece;
+        }
+        // Tours : hautes au fond et sur les côtés, petites devant (elles cacheraient le plateau).
+        let tower = |b: &mut Builder, p: Vec2, floors: i32| {
+            let base = cell_to_world(p, GROUND_Y + 0.2, l);
+            let s = 2.2;
+            b.model("castle-kit/tower-square-base", base, s, 0.0);
+            for f in 0..floors {
+                b.model("castle-kit/tower-square-mid-windows", base + Vec3::Y * (1.01 * s * (f + 1) as f32), s, 0.0);
+            }
+            b.model("castle-kit/tower-square-roof", base + Vec3::Y * (1.01 * s * (floors + 1) as f32), s, 0.0);
+        };
+        tower(&mut b, Vec2::new(ex0 - d, ey0 - d), 3);
+        tower(&mut b, Vec2::new(ex1 + d, ey0 - d), 1);
+        tower(&mut b, Vec2::new(ex0 - d, ey1 + d), 1);
+        tower(&mut b, Vec2::new(ex1 + d, ey1 + d), 0);
+        // Devant : une clôture basse et des fanions.
+        let mut x = ex0;
+        while x < ex1 {
+            b.model("fantasy-town-kit/fence", cell_to_world(Vec2::new(x, ey1 + d), GROUND_Y + 0.2, l), 1.8, 0.0);
+            x += 1.8;
+        }
+        let mut y = ey0;
+        while y < ey1 {
+            b.model("fantasy-town-kit/fence", cell_to_world(Vec2::new(ex1 + d, y), GROUND_Y + 0.2, l), 1.8, FRAC_PI_2);
+            y += 1.8;
+        }
+    }
+
     // Décor autour du plateau, y compris dans les creux des formes en L, en U ou en route.
     let mut rng = Rng::new(universe as u64 * 7919 + shape as u64 * 31);
     let reach_x = l.w as f32 / 2.0 + 10.0;
@@ -359,7 +416,7 @@ pub fn rebuild_world(
             let pos = Vec3::new(x, GROUND_Y, z) + jitter;
             // Position sur la grille de jeu, pour savoir à quelle distance du plateau on se trouve.
             let on_grid = Vec2::new(pos.x + (l.w - 1) as f32 / 2.0, pos.z + (l.h - 1) as f32 / 2.0);
-            let free = l.distance_to_walkable(on_grid) > 3.0;
+            let free = l.distance_to_walkable(on_grid) > if universe == Universe::Medieval { 4.2 } else { 3.0 };
             if free && rng.below(10) < 6 {
                 spawn_decor(universe, &mut b, &mut rng, pos);
             }
@@ -484,12 +541,28 @@ fn decor_models(u: Universe) -> &'static [(&'static str, f32)] {
             ("pirate-kit/crate", 1.6),
             ("city-kit-roads/light-square", 2.0),
         ],
+        Universe::Medieval => &[
+            ("castle-kit/tower-hexagon-base", 2.2),
+            ("castle-kit/tree-large", 2.4),
+            ("castle-kit/tree-large", 2.8),
+            ("mini-forest/tent", 2.0),
+            ("castle-kit/tree-large", 2.0),
+            ("castle-kit/tree-small", 2.0),
+            ("castle-kit/rocks-large", 1.6),
+            ("castle-kit/flag", 1.6),
+            ("fantasy-town-kit/stall-red", 1.6),
+            ("fantasy-town-kit/stall-green", 1.6),
+            ("fantasy-town-kit/cart", 1.6),
+            ("fantasy-town-kit/windmill", 1.2),
+            ("fantasy-town-kit/lantern", 2.2),
+            ("fantasy-town-kit/fence", 1.8),
+        ],
     }
 }
 
 /// Hauts ou larges : ils cacheraient le plateau s'ils étaient devant (côté caméra).
 fn is_tall(file: &str) -> bool {
-    ["tree", "pine", "palm", "cactus_tall", "prototype-kit/column", "mini-arena/column", "wall-arch", "pillar-stone", "statue", "ship", "boat", "crypt", "tent", "lightpost", "log_large", "fence", "rocks", "rock_large", "building", "water-tower", "chimney", "traffic-light", "stall", "support", "park-entrance"].iter().any(|k| file.contains(k))
+    ["tree", "pine", "palm", "cactus_tall", "prototype-kit/column", "mini-arena/column", "wall-arch", "pillar-stone", "statue", "ship", "boat", "crypt", "tent", "lightpost", "log_large", "fence", "rocks", "rock_large", "building", "tower", "castle-kit/wall", "windmill", "water-tower", "chimney", "traffic-light", "stall", "support", "park-entrance"].iter().any(|k| file.contains(k))
 }
 
 fn spawn_decor(u: Universe, b: &mut Builder, rng: &mut Rng, pos: Vec3) {

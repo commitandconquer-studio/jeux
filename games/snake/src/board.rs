@@ -265,6 +265,7 @@ pub fn obstacle_models(u: Universe) -> &'static [(&'static str, f32)] {
         Universe::Ville => &[("city-kit-suburban/tree-large", 2.0), ("city-kit-suburban/tree-small", 2.2), ("nature-kit/plant_bush", 2.0), ("nature-kit/rock_largeA", 1.8), ("special/pond", 1.0), ("special/pond", 1.0)],
         Universe::Gare => &[("city-kit-industrial/shipping-container-a", 1.0), ("city-kit-industrial/detail-tank", 1.2), ("city-kit-roads/construction-barrier", 2.0)],
         Universe::Port => &[("pirate-kit/barrel", 1.6), ("pirate-kit/crate", 1.6), ("city-kit-industrial/shipping-container-a", 1.0)],
+        Universe::Medieval => &[("fantasy-town-kit/cart", 1.6), ("castle-kit/rocks-small", 1.8), ("castle-kit/tree-trunk", 1.8), ("fantasy-town-kit/planks", 1.8)],
     }
 }
 

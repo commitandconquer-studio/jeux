@@ -1,0 +1,81 @@
+# Village médiéval — des herses : portes qui s'ouvrent et se ferment au rythme des pas (vert = ouvert, orange = va fermer, rouge = fermé).
+# Cases (nombre) : blocs, trous, teleporteurs (paires), accelerateurs, tapis, barrieres, rivaux, trains, pontons, herses.
+
+[Le chemin de ronde]
+lieu = medieval
+forme = carre 18
+touristes = 8
+herses = 2
+pas = 0.33
+
+[Les deux portes]
+lieu = medieval
+forme = carre 18
+touristes = 10
+herses = 3
+pas = 0.32
+
+[La place du marché]
+lieu = medieval
+forme = carre 16
+touristes = 12
+herses = 4
+blocs = 4
+pas = 0.32
+
+[Le moulin]
+lieu = medieval
+forme = carre 16
+touristes = 14
+herses = 3
+blocs = 6
+pas = 0.31
+
+[La grand-rue]
+lieu = medieval
+forme = rectangle 22x10
+touristes = 16
+herses = 5
+pas = 0.3
+
+[Le pont-levis]
+lieu = medieval
+forme = carre 16
+touristes = 14
+herses = 4
+sortie = oui
+pas = 0.3
+
+[Les remparts]
+lieu = medieval
+forme = u
+touristes = 18
+herses = 4
+blocs = 4
+pas = 0.3
+
+[Le donjon]
+lieu = medieval
+forme = carre 18
+touristes = 20
+herses = 5
+accelerateurs = 2
+pas = 0.29
+
+[La fête du château]
+lieu = medieval
+forme = allees
+touristes = 24
+herses = 6
+blocs = 5
+pas = 0.28
+
+[Le grand tournoi]
+lieu = medieval
+forme = carre 18
+touristes = 28
+herses = 6
+teleporteurs = 1
+accelerateurs = 3
+sortie = oui
+pas = 0.26
