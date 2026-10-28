@@ -37,7 +37,7 @@ impl Plugin for GamePlugin {
             .add_systems(
                 Update,
                 (
-                    (crate::board::sync_tiles, crate::board::animate_tiles),
+                    (crate::board::sync_tiles, crate::board::animate_tiles, crate::board::animate_gates),
                     (read_input, autopilot, step, apply_portal, exit_sequence, finish_crash).chain().run_if(in_state(GameState::Playing)),
                     (sync_guest, sync_segments).run_if(|s: Res<State<GameState>>| {
                         matches!(s.get(), GameState::Playing | GameState::GameOver)
@@ -141,6 +141,7 @@ fn cap(f: Feature) -> usize {
         Feature::Speeder => 4,
         Feature::Belt => 8,
         Feature::Portal => 1,
+        Feature::Gate => 6,
     }
 }
 
@@ -152,6 +153,7 @@ pub fn feature_name(f: Feature) -> &'static str {
         Feature::Teleport => tx!("Téléporteurs !", "Teleporters!", "Teleporter!", "Teletrasporti!", "¡Teletransportadores!"),
         Feature::Speeder => tx!("Accélérateurs !", "Speed pads!", "Turbo-Felder!", "Acceleratori!", "¡Aceleradores!"),
         Feature::Portal => tx!("Un portail !", "A portal!", "Ein Portal!", "Un portale!", "¡Un portal!"),
+        Feature::Gate => tx!("Barrières !", "Barriers!", "Schranken!", "Barriere!", "¡Barreras!"),
         Feature::Belt => tx!("Tapis roulants !", "Conveyor belts!", "Förderbänder!", "Nastri trasportatori!", "¡Cintas transportadoras!"),
     }
     .t()
@@ -384,7 +386,7 @@ fn autopilot(
     let hole = std::env::var("SNAKE_TROU").is_ok().then(|| board.tiles.iter().filter(|(_, t)| **t == Tile::Hole).map(|(c, _)| *c).min_by_key(|c| (*c - head).abs().element_sum())).flatten();
     let target = hole.or(run.exit).unwrap_or(food.cell);
     let body = &conga.cells[..conga.cells.len() - 1];
-    let safe = |c: IVec2| layout.walkable(c) && !body.contains(&c) && !matches!(board.tiles.get(&c), Some(Tile::Obstacle(_))) && (hole.is_some() || board.tiles.get(&c) != Some(&Tile::Hole));
+    let safe = |c: IVec2| layout.walkable(c) && !body.contains(&c) && !matches!(board.tiles.get(&c), Some(Tile::Obstacle(_))) && !board.shut(c, board.clock + 1) && (hole.is_some() || board.tiles.get(&c) != Some(&Tile::Hole));
     let best = [IVec2::X, IVec2::NEG_X, IVec2::Y, IVec2::NEG_Y]
         .into_iter()
         .filter(|d| *d != -conga.dir && safe(head + *d))
@@ -479,6 +481,8 @@ fn step(
         return;
     }
     boost.0 = boost.0.saturating_sub(1);
+    // Le rythme des barrières suit les pas, sans réveiller le décor du plateau.
+    board.bypass_change_detection().clock += 1;
     // Un tapis roulant impose sa direction (sauf à contresens).
     if let Some(Tile::Belt(d)) = board.tiles.get(&conga.cells[0])
         && *d != -conga.dir
@@ -499,6 +503,7 @@ fn step(
     let deadly = match board.tiles.get(&head) {
         Some(Tile::Obstacle(_) | Tile::Hole) => true,
         Some(Tile::Belt(d)) => *d == -conga.dir,
+        Some(Tile::Gate(ph)) => Board::gate_closed(*ph, board.clock),
         _ => false,
     };
     let hole_at = (board.tiles.get(&head) == Some(&Tile::Hole)).then_some(head);

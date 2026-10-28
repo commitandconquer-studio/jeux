@@ -41,10 +41,11 @@ pub enum Place {
     Graveyard,
     Pirates,
     Park,
+    City,
 }
 
 impl Place {
-    pub const ALL: [Place; 6] = [Place::Garden, Place::Desert, Place::Ruins, Place::Graveyard, Place::Pirates, Place::Park];
+    pub const ALL: [Place; 7] = [Place::Garden, Place::Desert, Place::Ruins, Place::Graveyard, Place::Pirates, Place::Park, Place::City];
 
     pub fn scenery(self) -> Universe {
         match self {
@@ -54,6 +55,7 @@ impl Place {
             Place::Graveyard => Universe::Cimetiere,
             Place::Pirates => Universe::Ocean,
             Place::Park => Universe::Parc,
+            Place::City => Universe::Ville,
         }
     }
 
@@ -66,6 +68,7 @@ impl Place {
             Place::Graveyard => tx!("Cimetière", "Graveyard", "Friedhof", "Cimitero", "Cementerio"),
             Place::Pirates => tx!("Île des pirates", "Pirate island", "Pirateninsel", "Isola dei pirati", "Isla pirata"),
             Place::Park => tx!("Parc de loisirs", "Theme park", "Freizeitpark", "Parco divertimenti", "Parque de atracciones"),
+            Place::City => tx!("Centre-ville", "Downtown", "Innenstadt", "Centro città", "Centro urbano"),
         }
         .t()
     }
@@ -109,6 +112,7 @@ fn parse_place(v: &str) -> Option<Place> {
         "cimetiere" => Place::Graveyard,
         "pirates" => Place::Pirates,
         "parc" => Place::Park,
+        "ville" => Place::City,
         _ => return None,
     })
 }
@@ -136,13 +140,14 @@ pub fn parse(text: &str) -> Result<Vec<Level>, String> {
             "sortie" => level.exit = value == "oui",
             "pas" => level.pace = value.parse().map_err(|_| err("nombre attendu"))?,
             "temps" => level.par = value.parse().map_err(|_| err("nombre attendu"))?,
-            "blocs" | "trous" | "teleporteurs" | "accelerateurs" | "tapis" => {
+            "blocs" | "trous" | "teleporteurs" | "accelerateurs" | "tapis" | "barrieres" => {
                 let n = value.parse().map_err(|_| err("nombre attendu"))?;
                 let f = match key {
                     "blocs" => Feature::Obstacle,
                     "trous" => Feature::Hole,
                     "teleporteurs" => Feature::Teleport,
                     "accelerateurs" => Feature::Speeder,
+                    "barrieres" => Feature::Gate,
                     _ => Feature::Belt,
                 };
                 level.cases.push((f, n));
@@ -162,7 +167,7 @@ pub fn parse(text: &str) -> Result<Vec<Level>, String> {
 /// Tous les niveaux, dans l'ordre du Voyage.
 pub static LEVELS: LazyLock<Vec<Level>> = LazyLock::new(|| {
     let mut all = Vec::new();
-    for text in [include_str!("../levels/jardin.txt"), include_str!("../levels/desert.txt"), include_str!("../levels/ruines.txt"), include_str!("../levels/cimetiere.txt"), include_str!("../levels/pirates.txt"), include_str!("../levels/parc.txt")] {
+    for text in [include_str!("../levels/jardin.txt"), include_str!("../levels/desert.txt"), include_str!("../levels/ruines.txt"), include_str!("../levels/cimetiere.txt"), include_str!("../levels/pirates.txt"), include_str!("../levels/parc.txt"), include_str!("../levels/ville.txt")] {
         all.extend(parse(text).unwrap_or_else(|e| panic!("niveaux illisibles : {e}")));
     }
     all

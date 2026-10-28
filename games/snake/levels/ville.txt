@@ -1,0 +1,80 @@
+# Centre-ville — les premières barrières : passages qui s'ouvrent et se ferment au rythme des pas (vert = ouvert, orange = va fermer, rouge = fermé).
+# Cases (nombre) : blocs, trous, teleporteurs (paires), accelerateurs, tapis, barrieres.
+
+[Le passage piéton]
+lieu = ville
+forme = carre 18
+touristes = 8
+barrieres = 2
+pas = 0.33
+
+[Le carrefour]
+lieu = ville
+forme = carre 18
+touristes = 10
+barrieres = 3
+pas = 0.32
+
+[Les feux]
+lieu = ville
+forme = carre 16
+touristes = 14
+barrieres = 4
+pas = 0.32
+
+[Travaux]
+lieu = ville
+forme = carre 16
+touristes = 14
+barrieres = 3
+blocs = 4
+pas = 0.31
+
+[L'avenue]
+lieu = ville
+forme = rectangle 22x10
+touristes = 16
+barrieres = 5
+pas = 0.3
+
+[La sortie du centre]
+lieu = ville
+forme = carre 16
+touristes = 16
+barrieres = 3
+accelerateurs = 2
+sortie = oui
+pas = 0.3
+
+[La rue étroite]
+lieu = ville
+forme = U
+touristes = 18
+barrieres = 4
+pas = 0.3
+
+[Le quartier d'affaires]
+lieu = ville
+forme = route
+touristes = 20
+barrieres = 5
+trous = 2
+pas = 0.3
+
+[L'heure de pointe]
+lieu = ville
+forme = allees
+touristes = 22
+barrieres = 6
+blocs = 3
+pas = 0.28
+
+[La grande parade]
+lieu = ville
+forme = carre 16
+touristes = 26
+barrieres = 6
+teleporteurs = 1
+accelerateurs = 2
+sortie = oui
+pas = 0.26

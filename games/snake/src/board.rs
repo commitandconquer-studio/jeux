@@ -22,6 +22,8 @@ pub enum Tile {
     /// La sortie d'un niveau du Voyage.
     Exit,
     Portal,
+    /// Barrière qui s'ouvre et se ferme au rythme des pas (décalage de phase).
+    Gate(u8),
 }
 
 /// Ce que le jeu sait poser sur le plateau.
@@ -34,18 +36,35 @@ pub enum Feature {
     Belt,
     /// Portail de paysage (mode infini) : change le décor, pas le plateau.
     Portal,
+    Gate,
 }
+
+/// Nombre de pas pendant lesquels une barrière reste ouverte (puis fermée).
+pub const GATE_PERIOD: u32 = 4;
 
 #[derive(Resource, Default)]
 pub struct Board {
     pub tiles: HashMap<IVec2, Tile>,
     pub teleports: u8,
+    /// Nombre de pas faits (rythme des barrières).
+    pub clock: u32,
 }
 
 impl Board {
     pub fn clear(&mut self) {
         self.tiles.clear();
         self.teleports = 0;
+        self.clock = 0;
+    }
+
+    /// La barrière de cette case est-elle fermée au pas `clock` ?
+    pub fn gate_closed(phase: u8, clock: u32) -> bool {
+        (clock / GATE_PERIOD + phase as u32) % 2 == 1
+    }
+
+    /// Cette case est-elle un mur au pas `clock` (barrière fermée) ?
+    pub fn shut(&self, c: IVec2, clock: u32) -> bool {
+        matches!(self.tiles.get(&c), Some(Tile::Gate(ph)) if Self::gate_closed(*ph, clock))
     }
 
     pub fn partner(&self, from: IVec2, id: u8) -> Option<IVec2> {
@@ -64,7 +83,7 @@ impl Board {
                         | (Feature::Teleport, Tile::Teleport(_))
                         | (Feature::Speeder, Tile::Speeder)
                         | (Feature::Belt, Tile::Belt(_))
-                        | (Feature::Portal, Tile::Portal)
+                        | (Feature::Portal, Tile::Portal) | (Feature::Gate, Tile::Gate(_))
                 )
             })
             .count()
@@ -89,6 +108,10 @@ impl Board {
                 }
                 Feature::Speeder => {
                     self.tiles.insert(c, Tile::Speeder);
+                    return true;
+                }
+                Feature::Gate => {
+                    self.tiles.insert(c, Tile::Gate(rng.below(2) as u8));
                     return true;
                 }
                 Feature::Portal => {
@@ -142,6 +165,7 @@ pub fn obstacle_models(u: Universe) -> &'static [(&'static str, f32)] {
         Universe::Cimetiere => &[("graveyard-kit/gravestone-cross", 2.4), ("graveyard-kit/rocks", 2.0), ("graveyard-kit/pumpkin", 2.4), ("graveyard-kit/gravestone-broken", 2.4)],
         Universe::Ocean => &[("survival-kit/barrel", 2.5), ("nature-kit/rock_largeE", 1.8), ("nature-kit/log", 2.0)],
         Universe::Parc => &[("coaster-kit/bench", 2.2), ("coaster-kit/trash", 2.4), ("coaster-kit/flowers", 2.4), ("fantasy-town-kit/stall-bench", 2.0)],
+        Universe::Ville => &[("city-kit-roads/construction-barrier", 2.0), ("city-kit-roads/construction-cone", 2.6), ("city-kit-suburban/planter", 2.2)],
     }
 }
 
@@ -195,6 +219,10 @@ pub fn sync_tiles(
     let hole = mk(Color::srgb(0.04, 0.03, 0.05), 0.0);
     let belt = mk(Color::srgb(0.22, 0.24, 0.30), 0.0);
     let chevron = mk(Color::srgb(1.0, 0.85, 0.2), 1.2);
+    let gate_base = mk(Color::srgb(0.30, 0.30, 0.34), 0.0);
+    let gate_shut = mk(Color::srgb(0.95, 0.25, 0.20), 0.8);
+    let gate_warn = mk(Color::srgb(1.0, 0.75, 0.15), 1.0);
+    let gate_open = mk(Color::srgb(0.35, 0.85, 0.45), 0.4);
     let speed_plate = mk(Color::srgb(1.0, 0.8, 0.1), 0.6);
     let speed_core = mk(Color::WHITE, 2.0);
     *count = board.tiles.len();
@@ -238,6 +266,15 @@ pub fn sync_tiles(
                 let sign = spawn(&mut commands, cube.clone(), mk(Color::WHITE, 1.0), at(1.15).with_scale(Vec3::new(0.7, 0.35, 0.1)), None);
                 commands.entity(sign).insert(Spin(1.2));
             }
+            Tile::Gate(phase) => {
+                let root = commands.spawn((at(0.0), Visibility::default(), TileVisual)).id();
+                spawn(&mut commands, plate.clone(), gate_base.clone(), Transform::IDENTITY, Some(root));
+                let kinds = [(&gate_shut, 0u8, Vec3::new(0.9, 0.8, 0.14), 0.4), (&gate_warn, 1, Vec3::new(0.9, 0.3, 0.14), 0.15), (&gate_open, 2, Vec3::new(0.9, 0.05, 0.14), 0.05)];
+                for (m, kind, size, y) in kinds {
+                    let e = spawn(&mut commands, cube.clone(), m.clone(), Transform::from_xyz(0.0, y, 0.0).with_scale(size), Some(root));
+                    commands.entity(e).insert(GateBar { phase, kind });
+                }
+            }
             Tile::Hole => {
                 spawn(&mut commands, disc.clone(), hole_rim.clone(), at(0.0).with_scale(Vec3::new(1.08, 1.0, 1.08)), None);
                 spawn(&mut commands, disc.clone(), hole.clone(), at(0.02).with_scale(Vec3::new(0.9, 1.0, 0.9)), None);
@@ -279,6 +316,24 @@ pub fn sync_tiles(
 
 #[derive(Component)]
 pub struct SideOffset(f32);
+
+#[derive(Component)]
+pub struct GateBar {
+    phase: u8,
+    /// 0 fermée, 1 sur le point de se fermer, 2 ouverte.
+    kind: u8,
+}
+
+/// Montre l'état des barrières : fermée (rouge, haute), prête à fermer (orange), ouverte (verte, basse).
+pub fn animate_gates(board: Res<Board>, mut bars: Query<(&GateBar, &mut Visibility)>) {
+    for (b, mut v) in &mut bars {
+        let closed = Board::gate_closed(b.phase, board.clock);
+        // Au prochain pas, elle sera fermée : on prévient.
+        let soon = !closed && Board::gate_closed(b.phase, board.clock + 1);
+        let kind = if closed { 0 } else if soon { 1 } else { 2 };
+        *v = if kind == b.kind { Visibility::Inherited } else { Visibility::Hidden };
+    }
+}
 
 pub fn animate_tiles(
     time: Res<Time>,
