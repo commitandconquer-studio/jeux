@@ -1,7 +1,7 @@
 +++
 title = "Follow the Guide!"
 updated = 2026-10-28T17:00:00+01:00
-description = "Lead a line of tourists through 11 places and 110 levels: every guest you recruit joins in right behind you."
+description = "Lead a line of tourists through 11 different settings: catch the stragglers, dodge the traps, and follow the story."
 [extra]
 web = true
 icone = "snake"
@@ -23,32 +23,32 @@ mondes = [
   { img = "10-gare", nom = "The station", t = "Tracks, warehouses and trains to dodge" },
   { img = "11-port", nom = "The harbour", t = "Fragile jetties, boats and barrels on the water" },
   { img = "12-village-medieval", nom = "The medieval village", t = "Ramparts, towers and portcullises" },
-  { img = "13-grottes", nom = "The caves", t = "Rocks and crystals in the dark, at the end of the Journey" },
+  { img = "13-grottes", nom = "The caves", t = "Rocks and crystals in the dark" },
 ]
 chiffres = [
-  { n = "110", t = "levels" },
-  { n = "11", t = "places" },
+  { n = "11", t = "settings" },
   { n = "19", t = "characters" },
+  { n = "10", t = "kinds of traps" },
 ]
-visuels = ["03-jardin-public", "15-cases-speciales", "02-voyage", "09-centre-ville", "07-ile-des-pirates", "14-longue-file"]
+visuels = ["03-jardin-public", "15-cases-speciales", "09-centre-ville", "07-ile-des-pirates", "14-longue-file"]
 captures = [
-  { img = "01-menu", t = "The menu: Journey, endless mode and scenery choice" },
-  { img = "02-voyage", t = "The Journey: one tab per place, ten levels and up to three stars" },
+  { img = "01-menu", t = "The menu: story mode, endless mode and scenery choice" },
   { img = "14-longue-file", t = "A line of a hundred tourists" },
   { img = "15-cases-speciales", t = "Teleporters, boosters, conveyors and holes" },
 ]
 +++
 
-**Follow the Guide!** is the new life of our Snake (it used to be *Conga Line*). You are the **guide** of a line of tourists that grows with every step, like a conga line at a village dance. Every tourist you recruit joins the line; hit an obstacle, fall into a hole or cross a train, and it's over.
+**Follow the Guide!** is the new life of our Snake (it used to be *Conga Line*). You are the **guide** of a line of tourists that grows with every step, like a conga line at a village dance. Catch the stragglers to bring them into the line, and never touch a wall or the line itself.
 
-## The Journey
-**11 places** of 10 levels each: from the public garden to the caves, through the desert, the ancient ruins, the graveyard, pirate island, the theme park, downtown, the station, the harbour and the medieval village. Each level earns **1 to 3 stars**, and each place brings something new. **Endless mode** is still there to beat your record.
+## Story mode
+Adventures made of **spoken scenes** (settings, animated characters, subtitles) alternating with **levels**. The first adventure, *Discovery*, is a short tutorial. A level editor lets us write more.
 
-## A board that gets trickier
-**Blocks** (trees, rocks, ponds…), **holes**, paired **teleporters**, **boosters**, **conveyors**, **fragile jetties**, **portcullises**, **rockfalls**, **trains**… and a **rival guide** who crosses the board and takes away any tourists of your line he touches. Boards come in every shape: square, rectangle, L, U, road, alleys.
+## Endless mode
+Play without end: a new special tile arrives every few guests, and the line gets longer and longer.
 
-## The characters
-**19 characters**: 12 tourists, 4 graveyard monsters and 3 wheelchair users. An appearance generator gives each of them **96 variants**, over 49,000 combinations of skin, hair, clothes and shoes.
+## Eleven settings
+Public garden, desert, ancient ruins, graveyard, pirate island, theme park, downtown (avenue and tram), station, harbour, medieval village and caves. Each one has its own scenery and its own traps.
 
-## The look
-A miniature-style setting, bold colours and wooden-sign menus. The game comes in **5 languages**, and a level editor lets you build your own.
+## Traps and characters
+**10 kinds of traps**: blocks, holes, paired teleporters, boosters, conveyors, fragile jetties, portcullises, rockfalls, a rival guide who takes your tourists, and trains. Boards come in every shape, even islands linked by teleporters.
+**19 characters**: 12 tourists, 4 graveyard monsters and 3 wheelchair users, each with **96 appearances**. The interface comes in **5 languages** (adventures are in French for now).
