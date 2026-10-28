@@ -30,9 +30,11 @@ chiffres = [
   { n = "19", t = "characters" },
   { n = "10", t = "kinds of traps" },
 ]
-visuels = ["03-jardin-public", "15-cases-speciales", "09-centre-ville", "07-ile-des-pirates", "14-longue-file"]
+visuels = ["03-jardin-public", "16-scene-bienvenue", "14-longue-file", "09-centre-ville", "15-cases-speciales", "07-ile-des-pirates"]
 captures = [
   { img = "01-menu", t = "The menu: story mode, endless mode and scenery choice" },
+  { img = "02-mode-scenario", t = "The story mode adventure list" },
+  { img = "17-scene-visite", t = "A spoken scene: animated characters and subtitles" },
   { img = "14-longue-file", t = "A line of a hundred tourists" },
   { img = "15-cases-speciales", t = "Teleporters, boosters, conveyors and holes" },
 ]

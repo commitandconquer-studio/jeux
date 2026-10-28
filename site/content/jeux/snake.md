@@ -30,9 +30,11 @@ chiffres = [
   { n = "19", t = "personnages" },
   { n = "10", t = "sortes de pièges" },
 ]
-visuels = ["03-jardin-public", "15-cases-speciales", "09-centre-ville", "07-ile-des-pirates", "14-longue-file"]
+visuels = ["03-jardin-public", "16-scene-bienvenue", "14-longue-file", "09-centre-ville", "15-cases-speciales", "07-ile-des-pirates"]
 captures = [
   { img = "01-menu", t = "Le menu : mode scénario, mode infini et choix du paysage" },
+  { img = "02-mode-scenario", t = "La liste des aventures du mode scénario" },
+  { img = "17-scene-visite", t = "Une scène parlée : personnages animés et sous-titres" },
   { img = "14-longue-file", t = "Une file de cent touristes" },
   { img = "15-cases-speciales", t = "Téléporteurs, accélérateurs, tapis roulants et trous" },
 ]
