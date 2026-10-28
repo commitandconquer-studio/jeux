@@ -8,7 +8,7 @@ use game_common::calendar::Date;
 use game_common::{Rng, iso_camera, iso_projection, save};
 
 use crate::GameState;
-use crate::vue::{Allure, DeScene, Kit, OndeVue, VueBelier, VueChien, VueLoup, VueMouton, eclat, spawn_scene};
+use crate::vue::{Allure, EtatChien, corriger_couleurs_chien, PoseChien, animer_chien, DeScene, Kit, OndeVue, VueBelier, VueChien, VueLoup, VueMouton, eclat, spawn_scene};
 
 pub const JEU: &str = "berger";
 
@@ -131,6 +131,7 @@ pub struct JeuPlugin;
 impl Plugin for JeuPlugin {
     fn build(&self, app: &mut App) {
         app.init_resource::<Kit>()
+            .init_resource::<PoseChien>()
             .insert_resource(Progression::charger())
             .insert_resource(CameraMobile(save::load(JEU, "camera").is_none_or(|v| v != "0")))
             .add_message::<Commencer>()
@@ -138,7 +139,7 @@ impl Plugin for JeuPlugin {
             .add_systems(Startup, setup)
             .add_systems(
                 Update,
-                (demarrer, touche_camera, avancer, synchroniser, camera, effets, crate::vue::animer_allures, crate::vue::animer_particules).chain(),
+                (demarrer, touche_camera, avancer, synchroniser, camera, effets, animer_chien, corriger_couleurs_chien, crate::vue::animer_allures, crate::vue::animer_particules).chain(),
             );
     }
 }
@@ -178,7 +179,11 @@ fn camera(
 ) {
     let Some(mut partie) = partie else { return };
     let dt = time.delta_secs().min(0.1);
-    let (zoom_voulu, centre_voulu) = if partie.demo || !mobile.0 || *state.get() == GameState::Niveaux {
+    // Pour les captures et les réglages : BERGER_ZOOM=0.2 colle la caméra au chien.
+    let zoom_force = std::env::var("BERGER_ZOOM").ok().and_then(|v| v.parse::<f32>().ok());
+    let (zoom_voulu, centre_voulu) = if let (Some(z), false) = (zoom_force, partie.demo) {
+        (z, partie.monde.chien.pos)
+    } else if partie.demo || !mobile.0 || *state.get() == GameState::Niveaux {
         (1.0, V2::ZERO)
     } else {
         let m = &partie.monde;
@@ -202,7 +207,7 @@ fn camera(
     let centre = partie.centre_vue;
     // Les bords du champ ne sortent pas trop de l'écran quand on est zoomé.
     let demi = partie.monde.carte.demi;
-    let marge = demi * (1.0 - partie.zoom);
+    let marge = if zoom_force.is_some() { demi } else { demi * (1.0 - partie.zoom) };
     let c = v2(centre.x.clamp(-marge.x, marge.x), centre.y.clamp(-marge.y, marge.y));
     let (w, h) = partie.cadre;
     for (mut t, mut p) in &mut cam {
@@ -225,6 +230,7 @@ fn demarrer(
     scene: Query<Entity, With<DeScene>>,
     kit: Res<Kit>,
     server: Res<AssetServer>,
+    mut graphes: ResMut<Assets<AnimationGraph>>,
     mut cam: Query<&mut Projection, With<MainCamera>>,
 ) {
     let Some(d) = demandes.read().last() else { return };
@@ -242,7 +248,7 @@ fn demarrer(
         Genre::Hasard(i, g) => (niveau(i), generer(&niveau(i), g)),
     };
     let carte_demi = carte.demi;
-    spawn_scene(&mut commands, &server, &kit, &carte, &nv);
+    spawn_scene(&mut commands, &server, &mut graphes, &kit, &carte, &nv);
     for mut p in &mut cam {
         *p = cadrage(carte.demi);
     }
@@ -363,6 +369,7 @@ fn synchroniser(
     mut commands: Commands,
     kit: Res<Kit>,
     mut mats: ResMut<Assets<StandardMaterial>>,
+    mut pose: ResMut<PoseChien>,
     mut moutons: Query<(&VueMouton, &mut Transform, &mut Visibility, &mut Allure), (Without<VueLoup>, Without<VueChien>, Without<OndeVue>, Without<VueBelier>)>,
     mut loups: Query<(&VueLoup, &mut Transform, &mut Visibility, &mut Allure), (Without<VueMouton>, Without<VueChien>, Without<OndeVue>, Without<VueBelier>)>,
     mut chien: Query<(&mut Transform, &mut Allure), (With<VueChien>, Without<VueMouton>, Without<VueLoup>, Without<OndeVue>, Without<VueBelier>)>,
@@ -422,6 +429,18 @@ fn synchroniser(
         t.rotation = Quat::from_rotation_y(a.cap);
         a.phase = phase;
         a.mouvement = (vitesse / 4.5).min(1.0);
+        pose.vitesse = vitesse;
+        pose.etat = if partie.monde.fin == Some(Fin::Victoire) {
+            EtatChien::Victoire
+        } else if c.aboie > 0.0 {
+            EtatChien::Aboie(c.onde_id)
+        } else if c.court && vitesse > 5.0 {
+            EtatChien::Course
+        } else if vitesse > 0.8 {
+            EtatChien::Marche
+        } else {
+            EtatChien::Repos
+        };
         a.agite = if c.onde > 0.0 { 1.0 } else { (vitesse / 6.0).min(1.0) };
         // L'aboiement : le chien se redresse puis se tasse (corps qui gonfle et s'aplatit).
         let s = (c.aboie / 0.28).clamp(0.0, 1.0);

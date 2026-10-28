@@ -259,33 +259,140 @@ pub fn spawn_belier(c: &mut Commands, k: &Kit, i: usize) -> Entity {
     root
 }
 
-/// Le chien de berger (border collie) : noir et blanc, oreilles dressées.
-pub fn spawn_chien(c: &mut Commands, k: &Kit) -> Entity {
+/// Le modèle du border collie (fourni par Olivier) : Z vers le haut, la tête vers -Y,
+/// avec ses animations (0 repos, 1 marche, 2 course, 3 aboiement, 4 victoire).
+pub const MODELE_CHIEN: &str = "models/berger/border-collie.glb";
+
+#[derive(Component)]
+pub struct ModeleChien {
+    graphe: Handle<AnimationGraph>,
+    noeuds: [AnimationNodeIndex; 5],
+}
+
+#[derive(Clone, Copy, PartialEq, Eq, Debug)]
+pub enum EtatChien {
+    Repos,
+    Marche,
+    Course,
+    /// Numéro de l'aboiement (pour relancer l'animation à chaque aboiement).
+    Aboie(u32),
+    Victoire,
+}
+
+/// Ce que fait le chien (écrit par `synchroniser`, lu par l'animation du modèle).
+#[derive(Resource)]
+pub struct PoseChien {
+    pub etat: EtatChien,
+    /// Vitesse de déplacement, pour régler la cadence de la marche.
+    pub vitesse: f32,
+}
+
+impl Default for PoseChien {
+    fn default() -> Self {
+        PoseChien { etat: EtatChien::Repos, vitesse: 0.0 }
+    }
+}
+
+/// L'état joué actuellement par le lecteur d'animation du chien.
+#[derive(Component)]
+pub struct JoueChien(EtatChien);
+
+/// Le chien de berger : le modèle border collie animé, tourné vers +Z, posé en y = 0.
+pub fn spawn_chien(c: &mut Commands, server: &AssetServer, graphes: &mut Assets<AnimationGraph>) -> Entity {
     let root = racine(c, 1.0, VueChien);
-    let corps = corps(c, root, 0.48);
-    piece(c, corps, &k.boule, &k.noir, Vec3::new(0.0, 0.0, -0.02), Vec3::new(0.46, 0.42, 1.02));
-    // Poitrail et collerette blancs.
-    piece(c, corps, &k.boule, &k.blanc, Vec3::new(0.0, -0.06, 0.3), Vec3::new(0.36, 0.34, 0.42));
-    piece(c, corps, &k.boule, &k.blanc, Vec3::new(0.0, 0.1, 0.42), Vec3::new(0.4, 0.3, 0.2));
-    // Tête : museau blanc, liste blanche, truffe noire.
-    piece(c, corps, &k.boule, &k.noir, Vec3::new(0.0, 0.2, 0.62), Vec3::new(0.34, 0.32, 0.36));
-    piece(c, corps, &k.cube, &k.blanc, Vec3::new(0.0, 0.14, 0.82), Vec3::new(0.16, 0.14, 0.26));
-    piece(c, corps, &k.cube, &k.blanc, Vec3::new(0.0, 0.32, 0.7), Vec3::new(0.06, 0.04, 0.3));
-    piece(c, corps, &k.boule, &k.noir, Vec3::new(0.0, 0.18, 0.96), Vec3::splat(0.08));
-    for s in [-1.0f32, 1.0] {
-        // Oreilles dressées, pointe pliée.
-        piece_tournee(c, corps, &k.cone, &k.noir, Vec3::new(0.12 * s, 0.44, 0.56), Vec3::new(0.14, 0.24, 0.1), Quat::from_rotation_z(-0.25 * s) * Quat::from_rotation_x(0.25));
-        piece(c, corps, &k.boule, &k.blanc, Vec3::new(0.08 * s, 0.28, 0.76), Vec3::splat(0.07));
-        piece(c, corps, &k.boule, &k.noir, Vec3::new(0.08 * s, 0.28, 0.79), Vec3::splat(0.04));
-    }
-    // La queue en panache, bout blanc : elle remue.
-    let queue = c.spawn((Transform::from_xyz(0.0, 0.08, -0.5), Visibility::default(), Queue { vitesse: 9.0 }, ChildOf(corps))).id();
-    piece_tournee(c, queue, &k.cube, &k.noir, Vec3::new(0.0, 0.1, -0.2), Vec3::new(0.1, 0.1, 0.46), Quat::from_rotation_x(0.55));
-    piece(c, queue, &k.boule, &k.blanc, Vec3::new(0.0, 0.2, -0.42), Vec3::new(0.12, 0.12, 0.2));
-    for (x, z, d) in [(-0.17, 0.32, 0.0), (0.17, 0.32, 3.14), (-0.17, -0.3, 3.14), (0.17, -0.3, 0.0)] {
-        patte(c, root, k, x, z, 0.36, 0.11, &k.noir, &k.blanc, d);
-    }
+    let scene = server.load(GltfAssetLabel::Scene(0).from_asset(MODELE_CHIEN));
+    let clip = |i: usize| server.load(GltfAssetLabel::Animation(i).from_asset(MODELE_CHIEN));
+    let mut g = AnimationGraph::new();
+    let noeuds = [g.add_clip(clip(0), 1.0, g.root), g.add_clip(clip(1), 1.0, g.root), g.add_clip(clip(2), 1.0, g.root), g.add_clip(clip(3), 1.0, g.root), g.add_clip(clip(4), 1.0, g.root)];
+    c.spawn((
+        WorldAssetRoot(scene),
+        Transform { rotation: Quat::from_rotation_x(-FRAC_PI_2), scale: Vec3::splat(0.5), ..default() },
+        ModeleChien { graphe: graphes.add(g), noeuds },
+        ChildOf(root),
+    ));
     root
+}
+
+/// Les couleurs des sommets du modèle sont écrites en sRGB alors que Bevy les lit en linéaire :
+/// on les convertit (sinon le noir devient gris et le chien paraît délavé).
+pub fn corriger_couleurs_chien(nouveaux: Query<(Entity, &Mesh3d), Added<Mesh3d>>, parents: Query<&ChildOf>, modeles: Query<(), With<ModeleChien>>, mut meshes: ResMut<Assets<Mesh>>, mut faits: Local<std::collections::HashSet<AssetId<Mesh>>>) {
+    for (e, m) in &nouveaux {
+        let mut cur = e;
+        let dedans = loop {
+            if modeles.contains(cur) {
+                break true;
+            }
+            match parents.get(cur) {
+                Ok(p) => cur = p.parent(),
+                Err(_) => break false,
+            }
+        };
+        if !dedans || !faits.insert(m.0.id()) {
+            continue;
+        }
+        let Some(mut mesh) = meshes.get_mut(&m.0) else { continue };
+        if let Some(bevy::mesh::VertexAttributeValues::Float32x4(couleurs)) = mesh.attribute_mut(Mesh::ATTRIBUTE_COLOR) {
+            let lin = |c: f32| if c <= 0.04045 { c / 12.92 } else { ((c + 0.055) / 1.055).powf(2.4) };
+            for c in couleurs.iter_mut() {
+                *c = [lin(c[0]), lin(c[1]), lin(c[2]), c[3]];
+            }
+        }
+    }
+}
+
+/// Pose le graphe d'animation dès que le modèle est chargé, puis joue l'animation qui correspond à l'état du chien.
+pub fn animer_chien(
+    mut commands: Commands,
+    pose: Res<PoseChien>,
+    mut lecteurs: Query<(Entity, &mut AnimationPlayer, Option<&mut JoueChien>)>,
+    parents: Query<&ChildOf>,
+    modeles: Query<&ModeleChien>,
+) {
+    for (e, mut lecteur, joue) in &mut lecteurs {
+        let mut cur = e;
+        let modele = loop {
+            if let Ok(m) = modeles.get(cur) {
+                break Some(m);
+            }
+            match parents.get(cur) {
+                Ok(p) => cur = p.parent(),
+                Err(_) => break None,
+            }
+        };
+        let Some(m) = modele else { continue };
+        let Some(mut joue) = joue else {
+            commands.entity(e).insert((AnimationGraphHandle(m.graphe.clone()), JoueChien(pose.etat)));
+            lecteur.play(m.noeuds[0]).repeat();
+            continue;
+        };
+        let (n, repete, vitesse) = match pose.etat {
+            EtatChien::Repos => (0, true, 1.0),
+            EtatChien::Marche => (1, true, (pose.vitesse / 3.5).clamp(0.6, 1.6)),
+            EtatChien::Course => (2, true, (pose.vitesse / 8.0).clamp(0.8, 1.4)),
+            EtatChien::Aboie(_) => (3, false, 1.3),
+            EtatChien::Victoire => (4, true, 1.0),
+        };
+        if joue.0 != pose.etat {
+            // Marche et course : on garde le même clip, on change seulement la cadence.
+            let meme_clip = std::mem::discriminant(&joue.0) == std::mem::discriminant(&pose.etat) && !matches!(pose.etat, EtatChien::Aboie(_));
+            if !meme_clip {
+                lecteur.stop_all();
+                let a = lecteur.play(m.noeuds[n]);
+                if repete {
+                    a.repeat();
+                }
+            }
+            joue.0 = pose.etat;
+        }
+        if let Some(a) = lecteur.animation_mut(m.noeuds[n]) {
+            a.set_speed(vitesse);
+        }
+        // Un aboiement fini : retour au repos ou à la marche.
+        if matches!(pose.etat, EtatChien::Aboie(_)) && lecteur.animation(m.noeuds[3]).is_some_and(|a| a.is_finished()) {
+            lecteur.stop_all();
+            lecteur.play(m.noeuds[0]).repeat();
+        }
+    }
 }
 
 /// Un loup : gris, plus grand, les yeux rouges et les oreilles pointues.
@@ -383,7 +490,7 @@ fn cloture(c: &mut Commands, server: &AssetServer, m: &Mur) {
 }
 
 /// Construit le champ : sol, herbe, décor, obstacles, enclos, animaux.
-pub fn spawn_scene(c: &mut Commands, server: &AssetServer, k: &Kit, carte: &Carte, niveau: &Niveau) {
+pub fn spawn_scene(c: &mut Commands, server: &AssetServer, graphes: &mut Assets<AnimationGraph>, k: &Kit, carte: &Carte, niveau: &Niveau) {
     let (hx, hz) = (carte.demi.x, carte.demi.y);
     let mut rng = Rng::new(carte.graine ^ 0xDEC0);
 
@@ -505,7 +612,7 @@ pub fn spawn_scene(c: &mut Commands, server: &AssetServer, k: &Kit, carte: &Cart
     for i in 0..carte.beliers.len() {
         spawn_belier(c, k, i);
     }
-    spawn_chien(c, k);
+    spawn_chien(c, server, graphes);
     for i in 0..carte.loups.len() {
         let l = spawn_loup(c, k, i, carte.loups[i].genre);
         c.entity(l).insert(Visibility::Hidden);
