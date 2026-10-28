@@ -138,6 +138,7 @@ pub fn obstacle_models(u: Universe) -> &'static [(&'static str, f32)] {
     match u {
         Universe::Prairie => &[("nature-kit/rock_largeA", 1.8), ("nature-kit/rock_largeC", 1.8), ("nature-kit/stump_round", 2.2), ("nature-kit/plant_bush", 2.0)],
         Universe::Desert => &[("nature-kit/cactus_short", 2.2), ("nature-kit/cactus_tall", 1.8), ("survival-kit/rock-sand-a", 2.5), ("survival-kit/rock-sand-b", 2.5)],
+        Universe::Ruines => &[("mini-arena/column-damaged", 2.4), ("prototype-kit/column-low", 2.4), ("nature-kit/rock_largeA", 1.8), ("mini-arena/bricks", 2.0)],
         Universe::Cimetiere => &[("graveyard-kit/gravestone-cross", 2.4), ("graveyard-kit/rocks", 2.0), ("graveyard-kit/pumpkin", 2.4), ("graveyard-kit/gravestone-broken", 2.4)],
         Universe::Ocean => &[("survival-kit/barrel", 2.5), ("nature-kit/rock_largeE", 1.8), ("nature-kit/log", 2.0)],
     }

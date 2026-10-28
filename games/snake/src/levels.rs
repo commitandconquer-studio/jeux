@@ -48,7 +48,8 @@ impl Place {
     pub fn scenery(self) -> Universe {
         match self {
             Place::Garden => Universe::Prairie,
-            Place::Desert | Place::Ruins => Universe::Desert,
+            Place::Desert => Universe::Desert,
+            Place::Ruins => Universe::Ruines,
             Place::Graveyard => Universe::Cimetiere,
             Place::Pirates => Universe::Ocean,
         }
@@ -157,7 +158,7 @@ pub fn parse(text: &str) -> Result<Vec<Level>, String> {
 /// Tous les niveaux, dans l'ordre du Voyage.
 pub static LEVELS: LazyLock<Vec<Level>> = LazyLock::new(|| {
     let mut all = Vec::new();
-    for text in [include_str!("../levels/jardin.txt"), include_str!("../levels/desert.txt")] {
+    for text in [include_str!("../levels/jardin.txt"), include_str!("../levels/desert.txt"), include_str!("../levels/ruines.txt")] {
         all.extend(parse(text).unwrap_or_else(|e| panic!("niveaux illisibles : {e}")));
     }
     all

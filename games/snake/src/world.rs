@@ -13,12 +13,13 @@ pub enum Universe {
     #[default]
     Prairie,
     Desert,
+    Ruines,
     Cimetiere,
     Ocean,
 }
 
 impl Universe {
-    pub const ALL: [Universe; 4] = [Universe::Prairie, Universe::Desert, Universe::Cimetiere, Universe::Ocean];
+    pub const ALL: [Universe; 5] = [Universe::Prairie, Universe::Desert, Universe::Ruines, Universe::Cimetiere, Universe::Ocean];
 
     pub fn next(self) -> Self {
         let i = Self::ALL.iter().position(|u| *u == self).unwrap_or(0);
@@ -29,6 +30,7 @@ impl Universe {
         match self {
             Universe::Prairie => tx!("Prairie", "Meadow", "Wiese", "Prateria", "Pradera"),
             Universe::Desert => tx!("Désert", "Desert", "Wüste", "Deserto", "Desierto"),
+            Universe::Ruines => tx!("Ruines antiques", "Ancient ruins", "Antike Ruinen", "Rovine antiche", "Ruinas antiguas"),
             Universe::Cimetiere => tx!("Cimetière", "Graveyard", "Friedhof", "Cimitero", "Cementerio"),
             Universe::Ocean => tx!("Île des pirates", "Pirate island", "Pirateninsel", "Isola dei pirati", "Isla pirata"),
         }
@@ -54,6 +56,14 @@ impl Universe {
                 ground: c(0.89, 0.73, 0.49),
                 sun: (c(1.0, 0.95, 0.85), 7_500.0),
                 ambient: (c(0.62, 0.52, 0.45), 900.0),
+            },
+            Universe::Ruines => Theme {
+                sky: c(0.78, 0.85, 0.93),
+                tiles: (c(0.92, 0.90, 0.84), c(0.86, 0.84, 0.77)),
+                rim: c(0.62, 0.58, 0.50),
+                ground: c(0.80, 0.76, 0.62),
+                sun: (c(1.0, 0.96, 0.88), 7_000.0),
+                ambient: (c(0.58, 0.58, 0.66), 1000.0),
             },
             Universe::Cimetiere => Theme {
                 sky: c(0.42, 0.38, 0.52),
@@ -197,6 +207,20 @@ fn decor_models(u: Universe) -> &'static [(&'static str, f32)] {
             ("survival-kit/campfire-pit", 1.8),
             ("survival-kit/signpost", 2.4),
         ],
+        Universe::Ruines => &[
+            ("prototype-kit/column", 2.6),
+            ("prototype-kit/column-rounded", 2.6),
+            ("prototype-kit/column-low", 2.6),
+            ("mini-arena/column", 2.6),
+            ("mini-arena/column-damaged", 2.6),
+            ("mini-arena/statue", 2.6),
+            ("mini-arena/trophy", 2.4),
+            ("fantasy-town-kit/pillar-stone", 2.6),
+            ("fantasy-town-kit/wall-arch", 2.2),
+            ("fantasy-town-kit/fountain-round", 2.2),
+            ("nature-kit/rock_largeA", 2.2),
+            ("nature-kit/cactus_short", 2.4),
+        ],
         Universe::Cimetiere => &[
             ("graveyard-kit/pine-fall", 2.4),
             ("graveyard-kit/pine", 2.4),
@@ -225,7 +249,7 @@ fn decor_models(u: Universe) -> &'static [(&'static str, f32)] {
 
 /// Hauts ou larges : ils cacheraient le plateau s'ils étaient devant (côté caméra).
 fn is_tall(file: &str) -> bool {
-    ["tree", "pine", "palm", "cactus_tall", "ship", "boat", "crypt", "tent", "lightpost", "log_large", "fence", "rocks", "rock_large"].iter().any(|k| file.contains(k))
+    ["tree", "pine", "palm", "cactus_tall", "prototype-kit/column", "mini-arena/column", "wall-arch", "pillar-stone", "statue", "ship", "boat", "crypt", "tent", "lightpost", "log_large", "fence", "rocks", "rock_large"].iter().any(|k| file.contains(k))
 }
 
 fn spawn_decor(u: Universe, b: &mut Builder, rng: &mut Rng, pos: Vec3) {

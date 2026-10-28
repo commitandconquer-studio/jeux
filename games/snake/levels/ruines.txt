@@ -1,0 +1,81 @@
+# Ruines antiques — les premiers trous : failles dans le sol des ruines. Un trou tue, comme un bloc.
+# Cases (nombre) : blocs, trous, teleporteurs (paires), accelerateurs, tapis.
+
+[Premières failles]
+lieu = ruines
+forme = carre 18
+touristes = 8
+trous = 2
+pas = 0.33
+
+[Plus de failles]
+lieu = ruines
+forme = carre 18
+touristes = 10
+trous = 4
+pas = 0.33
+
+[Le champ de failles]
+lieu = ruines
+forme = carre 16
+touristes = 14
+trous = 6
+pas = 0.32
+
+[Entre pierres et failles]
+lieu = ruines
+forme = carre 16
+touristes = 14
+trous = 3
+blocs = 3
+pas = 0.32
+
+[Le forum]
+lieu = ruines
+forme = rectangle 22x10
+touristes = 16
+trous = 4
+pas = 0.31
+
+[Le temple]
+lieu = ruines
+forme = carre 16
+touristes = 14
+trous = 4
+sortie = oui
+pas = 0.31
+
+[Le portique]
+lieu = ruines
+forme = U
+touristes = 16
+trous = 3
+blocs = 2
+sortie = oui
+pas = 0.30
+
+[La voie sacrée]
+lieu = ruines
+forme = route
+touristes = 12
+trous = 2
+sortie = oui
+pas = 0.30
+
+[L'arène]
+lieu = ruines
+forme = carre 16
+touristes = 20
+trous = 6
+blocs = 4
+sortie = oui
+pas = 0.24
+
+[Le labyrinthe]
+lieu = ruines
+forme = allees
+touristes = 24
+trous = 4
+blocs = 4
+sortie = oui
+pas = 0.28
