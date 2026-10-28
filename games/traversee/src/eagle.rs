@@ -158,7 +158,7 @@ fn run_eagle(
         Phase::Idle => {
             // Le compte à rebours ne tourne qu'une fois la partie bien lancée.
             let test = std::env::var("TRAVERSEE_EAGLE").is_ok();
-            if !(playing && (frog.started || test) && unlocked(points, Item::Eagle)) {
+            if !(playing && (frog.started || test) && unlocked(points, Item::Eagle) && (test || frog.row >= crate::lanes::PREMIER_AIGLE)) {
                 return;
             }
             // Immobile trop longtemps : il arrive tout de suite, sur sa colonne.

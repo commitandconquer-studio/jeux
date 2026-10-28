@@ -95,6 +95,7 @@ impl Plugin for GaragePlugin {
         app.init_resource::<View>()
             .add_observer(on_click)
             .add_systems(OnEnter(GameState::Garage), |mut v: ResMut<View>| v.dirty = true)
+            .add_systems(OnEnter(GameState::Garage), eclairage_de_face)
             .add_systems(
                 Update,
                 (build.run_if(|v: Res<View>| v.dirty), spin, shade_locked, place_labels, back_key).chain().run_if(in_state(GameState::Garage)),
@@ -163,6 +164,15 @@ fn world_slot(i: usize) -> Vec3 {
 fn character_slot(i: usize) -> Vec3 {
     let (col, row) = ((i % 6) as f32, (i / 6) as f32);
     ORIGIN + Vec3::new((col - 2.5) * 5.5, 0.0, (row - 0.5) * 11.0 - 1.0)
+}
+
+/// Au garage, une seconde lumière vient de la caméra : les personnages (tournés vers nous) ont le visage éclairé.
+fn eclairage_de_face(mut commands: Commands) {
+    commands.spawn((
+        DirectionalLight { illuminance: 7_000.0, shadow_maps_enabled: false, ..default() },
+        Transform::from_translation(ORIGIN + Vec3::new(0.0, 14.0, 30.0)).looking_at(ORIGIN + Vec3::Y, Vec3::Y),
+        DespawnOnExit(GameState::Garage),
+    ));
 }
 
 #[allow(clippy::too_many_arguments)]

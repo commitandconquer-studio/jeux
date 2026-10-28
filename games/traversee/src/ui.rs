@@ -521,7 +521,9 @@ fn update_hud(
         n.display = if suite.is_some() { Display::Flex } else { Display::None };
     }
     if let Some((at, item)) = suite {
-        let fraction = cumul as f32 / at.max(1) as f32;
+        // La barre repart de zéro à chaque palier franchi.
+        let depart = crate::progress::UNLOCKS.iter().filter(|(t, _)| cumul >= *t).map(|(t, _)| *t).max().unwrap_or(0);
+        let fraction = (cumul - depart) as f32 / (at - depart).max(1) as f32;
         for mut t in &mut suivants {
             t.0 = tx!("Prochain déblocage : {}", "Next unlock: {}", "Nächste Freischaltung: {}", "Prossimo sblocco: {}", "Próximo desbloqueo: {}").avec(&[&item.name()]);
         }

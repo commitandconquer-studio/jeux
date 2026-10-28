@@ -99,11 +99,13 @@ pub struct LaneGen {
     corridor: i32,
     /// La rivière précédente avait des rondins (le crapaud arrive n'importe où).
     prev_logs: bool,
+    /// Nombre de voies de route d'affilée juste avant la prochaine rangée.
+    route: u32,
 }
 
 impl LaneGen {
     pub fn new(seed: u64) -> Self {
-        Self { next_row: -8, rng: Rng::new(seed), queue: Vec::new(), prev: LaneKind::Grass, reset: true, corridor: 0, prev_logs: false }
+        Self { next_row: -8, rng: Rng::new(seed), queue: Vec::new(), prev: LaneKind::Grass, reset: true, corridor: 0, prev_logs: false, route: 0 }
     }
 
     /// Repart de zéro (appliqué au prochain passage de `ensure_lanes`).
@@ -116,6 +118,12 @@ impl LaneGen {
     }
 
     fn next_kind(&mut self, row: i32, points: u32) -> LaneKind {
+        let kind = self.choisir(row, points);
+        self.route = if kind == LaneKind::Road { self.route + 1 } else { 0 };
+        kind
+    }
+
+    fn choisir(&mut self, row: i32, _points: u32) -> LaneKind {
         if row < 3 {
             return LaneKind::Grass;
         }
@@ -123,24 +131,60 @@ impl LaneGen {
         if std::env::var("TRAVERSEE_RAIL").is_ok() {
             return if row % 2 == 0 { LaneKind::Rail } else { LaneKind::Grass };
         }
+        // La montée dans la partie : rien avant la ligne 13, puis les dangers arrivent un à un (voir `docs/jeux/cross-or-die-progression.md`).
+        if row < PREMIERE_ROUTE {
+            return LaneKind::Grass;
+        }
+        if row == PREMIERE_ROUTE {
+            self.queue.clear();
+            return LaneKind::Road;
+        }
+        // Le nombre de voies d'affilée est plafonné (1 au début, jusqu'à 4 au plus) : de l'herbe coupe les autoroutes.
+        let plafond = voies_max(row);
+        if self.prev == LaneKind::Road && self.route >= plafond {
+            self.queue.clear();
+            return LaneKind::Grass;
+        }
         if self.queue.is_empty() {
             let d = difficulty(row);
             let r = self.rand();
             let (kind, max) = if r < 0.30 - 0.1 * d {
                 (LaneKind::Grass, 2)
             } else if r < 0.68 {
-                (LaneKind::Road, 2 + (d * 3.0) as u32)
+                (LaneKind::Road, plafond)
             } else if r < 0.88 {
-                (LaneKind::River, 2 + (d * 2.0) as u32)
-            } else if crate::progress::unlocked(points, crate::progress::Item::Trains) {
+                // Pas de rivière avant la ligne 20 ; une seule à la fois avant les troncs.
+                if row < PREMIERS_NENUPHARS { (LaneKind::Grass, 1) } else { (LaneKind::River, if row < PREMIERS_TRONCS { 1 } else { 2 + (d * 2.0) as u32 }) }
+            } else if row >= PREMIERE_VOIE_FERREE {
                 (LaneKind::Rail, 1)
             } else {
-                (LaneKind::Road, 2)
+                (LaneKind::Grass, 1)
             };
             let n = 1 + self.rng.below(max);
             self.queue.extend(std::iter::repeat_n(kind, n as usize));
         }
         self.queue.pop().unwrap()
+    }
+}
+
+/// Lignes où chaque danger apparaît pour la première fois dans une partie.
+pub const PREMIERE_ROUTE: i32 = 13;
+pub const PREMIERS_NENUPHARS: i32 = 20;
+pub const PREMIERS_TRONCS: i32 = 30;
+pub const ROUTE_DEUX_VOIES: i32 = 50;
+pub const PREMIERE_VOIE_FERREE: i32 = 100;
+/// Premier changement de monde (si autorisé par les points cumulés), puis un monde tous les `BIOME_LEN`.
+pub const PREMIER_MONDE: i32 = 200;
+/// L'aigle peut arriver à partir de cette ligne (s'il est débloqué).
+pub const PREMIER_AIGLE: i32 = 250;
+
+/// Nombre maximal de voies de route d'affilée : 1 avant la ligne 50, puis 2, 3 et 4 (jamais plus).
+pub fn voies_max(row: i32) -> u32 {
+    match row {
+        ..50 => 1,
+        50..100 => 2,
+        100..150 => 3,
+        _ => 4,
     }
 }
 
@@ -370,13 +414,13 @@ fn spawn_lane(c: &mut Commands, kit: &Kit, x: &Extra, server: &AssetServer, grap
                     petit_decor(c, kit, x, server, root, deco, Vec3::new(col as f32, 0.0, 0.0) + jitter, variant);
                 }
                 // Une mouche à gober, parfois dorée
-                if row >= 3 && crate::progress::unlocked(points, crate::progress::Item::Flies) && g.rand() < 0.3 {
+                if row >= 3 && crate::progress::unlocked(points, crate::progress::Item::Flies) && (g.rand() < 0.3 || std::env::var_os("TRAVERSEE_BONUS").is_some()) {
                     let col = g.rng.below((COLS * 2 + 1) as u32) as i32 - COLS;
                     if !blocked.contains(&col) {
                         let gold = crate::progress::unlocked(points, crate::progress::Item::GoldFlies) && g.rand() < 0.12;
                         let phase = g.rand() * 6.28;
                         if crate::space::kenney() {
-                            crate::kenney::cadeau(c, kit, x, server, root, row, col, gold, phase);
+                            crate::kenney::cadeau(c, kit, x, server, root, row, col, gold, phase, biome);
                         } else {
                             spawn_fly(c, kit, x, root, row, col, gold, phase);
                         }
@@ -384,7 +428,7 @@ fn spawn_lane(c: &mut Commands, kit: &Kit, x: &Extra, server: &AssetServer, grap
                 }
             }
             // Une caisse à livrer, parfois.
-            if row >= if crate::colis::essai() > 0 { 2 } else { 6 } && g.rand() < crate::colis::chance() {
+            if row >= if crate::colis::essai() > 0 { 2 } else { 25 } && g.rand() < crate::colis::chance() {
                 let col = if crate::colis::essai() == 2 { 0 } else { g.rng.below((COLS * 2 + 1) as u32) as i32 - COLS };
                 if !blocked.contains(&col) {
                     crate::colis::spawn_colis(c, root, row, col, g.rng.below(4) as usize);
@@ -460,6 +504,9 @@ fn spawn_lane(c: &mut Commands, kit: &Kit, x: &Extra, server: &AssetServer, grap
             let mut x_pos = -WRAP + g.rand() * 3.0;
             loop {
                 let mut vehicle = pick_vehicle(g.rng.below(1000), points);
+                if row < ROUTE_DEUX_VOIES {
+                    vehicle = Vehicle::Car;
+                }
                 let own = biome.theme().is_some_and(|t| t.only_own);
                 // Dans le parc, surtout les véhicules du parc (ceux déjà gagnés).
                 if let (Some(theme), Some(ti)) = (biome.theme(), biome.theme_index()) {
@@ -527,10 +574,10 @@ fn spawn_lane(c: &mut Commands, kit: &Kit, x: &Extra, server: &AssetServer, grap
                 ground(c, -0.15, water, water_side);
             }
             let frozen = biome == Biome::Snow;
-            if g.rng.below(4) == 0 {
+            if row < PREMIERS_TRONCS || g.rng.below(4) == 0 {
                 // Nénuphars immobiles : toujours un sur le couloir, et beaucoup
                 // après une rivière à rondins (le crapaud n'est pas sur le couloir).
-                let dense = if prev_logs { 8 } else { 4 };
+                let dense = if prev_logs { 8 } else if row < PREMIERS_TRONCS { 6 } else { 4 };
                 let mut count = 0;
                 for col in -COLS..=COLS {
                     if col == g.corridor || g.rng.below(10) < dense {
@@ -800,5 +847,52 @@ pub fn run_rails(
                 mat.0 = want.clone();
             }
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    /// La montée dans la partie : dangers qui arrivent un à un, quelle que soit la graine.
+    #[test]
+    fn la_montee_respecte_les_paliers() {
+        for seed in 0..200u64 {
+            let mut g = LaneGen::new(seed);
+            let mut prev = LaneKind::Grass;
+            let mut vu_route = false;
+            for row in -8..400 {
+                let kind = g.next_kind(row, 0);
+                g.prev = kind;
+                if row < PREMIERE_ROUTE {
+                    assert_eq!(kind, LaneKind::Grass, "graine {seed}, ligne {row}");
+                }
+                if row == PREMIERE_ROUTE {
+                    assert_eq!(kind, LaneKind::Road);
+                    vu_route = true;
+                }
+                if kind == LaneKind::River {
+                    assert!(row >= PREMIERS_NENUPHARS, "rivière trop tôt : graine {seed}, ligne {row}");
+                }
+                if kind == LaneKind::Rail {
+                    assert!(row >= PREMIERE_VOIE_FERREE, "train trop tôt : graine {seed}, ligne {row}");
+                }
+                if kind == LaneKind::Road && prev == LaneKind::Road {
+                    assert!(row >= ROUTE_DEUX_VOIES, "deux voies trop tôt : graine {seed}, ligne {row}");
+                }
+                assert!(g.route <= voies_max(row), "trop de voies d'affilée : graine {seed}, ligne {row}, {} voies", g.route);
+                assert!(g.route <= 4);
+                prev = kind;
+            }
+            assert!(vu_route);
+        }
+    }
+
+    #[test]
+    fn les_mondes_changent_a_200() {
+        assert_eq!(Biome::segment(0), 0);
+        assert_eq!(Biome::segment(199), 0);
+        assert_eq!(Biome::segment(200), 1);
+        assert_eq!(Biome::segment(200 + crate::extra::BIOME_LEN), 2);
     }
 }

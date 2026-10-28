@@ -647,7 +647,7 @@ fn spawn_toast(commands: &mut Commands, item: crate::progress::Item, delay: f32)
             ))
             .with_children(|t| {
                 t.spawn((
-                    Text::new(tx!("Débloqué !", "Unlocked!", "Freigeschaltet!", "Sbloccato!", "¡Desbloqueado!").t()),
+                    Text::new(item.gagne()),
                     TextFont::from_font_size(16.0),
                     TextColor(Color::srgb(0.4, 0.4, 0.45)),
                     Pickable::IGNORE,
@@ -674,7 +674,7 @@ fn update_toasts(mut commands: Commands, time: Res<Time<Real>>, mut q: Query<(En
         let ease = 1.0 - (1.0 - slide_in).powi(3);
         let bounce = if t.age < 0.7 { (1.0 - (t.age - 0.4).max(0.0) / 0.3) * (t.age * 30.0).sin() * 6.0 } else { 0.0 };
         let out = ((t.age - (TOAST_LEN - 0.4)) / 0.4).clamp(0.0, 1.0);
-        let top = -120.0 + (120.0 + 96.0) * ease + bounce - out * out * 240.0;
+        let top = -120.0 + (120.0 + 184.0) * ease + bounce - out * out * 240.0;
         node.top = px(top);
     }
 }

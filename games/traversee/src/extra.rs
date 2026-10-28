@@ -39,8 +39,8 @@ pub struct Extra {
     fly_wing: Handle<StandardMaterial>,
     fly_eye: Handle<StandardMaterial>,
     /// Halo lumineux des cadeaux (Kenney) : normal et doré.
-    pub halo: Handle<StandardMaterial>,
-    pub halo_gold: Handle<StandardMaterial>,
+    /// Les couleurs de l'étincelle des bonus : blanc, rouge, bleu, vert, jaune, rose.
+    pub arcs: Vec<(Handle<StandardMaterial>, Handle<StandardMaterial>)>,
     biome: BiomeMats,
     /// Une matière par couleur utilisée par les modèles décrits en pièces.
     colors: Vec<([u8; 3], Handle<StandardMaterial>)>,
@@ -86,8 +86,17 @@ impl FromWorld for Extra {
         let bus = vec![f(0.98, 0.78, 0.15), f(0.25, 0.65, 0.40), f(0.85, 0.25, 0.25), f(0.30, 0.50, 0.85)];
         let tuft = f(0.40, 0.68, 0.30);
         let mut halo_mat = |c: Color, e: LinearRgba| mats.add(StandardMaterial { base_color: c, emissive: e, unlit: true, alpha_mode: AlphaMode::Blend, ..default() });
-        let halo = halo_mat(Color::srgba(1.0, 0.95, 0.6, 1.0), LinearRgba::rgb(4.0, 3.6, 2.0));
-        let halo_gold = halo_mat(Color::srgba(1.0, 0.8, 0.2, 1.0), LinearRgba::rgb(5.0, 3.4, 0.6));
+        let arcs: Vec<(Handle<StandardMaterial>, Handle<StandardMaterial>)> = [
+            (1.0, 1.0, 1.0),
+            (1.0, 0.25, 0.22),
+            (0.25, 0.5, 1.0),
+            (0.3, 1.0, 0.4),
+            (1.0, 0.85, 0.2),
+            (1.0, 0.4, 0.85),
+        ]
+        .iter()
+                .map(|&(r, g, b)| (halo_mat(Color::srgba(r, g, b, 0.3), LinearRgba::rgb(r, g, b) * 0.9), halo_mat(Color::srgba(r, g, b, 1.0), LinearRgba::rgb(r, g, b) * 5.0)))
+        .collect();
         let mut glow = |c: Color, e: LinearRgba| mats.add(StandardMaterial { emissive: e, ..flat_material(c) });
         let fly_gold = glow(Color::srgb(1.0, 0.82, 0.2), LinearRgba::rgb(2.5, 1.7, 0.2));
         let red_light = glow(Color::srgb(1.0, 0.2, 0.2), LinearRgba::rgb(3.0, 0.2, 0.2));
@@ -122,8 +131,7 @@ impl FromWorld for Extra {
             fly_gold,
             fly_wing: f(0.85, 0.93, 1.0),
             fly_eye: f(0.9, 0.15, 0.15),
-            halo,
-            halo_gold,
+            arcs,
             white_car: 0,
             yellow_car: 0,
         }
@@ -425,6 +433,10 @@ impl Fly {
     }
 }
 
+/// Un bonus qui tourne lentement sur lui-même (nourriture) au lieu de voler en rond.
+#[derive(Component)]
+pub struct Tourne;
+
 #[derive(Component)]
 pub struct Wing {
     side: f32,
@@ -462,9 +474,14 @@ pub fn spawn_fly(c: &mut Commands, k: &Kit, x: &Extra, lane: Entity, row: i32, c
 }
 
 /// Les mouches bourdonnent : elles tournent doucement et battent des ailes.
-pub fn animate_flies(time: Res<Time>, mut flies: Query<(&Fly, &mut Transform), Without<Wing>>, mut wings: Query<(&Wing, &mut Transform), Without<Fly>>) {
+pub fn animate_flies(time: Res<Time>, mut flies: Query<(&Fly, &mut Transform, Has<Tourne>), Without<Wing>>, mut wings: Query<(&Wing, &mut Transform), Without<Fly>>) {
     let t = time.elapsed_secs();
-    for (fly, mut tf) in &mut flies {
+    for (fly, mut tf, tourne) in &mut flies {
+        if tourne {
+            tf.translation = Vec3::new(fly.col as f32, 0.7 + (t * 2.0 + fly.phase).sin() * 0.06, 0.0);
+            tf.rotation = Quat::from_rotation_y(t * 0.9 + fly.phase);
+            continue;
+        }
         let a = t * 2.2 + fly.phase;
         tf.translation.x = fly.col as f32 + a.cos() * 0.18;
         tf.translation.z = a.sin() * 0.18;
@@ -612,12 +629,18 @@ impl Biome {
 }
 
 impl Biome {
+    /// Le numéro de la tranche du parcours : 0 jusqu'à la ligne 200, puis un de plus tous les `BIOME_LEN`.
+    pub fn segment(row: i32) -> i32 {
+        let premier = crate::lanes::PREMIER_MONDE;
+        if row < premier { 0 } else { 1 + (row - premier) / BIOME_LEN }
+    }
+
     /// Le monde de ce rang ; un monde pas encore débloqué reste de la prairie.
     pub fn of(row: i32, points: u32) -> Self {
         // TRAVERSEE_BIOME=1..3 : voir un monde tout de suite (essais et captures).
         static ENV: std::sync::OnceLock<i32> = std::sync::OnceLock::new();
         let start = *ENV.get_or_init(|| std::env::var("TRAVERSEE_BIOME").ok().and_then(|s| s.parse().ok()).unwrap_or(0)) + START_WORLD.load(std::sync::atomic::Ordering::Relaxed);
-        let biome = match (row.max(0) / BIOME_LEN + start) % 12 {
+        let biome = match (Biome::segment(row) + start) % 12 {
             0 => Biome::Prairie,
             1 => Biome::Desert,
             2 => Biome::Snow,
@@ -632,7 +655,7 @@ impl Biome {
             _ => Biome::Pirate,
         };
         let _ = biome;
-        let biome = Biome::ALL[((row.max(0) / BIOME_LEN + start) as usize) % Biome::ALL.len()];
+        let biome = Biome::ALL[((Biome::segment(row) + start) as usize) % Biome::ALL.len()];
         if biome != Biome::Prairie && !crate::progress::unlocked(points, crate::progress::Item::World(biome)) {
             Biome::Prairie
         } else {

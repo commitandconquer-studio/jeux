@@ -41,7 +41,7 @@ struct Destinataire {
 
 /// La caisse que le joueur porte (couleur), s'il en porte une.
 #[derive(Resource, Default)]
-struct Porte(Option<usize>);
+pub struct Porte(pub Option<usize>);
 
 /// La caisse qui flotte au-dessus du personnage.
 #[derive(Component)]
@@ -95,7 +95,7 @@ impl Plugin for ColisPlugin {
         app.init_resource::<Porte>()
             .add_systems(Startup, (setup, setup_carte))
             .add_systems(OnEnter(GameState::Dying), |mut porte: ResMut<Porte>| porte.0 = None)
-            .add_systems(Update, (habiller, flotter, majeur_carte))
+            .add_systems(Update, (habiller, flotter, rebondir, majeur_carte))
             .add_systems(Update, (logique, placer, porteur).chain().run_if(in_state(GameState::Playing)));
     }
 }
@@ -172,6 +172,34 @@ fn habiller(
             ))
             .id();
         caisse(&mut commands, icone, &kit, &mats, d.teinte, 0.32);
+        // Une flèche de sa couleur, pointée vers lui, qui rebondit : « c'est ici qu'on livre ».
+        let fleche = commands
+            .spawn((Transform::from_xyz(0.0, 2.5, 0.0), Visibility::default(), Rebondit { base: 2.5, phase: d.row as f32 }, ChildOf(e)))
+            .id();
+        let l = &mats.teintes[d.teinte];
+        commands.spawn((Mesh3d(kit.cube.clone()), MeshMaterial3d(l.clone()), Transform::from_xyz(0.0, 0.34, 0.0).with_scale(Vec3::new(0.26, 0.5, 0.26)), bevy::light::NotShadowCaster, ChildOf(fleche)));
+        commands.spawn((
+            Mesh3d(kit.cube.clone()),
+            MeshMaterial3d(l.clone()),
+            Transform::from_xyz(0.0, 0.0, 0.0).with_rotation(Quat::from_rotation_z(std::f32::consts::FRAC_PI_4)).with_scale(Vec3::new(0.52, 0.52, 0.26)),
+            bevy::light::NotShadowCaster,
+            ChildOf(fleche),
+        ));
+    }
+}
+
+/// Monte et descend en tournant sur elle-même (la flèche d'un destinataire).
+#[derive(Component)]
+struct Rebondit {
+    base: f32,
+    phase: f32,
+}
+
+fn rebondir(time: Res<Time>, mut q: Query<(&Rebondit, &mut Transform)>) {
+    let t = time.elapsed_secs();
+    for (r, mut tf) in &mut q {
+        tf.translation.y = r.base + (t * 3.0 + r.phase).sin() * 0.18;
+        tf.rotation = Quat::from_rotation_y(t * 2.2 + r.phase);
     }
 }
 

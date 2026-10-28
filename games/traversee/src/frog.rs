@@ -157,6 +157,10 @@ pub struct Death {
 }
 
 pub fn die(cause: Cause, death: &mut Death, next: &mut NextState<GameState>) {
+    // Photos de presse : le personnage ne meurt pas.
+    if crate::capture::presse().is_some() {
+        return;
+    }
     if death.cause.is_none() {
         death.cause = Some(cause);
         death.timer = 0.0;
@@ -252,7 +256,7 @@ pub fn update_frog(
                 sfx.write(Sfx::Chime);
             }
             // Un nouveau monde commence : on le dit à l'écran.
-            if to_row > 0 && to_row % crate::extra::BIOME_LEN == 0 {
+            if to_row > 0 && crate::extra::Biome::segment(to_row) != crate::extra::Biome::segment(to_row - 1) {
                 let points = progress.total + frog.max_row as u32 + frog.bonus;
                 let world = crate::extra::Biome::of(to_row, points);
                 if world != crate::extra::Biome::Prairie {

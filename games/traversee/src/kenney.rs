@@ -573,38 +573,131 @@ pub struct Etincelle {
 pub struct LueurCadeau {
     phase: f32,
     base: f32,
+    dore: bool,
 }
 
-/// Un cadeau à ramasser à la place d'une mouche (le doré vaut plus) : modèle Kenney qui brille, vraie lumière
-/// chaude autour de lui et étincelles. Il garde le composant `Fly` : ramassage et points comme les mouches.
+/// Les couleurs de la lumière des bonus : blanc, rouge, bleu, vert, jaune, rose.
+const TEINTES_LUEUR: [Color; 6] = [
+    Color::srgb(1.0, 1.0, 1.0),
+    Color::srgb(1.0, 0.25, 0.22),
+    Color::srgb(0.25, 0.5, 1.0),
+    Color::srgb(0.3, 1.0, 0.4),
+    Color::srgb(1.0, 0.85, 0.2),
+    Color::srgb(1.0, 0.4, 0.85),
+];
+
+/// Marque la nourriture dorée : sa matière est teintée d'or en plus de briller.
+#[derive(Component)]
+pub struct Dore;
+
+/// Les bonus de chaque monde : quatre mets, tirés au hasard (modèles du Food Kit, tous inscrits dans -1..1).
+fn nourritures(biome: crate::extra::Biome) -> [&'static str; 4] {
+    use crate::extra::Biome::*;
+    match biome {
+        Prairie => ["apple", "carrot", "strawberry", "corn"],
+        Desert => ["watermelon", "pineapple", "banana", "coconut"],
+        Snow => ["cupcake", "ice-cream", "ginger-bread", "chocolate"],
+        Autumn => ["pumpkin", "mushroom", "grapes", "pear"],
+        Jurassic => ["banana", "coconut", "broccoli", "mushroom"],
+        Nippon => ["sushi-salmon", "maki-salmon", "rice-ball", "dim-sum"],
+        Space | Cyber => ["pizza", "burger", "fries", "soda"],
+        FarWest => ["burger", "hot-dog", "corn", "taco"],
+        Halloween => ["pumpkin", "candy-bar", "donut", "mushroom"],
+        Medieval => ["bread", "cheese", "whole-ham", "mincemeat-pie"],
+        Pirate => ["fish", "cherries", "pineapple", "coconut"],
+    }
+}
+
+/// Centre et plus grande dimension de chaque modèle du Food Kit (ils ne sont pas à la même échelle ni centrés) : on les ramène à la même taille.
+const TAILLES: [(&str, [f32; 3], f32); 36] = [
+    ("apple", [0.000, 0.095, 0.000], 0.196),
+    ("banana", [0.000, 0.098, 0.000], 0.630),
+    ("bread", [0.000, 0.020, 0.000], 0.442),
+    ("broccoli", [0.000, 0.211, 0.000], 0.422),
+    ("burger", [0.000, 0.145, 0.000], 0.404),
+    ("candy-bar", [0.000, 0.033, 0.000], 0.292),
+    ("carrot", [0.000, 0.358, 0.000], 0.716),
+    ("cheese", [0.000, 0.110, 0.000], 0.680),
+    ("cherries", [0.000, 0.085, 0.000], 0.171),
+    ("chocolate", [0.000, 0.017, 0.000], 0.292),
+    ("coconut", [0.000, 0.124, 0.000], 0.248),
+    ("corn", [-0.007, 0.158, -0.006], 0.343),
+    ("cupcake", [0.000, 0.212, 0.000], 0.424),
+    ("dim-sum", [0.000, 0.060, 0.000], 0.186),
+    ("donut", [0.000, 0.044, 0.000], 0.283),
+    ("eggplant", [0.000, 0.203, 0.000], 0.405),
+    ("fish", [0.000, 0.161, 0.000], 0.621),
+    ("fries", [0.001, 0.199, 0.000], 0.398),
+    ("ginger-bread", [0.000, 0.015, 0.000], 0.260),
+    ("grapes", [0.000, 0.211, 0.000], 0.423),
+    ("hot-dog", [0.000, 0.076, 0.000], 0.586),
+    ("ice-cream", [0.000, 0.232, 0.000], 0.463),
+    ("maki-salmon", [0.000, 0.035, 0.000], 0.120),
+    ("mincemeat-pie", [0.000, 0.084, 0.000], 0.613),
+    ("mushroom", [0.000, 0.070, 0.000], 0.144),
+    ("pear", [0.000, 0.135, 0.000], 0.271),
+    ("pineapple", [0.000, 0.236, 0.000], 0.472),
+    ("pizza", [0.000, 0.022, 0.000], 0.842),
+    ("pumpkin", [0.000, 0.115, 0.000], 0.419),
+    ("rice-ball", [0.000, 0.065, 0.000], 0.131),
+    ("soda", [0.000, 0.216, 0.000], 0.432),
+    ("strawberry", [0.000, 0.091, 0.000], 0.182),
+    ("sushi-salmon", [0.000, 0.045, 0.000], 0.201),
+    ("taco", [0.000, 0.131, 0.000], 0.426),
+    ("watermelon", [0.000, 0.238, 0.000], 0.476),
+    ("whole-ham", [0.000, 0.220, 0.000], 0.640),
+];
+
+/// Un bonus de points à ramasser (le doré vaut plus) : un mets du monde, qui brille, tourne lentement, avec une vraie
+/// lumière chaude autour de lui et des étincelles. Il garde le composant `Fly` : ramassage et points comme les mouches.
 #[allow(clippy::too_many_arguments)]
-pub fn cadeau(c: &mut Commands, k: &crate::models::Kit, x: &crate::extra::Extra, server: &AssetServer, lane: Entity, row: i32, col: i32, gold: bool, phase: f32) {
-    let nom = ["present-a-cube", "present-a-round", "present-b-cube", "present-a-rectangle", "present-b-round", "present-b-rectangle"][(phase * 10.0) as usize % 6];
-    let scene = server.load(GltfAssetLabel::Scene(0).from_asset(format!("kenney/holiday-kit/{nom}.glb")));
+pub fn cadeau(c: &mut Commands, k: &crate::models::Kit, x: &crate::extra::Extra, server: &AssetServer, lane: Entity, row: i32, col: i32, gold: bool, phase: f32, biome: crate::extra::Biome) {
+    let nom = nourritures(biome)[(phase * 10.0) as usize % 4];
+    let scene = server.load(GltfAssetLabel::Scene(0).from_asset(format!("kenney/food-kit/{nom}.glb")));
     let fly = c
         .spawn((
-            Transform::from_xyz(col as f32, 0.6, 0.0),
+            Transform::from_xyz(col as f32, 0.7, 0.0),
             Visibility::default(),
             crate::extra::Fly { row, col, gold, phase },
+            crate::extra::Tourne,
             ChildOf(lane),
         ))
         .id();
-    // Le modèle est décalé de 0,3 en hauteur dans son fichier ; on le centre.
-    let echelle = if gold { 1.9 } else { 1.4 };
-    c.spawn((WorldAssetRoot(scene), Transform::from_xyz(0.0, -0.3 * echelle - 0.1, 0.0).with_scale(Vec3::splat(echelle)), Brille(1.4), ChildOf(fly)));
+    let (_, centre, taille) = TAILLES.iter().find(|t| t.0 == nom).copied().unwrap_or((nom, [0.0; 3], 1.0));
+    let echelle = (if gold { 1.0 } else { 0.75 }) / taille;
+    // Le pivot gonfle et dégonfle comme un ressort : « viens me prendre ! »
+    let pivot = c.spawn((Transform::default(), Visibility::default(), Ressort { phase }, ChildOf(fly))).id();
+    let mut modele = c.spawn((WorldAssetRoot(scene), Transform::from_translation(-Vec3::from(centre) * echelle).with_scale(Vec3::splat(echelle)), Brille(0.5), ChildOf(pivot)));
+    if gold {
+        modele.insert(Dore);
+    }
     let couleur = if gold { Color::srgb(1.0, 0.8, 0.25) } else { Color::srgb(1.0, 0.93, 0.7) };
-    let base = if gold { 90_000.0 } else { 45_000.0 };
-    c.spawn((PointLight { color: couleur, intensity: base, range: 3.5, shadow_maps_enabled: false, ..default() }, Transform::from_xyz(0.0, 0.5, 0.0), LueurCadeau { phase, base }, ChildOf(fly)));
-    let mat = if gold { &x.halo_gold } else { &x.halo };
-    for i in 0..5 {
-        let a = i as f32 * 1.256 + phase;
+    let base = if gold { 160_000.0 } else { 110_000.0 };
+    c.spawn((PointLight { color: couleur, intensity: base, range: 4.5, shadow_maps_enabled: false, ..default() }, Transform::from_xyz(0.0, 0.5, 0.0), LueurCadeau { phase, base, dore: gold }, ChildOf(fly)));
+    // Pas de disque visible : la lumière colorée du bonus éclaire l'herbe autour de lui, et les étincelles tournent.
+    for i in 0..6 {
+        let a = i as f32 * 1.047 + phase;
         c.spawn((
             Mesh3d(k.ball.clone()),
-            MeshMaterial3d(mat.clone()),
-            Transform::from_xyz(a.cos() * 0.4, 0.0, a.sin() * 0.4).with_scale(Vec3::splat(0.05)),
-            Etincelle { phase: a, rayon: 0.35 + 0.08 * (i % 2) as f32 },
+            MeshMaterial3d(x.arcs[i % x.arcs.len()].1.clone()),
+            Transform::from_xyz(a.cos() * 0.6, 0.0, a.sin() * 0.6).with_scale(Vec3::splat(0.08)),
+            Etincelle { phase: a, rayon: 0.6 + 0.12 * (i % 2) as f32 },
             ChildOf(fly),
         ));
+    }
+}
+
+/// Fait gonfler et dégonfler les bonus, en rebond (ressort).
+#[derive(Component)]
+pub struct Ressort {
+    phase: f32,
+}
+
+pub fn ressorts(time: Res<Time>, mut q: Query<(&Ressort, &mut Transform)>) {
+    let t = time.elapsed_secs();
+    for (r, mut tf) in &mut q {
+        let s = 1.0 + 0.2 * (t * 4.5 + r.phase).sin();
+        tf.scale = Vec3::new(s, 2.0 - s, s);
     }
 }
 
@@ -618,30 +711,34 @@ pub fn scintiller(time: Res<Time>, mut etincelles: Query<(&Etincelle, &mut Trans
     }
     for (l, mut light) in &mut lueurs {
         light.intensity = l.base * (0.8 + 0.25 * (t * 3.0 + l.phase).sin());
+        if !l.dore {
+            light.color = TEINTES_LUEUR[((t * 2.0 + l.phase) as usize) % TEINTES_LUEUR.len()];
+        }
     }
 }
 
 /// Rend lumineuses les matières des modèles marqués `Brille` : la couleur du modèle sert aussi d'émission.
 pub fn faire_briller(
-    racines: Query<(Entity, &Brille)>,
+    racines: Query<(Entity, &Brille, Has<Dore>)>,
     enfants: Query<&Children>,
     mut meshes: Query<&mut MeshMaterial3d<StandardMaterial>, Without<Brille>>,
     mut mats: ResMut<Assets<StandardMaterial>>,
     mut faites: Local<std::collections::HashMap<(AssetId<StandardMaterial>, u32), Handle<StandardMaterial>>>,
 ) {
-    for (racine, force) in &racines {
+    for (racine, force, dore) in &racines {
         for e in enfants.iter_descendants(racine) {
             let Ok(mut m) = meshes.get_mut(e) else { continue };
             let origine = m.0.id();
             if faites.values().any(|h| h.id() == origine) {
                 continue; // déjà une matière lumineuse
             }
-            let cle = (origine, force.0.to_bits());
+            let cle = (origine, force.0.to_bits() + dore as u32);
             let lumineuse = match faites.get(&cle) {
                 Some(h) => h.clone(),
                 None => {
                     let Some(base) = mats.get(&m.0).cloned() else { continue };
-                    let h = mats.add(StandardMaterial { emissive: LinearRgba::rgb(force.0, force.0, force.0), emissive_texture: base.base_color_texture.clone(), ..base });
+                    let or = if dore { Color::srgb(1.0, 0.78, 0.25) } else { Color::WHITE };
+                    let h = mats.add(StandardMaterial { emissive: if dore { LinearRgba::rgb(force.0, force.0 * 0.8, force.0 * 0.3) } else { LinearRgba::rgb(force.0, force.0, force.0) }, emissive_texture: base.base_color_texture.clone(), base_color: if dore { or } else { base.base_color }, ..base });
                     faites.insert(cle, h.clone());
                     h
                 }

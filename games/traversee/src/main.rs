@@ -118,6 +118,7 @@ fn main() {
                 kenney::animer_humains,
                 kenney::rouler,
                 kenney::scintiller,
+                kenney::ressorts,
                 kenney::eclairage_nuit,
                 kenney::lampe_heros,
                 kenney::faire_briller,

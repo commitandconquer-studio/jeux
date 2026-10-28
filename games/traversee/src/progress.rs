@@ -16,7 +16,6 @@ const SAVE: &str = "traversee";
 #[derive(Clone, Copy, PartialEq, Eq, Debug)]
 pub enum Item {
     Vehicle(Vehicle),
-    Trains,
     World(Biome),
     Character(Character),
     Flies,
@@ -31,37 +30,40 @@ pub fn rescale(t: u32) -> u32 {
     (t * 1.5 + t * t / 1500.0).round() as u32
 }
 
-/// Points cumulés nécessaires, dans l'ordre d'arrivée.
+/// Points cumulés nécessaires, dans l'ordre d'arrivée : une nouveauté tous les 250 points, et les grosses
+/// (premier monde, aigle) aux paliers de 1 000 à 2 000. Valeurs finales, sans étirement.
 const BASE_UNLOCKS: &[(u32, Item)] = &[
-    (15, Item::Flies),
-    (25, Item::Vehicle(Vehicle::Truck)),
-    (60, Item::Vehicle(Vehicle::Taxi)),
-    (80, Item::Character(Character::Rabbit)),
-    (100, Item::Trains),
-    (160, Item::Vehicle(Vehicle::Moto)),
-    (180, Item::Eagle),
-    (240, Item::Vehicle(Vehicle::Bus)),
-    (280, Item::Character(Character::Badger)),
-    (350, Item::GoldFlies),
-    (380, Item::Vehicle(Vehicle::Pickup)),
-    (500, Item::Character(Character::Raccoon)),
-    (380, Item::Character(Character::Noe)),
-    (640, Item::Character(Character::Ines)),
-    (560, Item::Vehicle(Vehicle::Sport)),
-    (720, Item::Vehicle(Vehicle::Police)),
-    (900, Item::Character(Character::Hedgehog)),
-    (1000, Item::Vehicle(Vehicle::Tractor)),
-    (1100, Item::Character(Character::Sacha)),
-    (1250, Item::Character(Character::Fox)),
-    (2000, Item::Character(Character::Maya)),
-    (1800, Item::Character(Character::Panda)),
-    (2000, Item::Vehicle(Vehicle::Sheriff)),
-    (2600, Item::Character(Character::Duck)),
+    (20, Item::Flies),
+    (250, Item::Vehicle(Vehicle::Truck)),
+    (500, Item::Character(Character::Rabbit)),
+    (750, Item::Vehicle(Vehicle::Taxi)),
+    (1000, Item::Vehicle(Vehicle::Moto)),
+    (1250, Item::World(Biome::Desert)),
+    (1500, Item::Vehicle(Vehicle::Bus)),
+    (1750, Item::Character(Character::Badger)),
+    (2000, Item::Eagle),
+    (2250, Item::GoldFlies),
+    (2500, Item::Vehicle(Vehicle::Pickup)),
+    (2750, Item::Character(Character::Raccoon)),
+    (3000, Item::World(Biome::Snow)),
+    (3250, Item::Character(Character::Noe)),
+    (3500, Item::Vehicle(Vehicle::Sport)),
+    (3750, Item::Character(Character::Ines)),
+    (4000, Item::Vehicle(Vehicle::Police)),
+    (4250, Item::Character(Character::Hedgehog)),
+    (4500, Item::World(Biome::Autumn)),
+    (4750, Item::Vehicle(Vehicle::Tractor)),
+    (5000, Item::Character(Character::Sacha)),
+    (5250, Item::Character(Character::Fox)),
+    (5500, Item::Character(Character::Panda)),
+    (5750, Item::Character(Character::Maya)),
+    (6000, Item::Character(Character::Duck)),
+    (6250, Item::Vehicle(Vehicle::Sheriff)),
 ];
 
 /// Tous les déblocages, par ordre de points : ceux ci-dessus et les véhicules décrits en pièces.
 pub static UNLOCKS: LazyLock<Vec<(u32, Item)>> = LazyLock::new(|| {
-    let mut all: Vec<(u32, Item)> = BASE_UNLOCKS.iter().map(|(t, i)| (rescale(*t), *i)).collect();
+    let mut all: Vec<(u32, Item)> = BASE_UNLOCKS.to_vec();
     for b in Biome::ALL {
         if let Some(t) = b.theme() {
             all.push((rescale(t.points), Item::World(b)));
@@ -76,12 +78,11 @@ impl Item {
     /// Le nom à afficher (petit nom des véhicules, nom des mondes, des personnages…).
     pub fn name(self) -> &'static str {
         match self {
-            Item::Trains => tx!("Le Rapide Rouge", "The Red Rocket", "Der Rote Blitz", "Il Rapido Rosso", "El Rayo Rojo"),
             Item::World(b) => return b.name(),
             Item::Character(c) => return c.name(),
-            Item::Flies => tx!("Les cadeaux", "The gifts", "Die Geschenke", "I regali", "Los regalos"),
+            Item::Flies => tx!("La nourriture", "Food", "Das Essen", "Il cibo", "La comida"),
             Item::Eagle => tx!("L'aigle (attention !)", "The eagle (watch out!)", "Der Adler (Vorsicht!)", "L'aquila (attenzione!)", "El águila (¡cuidado!)"),
-            Item::GoldFlies => tx!("Les cadeaux dorés", "The golden gifts", "Die goldenen Geschenke", "I regali dorati", "Los regalos dorados"),
+            Item::GoldFlies => tx!("La nourriture dorée", "Golden food", "Das goldene Essen", "Il cibo dorato", "La comida dorada"),
             Item::Vehicle(Vehicle::Gen(i)) => return crate::gen_vehicles::name(i),
             Item::Vehicle(v) => match v {
                 Vehicle::Gen(_) => unreachable!(),
@@ -226,7 +227,7 @@ impl Item {
     /// Le genre de nouveauté, pour l'étiquette de l'annonce.
     pub fn kind(self) -> &'static str {
         match self {
-            Item::Vehicle(_) | Item::Trains => tx!("VÉHICULE", "VEHICLE", "FAHRZEUG", "VEICOLO", "VEHÍCULO"),
+            Item::Vehicle(_) => tx!("VÉHICULE", "VEHICLE", "FAHRZEUG", "VEICOLO", "VEHÍCULO"),
             Item::World(_) => tx!("MONDE", "WORLD", "WELT", "MONDO", "MUNDO"),
             Item::Character(_) => tx!("PERSONNAGE", "CHARACTER", "FIGUR", "PERSONAGGIO", "PERSONAJE"),
             Item::Flies | Item::GoldFlies | Item::Eagle => tx!("NOUVEAUTÉ", "NEW", "NEU", "NOVITÀ", "NOVEDAD"),
@@ -234,9 +235,20 @@ impl Item {
         .t()
     }
 
+    /// La phrase du pop-up quand on vient de le gagner.
+    pub fn gagne(self) -> &'static str {
+        match self {
+            Item::Vehicle(_) => tx!("Nouveau modèle gagné !", "New model unlocked!", "Neues Modell freigeschaltet!", "Nuovo modello sbloccato!", "¡Nuevo modelo desbloqueado!"),
+            Item::World(_) => tx!("Nouveau monde gagné !", "New world unlocked!", "Neue Welt freigeschaltet!", "Nuovo mondo sbloccato!", "¡Nuevo mundo desbloqueado!"),
+            Item::Character(_) => tx!("Nouveau personnage gagné !", "New character unlocked!", "Neue Figur freigeschaltet!", "Nuovo personaggio sbloccato!", "¡Nuevo personaje desbloqueado!"),
+            Item::Flies | Item::GoldFlies | Item::Eagle => tx!("Nouveauté débloquée !", "New unlocked!", "Neuheit freigeschaltet!", "Novità sbloccata!", "¡Novedad desbloqueada!"),
+        }
+        .t()
+    }
+
     pub fn color(self) -> Color {
         match self {
-            Item::Vehicle(_) | Item::Trains => Color::srgb(0.25, 0.5, 0.9),
+            Item::Vehicle(_) => Color::srgb(0.25, 0.5, 0.9),
             Item::World(_) => Color::srgb(0.3, 0.7, 0.35),
             Item::Character(_) => Color::srgb(0.95, 0.55, 0.15),
             Item::Flies | Item::GoldFlies | Item::Eagle => Color::srgb(0.2, 0.7, 0.7),

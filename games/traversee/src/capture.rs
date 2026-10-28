@@ -1,8 +1,10 @@
 //! Mode « captures d'écran » : `TRAVERSEE_CAPTURE=dossier cargo run -p traversee`
 //! enregistre l'accueil, le départ, puis une partie jouée en pilote automatique
 //! (le crapaud saute tout droit), et quitte.
+//! Photo de presse : `TRAVERSEE_PRESSE=dossier` (voir `presse()`), en 1920×1080 et sans interface.
 use bevy::prelude::*;
 use bevy::render::view::screenshot::{Screenshot, save_to_disk};
+use bevy::window::PrimaryWindow;
 
 use crate::GameState;
 use crate::extra::{Extra, spawn_fly};
@@ -40,10 +42,32 @@ struct Capture {
     fly_done: bool,
 }
 
+/// Photo de presse : `TRAVERSEE_PRESSE=dossier` (avec `TRAVERSEE_BIOME=n` pour le monde) enregistre
+/// `presse.png` en 1920×1080, sans interface, personnage immortel avec un colis sur le dos et
+/// destinataires en vue, puis quitte.
+pub fn presse() -> Option<&'static str> {
+    static P: std::sync::OnceLock<Option<String>> = std::sync::OnceLock::new();
+    P.get_or_init(|| std::env::var("TRAVERSEE_PRESSE").ok()).as_deref()
+}
+
+#[derive(Resource)]
+struct Presse {
+    dir: String,
+    phase: u8,
+    since: f32,
+    last_hop: f32,
+}
+
 pub struct CapturePlugin;
 
 impl Plugin for CapturePlugin {
     fn build(&self, app: &mut App) {
+        if let Some(dir) = presse() {
+            app.insert_resource(Presse { dir: dir.to_string(), phase: 0, since: 0.0, last_hop: 0.0 })
+                .add_systems(Startup, full_hd)
+                .add_systems(Update, (run_presse, cacher_interface));
+            return;
+        }
         if std::env::var("TRAVERSEE_PERF").is_ok() {
             // Mesure : fps et nombre d'entités dans la console, en jouant tout seul.
             use bevy::diagnostic::{EntityCountDiagnosticsPlugin, FrameTimeDiagnosticsPlugin, LogDiagnosticsPlugin};
@@ -316,5 +340,67 @@ fn run_collection(
         } else if now >= due + 2.0 {
             exit.write(AppExit::Success);
         }
+    }
+}
+
+/// Fenêtre en 1920×1080 exactement (échelle 1), pour des images de presse.
+fn full_hd(mut windows: Query<&mut Window, With<PrimaryWindow>>) {
+    for mut w in &mut windows {
+        w.resolution.set_scale_factor_override(Some(1.0));
+        w.resolution.set(1920.0, 1080.0);
+        w.decorations = false;
+        // Plein écran sans bordure : la barre de titre ne rogne pas l'image (sur un écran 1920×1080).
+        w.mode = bevy::window::WindowMode::BorderlessFullscreen(bevy::window::MonitorSelection::Current);
+    }
+}
+
+/// Plus aucune interface : tous les écrans, bandeaux et cartes sont masqués.
+fn cacher_interface(mut racines: Query<&mut Node, Without<ChildOf>>) {
+    for mut n in &mut racines {
+        n.display = Display::None;
+    }
+}
+
+fn run_presse(
+    time: Res<Time<Real>>,
+    mut p: ResMut<Presse>,
+    state: Res<State<GameState>>,
+    mut next: ResMut<NextState<GameState>>,
+    mut frog: ResMut<Frog>,
+    mut porte: ResMut<crate::colis::Porte>,
+    mut commands: Commands,
+    mut exit: MessageWriter<AppExit>,
+) {
+    let now = time.elapsed_secs();
+    match p.phase {
+        // Le temps de compiler les shaders, puis on lance la partie.
+        0 if now > 4.0 => {
+            next.set(GameState::Playing);
+            p.phase = 1;
+            p.since = now;
+        }
+        // Quelques sauts tout droit.
+        1 if *state.get() == GameState::Playing => {
+            if frog.row >= 3 && frog.hop.is_none() {
+                p.phase = 2;
+                p.since = now;
+            } else if now - p.last_hop > 0.45 {
+                p.last_hop = now;
+                frog.queued = Some(IVec2::Y);
+            }
+        }
+        // Le colis sur le dos : les destinataires apparaissent, on attend que tout se pose.
+        2 => {
+            porte.0 = Some(1);
+            if now - p.since > 2.5 {
+                commands.spawn(Screenshot::primary_window()).observe(save_to_disk(format!("{}/presse.png", p.dir)));
+                p.phase = 3;
+                p.since = now;
+            }
+        }
+        3 if now - p.since > 1.5 => {
+            exit.write(AppExit::Success);
+        }
+        _ => {}
     }
 }
