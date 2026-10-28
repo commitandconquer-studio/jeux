@@ -1,0 +1,80 @@
+# Cimetière — les premiers téléporteurs : on entre dans une dalle, on ressort de l'autre. Chaque personne de la file passe à son tour.
+# Les invités y sont souvent des monstres (zombies, squelettes, vampires, fantômes).
+# Cases (nombre) : blocs, trous, teleporteurs (paires), accelerateurs, tapis.
+
+[Les premières dalles]
+lieu = cimetiere
+forme = carre 18
+touristes = 8
+teleporteurs = 1
+pas = 0.33
+
+[Le passage secret]
+lieu = cimetiere
+forme = carre 18
+touristes = 10
+teleporteurs = 1
+pas = 0.32
+
+[Deux passages]
+lieu = cimetiere
+forme = carre 16
+touristes = 14
+teleporteurs = 2
+pas = 0.32
+
+[Tombes et passages]
+lieu = cimetiere
+forme = carre 16
+touristes = 14
+teleporteurs = 1
+blocs = 4
+pas = 0.31
+
+[Le caveau]
+lieu = cimetiere
+forme = rectangle 22x10
+touristes = 16
+teleporteurs = 2
+pas = 0.31
+
+[La procession]
+lieu = cimetiere
+forme = carre 16
+touristes = 14
+teleporteurs = 1
+sortie = oui
+pas = 0.31
+
+[L'allée des cyprès]
+lieu = cimetiere
+forme = U
+touristes = 16
+teleporteurs = 2
+sortie = oui
+pas = 0.30
+
+[Le chemin des ombres]
+lieu = cimetiere
+forme = route
+touristes = 12
+teleporteurs = 1
+sortie = oui
+pas = 0.30
+
+[La nuit des fantômes]
+lieu = cimetiere
+forme = carre 16
+touristes = 20
+teleporteurs = 3
+sortie = oui
+pas = 0.24
+
+[Le labyrinthe des tombes]
+lieu = cimetiere
+forme = allees
+touristes = 24
+teleporteurs = 3
+trous = 2
+sortie = oui
+pas = 0.28

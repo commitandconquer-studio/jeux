@@ -15,7 +15,7 @@ use crate::progress::Progress;
 use crate::settings::Settings;
 use crate::layout::Layout;
 use crate::voyage::{Mode, Outcome, Run, Scenery, Voyage, stars_for};
-use crate::world::cell_to_world;
+use crate::world::{Universe, cell_to_world};
 
 pub struct GamePlugin;
 
@@ -253,6 +253,7 @@ fn new_game(
     mut commands: Commands,
     settings: Res<Settings>,
     layout: Res<Layout>,
+    scenery: Res<Scenery>,
     mut conga: ResMut<Conga>,
     mut food: ResMut<Food>,
     mut timer: ResMut<StepTimer>,
@@ -276,7 +277,7 @@ fn new_game(
     *crash = Crash::default();
     *conga = Conga::new(&layout, settings.leader);
     food.cell = free_cell(&conga.cells, &board, &layout, &mut rng);
-    food.kind = guest_kind(&mut rng, &progress);
+    food.kind = guest_kind(&mut rng, &progress, scenery.0);
     food.look = rng.below(LOOKS);
     food.spawned = false;
     timer.0 = Timer::from_seconds(settings.speed.step_times().0, TimerMode::Repeating);
@@ -356,7 +357,11 @@ fn clear_board(mut commands: Commands, stuff: Query<Entity, Or<(With<Segment>, W
 }
 
 /// Un invité au hasard parmi les personnages débloqués.
-fn guest_kind(rng: &mut Rng, progress: &Progress) -> usize {
+fn guest_kind(rng: &mut Rng, progress: &Progress, scenery: Universe) -> usize {
+    // Au cimetière, un invité sur deux est un monstre.
+    if scenery == Universe::Cimetiere && rng.below(2) == 0 {
+        return 12 + rng.below(4) as usize;
+    }
     let pool = progress.persons();
     pool[rng.below(pool.len() as u32) as usize]
 }
@@ -533,7 +538,7 @@ fn step(
         let look = food.look;
         conga.looks.push(look);
         food.cell = free_cell(&conga.cells, &board, &layout, &mut rng);
-        food.kind = guest_kind(&mut rng, &progress);
+        food.kind = guest_kind(&mut rng, &progress, voyage.scenery.0);
         food.look = rng.below(LOOKS);
         food.spawned = false;
         if let Some(level) = voyage.mode.level() {

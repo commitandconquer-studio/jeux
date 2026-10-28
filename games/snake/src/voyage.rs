@@ -124,6 +124,7 @@ pub struct Voyage<'w> {
     pub run: ResMut<'w, Run>,
     pub outcome: ResMut<'w, Outcome>,
     pub next: ResMut<'w, NextState<GameState>>,
+    pub scenery: Res<'w, Scenery>,
 }
 
 pub struct VoyagePlugin;
