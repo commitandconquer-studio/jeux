@@ -23,13 +23,15 @@ fn build(text: &str, fallback_title: &str) -> Result<Scenario, String> {
 /// Toutes les aventures. En aperçu (éditeur), seul le fichier d'aperçu.
 pub static SCENARIOS: LazyLock<Vec<Scenario>> = LazyLock::new(|| {
     if let Some(text) = preview_text() {
-        match build(&text, "Aperçu") {
+        let problem = match build(&text, "Aperçu") {
             Ok(s) if !s.steps.is_empty() => return vec![s],
-            Ok(_) => warn!("aperçu : aucune étape dans le fichier"),
-            Err(e) => warn!("aperçu : fichier illisible : {e}"),
-        }
-        // Repli : une aventure minimale, pour que le jeu ne plante pas.
-        return vec![build("[Aperçu vide]\ntype = scene\nreplique = Guide | Le fichier d'aperçu est illisible ou vide.\n", "Aperçu").expect("aventure de repli")];
+            Ok(_) => "aucune étape dans le fichier".to_owned(),
+            Err(e) => e,
+        };
+        warn!("aperçu : {problem}");
+        // Repli : une scène qui affiche le problème, pour que ce soit visible dans l'éditeur (et que le jeu ne plante pas).
+        let shown: String = problem.chars().filter(|c| !matches!(c, '|' | '\n' | '\r')).collect();
+        return vec![build(&format!("[Aperçu illisible]\ntype = scene\nreplique = Aperçu | Le fichier d'aperçu est illisible — {shown}\n"), "Aperçu").expect("aventure de repli")];
     }
     let mut all = Vec::new();
     for (name, text) in [("Découverte", include_str!("../scenarios/decouverte.txt"))] {
