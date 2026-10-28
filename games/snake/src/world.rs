@@ -182,7 +182,7 @@ pub fn rebuild_world(
     }
 
     // Grande ville : des immeubles occupent les pâtés de maisons entre les rues.
-    if l.follow {
+    if l.blocks > 0 {
         let mut rng = Rng::new(universe as u64 * 7919 + shape as u64 * 31);
         let pitch = crate::layout::CITY_BLOCK + crate::layout::CITY_STREET;
         let lawn = b.mat(theme.rim);

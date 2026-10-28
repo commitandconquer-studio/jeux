@@ -144,7 +144,7 @@ pub fn parse(text: &str) -> Result<Vec<Level>, String> {
             "sortie" => level.exit = value == "oui",
             "pas" => level.pace = value.parse().map_err(|_| err("nombre attendu"))?,
             "temps" => level.par = value.parse().map_err(|_| err("nombre attendu"))?,
-            "blocs" | "trous" | "teleporteurs" | "accelerateurs" | "tapis" | "barrieres" | "trains" => {
+            "blocs" | "trous" | "teleporteurs" | "accelerateurs" | "tapis" | "barrieres" | "rivaux" => {
                 let n = value.parse().map_err(|_| err("nombre attendu"))?;
                 let f = match key {
                     "blocs" => Feature::Obstacle,
@@ -152,7 +152,7 @@ pub fn parse(text: &str) -> Result<Vec<Level>, String> {
                     "teleporteurs" => Feature::Teleport,
                     "accelerateurs" => Feature::Speeder,
                     "barrieres" => Feature::Gate,
-                    "trains" => Feature::Train,
+                    "rivaux" => Feature::Rival,
                     _ => Feature::Belt,
                 };
                 level.cases.push((f, n));

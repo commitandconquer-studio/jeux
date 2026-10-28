@@ -24,8 +24,8 @@ pub enum Tile {
     Portal,
     /// Barrière qui s'ouvre et se ferme au rythme des pas (décalage de phase).
     Gate(u8),
-    /// Voie ferrée (vrai : le long de x) ; un train y passe de temps en temps.
-    Rail(bool),
+    /// Chemin du guide rival (vrai : le long de x).
+    Lane(bool),
 }
 
 /// Ce que le jeu sait poser sur le plateau.
@@ -39,32 +39,34 @@ pub enum Feature {
     /// Portail de paysage (mode infini) : change le décor, pas le plateau.
     Portal,
     Gate,
-    /// Une voie ferrée entière avec son train.
-    Train,
+    /// Un guide rival qui traverse le plateau en emmenant les touristes qu'il touche.
+    Rival,
 }
 
-/// Un train : il traverse tout le plateau le long d'une ligne de cases, puis revient après une pause.
-pub struct Train {
-    /// Les cases de la voie, dans le sens de la marche.
+/// Un guide rival et ses deux touristes : il traverse tout le plateau le long d'une ligne de cases, puis revient après une pause.
+pub struct Rival {
+    /// Les cases du chemin, dans le sens de la marche (la première est l'entrée).
     pub cells: Vec<IVec2>,
     pub offset: u32,
 }
 
-impl Train {
+impl Rival {
     pub const CARS: i32 = 3;
+    /// Pas pendant lesquels l'entrée clignote avant son arrivée.
+    pub const WARN: u32 = 10;
 
     pub fn period(&self) -> u32 {
-        self.cells.len() as u32 + 6
+        self.cells.len() as u32 + Self::CARS as u32 + 14
     }
 
-    /// Indice (sur la voie) de la locomotive au pas `clock` ; négatif = pas encore entré.
+    /// Indice (sur le chemin) du guide rival au pas `clock`.
     pub fn front(&self, clock: u32) -> i32 {
         ((clock + self.offset) % self.period()) as i32
     }
 
-    /// Le train arrive dans deux pas ou moins : les feux clignotent.
+    /// Il arrive dans quelques pas : l'entrée clignote.
     pub fn warning(&self, clock: u32) -> bool {
-        self.front(clock) as u32 >= self.period() - 2
+        self.front(clock) as u32 + Self::WARN >= self.period()
     }
 
     pub fn hits(&self, c: IVec2, clock: u32) -> bool {
@@ -82,7 +84,7 @@ pub struct Board {
     pub teleports: u8,
     /// Nombre de pas faits (rythme des barrières).
     pub clock: u32,
-    pub trains: Vec<Train>,
+    pub rivals: Vec<Rival>,
 }
 
 impl Board {
@@ -90,12 +92,12 @@ impl Board {
         self.tiles.clear();
         self.teleports = 0;
         self.clock = 0;
-        self.trains.clear();
+        self.rivals.clear();
     }
 
-    /// Un train occupe-t-il cette case au pas `clock` ?
-    pub fn train_hits(&self, c: IVec2, clock: u32) -> bool {
-        self.trains.iter().any(|t| t.hits(c, clock))
+    /// Un rival occupe-t-il cette case au pas `clock` ?
+    pub fn rival_hits(&self, c: IVec2, clock: u32) -> bool {
+        self.rivals.iter().any(|t| t.hits(c, clock))
     }
 
     /// La barrière de cette case est-elle fermée au pas `clock` ?
@@ -114,8 +116,8 @@ impl Board {
 
     /// Nombre de cases de ce genre déjà posées.
     pub fn count(&self, f: Feature) -> usize {
-        if f == Feature::Train {
-            return self.trains.len();
+        if f == Feature::Rival {
+            return self.rivals.len();
         }
         self.tiles
             .values()
@@ -154,18 +156,22 @@ impl Board {
                     self.tiles.insert(c, Tile::Speeder);
                     return true;
                 }
-                Feature::Train => {
+                Feature::Rival => {
                     let horizontal = rng.below(2) == 0;
                     let line: Vec<IVec2> = if horizontal { (0..layout.w).map(|x| IVec2::new(x, c.y)).collect() } else { (0..layout.h).map(|y| IVec2::new(c.x, y)).collect() };
                     let line: Vec<IVec2> = line.into_iter().filter(|p| layout.walkable(*p)).collect();
-                    // La voie doit traverser tout le plateau d'un seul tenant, loin de la tête.
+                    // Le chemin doit traverser tout le plateau d'un seul tenant, loin de la tête.
                     let straight = line.windows(2).all(|w| (w[1] - w[0]).abs().element_sum() == 1);
+                    let mut line = line;
+                    if rng.below(2) == 0 {
+                        line.reverse();
+                    }
                     if line.len() >= 8 && straight && line.iter().all(|p| self.is_free(*p, busy, head) && !busy.contains(p)) {
                         for p in &line {
-                            self.tiles.insert(*p, Tile::Rail(horizontal));
+                            self.tiles.insert(*p, Tile::Lane(horizontal));
                         }
                         let offset = rng.below(line.len() as u32 + 6);
-                        self.trains.push(Train { cells: line, offset });
+                        self.rivals.push(Rival { cells: line, offset });
                         return true;
                     }
                 }
@@ -257,6 +263,7 @@ pub fn sync_tiles(
     mut meshes: ResMut<Assets<Mesh>>,
     mut mats: ResMut<Assets<StandardMaterial>>,
     old: Query<Entity, With<TileVisual>>,
+    mut graphs: ResMut<Assets<AnimationGraph>>,
     mut count: Local<usize>,
 ) {
     if !board.is_changed() && !scenery.is_changed() {
@@ -282,30 +289,30 @@ pub fn sync_tiles(
     let gate_shut = mk(Color::srgb(0.95, 0.25, 0.20), 0.8);
     let gate_warn = mk(Color::srgb(1.0, 0.75, 0.15), 1.0);
     let gate_open = mk(Color::srgb(0.35, 0.85, 0.45), 0.4);
-    let rail_bed = mk(Color::srgb(0.40, 0.34, 0.30), 0.0);
-    let rail_steel = mk(Color::srgb(0.75, 0.77, 0.80), 0.0);
+    let rail_bed = mk(Color::srgb(0.60, 0.62, 0.66), 0.0);
+    let rail_steel = mk(Color::WHITE, 0.0);
     let rail_lamp = mk(Color::srgb(1.0, 0.25, 0.15), 2.0);
     let speed_plate = mk(Color::srgb(1.0, 0.8, 0.1), 0.6);
     let speed_core = mk(Color::WHITE, 2.0);
     *count = board.tiles.len();
-    // Les trains : une locomotive et deux wagons par voie, et un feu à l'entrée.
-    for (n, t) in board.trains.iter().enumerate() {
-        let horizontal = t.cells.len() > 1 && t.cells[1].x != t.cells[0].x;
-        let cars = ["train-kit/train-diesel-a", "train-kit/train-carriage-box", "train-kit/train-carriage-container-red"];
-        for (k, file) in cars.iter().enumerate() {
-            let scene = server.load(GltfAssetLabel::Scene(0).from_asset(format!("kenney/{file}.glb")));
-            commands.spawn((
-                WorldAssetRoot(scene),
-                Transform::from_translation(Vec3::new(0.0, -50.0, 0.0)).with_scale(Vec3::new(0.7, 0.6, 0.4)),
-                Visibility::Hidden,
-                TrainCar { train: n, car: k as i32, horizontal },
-                TileVisual,
-            ));
+    // Les guides rivaux : un guide et deux touristes en marche, et un signal clignotant à l'entrée.
+    for (n, t) in board.rivals.iter().enumerate() {
+        let dir = if t.cells.len() > 1 { t.cells[1] - t.cells[0] } else { IVec2::X };
+        for (k, kind) in [3usize, 5, 8].into_iter().enumerate() {
+            let root = commands
+                .spawn((
+                    Transform::from_translation(Vec3::new(0.0, -50.0, 0.0)).with_rotation(Quat::from_rotation_y((dir.x as f32).atan2(dir.y as f32))),
+                    Visibility::Hidden,
+                    RivalCar { rival: n, car: k as i32, dir },
+                    TileVisual,
+                ))
+                .id();
+            crate::people::spawn_model(&mut commands, &server, &mut graphs, root, kind, crate::people::Pose::Walk, 1.0, (n * 7 + k * 13 + 5) as u32, k == 0);
         }
-        let lamp_at = cell_to_world(t.cells[0].as_vec2(), 0.3, grid);
-        let lamp_at = lamp_at - if horizontal { Vec3::X } else { Vec3::Z } * 0.0;
-        let lamp = commands.spawn((Mesh3d(cube.clone()), MeshMaterial3d(rail_lamp.clone()), Transform::from_translation(lamp_at + Vec3::Y * 0.1).with_scale(Vec3::splat(0.22)), Visibility::Hidden, TrainLamp(n), NotShadowCaster, TileVisual));
-        let _ = lamp;
+        let at_entry = cell_to_world(t.cells[0].as_vec2(), 0.12, grid);
+        commands.spawn((Mesh3d(disc.clone()), MeshMaterial3d(rail_lamp.clone()), Transform::from_translation(at_entry).with_scale(Vec3::new(1.1, 1.0, 1.1)), Visibility::Hidden, RivalMarker(n), NotShadowCaster, TileVisual));
+        let post = cell_to_world(t.cells[0].as_vec2(), 0.7, grid);
+        commands.spawn((Mesh3d(cube.clone()), MeshMaterial3d(rail_lamp.clone()), Transform::from_translation(post).with_scale(Vec3::new(0.2, 1.2, 0.2)), Visibility::Hidden, RivalMarker(n), NotShadowCaster, TileVisual));
     }
 
     for (&cell, &tile) in &board.tiles {
@@ -356,16 +363,11 @@ pub fn sync_tiles(
                     commands.entity(e).insert(GateBar { phase, kind });
                 }
             }
-            Tile::Rail(horizontal) => {
+            Tile::Lane(horizontal) => {
                 let yaw = if horizontal { FRAC_PI_2 } else { 0.0 };
                 let root = commands.spawn((at(0.0).with_rotation(Quat::from_rotation_y(yaw)), Visibility::default(), TileVisual)).id();
                 spawn(&mut commands, plate.clone(), rail_bed.clone(), Transform::IDENTITY, Some(root));
-                for x in [-0.25_f32, 0.25] {
-                    spawn(&mut commands, cube.clone(), rail_steel.clone(), Transform::from_xyz(x, 0.06, 0.0).with_scale(Vec3::new(0.07, 0.05, 1.0)), Some(root));
-                }
-                for z in [-0.3_f32, 0.0, 0.3] {
-                    spawn(&mut commands, cube.clone(), rail_bed.clone(), Transform::from_xyz(0.0, 0.045, z).with_scale(Vec3::new(0.7, 0.03, 0.1)), Some(root));
-                }
+                spawn(&mut commands, cube.clone(), rail_steel.clone(), Transform::from_xyz(0.0, 0.05, 0.0).with_scale(Vec3::new(0.08, 0.02, 0.5)), Some(root));
             }
             Tile::Hole => {
                 spawn(&mut commands, disc.clone(), hole_rim.clone(), at(0.0).with_scale(Vec3::new(1.08, 1.0, 1.08)), None);
@@ -410,42 +412,40 @@ pub fn sync_tiles(
 pub struct SideOffset(f32);
 
 #[derive(Component)]
-pub struct TrainCar {
-    train: usize,
+pub struct RivalCar {
+    rival: usize,
     car: i32,
-    horizontal: bool,
+    dir: IVec2,
 }
 
 #[derive(Component)]
-pub struct TrainLamp(usize);
+pub struct RivalMarker(usize);
 
-/// Fait rouler les trains d'une case par pas, et clignoter le feu avant leur arrivée.
-pub fn animate_trains(
+/// Fait avancer les guides rivaux d'une case par pas, et clignoter l'entrée avant leur arrivée.
+pub fn animate_rivals(
     time: Res<Time>,
     board: Res<Board>,
     layout: Res<Layout>,
-    mut cars: Query<(&TrainCar, &mut Transform, &mut Visibility), Without<TrainLamp>>,
-    mut lamps: Query<(&TrainLamp, &mut Visibility), Without<TrainCar>>,
+    mut cars: Query<(&RivalCar, &mut Transform, &mut Visibility), Without<RivalMarker>>,
+    mut marks: Query<(&RivalMarker, &mut Visibility), Without<RivalCar>>,
 ) {
-    let blink = (time.elapsed_secs() * 8.0).sin() > 0.0;
-    for (l, mut v) in &mut lamps {
-        let on = board.trains.get(l.0).is_some_and(|t| t.warning(board.clock)) && blink;
+    let blink = (time.elapsed_secs() * 7.0).sin() > 0.0;
+    for (l, mut v) in &mut marks {
+        let on = board.rivals.get(l.0).is_some_and(|t| t.warning(board.clock)) && blink;
         *v = if on { Visibility::Inherited } else { Visibility::Hidden };
     }
     for (c, mut tf, mut v) in &mut cars {
-        let Some(t) = board.trains.get(c.train) else { continue };
+        let Some(t) = board.rivals.get(c.rival) else { continue };
         let i = t.front(board.clock) - c.car;
         if i < -1 || i > t.cells.len() as i32 {
             *v = Visibility::Hidden;
             continue;
         }
         *v = Visibility::Inherited;
-        // Les voies vont de la case 0 à la dernière ; au-delà, on prolonge en ligne droite.
-        let step = if c.horizontal { Vec2::X } else { Vec2::Y };
-        let target = cell_to_world(t.cells[0].as_vec2() + step * i as f32, 0.05, &layout);
+        // Au-delà des extrémités, on prolonge en ligne droite : il entre et sort du décor en marchant.
+        let target = cell_to_world(t.cells[0].as_vec2() + c.dir.as_vec2() * i as f32, 0.05, &layout);
         let jump = tf.translation.distance(target) > 2.5;
         tf.translation = if jump { target } else { tf.translation.lerp(target, (time.delta_secs() * 14.0).min(1.0)) };
-        tf.rotation = Quat::from_rotation_y(if c.horizontal { FRAC_PI_2 } else { 0.0 });
     }
 }
 
@@ -485,5 +485,23 @@ pub fn animate_tiles(
     for (p, mut tf) in &mut pulses {
         let k = 0.34 + 0.12 * (t * 6.0 + p.0).sin();
         tf.scale = Vec3::new(k, 0.05, k);
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn rival_warns_before_entering_and_covers_three_cells() {
+        let r = Rival { cells: (0..10).map(|x| IVec2::new(x, 0)).collect(), offset: 0 };
+        // Au pas 0 il entre : seule la première case est occupée.
+        assert!(r.hits(IVec2::new(0, 0), 0) && !r.hits(IVec2::new(1, 0), 0));
+        // Au pas 4 il occupe les cases 2 à 4.
+        assert!(r.hits(IVec2::new(2, 0), 4) && r.hits(IVec2::new(4, 0), 4) && !r.hits(IVec2::new(5, 0), 4));
+        // L'entrée clignote juste avant son arrivée, mais pas juste après son départ.
+        assert!(r.warning(r.period() - 1) && !r.warning(5));
+        // Il est parti avant la fin du cycle.
+        assert!((0..10).all(|x| !r.hits(IVec2::new(x, 0), 14)));
     }
 }

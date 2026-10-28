@@ -29,7 +29,6 @@ impl Plugin for GamePlugin {
             .insert_resource(Crash::default())
             .insert_resource(Banner::default())
             .init_resource::<Board>()
-            .init_resource::<Focus>()
             .insert_resource(StepTimer(Timer::from_seconds(0.16, TimerMode::Repeating)))
             .add_systems(Startup, (setup, load_best, crate::dress::setup))
             .add_systems(OnEnter(GameState::Playing), (new_game, new_run).chain())
@@ -38,9 +37,9 @@ impl Plugin for GamePlugin {
             .add_systems(
                 Update,
                 (
-                    (crate::board::sync_tiles, crate::board::animate_tiles, crate::board::animate_gates, crate::board::animate_trains),
+                    (crate::board::sync_tiles, crate::board::animate_tiles, crate::board::animate_gates, crate::board::animate_rivals),
                     (read_input, autopilot, step, apply_portal, exit_sequence, finish_crash).chain().run_if(in_state(GameState::Playing)),
-                    (track_focus, sync_guest, sync_segments).run_if(|s: Res<State<GameState>>| {
+                    (sync_guest, sync_segments).run_if(|s: Res<State<GameState>>| {
                         matches!(s.get(), GameState::Playing | GameState::GameOver)
                     }),
                     (animate_guest, animate_pop, people::start_animations, crate::dress::dress, people::attach_guide),
@@ -143,7 +142,7 @@ fn cap(f: Feature) -> usize {
         Feature::Belt => 8,
         Feature::Portal => 1,
         Feature::Gate => 6,
-        Feature::Train => 2,
+        Feature::Rival => 2,
     }
 }
 
@@ -155,24 +154,11 @@ pub fn feature_name(f: Feature) -> &'static str {
         Feature::Teleport => tx!("Téléporteurs !", "Teleporters!", "Teleporter!", "Teletrasporti!", "¡Teletransportadores!"),
         Feature::Speeder => tx!("Accélérateurs !", "Speed pads!", "Turbo-Felder!", "Acceleratori!", "¡Aceleradores!"),
         Feature::Portal => tx!("Un portail !", "A portal!", "Ein Portal!", "Un portale!", "¡Un portal!"),
-        Feature::Train => tx!("Des trains !", "Trains!", "Züge!", "Treni!", "¡Trenes!"),
+        Feature::Rival => tx!("Un guide rival !", "A rival guide!", "Ein Konkurrenzführer!", "Una guida rivale!", "¡Un guía rival!"),
         Feature::Gate => tx!("Barrières !", "Barriers!", "Schranken!", "Barriere!", "¡Barreras!"),
         Feature::Belt => tx!("Tapis roulants !", "Conveyor belts!", "Förderbänder!", "Nastri trasportatori!", "¡Cintas transportadoras!"),
     }
     .t()
-}
-
-/// Le point que la caméra suit sur une grande carte : la tête, glissant d'une case à l'autre.
-#[derive(Resource, Default)]
-pub struct Focus(pub Vec2);
-
-fn track_focus(conga: Res<Conga>, timer: Res<StepTimer>, layout: Res<Layout>, state: Res<State<GameState>>, crash: Res<Crash>, mut focus: ResMut<Focus>) {
-    let t = if *state.get() == GameState::Playing && !crash.active { timer.0.fraction() } else { 1.0 };
-    let (a, b) = (conga.prev.first().copied().unwrap_or(conga.cells[0]), conga.cells[0]);
-    // Après un téléporteur ou un saut de bord, on ne glisse pas à travers tout le plateau.
-    let cell = if (b - a).abs().element_sum() > 1 { b.as_vec2() } else { a.as_vec2().lerp(b.as_vec2(), t) };
-    let p = crate::world::cell_to_world(cell, 0.0, &layout);
-    focus.0 = Vec2::new(p.x, p.z);
 }
 
 /// La chenille : la tête en premier, puis les invités attrapés.
@@ -402,7 +388,7 @@ fn autopilot(
     let hole = std::env::var("SNAKE_TROU").is_ok().then(|| board.tiles.iter().filter(|(_, t)| **t == Tile::Hole).map(|(c, _)| *c).min_by_key(|c| (*c - head).abs().element_sum())).flatten();
     let target = hole.or(run.exit).unwrap_or(food.cell);
     let body = &conga.cells[..conga.cells.len() - 1];
-    let safe = |c: IVec2| layout.walkable(c) && !body.contains(&c) && !matches!(board.tiles.get(&c), Some(Tile::Obstacle(_))) && !board.shut(c, board.clock + 1) && !board.train_hits(c, board.clock + 1) && (hole.is_some() || board.tiles.get(&c) != Some(&Tile::Hole));
+    let safe = |c: IVec2| layout.walkable(c) && !body.contains(&c) && !matches!(board.tiles.get(&c), Some(Tile::Obstacle(_))) && !board.shut(c, board.clock + 1) && !board.rival_hits(c, board.clock + 1) && (hole.is_some() || board.tiles.get(&c) != Some(&Tile::Hole));
     let best = [IVec2::X, IVec2::NEG_X, IVec2::Y, IVec2::NEG_Y]
         .into_iter()
         .filter(|d| *d != -conga.dir && safe(head + *d))
@@ -520,7 +506,6 @@ fn step(
         Some(Tile::Obstacle(_) | Tile::Hole) => true,
         Some(Tile::Belt(d)) => *d == -conga.dir,
         Some(Tile::Gate(ph)) => Board::gate_closed(*ph, board.clock),
-        Some(Tile::Rail(_)) => board.train_hits(head, board.clock),
         _ => false,
     };
     let hole_at = (board.tiles.get(&head) == Some(&Tile::Hole)).then_some(head);
@@ -610,6 +595,22 @@ fn step(
     } else {
         conga.cells.pop();
         conga.vias.pop();
+    }
+    // Un guide rival emmène avec lui les touristes qu'il touche (ceux de la case touchée jusqu'au bout de la file).
+    if let Some(i) = conga.cells.iter().position(|c| board.rival_hits(*c, board.clock)) {
+        let keep = i.max(2).min(conga.cells.len());
+        let lost = conga.cells.len() - keep;
+        if lost > 0 {
+            conga.cells.truncate(keep);
+            conga.prev.truncate(keep);
+            conga.vias.truncate(keep);
+            conga.kinds.truncate(keep);
+            conga.looks.truncate(keep);
+            voyage.run.recruited = voyage.run.recruited.saturating_sub(lost as u32);
+            banner.text = game_common::tx!("Le guide rival emmène {} touristes !", "The rival guide takes {} tourists!", "Der Konkurrenzführer nimmt {} Touristen mit!", "La guida rivale porta via {} turisti!", "¡El guía rival se lleva {} turistas!").avec(&[&lost]);
+            banner.left = 3.0;
+            sfx.write(Sfx::GameOver);
+        }
     }
     if board.tiles.get(&head) == Some(&Tile::Portal) {
         board.tiles.remove(&head);

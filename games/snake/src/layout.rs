@@ -13,8 +13,6 @@ pub struct Layout {
     pub dir: IVec2,
     /// Identifie la forme (pour savoir quand reconstruire le décor).
     pub id: u32,
-    /// Grande carte : la caméra zoome et suit la tête (au lieu de montrer tout le plateau).
-    pub follow: bool,
     /// Villes : pas des rues (quartiers de `CITY_BLOCK` cases entourés de rues de 2 cases).
     pub blocks: i32,
 }
@@ -33,12 +31,12 @@ impl Default for Layout {
 impl Layout {
     /// Rectangle plein ; départ au centre, vers l'est.
     pub fn rect(w: i32, h: i32) -> Self {
-        Layout { w, h, mask: vec![true; (w * h) as usize], start: IVec2::new(w / 2, h / 2), dir: IVec2::X, id: 0, follow: false, blocks: 0 }
+        Layout { w, h, mask: vec![true; (w * h) as usize], start: IVec2::new(w / 2, h / 2), dir: IVec2::X, id: 0, blocks: 0 }
     }
 
     /// Union de rectangles `(x0, y0, x1, y1)` (bornes comprises).
     pub fn from_rects(w: i32, h: i32, rects: &[(i32, i32, i32, i32)], start: IVec2) -> Self {
-        let mut l = Layout { w, h, mask: vec![false; (w * h) as usize], start, dir: IVec2::X, id: 0, follow: false, blocks: 0 };
+        let mut l = Layout { w, h, mask: vec![false; (w * h) as usize], start, dir: IVec2::X, id: 0, blocks: 0 };
         for &(x0, y0, x1, y1) in rects {
             for y in y0..=y1 {
                 for x in x0..=x1 {
@@ -70,7 +68,6 @@ impl Layout {
                 }
             }
         }
-        l.follow = true;
         l.blocks = n;
         l
     }
@@ -206,7 +203,7 @@ mod tests {
     #[test]
     fn city_streets_have_no_dead_end() {
         let l = Layout::city(4);
-        assert!(l.follow && l.walkable(l.start) && l.walkable(l.start + l.dir));
+        assert!(l.walkable(l.start) && l.walkable(l.start + l.dir));
         assert_eq!(l.reachable(l.start), l.cells().count());
         for c in l.cells() {
             let n = [IVec2::X, IVec2::NEG_X, IVec2::Y, IVec2::NEG_Y].iter().filter(|d| l.walkable(c + **d)).count();

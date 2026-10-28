@@ -1,73 +1,82 @@
-# Centre-ville — une grande carte zoomée : la caméra suit la file dans les rues, les immeubles bordent les pâtés de maisons.
-# Cases (nombre) : blocs, trous, teleporteurs (paires), accelerateurs, tapis.
+# Centre-ville — un guide rival traverse le plateau (son entrée clignote quelques secondes avant) et emmène les touristes de la file qu'il touche.
+# Cases (nombre) : blocs, trous, teleporteurs (paires), accelerateurs, tapis, barrieres, rivaux.
 
 [Les premières rues]
 lieu = ville
-forme = ville 2
+forme = ville 3
 touristes = 6
 pas = 0.3
 
-[Un petit quartier]
+[Un guide à l'horizon]
 lieu = ville
 forme = ville 3
 touristes = 8
+rivaux = 1
 pas = 0.3
 
 [Le tour du quartier]
 lieu = ville
 forme = ville 3
-touristes = 12
+touristes = 10
+rivaux = 1
 pas = 0.3
 
 [Le marché]
 lieu = ville
-forme = ville 4
-touristes = 14
-blocs = 6
+forme = ville 3
+touristes = 12
+rivaux = 1
+blocs = 5
 pas = 0.3
 
-[La grande avenue]
+[Deux guides]
 lieu = ville
-forme = ville 4
-touristes = 18
-pas = 0.28
+forme = ville 3
+touristes = 14
+rivaux = 2
+pas = 0.29
 
 [La sortie de la ville]
 lieu = ville
-forme = ville 4
-touristes = 16
+forme = ville 3
+touristes = 14
+rivaux = 2
 sortie = oui
-pas = 0.28
+pas = 0.29
 
 [Les travaux]
 lieu = ville
-forme = ville 5
-touristes = 20
-blocs = 10
+forme = ville 3
+touristes = 16
+rivaux = 2
+blocs = 8
 pas = 0.28
 
 [Le quartier d'affaires]
 lieu = ville
-forme = ville 5
-touristes = 24
-blocs = 8
+forme = ville 3
+touristes = 20
+rivaux = 2
+blocs = 6
 accelerateurs = 3
 pas = 0.27
 
 [L'heure de pointe]
 lieu = ville
-forme = ville 6
-touristes = 30
-blocs = 10
-accelerateurs = 4
+forme = ville 3
+touristes = 24
+rivaux = 3
+blocs = 8
+accelerateurs = 3
 pas = 0.26
 
 [La grande parade]
 lieu = ville
-forme = ville 6
-touristes = 36
-blocs = 10
+forme = ville 3
+touristes = 28
+rivaux = 3
+blocs = 8
 teleporteurs = 1
-accelerateurs = 4
+accelerateurs = 3
 sortie = oui
 pas = 0.25

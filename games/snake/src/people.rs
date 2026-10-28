@@ -187,13 +187,16 @@ pub fn attach_guide(
     heads: Query<(Entity, &Name), Added<Name>>,
     parents: Query<&ChildOf>,
     persons: Query<&Person>,
+    rivals: Query<(), With<crate::board::RivalCar>>,
 ) {
     for (head, name) in &heads {
         if name.as_str() != "head" {
             continue;
         }
         let mut up = head;
+        let mut rival = false;
         let guide = loop {
+            rival |= rivals.contains(up);
             if let Ok(p) = persons.get(up) {
                 break p.guide;
             }
@@ -207,7 +210,7 @@ pub fn attach_guide(
         }
         let cube = meshes.add(Cuboid::new(1.0, 1.0, 1.0));
         let mut mat = |c: Color| materials.add(game_common::flat_material(c));
-        let (red, yellow, dark) = (mat(Color::srgb(0.88, 0.16, 0.14)), mat(Color::srgb(1.0, 0.82, 0.1)), mat(Color::srgb(0.25, 0.2, 0.18)));
+        let (red, yellow, dark) = (mat(if rival { Color::srgb(0.16, 0.36, 0.9) } else { Color::srgb(0.88, 0.16, 0.14) }), mat(Color::srgb(1.0, 0.82, 0.1)), mat(Color::srgb(0.25, 0.2, 0.18)));
         let mut part = |m: &Handle<StandardMaterial>, pos: Vec3, size: Vec3| {
             commands.spawn((Mesh3d(cube.clone()), MeshMaterial3d(m.clone()), Transform::from_translation(pos).with_scale(size), ChildOf(head)));
         };
