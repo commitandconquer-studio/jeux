@@ -141,6 +141,7 @@ pub fn obstacle_models(u: Universe) -> &'static [(&'static str, f32)] {
         Universe::Ruines => &[("mini-arena/column-damaged", 2.4), ("prototype-kit/column-low", 2.4), ("nature-kit/rock_largeA", 1.8), ("mini-arena/bricks", 2.0)],
         Universe::Cimetiere => &[("graveyard-kit/gravestone-cross", 2.4), ("graveyard-kit/rocks", 2.0), ("graveyard-kit/pumpkin", 2.4), ("graveyard-kit/gravestone-broken", 2.4)],
         Universe::Ocean => &[("survival-kit/barrel", 2.5), ("nature-kit/rock_largeE", 1.8), ("nature-kit/log", 2.0)],
+        Universe::Parc => &[("coaster-kit/bench", 2.2), ("coaster-kit/trash", 2.4), ("coaster-kit/flowers", 2.4), ("fantasy-town-kit/stall-bench", 2.0)],
     }
 }
 

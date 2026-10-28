@@ -1,0 +1,80 @@
+# Parc de loisirs — les accélérateurs : une case qui donne un coup de vitesse à toute la file.
+# Cases (nombre) : blocs, trous, teleporteurs (paires), accelerateurs, tapis.
+
+[Le manège]
+lieu = parc
+forme = carre 18
+touristes = 8
+accelerateurs = 1
+pas = 0.33
+
+[Deux accélérateurs]
+lieu = parc
+forme = carre 18
+touristes = 10
+accelerateurs = 2
+pas = 0.32
+
+[La grande roue]
+lieu = parc
+forme = carre 16
+touristes = 14
+accelerateurs = 3
+pas = 0.32
+
+[Auto-tamponneuses]
+lieu = parc
+forme = carre 16
+touristes = 14
+accelerateurs = 2
+blocs = 4
+pas = 0.31
+
+[Le grand huit]
+lieu = parc
+forme = rectangle 22x10
+touristes = 16
+accelerateurs = 3
+pas = 0.3
+
+[La sortie du parc]
+lieu = parc
+forme = carre 16
+touristes = 16
+accelerateurs = 2
+teleporteurs = 1
+sortie = oui
+pas = 0.3
+
+[La file d'attente]
+lieu = parc
+forme = U
+touristes = 18
+accelerateurs = 3
+pas = 0.3
+
+[Le train fantôme]
+lieu = parc
+forme = route
+touristes = 20
+accelerateurs = 3
+trous = 2
+pas = 0.3
+
+[Le grand huit express]
+lieu = parc
+forme = allees
+touristes = 22
+accelerateurs = 4
+blocs = 3
+pas = 0.28
+
+[Le feu d'artifice]
+lieu = parc
+forme = carre 16
+touristes = 26
+accelerateurs = 4
+teleporteurs = 1
+blocs = 4
+sortie = oui
+pas = 0.26

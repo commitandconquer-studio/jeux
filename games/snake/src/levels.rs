@@ -40,10 +40,11 @@ pub enum Place {
     Ruins,
     Graveyard,
     Pirates,
+    Park,
 }
 
 impl Place {
-    pub const ALL: [Place; 5] = [Place::Garden, Place::Desert, Place::Ruins, Place::Graveyard, Place::Pirates];
+    pub const ALL: [Place; 6] = [Place::Garden, Place::Desert, Place::Ruins, Place::Graveyard, Place::Pirates, Place::Park];
 
     pub fn scenery(self) -> Universe {
         match self {
@@ -52,6 +53,7 @@ impl Place {
             Place::Ruins => Universe::Ruines,
             Place::Graveyard => Universe::Cimetiere,
             Place::Pirates => Universe::Ocean,
+            Place::Park => Universe::Parc,
         }
     }
 
@@ -63,6 +65,7 @@ impl Place {
             Place::Ruins => tx!("Ruines antiques", "Ancient ruins", "Antike Ruinen", "Rovine antiche", "Ruinas antiguas"),
             Place::Graveyard => tx!("Cimetière", "Graveyard", "Friedhof", "Cimitero", "Cementerio"),
             Place::Pirates => tx!("Île des pirates", "Pirate island", "Pirateninsel", "Isola dei pirati", "Isla pirata"),
+            Place::Park => tx!("Parc de loisirs", "Theme park", "Freizeitpark", "Parco divertimenti", "Parque de atracciones"),
         }
         .t()
     }
@@ -105,6 +108,7 @@ fn parse_place(v: &str) -> Option<Place> {
         "ruines" => Place::Ruins,
         "cimetiere" => Place::Graveyard,
         "pirates" => Place::Pirates,
+        "parc" => Place::Park,
         _ => return None,
     })
 }
@@ -158,7 +162,7 @@ pub fn parse(text: &str) -> Result<Vec<Level>, String> {
 /// Tous les niveaux, dans l'ordre du Voyage.
 pub static LEVELS: LazyLock<Vec<Level>> = LazyLock::new(|| {
     let mut all = Vec::new();
-    for text in [include_str!("../levels/jardin.txt"), include_str!("../levels/desert.txt"), include_str!("../levels/ruines.txt"), include_str!("../levels/cimetiere.txt"), include_str!("../levels/pirates.txt")] {
+    for text in [include_str!("../levels/jardin.txt"), include_str!("../levels/desert.txt"), include_str!("../levels/ruines.txt"), include_str!("../levels/cimetiere.txt"), include_str!("../levels/pirates.txt"), include_str!("../levels/parc.txt")] {
         all.extend(parse(text).unwrap_or_else(|e| panic!("niveaux illisibles : {e}")));
     }
     all

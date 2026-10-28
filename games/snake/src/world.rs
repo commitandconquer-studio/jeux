@@ -16,10 +16,11 @@ pub enum Universe {
     Ruines,
     Cimetiere,
     Ocean,
+    Parc,
 }
 
 impl Universe {
-    pub const ALL: [Universe; 5] = [Universe::Prairie, Universe::Desert, Universe::Ruines, Universe::Cimetiere, Universe::Ocean];
+    pub const ALL: [Universe; 6] = [Universe::Prairie, Universe::Desert, Universe::Ruines, Universe::Cimetiere, Universe::Ocean, Universe::Parc];
 
     pub fn next(self) -> Self {
         let i = Self::ALL.iter().position(|u| *u == self).unwrap_or(0);
@@ -33,6 +34,7 @@ impl Universe {
             Universe::Ruines => tx!("Ruines antiques", "Ancient ruins", "Antike Ruinen", "Rovine antiche", "Ruinas antiguas"),
             Universe::Cimetiere => tx!("Cimetière", "Graveyard", "Friedhof", "Cimitero", "Cementerio"),
             Universe::Ocean => tx!("Île des pirates", "Pirate island", "Pirateninsel", "Isola dei pirati", "Isla pirata"),
+            Universe::Parc => tx!("Parc de loisirs", "Theme park", "Freizeitpark", "Parco divertimenti", "Parque de atracciones"),
         }
         .t()
     }
@@ -80,6 +82,14 @@ impl Universe {
                 ground: c(0.22, 0.58, 0.78),
                 sun: (Color::WHITE, 6_500.0),
                 ambient: (c(0.55, 0.60, 0.70), 1000.0),
+            },
+            Universe::Parc => Theme {
+                sky: c(0.80, 0.84, 0.95),
+                tiles: (c(0.95, 0.82, 0.86), c(0.90, 0.74, 0.80)),
+                rim: c(0.55, 0.38, 0.50),
+                ground: c(0.55, 0.78, 0.50),
+                sun: (Color::WHITE, 6_800.0),
+                ambient: (c(0.56, 0.52, 0.66), 1000.0),
             },
         }
     }
@@ -244,12 +254,26 @@ fn decor_models(u: Universe) -> &'static [(&'static str, f32)] {
             ("pirate-kit/boat-row-small", 1.4),
             ("pirate-kit/ship-small", 1.0),
         ],
+        Universe::Parc => &[
+            ("coaster-kit/tree", 2.2),
+            ("coaster-kit/tree-large", 2.0),
+            ("coaster-kit/flowers", 2.4),
+            ("coaster-kit/bench", 2.2),
+            ("coaster-kit/trash", 2.2),
+            ("coaster-kit/stall-food", 2.0),
+            ("coaster-kit/stall-drinks", 2.0),
+            ("coaster-kit/stall-information", 2.0),
+            ("coaster-kit/support-large", 1.6),
+            ("coaster-kit/park-entrance", 1.2),
+            ("fantasy-town-kit/lantern", 2.4),
+            ("fantasy-town-kit/fountain-round", 2.2),
+        ],
     }
 }
 
 /// Hauts ou larges : ils cacheraient le plateau s'ils étaient devant (côté caméra).
 fn is_tall(file: &str) -> bool {
-    ["tree", "pine", "palm", "cactus_tall", "prototype-kit/column", "mini-arena/column", "wall-arch", "pillar-stone", "statue", "ship", "boat", "crypt", "tent", "lightpost", "log_large", "fence", "rocks", "rock_large"].iter().any(|k| file.contains(k))
+    ["tree", "pine", "palm", "cactus_tall", "prototype-kit/column", "mini-arena/column", "wall-arch", "pillar-stone", "statue", "ship", "boat", "crypt", "tent", "lightpost", "log_large", "fence", "rocks", "rock_large", "stall", "support", "park-entrance"].iter().any(|k| file.contains(k))
 }
 
 fn spawn_decor(u: Universe, b: &mut Builder, rng: &mut Rng, pos: Vec3) {
