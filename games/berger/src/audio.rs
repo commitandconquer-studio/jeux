@@ -43,7 +43,7 @@ fn effets(mut commands: Commands, server: Res<AssetServer>, son: Res<SoundOn>, m
             Evenement::LoupFuit(_) => jouer(&mut commands, lib::HOP),
             Evenement::Fin(Fin::Victoire) => jouer(&mut commands, lib::WIN),
             Evenement::Fin(_) => jouer(&mut commands, lib::GAME_OVER),
-            Evenement::Sorti(_) => {}
+            Evenement::Sorti(_) | Evenement::Sursaut(_) => {}
         }
     }
 }

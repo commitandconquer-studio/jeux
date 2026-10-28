@@ -282,6 +282,7 @@ fn synchroniser(
     partie: Option<ResMut<Partie>>,
     mut commands: Commands,
     kit: Res<Kit>,
+    mut mats: ResMut<Assets<StandardMaterial>>,
     mut moutons: Query<(&VueMouton, &mut Transform, &mut Visibility, &mut Allure), (Without<VueLoup>, Without<VueChien>, Without<OndeVue>)>,
     mut loups: Query<(&VueLoup, &mut Transform, &mut Visibility, &mut Allure), (Without<VueMouton>, Without<VueChien>, Without<OndeVue>)>,
     mut chien: Query<(&mut Transform, &mut Allure), (With<VueChien>, Without<VueMouton>, Without<VueLoup>, Without<OndeVue>)>,
@@ -301,6 +302,7 @@ fn synchroniser(
         a.phase = m.phase * 2.0;
         a.mouvement = (m.vel.len() / 2.2).min(1.0);
         a.agite = m.panique;
+        a.saut = m.sursaut / 0.4;
     }
     for (v, mut t, mut vis, mut a) in &mut loups {
         let Some(l) = partie.monde.loups.get(v.0) else { continue };
@@ -325,12 +327,24 @@ fn synchroniser(
         a.phase = phase;
         a.mouvement = (vitesse / 4.5).min(1.0);
         a.agite = if c.onde > 0.0 { 1.0 } else { (vitesse / 6.0).min(1.0) };
+        // L'aboiement : le chien se redresse puis se tasse (corps qui gonfle et s'aplatit).
+        let s = (c.aboie / 0.28).clamp(0.0, 1.0);
+        let pulse = (s * std::f32::consts::PI).sin();
+        t.scale = Vec3::new(1.0 + 0.1 * pulse, 1.0 - 0.1 * pulse, 1.0 + 0.14 * pulse);
     }
     for (mut t, mut vis) in &mut onde {
         if c.onde > 0.0 {
             *vis = Visibility::Inherited;
-            t.translation = Vec3::new(c.pos.x, 0.12, c.pos.y);
+            t.translation = Vec3::new(c.onde_origine.x, 0.12, c.onde_origine.y);
             t.scale = Vec3::splat(c.onde);
+            // L'onde s'éteint en grandissant.
+            let reste = (1.0 - c.onde / (partie.monde.reg.portee_aboiement + 2.0)).clamp(0.0, 1.0);
+            if let Some(mut m) = mats.get_mut(&kit.onde) {
+                m.base_color = m.base_color.with_alpha(0.9 * reste.sqrt());
+            }
+            if let Some(mut m) = mats.get_mut(&kit.onde_disque) {
+                m.base_color = m.base_color.with_alpha(0.22 * reste * reste);
+            }
         } else {
             *vis = Visibility::Hidden;
         }

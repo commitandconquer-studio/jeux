@@ -55,6 +55,28 @@ mod tests {
     }
 
     #[test]
+    fn l_onde_touche_chaque_mouton_une_fois_et_de_proche_en_proche() {
+        let nv = NIVEAUX[0];
+        let mut m = Monde::nouveau(generer(&nv, 3), nv);
+        let chien = m.chien.pos;
+        m.moutons[0].pos = chien + v2(2.0, 0.0);
+        m.moutons[1].pos = chien + v2(8.0, 0.0);
+        let mut touches = Vec::new();
+        m.pas(1.0 / 60.0, Commande { aboyer: true, ..Commande::default() });
+        for _ in 0..90 {
+            m.pas(1.0 / 60.0, Commande::default());
+            for e in &m.evenements {
+                if let Evenement::Sursaut(i) = e {
+                    touches.push(*i);
+                }
+            }
+        }
+        let pos = |k: usize| touches.iter().position(|&i| i == k);
+        assert_eq!(touches.iter().filter(|&&i| i == 0).count(), 1);
+        assert!(pos(0).unwrap() < pos(1).unwrap(), "{touches:?}");
+    }
+
+    #[test]
     fn la_carte_est_deterministe() {
         let a = generer(&NIVEAUX[6], 99);
         let b = generer(&NIVEAUX[6], 99);

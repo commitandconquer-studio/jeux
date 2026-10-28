@@ -45,6 +45,7 @@ fn capturer(
     mut next: ResMut<NextState<GameState>>,
     mut commencer: MessageWriter<Commencer>,
     mut exit: MessageWriter<AppExit>,
+    partie: Option<ResMut<crate::jeu::Partie>>,
 ) {
     let t = time.elapsed_secs();
     let Some(&(nom, etat, delai, genre)) = CLICHES.get(cap.i) else {
@@ -63,6 +64,12 @@ fn capturer(
     }
     if *state.get() != etat {
         return;
+    }
+    // Le chien aboie juste avant la photo : on voit l'onde.
+    if !cap.pris && cap.i == 2 && t - cap.depuis >= delai - 0.2 {
+        if let Some(mut p) = partie {
+            p.bouton_aboyer = true;
+        }
     }
     if !cap.pris && t - cap.depuis >= delai {
         cap.pris = true;

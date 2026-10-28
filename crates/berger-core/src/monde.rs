@@ -74,6 +74,11 @@ pub struct Chien {
     pub recharge: f32,
     /// Rayon de l'onde d'aboiement en cours (0 = aucune).
     pub onde: f32,
+    /// D'où part l'onde, et son numéro (chaque cible n'est touchée qu'une fois par onde).
+    pub onde_origine: V2,
+    pub onde_id: u32,
+    /// Temps restant de l'aboiement : le chien se plante sur ses pattes et ralentit.
+    pub aboie: f32,
     pub court: bool,
 }
 
@@ -88,6 +93,9 @@ pub struct Mouton {
     pub perdu: bool,
     pub abrite: bool,
     pub phase: f32,
+    pub onde_vue: u32,
+    /// Temps restant du sursaut (l'onde vient de passer) : sert à l'animation.
+    pub sursaut: f32,
 }
 
 #[derive(Clone, Copy, Debug, PartialEq)]
@@ -109,6 +117,7 @@ pub struct Loup {
     pub apparition: f32,
     pub bord: V2,
     pub phase: f32,
+    pub onde_vue: u32,
 }
 
 #[derive(Clone, Copy, Debug, PartialEq)]
@@ -124,6 +133,8 @@ pub enum Evenement {
     Bele(usize),
     Entre(usize),
     Sorti(usize),
+    /// L'onde d'aboiement vient d'atteindre un mouton.
+    Sursaut(usize),
     Mange(usize),
     LoupArrive(usize),
     LoupFuit(usize),
@@ -162,6 +173,8 @@ impl Monde {
                 perdu: false,
                 abrite: false,
                 phase: hasard.entre(0.0, std::f32::consts::TAU),
+                onde_vue: 0,
+                sursaut: 0.0,
             })
             .collect();
         let loups = carte
@@ -177,9 +190,10 @@ impl Monde {
                 apparition: l.apparition,
                 bord: l.bord,
                 phase: hasard.entre(0.0, std::f32::consts::TAU),
+                onde_vue: 0,
             })
             .collect();
-        let chien = Chien { pos: carte.depart_chien, vel: V2::ZERO, cap: 0.0, endurance: 1.0, essouffle: false, recharge: 0.0, onde: 0.0, court: false };
+        let chien = Chien { pos: carte.depart_chien, vel: V2::ZERO, cap: 0.0, endurance: 1.0, essouffle: false, recharge: 0.0, onde: 0.0, onde_origine: V2::ZERO, onde_id: 0, aboie: 0.0, court: false };
         Monde { carte, niveau, chien, moutons, loups, temps: 0.0, fin: None, evenements: Vec::new(), reg: Reglages::default(), tenu: 0.0, reste: 0.0, hasard }
     }
 
@@ -260,6 +274,7 @@ impl Monde {
         let court = cmd.course && bouge && !c.essouffle && c.endurance > 0.0;
         c.court = court;
         let vitesse = if court { self.reg.vitesse_course } else { self.reg.vitesse_chien };
+        let vitesse = if c.aboie > 0.0 { vitesse * 0.45 } else { vitesse };
         c.vel = c.vel.lerp(veut * vitesse, (dt * self.reg.reactivite_chien).min(1.0));
         c.pos += c.vel * dt;
         if court {
@@ -277,6 +292,7 @@ impl Monde {
             c.cap = c.vel.angle();
         }
         c.recharge = (c.recharge - dt).max(0.0);
+        c.aboie = (c.aboie - dt).max(0.0);
         if c.onde > 0.0 {
             c.onde += dt * self.reg.vitesse_onde;
             if c.onde > self.reg.portee_aboiement + 2.0 {
@@ -291,25 +307,43 @@ impl Monde {
         if cmd.aboyer && self.chien.recharge <= 0.0 {
             self.chien.recharge = self.reg.recharge_aboiement;
             self.chien.onde = 0.01;
+            self.chien.onde_origine = self.chien.pos;
+            self.chien.onde_id += 1;
+            self.chien.aboie = 0.28;
             self.evenements.push(Evenement::Aboiement);
-            let chien = self.chien.pos;
-            for m in self.moutons.iter_mut().filter(|m| !m.perdu) {
-                let d = m.pos.dist(chien);
-                if d < self.reg.portee_aboiement {
-                    let t = 1.0 - d / self.reg.portee_aboiement;
-                    m.vel += (m.pos - chien).norm() * (1.5 + 3.5 * t);
-                    m.panique = m.panique.max(0.5 + 0.5 * t);
-                }
+        }
+        self.propager_onde();
+    }
+
+    /// L'onde grandit : chaque animal qu'elle atteint réagit, une seule fois par onde.
+    fn propager_onde(&mut self) {
+        let (rayon, origine, id) = (self.chien.onde, self.chien.onde_origine, self.chien.onde_id);
+        if rayon <= 0.0 {
+            return;
+        }
+        let portee = self.reg.portee_aboiement;
+        for (i, m) in self.moutons.iter_mut().enumerate() {
+            let d = m.pos.dist(origine);
+            if m.perdu || m.onde_vue == id || d > rayon.min(portee) {
+                continue;
             }
-            for (i, l) in self.loups.iter_mut().enumerate() {
-                if matches!(l.etat, EtatLoup::Rode | EtatLoup::Fuit) && l.pos.dist(chien) < self.reg.portee_aboiement {
-                    l.etat = EtatLoup::Fuit;
-                    l.timer = 4.5;
-                    l.cible = None;
-                    l.morsure = 0.0;
-                    self.evenements.push(Evenement::LoupFuit(i));
-                }
+            m.onde_vue = id;
+            m.sursaut = 0.4;
+            let t = 1.0 - d / portee;
+            m.vel += (m.pos - origine).norm() * (1.5 + 3.5 * t);
+            m.panique = m.panique.max(0.5 + 0.5 * t);
+            self.evenements.push(Evenement::Sursaut(i));
+        }
+        for (i, l) in self.loups.iter_mut().enumerate() {
+            if l.onde_vue == id || !matches!(l.etat, EtatLoup::Rode | EtatLoup::Fuit) || l.pos.dist(origine) > rayon.min(portee) {
+                continue;
             }
+            l.onde_vue = id;
+            l.etat = EtatLoup::Fuit;
+            l.timer = 4.5;
+            l.cible = None;
+            l.morsure = 0.0;
+            self.evenements.push(Evenement::LoupFuit(i));
         }
     }
 
@@ -482,6 +516,7 @@ impl Monde {
             Self::collisions(&self.carte, &mut pos, &mut vel, self.reg.rayon_mouton, self.reg.rayon_mouton * 0.8);
             m.pos = pos;
             m.vel = vel;
+            m.sursaut = (m.sursaut - dt).max(0.0);
             m.phase += dt * (1.5 + vel.len() * 2.2);
 
             let dedans = self.carte.enclos.dedans(pos, 0.1);

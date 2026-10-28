@@ -28,6 +28,8 @@ pub struct Allure {
     pub mouvement: f32,
     pub cap: f32,
     pub agite: f32,
+    /// De 0 à 1 : petit saut de surprise.
+    pub saut: f32,
 }
 
 #[derive(Component)]
@@ -51,6 +53,7 @@ pub struct Kit {
     pub cone: Handle<Mesh>,
     pub cyl: Handle<Mesh>,
     pub anneau: Handle<Mesh>,
+    pub disque: Handle<Mesh>,
     pub laine: [Handle<StandardMaterial>; 3],
     pub peau: Handle<StandardMaterial>,
     pub fonce: Handle<StandardMaterial>,
@@ -73,6 +76,7 @@ pub struct Kit {
     pub roche: [Handle<StandardMaterial>; 3],
     pub fleurs: [Handle<StandardMaterial>; 4],
     pub onde: Handle<StandardMaterial>,
+    pub onde_disque: Handle<StandardMaterial>,
     pub poussiere: Handle<StandardMaterial>,
     pub etoile: Handle<StandardMaterial>,
     pub alerte: Handle<StandardMaterial>,
@@ -85,7 +89,8 @@ impl FromWorld for Kit {
         let boule = meshes.add(Sphere::new(0.5).mesh().uv(10, 7));
         let cone = meshes.add(Cone { radius: 0.5, height: 1.0 }.mesh().resolution(7));
         let cyl = meshes.add(Cylinder::new(0.5, 1.0).mesh().resolution(10));
-        let anneau = meshes.add(Annulus::new(0.93, 1.0));
+        let anneau = meshes.add(Annulus::new(0.95, 1.0));
+        let disque = meshes.add(Circle::new(1.0));
         let mut mats = world.resource_mut::<Assets<StandardMaterial>>();
         let mut m = |r: f32, g: f32, b: f32| mats.add(flat_material(Color::srgb(r, g, b)));
         let laine = [m(0.97, 0.95, 0.88), m(0.93, 0.91, 0.84), m(0.99, 0.98, 0.94)];
@@ -112,6 +117,7 @@ impl FromWorld for Kit {
         let feuillage_fonce = mats.add(flat_material(palette::FOLIAGE_DARK));
         let transparent = |c: Color| StandardMaterial { base_color: c, alpha_mode: AlphaMode::Blend, unlit: true, ..default() };
         let onde = mats.add(transparent(Color::srgba(1.0, 1.0, 1.0, 0.75)));
+        let onde_disque = mats.add(transparent(Color::srgba(1.0, 1.0, 1.0, 0.2)));
         let poussiere = mats.add(transparent(Color::srgba(0.92, 0.88, 0.76, 0.8)));
         let etoile = mats.add(StandardMaterial { base_color: palette::YELLOW, unlit: true, ..default() });
         let alerte = mats.add(transparent(Color::srgba(0.95, 0.2, 0.15, 0.55)));
@@ -121,6 +127,7 @@ impl FromWorld for Kit {
             cone,
             cyl,
             anneau,
+            disque,
             laine,
             peau,
             fonce,
@@ -143,6 +150,7 @@ impl FromWorld for Kit {
             roche,
             fleurs,
             onde,
+            onde_disque,
             poussiere,
             etoile,
             alerte,
@@ -461,6 +469,7 @@ pub fn spawn_scene(c: &mut Commands, k: &Kit, carte: &Carte, niveau: &Niveau) {
         NotShadowCaster,
         OndeVue,
         DeScene,
+        children![(Mesh3d(k.disque.clone()), MeshMaterial3d(k.onde_disque.clone()), Transform::from_xyz(0.0, 0.0, -0.01), NotShadowCaster)],
     ));
 
     // Les animaux.
@@ -528,7 +537,7 @@ pub fn animer_allures(
                 tr.rotation = Quat::from_rotation_x((a.phase + p.decalage).sin() * 0.75 * a.mouvement);
             }
             if let Some(c) = corps {
-                tr.translation.y = c.base + (a.phase * 2.0).sin().abs() * 0.07 * a.mouvement + (t * 2.0 + a.phase).sin() * 0.004;
+                tr.translation.y = c.base + (a.phase * 2.0).sin().abs() * 0.07 * a.mouvement + (t * 2.0 + a.phase).sin() * 0.004 + (a.saut * std::f32::consts::PI).sin() * 0.28;
                 tr.rotation = Quat::from_rotation_x((a.phase).sin() * 0.05 * a.mouvement) * Quat::from_rotation_z((a.phase).cos() * 0.04 * a.mouvement);
             }
             if let Some(q) = queue {
