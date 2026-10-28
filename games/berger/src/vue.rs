@@ -3,7 +3,7 @@
 //! à couleurs unies (le style maison) assemblées à la main.
 use std::f32::consts::{FRAC_PI_2, TAU};
 
-use berger_core::{Carte, Genre, Mur, Niveau};
+use berger_core::{Carte, Genre, Mur, Niveau, TypeMouton};
 use bevy::light::NotShadowCaster;
 use bevy::prelude::*;
 use game_common::{Rng, flat_material, palette};
@@ -55,6 +55,7 @@ pub struct Kit {
     pub anneau: Handle<Mesh>,
     pub disque: Handle<Mesh>,
     pub laine: [Handle<StandardMaterial>; 3],
+    pub laine_noire: Handle<StandardMaterial>,
     pub peau: Handle<StandardMaterial>,
     pub fonce: Handle<StandardMaterial>,
     pub noir: Handle<StandardMaterial>,
@@ -94,6 +95,7 @@ impl FromWorld for Kit {
         let mut mats = world.resource_mut::<Assets<StandardMaterial>>();
         let mut m = |r: f32, g: f32, b: f32| mats.add(flat_material(Color::srgb(r, g, b)));
         let laine = [m(0.97, 0.95, 0.88), m(0.93, 0.91, 0.84), m(0.99, 0.98, 0.94)];
+        let laine_noire = m(0.2, 0.19, 0.22);
         let peau = m(0.28, 0.24, 0.24);
         let fonce = m(0.16, 0.14, 0.16);
         let noir = m(0.09, 0.09, 0.11);
@@ -129,6 +131,7 @@ impl FromWorld for Kit {
             anneau,
             disque,
             laine,
+            laine_noire,
             peau,
             fonce,
             noir,
@@ -186,11 +189,11 @@ fn racine(c: &mut Commands, scale: f32, extra: impl Bundle) -> Entity {
 }
 
 /// Un mouton, tourné vers +Z, posé en y = 0. `v` varie la laine et la taille.
-pub fn spawn_mouton(c: &mut Commands, k: &Kit, i: usize) -> Entity {
+pub fn spawn_mouton(c: &mut Commands, k: &Kit, i: usize, genre: TypeMouton) -> Entity {
     let v = (i * 7 + 3) % 5;
-    let taille = 0.95 + v as f32 * 0.05;
+    let taille = (0.95 + v as f32 * 0.05) * if genre == TypeMouton::Agneau { 0.68 } else { 1.0 };
     let root = racine(c, taille, VueMouton(i));
-    let laine = &k.laine[i % 3];
+    let laine = if genre == TypeMouton::Noir { &k.laine_noire } else { &k.laine[i % 3] };
     let corps = corps(c, root, 0.42);
     // Une laine bouclée : une grosse boule et des touffes tout autour.
     piece(c, corps, &k.boule, laine, Vec3::new(0.0, 0.0, 0.0), Vec3::new(0.78, 0.66, 0.92));
@@ -474,7 +477,7 @@ pub fn spawn_scene(c: &mut Commands, k: &Kit, carte: &Carte, niveau: &Niveau) {
 
     // Les animaux.
     for i in 0..carte.moutons.len() {
-        spawn_mouton(c, k, i);
+        spawn_mouton(c, k, i, carte.types[i]);
     }
     spawn_chien(c, k);
     for i in 0..carte.loups.len() {

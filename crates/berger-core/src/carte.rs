@@ -73,6 +73,46 @@ pub struct DepartLoup {
     pub bord: V2,
 }
 
+/// Les sortes de moutons : le blanc est le mouton de base.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum TypeMouton {
+    Blanc,
+    /// Plus indépendant : il suit moins bien le troupeau.
+    Noir,
+    /// Petit, rapide, il reste près des adultes et s'effraie plus vite.
+    Agneau,
+}
+
+impl TypeMouton {
+    /// Force de la cohésion avec le troupeau.
+    pub fn cohesion(self) -> f32 {
+        match self {
+            TypeMouton::Blanc => 1.0,
+            TypeMouton::Noir => 0.45,
+            TypeMouton::Agneau => 1.6,
+        }
+    }
+    pub fn vitesse(self) -> f32 {
+        match self {
+            TypeMouton::Agneau => 1.15,
+            _ => 1.0,
+        }
+    }
+    /// Multiplie le rayon de peur du chien.
+    pub fn peur(self) -> f32 {
+        match self {
+            TypeMouton::Agneau => 1.25,
+            _ => 1.0,
+        }
+    }
+    pub fn rayon(self) -> f32 {
+        match self {
+            TypeMouton::Agneau => 0.28,
+            _ => 0.38,
+        }
+    }
+}
+
 /// Les réglages d'un niveau de la campagne.
 #[derive(Clone, Copy, Debug)]
 pub struct Niveau {
@@ -91,6 +131,9 @@ pub struct Niveau {
     /// Temps de référence pour la deuxième étoile (secondes).
     pub temps_ref: f32,
     pub entonnoir: bool,
+    pub noirs: u32,
+    pub agneaux: u32,
+    pub beliers: u32,
 }
 
 #[allow(clippy::too_many_arguments)]
@@ -118,23 +161,26 @@ const fn n(
         pertes_max,
         temps_ref,
         entonnoir: moutons <= 12,
+        noirs: 0,
+        agneaux: 0,
+        beliers: 0,
     }
 }
 
 /// La campagne : douze niveaux de plus en plus difficiles.
 pub const NIVEAUX: [Niveau; 12] = [
     n((18.0, 12.0), 5, 3, 0, 0, 0, 0, 0, 60.0),
-    n((20.5, 13.0), 7, 5, 2, 0, 0, 0, 0, 70.0),
-    n((23.0, 14.5), 8, 6, 3, 1, 0, 0, 0, 80.0),
-    n((24.0, 15.5), 10, 6, 4, 1, 2, 0, 0, 95.0),
-    n((25.0, 15.5), 10, 7, 4, 2, 2, 1, 1, 100.0),
-    n((26.5, 17.0), 12, 8, 5, 2, 3, 1, 1, 115.0),
-    n((29.0, 17.0), 14, 9, 5, 2, 3, 1, 1, 130.0),
-    n((29.0, 18.0), 14, 10, 6, 3, 4, 2, 2, 140.0),
-    n((31.0, 19.0), 16, 10, 6, 3, 5, 2, 2, 155.0),
-    n((31.0, 19.0), 18, 12, 7, 3, 5, 2, 2, 170.0),
-    n((33.5, 20.5), 20, 12, 8, 4, 6, 3, 3, 190.0),
-    n((36.0, 21.5), 24, 14, 9, 4, 6, 3, 3, 215.0),
+    Niveau { noirs: 1, agneaux: 0, beliers: 0, ..n((20.5, 13.0), 7, 5, 2, 0, 0, 0, 0, 70.0) },
+    Niveau { noirs: 1, agneaux: 0, beliers: 0, ..n((23.0, 14.5), 8, 6, 3, 1, 0, 0, 0, 80.0) },
+    Niveau { noirs: 2, agneaux: 0, beliers: 1, ..n((24.0, 15.5), 10, 6, 4, 1, 2, 0, 0, 95.0) },
+    Niveau { noirs: 2, agneaux: 0, beliers: 0, ..n((25.0, 15.5), 10, 7, 4, 2, 2, 1, 1, 100.0) },
+    Niveau { noirs: 2, agneaux: 2, beliers: 0, ..n((26.5, 17.0), 12, 8, 5, 2, 3, 1, 1, 115.0) },
+    Niveau { noirs: 2, agneaux: 2, beliers: 1, ..n((29.0, 17.0), 14, 9, 5, 2, 3, 1, 1, 130.0) },
+    Niveau { noirs: 3, agneaux: 2, beliers: 0, ..n((29.0, 18.0), 14, 10, 6, 3, 4, 2, 2, 140.0) },
+    Niveau { noirs: 3, agneaux: 2, beliers: 1, ..n((31.0, 19.0), 16, 10, 6, 3, 5, 2, 2, 155.0) },
+    Niveau { noirs: 3, agneaux: 3, beliers: 0, ..n((31.0, 19.0), 18, 12, 7, 3, 5, 2, 2, 170.0) },
+    Niveau { noirs: 4, agneaux: 3, beliers: 2, ..n((33.5, 20.5), 20, 12, 8, 4, 6, 3, 3, 190.0) },
+    Niveau { noirs: 4, agneaux: 4, beliers: 2, ..n((36.0, 21.5), 24, 14, 9, 4, 6, 3, 3, 215.0) },
 ];
 
 pub fn niveau(i: usize) -> Niveau {
@@ -163,6 +209,10 @@ pub struct Carte {
     pub depart_chien: V2,
     pub depart_troupeau: V2,
     pub moutons: Vec<V2>,
+    /// Le genre de chaque mouton (même ordre que `moutons`).
+    pub types: Vec<TypeMouton>,
+    /// Où démarrent les béliers.
+    pub beliers: Vec<V2>,
     pub loups: Vec<DepartLoup>,
     pub graine: u64,
 }
@@ -218,6 +268,21 @@ impl Carte {
         }
         false
     }
+}
+
+/// Le genre de chaque mouton d'un niveau : les noirs d'abord, puis les agneaux, puis les blancs.
+pub fn types_de(nv: &Niveau, n: usize) -> Vec<TypeMouton> {
+    (0..n as u32)
+        .map(|i| {
+            if i < nv.noirs {
+                TypeMouton::Noir
+            } else if i < nv.noirs + nv.agneaux {
+                TypeMouton::Agneau
+            } else {
+                TypeMouton::Blanc
+            }
+        })
+        .collect()
 }
 
 /// Fabrique la carte d'un niveau. Même niveau + même graine = même carte.
@@ -353,7 +418,26 @@ fn essayer(nv: &Niveau, graine: u64, clairsemee: bool) -> Carte {
         loups.push(DepartLoup { apparition: nv.loup_debut + k as f32 * nv.loup_ecart, bord });
     }
 
-    Carte { demi, obstacles, enclos, murs_enclos, clotures, depart_chien: chien, depart_troupeau: troupeau, moutons, loups, graine }
+    // Les béliers se tiennent près du troupeau, mais pas au milieu.
+    let mut beliers: Vec<V2> = Vec::new();
+    for k in 0..nv.beliers {
+        for _ in 0..80 {
+            let a = h.entre(0.0, std::f32::consts::TAU);
+            let p = troupeau + V2::from_angle(a) * (rayon_troupeau + 2.0 + k as f32);
+            let libre = !obstacles.iter().any(|o| o.pos.dist(p) < o.rayon + 1.0)
+                && !clotures.iter().any(|c| sur_segment(p, c.a, c.b).dist(p) < 1.2)
+                && p.x.abs() < demi.x - 2.0
+                && p.y.abs() < demi.y - 2.0
+                && p.dist(chien) > 4.0
+                && beliers.iter().all(|q| q.dist(p) > 2.0);
+            if libre {
+                beliers.push(p);
+                break;
+            }
+        }
+    }
+    let types = types_de(nv, moutons.len());
+    Carte { demi, obstacles, enclos, murs_enclos, clotures, depart_chien: chien, depart_troupeau: troupeau, moutons, types, beliers, loups, graine }
 }
 
 /// Le niveau vitrine (niveau 4 de la campagne), dessiné à la main : l'enclos à l'ouest,
@@ -392,7 +476,7 @@ pub fn vitrine() -> (Niveau, Carte) {
             moutons.push(p);
         }
     }
-    let carte = Carte { demi, obstacles, enclos, murs_enclos, clotures, depart_chien: v2(17.0, 6.5), depart_troupeau: troupeau, moutons, loups: Vec::new(), graine: 4242 };
+    let carte = Carte { demi, obstacles, enclos, murs_enclos, clotures, depart_chien: v2(17.0, 6.5), depart_troupeau: troupeau, types: types_de(&nv, moutons.len()), moutons, beliers: vec![v2(4.0, -1.0)], loups: Vec::new(), graine: 4242 };
     (nv, carte)
 }
 

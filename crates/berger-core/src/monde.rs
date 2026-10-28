@@ -1,6 +1,6 @@
 //! La simulation : le chien, les moutons (des boids qui fuient le chien et
 //! les loups) et les loups. Un pas de temps à la fois, sans affichage.
-use crate::carte::{Carte, Niveau};
+use crate::carte::{Carte, Niveau, TypeMouton};
 use crate::v2::{Hasard, V2, sur_segment, v2};
 
 /// Pas de simulation fixe : le jeu se déroule pareil quelle que soit la fréquence d'affichage.
@@ -103,6 +103,7 @@ pub enum EtatMouton {
 
 #[derive(Clone, Debug)]
 pub struct Mouton {
+    pub genre: TypeMouton,
     pub etat: EtatMouton,
     /// Temps pendant lequel il est affolé sans avancer (coincé).
     pub coince: f32,
@@ -186,7 +187,9 @@ impl Monde {
         let moutons = carte
             .moutons
             .iter()
-            .map(|&p| Mouton {
+            .zip(carte.types.iter())
+            .map(|(&p, &genre)| Mouton {
+                genre,
                 pos: p,
                 vel: V2::ZERO,
                 cap: hasard.entre(0.0, std::f32::consts::TAU),
@@ -461,6 +464,7 @@ impl Monde {
                 continue;
             }
             let (p, v) = (pos[i], vel[i]);
+            let genre = self.moutons[i].genre;
 
             // Les trois règles des boids : séparation, alignement, cohésion.
             let (mut sep, mut ali, mut coh) = (V2::ZERO, V2::ZERO, V2::ZERO);
@@ -484,7 +488,7 @@ impl Monde {
             if voisins > 0.0 {
                 ali = ali / voisins - v;
                 coh = coh / voisins - p;
-                acc += ali * 1.4 + coh.norm() * (coh.len() / 3.0).min(1.0) * 1.7;
+                acc += ali * 1.4 + coh.norm() * (coh.len() / 3.0).min(1.0) * 1.7 * genre.cohesion();
             }
 
             // Un mouton isolé rejoint le troupeau : ils sont grégaires.
@@ -494,7 +498,7 @@ impl Monde {
 
             // La peur : le chien (plus il court, plus il fait peur) et les loups.
             let mut menace: f32 = 0.0;
-            let rayon_peur = self.reg.peur_chien_r + vitesse_chien * 0.25;
+            let rayon_peur = (self.reg.peur_chien_r + vitesse_chien * 0.25) * genre.peur();
             let d = p - chien;
             let dist = d.len();
             if dist < rayon_peur {
@@ -527,7 +531,7 @@ impl Monde {
             }
 
             // Obstacles et clôtures : on les contourne.
-            acc += Self::evitement(&self.carte, p, self.reg.rayon_mouton, 1.6) * 9.0;
+            acc += Self::evitement(&self.carte, p, genre.rayon(), 1.6) * 9.0;
 
             // Tranquille : il broute, par moments il se déplace un peu.
             let m = &mut self.moutons[i];
@@ -547,11 +551,11 @@ impl Monde {
 
             let vers = if menace > m.panique { 9.0 } else { 1.1 };
             m.panique += (menace - m.panique) * (dt * vers).min(1.0);
-            let vmax = 1.2 + m.panique * 3.0;
+            let vmax = (1.2 + m.panique * 3.0) * genre.vitesse();
             let mut vel = (v + acc * dt) * (1.0 - 2.4 * dt).max(0.0);
             vel = vel.limit(vmax);
             let mut pos = p + vel * dt;
-            Self::collisions(&self.carte, &mut pos, &mut vel, self.reg.rayon_mouton, self.reg.rayon_mouton * 0.8);
+            Self::collisions(&self.carte, &mut pos, &mut vel, genre.rayon(), genre.rayon() * 0.8);
             m.pos = pos;
             m.vel = vel;
             m.sursaut = (m.sursaut - dt).max(0.0);

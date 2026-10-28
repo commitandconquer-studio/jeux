@@ -6,7 +6,7 @@ pub mod monde;
 pub mod robot;
 pub mod v2;
 
-pub use carte::{Carte, Cote, Genre, Mur, NIVEAUX, Niveau, generer, niveau, niveau_du_jour, vitrine};
+pub use carte::{Carte, Cote, Genre, Mur, NIVEAUX, Niveau, TypeMouton, generer, niveau, niveau_du_jour, vitrine};
 pub use monde::{Commande, EtatLoup, EtatMouton, Evenement, Fin, Monde, PAS_FIXE, Reglages};
 pub use v2::{V2, v2};
 
@@ -133,6 +133,20 @@ mod tests {
         println!("vitrine : {:?} en {:.0} s", m.fin, m.temps);
         // Le chien automatique est maladroit près des clôtures de l'enclos : on lui demande la majorité du troupeau.
         assert!(m.abrites() >= 7, "{} moutons seulement à l'abri", m.abrites());
+    }
+
+    #[test]
+    fn les_niveaux_ont_leurs_noirs_agneaux_et_beliers() {
+        for (i, nv) in NIVEAUX.iter().enumerate() {
+            let c = generer(nv, 1000 + i as u64 * 77);
+            let compte = |t: TypeMouton| c.types.iter().filter(|&&x| x == t).count() as u32;
+            assert_eq!(compte(TypeMouton::Noir), nv.noirs, "niveau {}", i + 1);
+            assert_eq!(compte(TypeMouton::Agneau), nv.agneaux, "niveau {}", i + 1);
+            assert_eq!(c.types.len(), c.moutons.len());
+            if i != 3 {
+                assert_eq!(c.beliers.len() as u32, nv.beliers, "niveau {} : béliers", i + 1);
+            }
+        }
     }
 
     #[test]
