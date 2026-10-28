@@ -31,7 +31,7 @@ impl Plugin for GamePlugin {
             .init_resource::<Board>()
             .insert_resource(StepTimer(Timer::from_seconds(0.16, TimerMode::Repeating)))
             .add_systems(Startup, (setup, load_best, crate::dress::setup))
-            .add_systems(OnEnter(GameState::Playing), (new_game, new_run).chain())
+            .add_systems(OnEnter(GameState::Playing), (crate::voyage::sync_layout, new_game, new_run).chain())
             .add_systems(OnEnter(GameState::Menu), clear_board)
             .add_systems(OnEnter(GameState::GameOver), (people::all_die, save_best))
             .add_systems(
@@ -342,6 +342,7 @@ fn new_run(
         conga.dir = if conga.cells.len() > 1 { conga.cells[0] - conga.cells[1] } else { IVec2::X };
         timer.0 = Timer::from_seconds(5.0, TimerMode::Repeating);
     }
+    debug!("nouvelle partie : plateau {}×{}, tête {}, invité {}", layout.w, layout.h, conga.cells[0], food.cell);
     paused.0 = demo.press;
     if let Mode::Voyage(i) = *mode {
         outcome.best_before = progress_v.stars(i);
@@ -791,7 +792,8 @@ fn sync_guest(
     mut graphs: ResMut<Assets<AnimationGraph>>,
     old: Query<Entity, With<Guest>>,
 ) {
-    if food.spawned {
+    // Si le plateau change de taille, l'invité (posé d'après l'ancien plateau) est replacé.
+    if food.spawned && !layout.is_changed() {
         return;
     }
     food.spawned = true;

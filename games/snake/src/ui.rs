@@ -224,7 +224,15 @@ fn spawn_menu(mut commands: Commands, settings: Res<Settings>, progress: Res<Pro
         let t = spawn_text(&mut commands, tag, next, 15.0);
         light(&mut commands, t);
     }
-    game_common::ui::spawn_studio_logo(&mut commands, root);
+    // Le logo du studio sur un bloc clair : sur le décor il serait illisible.
+    let block = commands
+        .spawn((
+            Node { position_type: PositionType::Absolute, right: Val::Px(20.0), bottom: Val::Px(20.0), padding: UiRect::axes(Val::Px(16.0), Val::Px(8.0)), border_radius: BorderRadius::all(Val::Px(16.0)), ..default() },
+            BackgroundColor(Color::srgb(0.98, 0.96, 0.9)),
+            ChildOf(root),
+        ))
+        .id();
+    game_common::ui::spawn_studio_logo(&mut commands, block);
 }
 
 fn stars_text(n: u8) -> String {

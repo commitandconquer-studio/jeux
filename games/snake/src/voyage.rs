@@ -162,7 +162,7 @@ fn load(mut p: ResMut<VoyageProgress>, mut progress: ResMut<Progress>, mut mode:
 }
 
 /// La forme et le paysage suivent le mode (infini : les réglages ; voyage : le niveau).
-fn sync_layout(
+pub fn sync_layout(
     settings: Res<Settings>,
     mode: Res<Mode>,
     mut layout: ResMut<Layout>,
