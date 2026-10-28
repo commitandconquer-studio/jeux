@@ -1,14 +1,14 @@
 //! Écrans : accueil, réglages, fin de partie, et affichage du score.
 use bevy::prelude::*;
 use game_common::langue::Langue;
-use game_common::ui::{GameHelp, pied_de_menu, spawn_button, spawn_gap, spawn_hud, spawn_panel, spawn_text};
+use game_common::ui::{ButtonColor, GameHelp, spawn_button_sized, pied_de_menu, spawn_button, spawn_gap, spawn_hud, spawn_panel, spawn_text};
 use game_common::{Score, tx};
 
 use crate::GameState;
 use crate::audio::Sfx;
 use crate::game::{Banner, Paused};
 use crate::progress::{Progress, label};
-use crate::levels::LEVELS;
+use crate::levels::{LEVELS, Place};
 use crate::settings::{OptionKind, Settings};
 use crate::voyage::{Mode, Outcome, Run, VoyageProgress};
 
@@ -91,7 +91,9 @@ paisajes y casillas desbloqueas."
             )))
             .add_systems(OnEnter(GameState::Menu), spawn_menu)
             .add_systems(OnEnter(GameState::Options), spawn_options)
-            .add_systems(OnEnter(GameState::Voyage), spawn_voyage)
+            .insert_resource(VoyageTab { selected: Place::Garden, built: None })
+            .add_systems(OnEnter(GameState::Voyage), (pick_tab, spawn_voyage).chain())
+            .add_systems(Update, redraw_voyage)
             .add_systems(OnEnter(GameState::GameOver), spawn_game_over)
             .add_systems(Update, (update_hud, update_banner, refresh_option_texts, keyboard_shortcuts))
             .add_observer(on_click);
@@ -108,6 +110,7 @@ enum UiAction {
     /// Carte du Voyage.
     Voyage,
     Level(usize),
+    Tab(Place),
     Locked,
     Next,
     Settings,
@@ -168,48 +171,98 @@ fn stars_text(n: u8) -> String {
     (0..3).map(|i| if i < n { '*' } else { '-' }).collect()
 }
 
-/// La carte du Voyage : les niveaux, leurs étoiles, ceux qui sont encore fermés.
-fn spawn_voyage(mut commands: Commands, voyage: Res<VoyageProgress>) {
+/// L'onglet (le lieu) affiché sur la carte du Voyage.
+#[derive(Resource)]
+struct VoyageTab {
+    selected: Place,
+    built: Option<Place>,
+}
+
+#[derive(Component)]
+struct VoyagePanel;
+
+/// À l'arrivée sur la carte : on ouvre le lieu du niveau qu'on vient de jouer.
+fn pick_tab(mode: Res<Mode>, mut tab: ResMut<VoyageTab>) {
+    if let Mode::Voyage(i) = *mode
+        && let Some(level) = LEVELS.get(i)
+    {
+        tab.selected = level.place;
+    }
+}
+
+/// La carte du Voyage : un onglet par lieu, puis 12 niveaux en 3 colonnes × 4 lignes.
+fn spawn_voyage(mut commands: Commands, voyage: Res<VoyageProgress>, mut tab: ResMut<VoyageTab>) {
+    tab.built = Some(tab.selected);
     let panel = spawn_panel(&mut commands, DespawnOnExit(GameState::Voyage));
-    spawn_text(&mut commands, panel, tx!("Voyage", "Journey", "Reise", "Viaggio", "Viaje").t(), 44.0);
+    commands.entity(panel).insert(VoyagePanel);
+    spawn_text(&mut commands, panel, tx!("Voyage", "Journey", "Reise", "Viaggio", "Viaje").t(), 40.0);
     spawn_text(
         &mut commands,
         panel,
         tx!("Étoiles : {}", "Stars: {}", "Sterne: {}", "Stelle: {}", "Estrellas: {}").avec(&[&voyage.total_stars()]),
-        20.0,
+        18.0,
     );
-    let mut place = None;
-    let mut grid = None;
-    for (i, level) in LEVELS.iter().enumerate() {
-        if place != Some(level.place) {
-            place = Some(level.place);
-            spawn_text(&mut commands, panel, level.place.label(), 26.0);
-            grid = Some(
-                commands
-                    .spawn((
-                        Node {
-                            flex_wrap: FlexWrap::Wrap,
-                            justify_content: JustifyContent::Center,
-                            column_gap: Val::Px(8.0),
-                            row_gap: Val::Px(2.0),
-                            max_width: Val::Px(900.0),
-                            ..default()
-                        },
-                        ChildOf(panel),
-                    ))
-                    .id(),
-            );
+    // Onglets : un par lieu.
+    let tabs = commands
+        .spawn((Node { column_gap: Val::Px(8.0), margin: UiRect::vertical(Val::Px(6.0)), ..default() }, ChildOf(panel)))
+        .id();
+    for place in Place::ALL {
+        let levels: Vec<usize> = LEVELS.iter().enumerate().filter(|(_, l)| l.place == place).map(|(i, _)| i).collect();
+        let open = levels.first().is_some_and(|i| voyage.unlocked(*i));
+        let (b, _) = spawn_button_sized(&mut commands, tabs, place.label(), 190.0, 48.0, 19.0);
+        if place == tab.selected {
+            commands.entity(b).insert((BackgroundColor(Color::srgb(1.0, 0.86, 0.45)), ButtonColor(Color::srgb(1.0, 0.86, 0.45))));
+        } else if !open {
+            commands.entity(b).insert((BackgroundColor(Color::srgb(0.85, 0.84, 0.80)), ButtonColor(Color::srgb(0.85, 0.84, 0.80))));
         }
-        let open = voyage.unlocked(i);
-        let label = if open {
-            format!("{} · {}  {}", i + 1, level.name, stars_text(voyage.stars(i)))
-        } else {
-            format!("{} · ?", i + 1)
-        };
-        button(&mut commands, grid.unwrap_or(panel), label, if open { UiAction::Level(i) } else { UiAction::Locked });
+        commands.entity(b).insert(if open { UiAction::Tab(place) } else { UiAction::Locked });
     }
-    spawn_gap(&mut commands, panel, 6.0);
+    // Les niveaux du lieu : 12 cases.
+    let grid = commands
+        .spawn((
+            Node {
+                flex_wrap: FlexWrap::Wrap,
+                justify_content: JustifyContent::Center,
+                column_gap: Val::Px(8.0),
+                row_gap: Val::Px(8.0),
+                width: Val::Px(3.0 * 250.0 + 2.0 * 8.0),
+                ..default()
+            },
+            ChildOf(panel),
+        ))
+        .id();
+    let levels: Vec<usize> = LEVELS.iter().enumerate().filter(|(_, l)| l.place == tab.selected).map(|(i, _)| i).collect();
+    for slot in 0..12 {
+        let (label, action) = match levels.get(slot) {
+            Some(&i) if voyage.unlocked(i) => (format!("{} · {}\n{}", slot + 1, LEVELS[i].name, stars_text(voyage.stars(i))), UiAction::Level(i)),
+            Some(_) => (format!("{}\n?", slot + 1), UiAction::Locked),
+            None => ("·".to_owned(), UiAction::Locked),
+        };
+        let (b, _) = spawn_button_sized(&mut commands, grid, label, 250.0, 84.0, 19.0);
+        if !matches!(action, UiAction::Level(_)) {
+            commands.entity(b).insert((BackgroundColor(Color::srgb(0.85, 0.84, 0.80)), ButtonColor(Color::srgb(0.85, 0.84, 0.80))));
+        }
+        commands.entity(b).insert(action);
+    }
+    spawn_gap(&mut commands, panel, 4.0);
     button(&mut commands, panel, tx!("Retour", "Back", "Zurück", "Indietro", "Volver").t(), UiAction::Menu);
+}
+
+/// Changement d'onglet : on redessine la carte.
+fn redraw_voyage(
+    mut commands: Commands,
+    voyage: Res<VoyageProgress>,
+    tab: ResMut<VoyageTab>,
+    panels: Query<Entity, With<VoyagePanel>>,
+    state: Res<State<GameState>>,
+) {
+    if *state.get() != GameState::Voyage || tab.built == Some(tab.selected) {
+        return;
+    }
+    for e in &panels {
+        commands.entity(e).despawn();
+    }
+    spawn_voyage(commands, voyage, tab);
 }
 
 fn spawn_options(mut commands: Commands, settings: Res<Settings>, progress: Res<Progress>) {
@@ -403,6 +456,7 @@ fn on_click(
     mut settings: ResMut<Settings>,
     progress: Res<Progress>,
     mut mode: ResMut<Mode>,
+    mut tab: ResMut<VoyageTab>,
     mut next: ResMut<NextState<GameState>>,
     mut sfx: MessageWriter<Sfx>,
 ) {
@@ -427,6 +481,7 @@ fn on_click(
             }
             next.set(GameState::Playing);
         }
+        UiAction::Tab(place) => tab.selected = place,
         UiAction::Locked => {}
         UiAction::Settings => next.set(GameState::Options),
         UiAction::Back | UiAction::Menu => next.set(GameState::Menu),
