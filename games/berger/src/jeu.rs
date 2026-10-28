@@ -8,6 +8,7 @@ use game_common::calendar::Date;
 use game_common::{Rng, iso_camera, iso_projection, save};
 
 use crate::GameState;
+use crate::chiens::CHIENS;
 use crate::vue::{Allure, DeScene, Kit, OndeVue, VueBelier, VueChien, VueLoup, VueMouton, eclat, spawn_scene};
 
 pub const JEU: &str = "berger";
@@ -69,6 +70,10 @@ pub struct Progression {
     pub etoiles: [u8; 12],
     pub jour_fait: Option<i64>,
     pub serie: u32,
+    /// Le chien choisi (index dans `CHIENS`).
+    pub chien: usize,
+    /// Le chien débloqué par la dernière victoire (pour l'annoncer).
+    pub nouveau: Option<usize>,
 }
 
 impl Progression {
@@ -81,7 +86,12 @@ impl Progression {
         }
         let jour_fait = save::load(JEU, "jour").and_then(|v| v.parse().ok());
         let serie = save::load(JEU, "serie").and_then(|v| v.parse().ok()).unwrap_or(0);
-        Progression { etoiles, jour_fait, serie }
+        let chien = save::load(JEU, "chien").and_then(|v| v.parse().ok()).unwrap_or(0);
+        let mut p = Progression { etoiles, jour_fait, serie, chien, nouveau: None };
+        if !p.chien_ouvert(p.chien) {
+            p.chien = 0;
+        }
+        p
     }
 
     pub fn enregistrer(&self) {
@@ -91,6 +101,7 @@ impl Progression {
             save::store(JEU, "jour", &j.to_string());
         }
         save::store(JEU, "serie", &self.serie.to_string());
+        save::store(JEU, "chien", &self.chien.to_string());
     }
 
     /// Un niveau est ouvert quand le précédent est réussi.
@@ -107,11 +118,16 @@ impl Progression {
         self.etoiles.iter().map(|&e| e as u32).sum()
     }
 
+    pub fn chien_ouvert(&self, i: usize) -> bool {
+        CHIENS.get(i).is_some_and(|c| self.total() >= c.seuil)
+    }
+
     pub fn jour_reussi(&self) -> bool {
         self.jour_fait == Some(Date::today().days())
     }
 
     fn victoire(&mut self, genre: Genre, etoiles: u32) {
+        let avant = self.total();
         match genre {
             Genre::Campagne(i) => self.etoiles[i] = self.etoiles[i].max(etoiles as u8),
             Genre::Jour(j) => {
@@ -122,6 +138,8 @@ impl Progression {
             }
             Genre::Hasard(..) => {}
         }
+        let apres = self.total();
+        self.nouveau = CHIENS.iter().position(|c| c.seuil > avant && c.seuil <= apres);
         self.enregistrer();
     }
 }
@@ -178,7 +196,7 @@ fn camera(
 ) {
     let Some(mut partie) = partie else { return };
     let dt = time.delta_secs().min(0.1);
-    let (zoom_voulu, centre_voulu) = if partie.demo || !mobile.0 || *state.get() == GameState::Niveaux {
+    let (zoom_voulu, centre_voulu) = if partie.demo || !mobile.0 || matches!(*state.get(), GameState::Niveaux | GameState::Chiens) {
         (1.0, V2::ZERO)
     } else {
         let m = &partie.monde;

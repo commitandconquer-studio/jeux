@@ -5,6 +5,7 @@
 // les loups) et le rentre dans l'enclos, sur des prés qui changent.
 mod audio;
 mod capture;
+mod chiens;
 mod jeu;
 mod miniature;
 mod ui;
@@ -20,6 +21,7 @@ pub enum GameState {
     #[default]
     Menu,
     Niveaux,
+    Chiens,
     Playing,
     Fin,
 }
@@ -35,7 +37,7 @@ fn main() {
         // Tout le commun : style, démarrage, univers, son, langues, Options, ambiance.
         .add_plugins(StudioPlugin::new(Universe::Croa, AmbiancePlugin::exterieur()))
         .add_plugins(miniature::MiniaturePlugin)
-        .add_plugins((jeu::JeuPlugin, ui::UiPlugin, audio::AudioPlugin, capture::CapturePlugin))
+        .add_plugins((jeu::JeuPlugin, ui::UiPlugin, audio::AudioPlugin, capture::CapturePlugin, chiens::ChiensPlugin))
         // Langue changée dans les Options : le menu est rebâti dans la nouvelle langue.
         .add_systems(Update, game_common::langue::rebatir_menu(GameState::Menu))
         .run();

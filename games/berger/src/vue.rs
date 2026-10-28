@@ -64,6 +64,8 @@ pub struct Kit {
     pub peau: Handle<StandardMaterial>,
     pub fonce: Handle<StandardMaterial>,
     pub noir: Handle<StandardMaterial>,
+    pub chien_pelage: Handle<StandardMaterial>,
+    pub chien_accent: Handle<StandardMaterial>,
     pub blanc: Handle<StandardMaterial>,
     pub gris: Handle<StandardMaterial>,
     pub roux: Handle<StandardMaterial>,
@@ -105,6 +107,8 @@ impl FromWorld for Kit {
         let peau = m(0.28, 0.24, 0.24);
         let fonce = m(0.16, 0.14, 0.16);
         let noir = m(0.09, 0.09, 0.11);
+        let chien_pelage = m(0.09, 0.09, 0.11);
+        let chien_accent = m(0.96, 0.96, 0.95);
         let blanc = m(0.96, 0.96, 0.95);
         let gris = m(0.52, 0.54, 0.58);
         let roux = m(0.66, 0.46, 0.3);
@@ -142,6 +146,8 @@ impl FromWorld for Kit {
             peau,
             fonce,
             noir,
+            chien_pelage,
+            chien_accent,
             blanc,
             gris,
             roux,
@@ -263,27 +269,27 @@ pub fn spawn_belier(c: &mut Commands, k: &Kit, i: usize) -> Entity {
 pub fn spawn_chien(c: &mut Commands, k: &Kit) -> Entity {
     let root = racine(c, 1.0, VueChien);
     let corps = corps(c, root, 0.48);
-    piece(c, corps, &k.boule, &k.noir, Vec3::new(0.0, 0.0, -0.02), Vec3::new(0.46, 0.42, 1.02));
+    piece(c, corps, &k.boule, &k.chien_pelage, Vec3::new(0.0, 0.0, -0.02), Vec3::new(0.46, 0.42, 1.02));
     // Poitrail et collerette blancs.
-    piece(c, corps, &k.boule, &k.blanc, Vec3::new(0.0, -0.06, 0.3), Vec3::new(0.36, 0.34, 0.42));
-    piece(c, corps, &k.boule, &k.blanc, Vec3::new(0.0, 0.1, 0.42), Vec3::new(0.4, 0.3, 0.2));
+    piece(c, corps, &k.boule, &k.chien_accent, Vec3::new(0.0, -0.06, 0.3), Vec3::new(0.36, 0.34, 0.42));
+    piece(c, corps, &k.boule, &k.chien_accent, Vec3::new(0.0, 0.1, 0.42), Vec3::new(0.4, 0.3, 0.2));
     // Tête : museau blanc, liste blanche, truffe noire.
-    piece(c, corps, &k.boule, &k.noir, Vec3::new(0.0, 0.2, 0.62), Vec3::new(0.34, 0.32, 0.36));
-    piece(c, corps, &k.cube, &k.blanc, Vec3::new(0.0, 0.14, 0.82), Vec3::new(0.16, 0.14, 0.26));
-    piece(c, corps, &k.cube, &k.blanc, Vec3::new(0.0, 0.32, 0.7), Vec3::new(0.06, 0.04, 0.3));
+    piece(c, corps, &k.boule, &k.chien_pelage, Vec3::new(0.0, 0.2, 0.62), Vec3::new(0.34, 0.32, 0.36));
+    piece(c, corps, &k.cube, &k.chien_accent, Vec3::new(0.0, 0.14, 0.82), Vec3::new(0.16, 0.14, 0.26));
+    piece(c, corps, &k.cube, &k.chien_accent, Vec3::new(0.0, 0.32, 0.7), Vec3::new(0.06, 0.04, 0.3));
     piece(c, corps, &k.boule, &k.noir, Vec3::new(0.0, 0.18, 0.96), Vec3::splat(0.08));
     for s in [-1.0f32, 1.0] {
         // Oreilles dressées, pointe pliée.
-        piece_tournee(c, corps, &k.cone, &k.noir, Vec3::new(0.12 * s, 0.44, 0.56), Vec3::new(0.14, 0.24, 0.1), Quat::from_rotation_z(-0.25 * s) * Quat::from_rotation_x(0.25));
-        piece(c, corps, &k.boule, &k.blanc, Vec3::new(0.08 * s, 0.28, 0.76), Vec3::splat(0.07));
-        piece(c, corps, &k.boule, &k.noir, Vec3::new(0.08 * s, 0.28, 0.79), Vec3::splat(0.04));
+        piece_tournee(c, corps, &k.cone, &k.chien_pelage, Vec3::new(0.12 * s, 0.44, 0.56), Vec3::new(0.14, 0.24, 0.1), Quat::from_rotation_z(-0.25 * s) * Quat::from_rotation_x(0.25));
+        piece(c, corps, &k.boule, &k.chien_accent, Vec3::new(0.08 * s, 0.28, 0.76), Vec3::splat(0.07));
+        piece(c, corps, &k.boule, &k.chien_pelage, Vec3::new(0.08 * s, 0.28, 0.79), Vec3::splat(0.04));
     }
     // La queue en panache, bout blanc : elle remue.
     let queue = c.spawn((Transform::from_xyz(0.0, 0.08, -0.5), Visibility::default(), Queue { vitesse: 9.0 }, ChildOf(corps))).id();
-    piece_tournee(c, queue, &k.cube, &k.noir, Vec3::new(0.0, 0.1, -0.2), Vec3::new(0.1, 0.1, 0.46), Quat::from_rotation_x(0.55));
-    piece(c, queue, &k.boule, &k.blanc, Vec3::new(0.0, 0.2, -0.42), Vec3::new(0.12, 0.12, 0.2));
+    piece_tournee(c, queue, &k.cube, &k.chien_pelage, Vec3::new(0.0, 0.1, -0.2), Vec3::new(0.1, 0.1, 0.46), Quat::from_rotation_x(0.55));
+    piece(c, queue, &k.boule, &k.chien_accent, Vec3::new(0.0, 0.2, -0.42), Vec3::new(0.12, 0.12, 0.2));
     for (x, z, d) in [(-0.17, 0.32, 0.0), (0.17, 0.32, 3.14), (-0.17, -0.3, 3.14), (0.17, -0.3, 0.0)] {
-        patte(c, root, k, x, z, 0.36, 0.11, &k.noir, &k.blanc, d);
+        patte(c, root, k, x, z, 0.36, 0.11, &k.chien_pelage, &k.chien_accent, d);
     }
     root
 }
