@@ -1,81 +1,84 @@
-# Centre-ville — un guide rival traverse le plateau (son entrée clignote quelques secondes avant) et emmène les touristes de la file qu'il touche.
-# Cases (nombre) : blocs, trous, teleporteurs (paires), accelerateurs, tapis, barrieres, rivaux.
+# Centre-ville — un grand parc au milieu des tours : arbres, étangs, bancs ; un guide rival le traverse (son entrée clignote avant) et emmène les touristes de la file qu'il touche.
+# Cases (nombre) : blocs (arbres, rochers, étangs), trous, teleporteurs (paires), accelerateurs, tapis, barrieres, rivaux, trains, pontons.
 
-[Les premières rues]
+[Les premières allées]
 lieu = ville
-forme = ville 3
+forme = carre 18
 touristes = 6
 pas = 0.3
 
 [Un guide à l'horizon]
 lieu = ville
-forme = ville 3
+forme = carre 18
 touristes = 8
 rivaux = 1
 pas = 0.3
 
-[Le tour du quartier]
+[Autour de l'étang]
 lieu = ville
-forme = ville 3
+forme = rectangle 24x12
 touristes = 10
 rivaux = 1
+blocs = 4
 pas = 0.3
 
-[Le marché]
+[Le grand pré]
 lieu = ville
-forme = ville 3
+forme = carre 18
 touristes = 12
 rivaux = 1
-blocs = 5
+blocs = 6
 pas = 0.3
 
 [Deux guides]
 lieu = ville
-forme = ville 3
+forme = rectangle 24x12
 touristes = 14
 rivaux = 2
+blocs = 4
 pas = 0.29
 
-[La sortie de la ville]
+[La sortie du parc]
 lieu = ville
-forme = ville 3
+forme = carre 16
 touristes = 14
 rivaux = 2
+blocs = 4
 sortie = oui
 pas = 0.29
 
-[Les travaux]
+[Les bosquets]
 lieu = ville
-forme = ville 3
+forme = l
 touristes = 16
 rivaux = 2
 blocs = 8
 pas = 0.28
 
-[Le quartier d'affaires]
+[Le tour des lacs]
 lieu = ville
-forme = ville 3
+forme = u
 touristes = 20
 rivaux = 2
-blocs = 6
+blocs = 8
 accelerateurs = 3
 pas = 0.27
 
-[L'heure de pointe]
+[Le jour de marché]
 lieu = ville
-forme = ville 3
+forme = carre 18
 touristes = 24
 rivaux = 3
-blocs = 8
+blocs = 10
 accelerateurs = 3
 pas = 0.26
 
-[La grande parade]
+[Le grand rassemblement]
 lieu = ville
-forme = ville 3
+forme = rectangle 24x12
 touristes = 28
 rivaux = 3
-blocs = 8
+blocs = 10
 teleporteurs = 1
 accelerateurs = 3
 sortie = oui

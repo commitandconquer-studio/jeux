@@ -262,7 +262,7 @@ pub fn obstacle_models(u: Universe) -> &'static [(&'static str, f32)] {
         Universe::Cimetiere => &[("graveyard-kit/gravestone-cross", 2.4), ("graveyard-kit/rocks", 2.0), ("graveyard-kit/pumpkin", 2.4), ("graveyard-kit/gravestone-broken", 2.4)],
         Universe::Ocean => &[("survival-kit/barrel", 2.5), ("nature-kit/rock_largeE", 1.8), ("nature-kit/log", 2.0)],
         Universe::Parc => &[("coaster-kit/bench", 2.2), ("coaster-kit/trash", 2.4), ("coaster-kit/flowers", 2.4), ("fantasy-town-kit/stall-bench", 2.0)],
-        Universe::Ville => &[("city-kit-roads/construction-barrier", 2.0), ("city-kit-roads/construction-cone", 2.6), ("city-kit-suburban/planter", 2.2)],
+        Universe::Ville => &[("city-kit-suburban/tree-large", 2.0), ("city-kit-suburban/tree-small", 2.2), ("nature-kit/plant_bush", 2.0), ("nature-kit/rock_largeA", 1.8), ("special/pond", 1.0), ("special/pond", 1.0)],
         Universe::Gare => &[("city-kit-industrial/shipping-container-a", 1.0), ("city-kit-industrial/detail-tank", 1.2), ("city-kit-roads/construction-barrier", 2.0)],
         Universe::Port => &[("pirate-kit/barrel", 1.6), ("pirate-kit/crate", 1.6), ("city-kit-industrial/shipping-container-a", 1.0)],
     }
@@ -326,8 +326,10 @@ pub fn sync_tiles(
     let rail_bed = mk(Color::srgb(0.60, 0.62, 0.66), 0.0);
     let rail_steel = mk(Color::WHITE, 0.0);
     let rail_lamp = mk(Color::srgb(1.0, 0.25, 0.15), 2.0);
-    let plank_wood = mk(Color::srgb(0.66, 0.46, 0.27), 0.0);
-    let plank_dark = mk(Color::srgb(0.40, 0.27, 0.15), 0.0);
+    let pond_edge = mk(Color::srgb(0.62, 0.60, 0.52), 0.0);
+    let pond = mk(Color::srgb(0.28, 0.58, 0.82), 0.25);
+    let plank_wood = mk(Color::srgb(0.58, 0.45, 0.30), 0.0);
+    let plank_dark = mk(Color::srgb(0.36, 0.30, 0.24), 0.0);
     let speed_plate = mk(Color::srgb(1.0, 0.8, 0.1), 0.6);
     let speed_core = mk(Color::WHITE, 2.0);
     *count = board.tiles.len();
@@ -374,6 +376,12 @@ pub fn sync_tiles(
             Tile::Obstacle(v) => {
                 let models = obstacle_models(scenery.0);
                 let (file, scale) = models[v as usize % models.len()];
+                // Un étang : un disque d'eau, pas un modèle.
+                if file == "special/pond" {
+                    spawn(&mut commands, disc.clone(), pond_edge.clone(), at(0.0).with_scale(Vec3::new(2.0, 1.0, 2.0)), None);
+                    spawn(&mut commands, disc.clone(), pond.clone(), at(0.02).with_scale(Vec3::new(1.8, 1.0, 1.8)), None);
+                    continue;
+                }
                 let scene = server.load(GltfAssetLabel::Scene(0).from_asset(format!("kenney/{file}.glb")));
                 let yaw = (cell.x * 7 + cell.y * 13) as f32 * 0.9;
                 commands.spawn((
@@ -432,9 +440,13 @@ pub fn sync_tiles(
                 commands.entity(core).insert(Pulse(cell.x as f32 * 0.7));
             }
             Tile::Plank => {
-                spawn(&mut commands, plate.clone(), plank_wood.clone(), at(0.0), None);
-                for z in [-0.3_f32, 0.0, 0.3] {
-                    spawn(&mut commands, cube.clone(), plank_dark.clone(), { let mut t = at(0.04); t.translation.z += z; t.with_scale(Vec3::new(0.9, 0.02, 0.04)) }, None);
+                // Planche pourrie : trois lattes de travers, usées, avec des jours entre elles.
+                for (k, z) in [-0.32_f32, 0.0, 0.32].into_iter().enumerate() {
+                    let tilt = ((cell.x * 5 + cell.y * 3 + k as i32 * 7) % 5 - 2) as f32 * 0.05;
+                    let mut t = at(0.0);
+                    t.translation.z += z;
+                    let mat = if (cell.x + cell.y + k as i32) % 3 == 0 { plank_dark.clone() } else { plank_wood.clone() };
+                    spawn(&mut commands, cube.clone(), mat, t.with_rotation(Quat::from_rotation_y(tilt)).with_scale(Vec3::new(0.92, 0.07, 0.27)), None);
                 }
             }
             Tile::Belt(d) => {

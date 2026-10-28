@@ -101,9 +101,9 @@ impl Universe {
             },
             Universe::Ville => Theme {
                 sky: c(0.70, 0.76, 0.86),
-                tiles: (c(0.40, 0.41, 0.45), c(0.37, 0.38, 0.42)),
-                rim: c(0.26, 0.27, 0.30),
-                ground: c(0.34, 0.35, 0.38),
+                tiles: (c(0.50, 0.74, 0.38), c(0.45, 0.68, 0.34)),
+                rim: c(0.36, 0.30, 0.22),
+                ground: c(0.74, 0.72, 0.68),
                 sun: (Color::WHITE, 6_500.0),
                 ambient: (c(0.52, 0.52, 0.62), 1000.0),
             },
@@ -136,12 +136,11 @@ struct Theme {
     ambient: (Color, f32),
 }
 
-/// Un véhicule qui roule en boucle sur une rue au-delà du plateau (cases de la grille, pas de logique de jeu).
+/// Un véhicule qui fait le tour du parc sur l'avenue : rectangle `(x0, y0, x1, y1)` en cases de la grille, sans logique de jeu.
 #[derive(Component)]
 pub struct Traffic {
-    start: Vec2,
-    dir: Vec2,
-    len: f32,
+    rect: (f32, f32, f32, f32),
+    clockwise: bool,
     speed: f32,
     phase: f32,
 }
@@ -149,8 +148,24 @@ pub struct Traffic {
 pub fn animate_traffic(time: Res<Time>, layout: Res<Layout>, mut q: Query<(&Traffic, &mut Transform)>) {
     let t = time.elapsed_secs();
     for (v, mut tf) in &mut q {
-        let s = (v.phase + t * v.speed).rem_euclid(v.len);
-        tf.translation = cell_to_world(v.start + v.dir * s, 0.05, &layout);
+        let (x0, y0, x1, y1) = v.rect;
+        let (w, h) = (x1 - x0, y1 - y0);
+        let per = 2.0 * (w + h);
+        let s = (v.phase + t * v.speed).rem_euclid(per);
+        // Sens horaire sur la grille ; l'autre voie fait le tour à l'envers.
+        let s = if v.clockwise { s } else { per - s };
+        let (p, d) = if s < w {
+            (Vec2::new(x0 + s, y0), Vec2::X)
+        } else if s < w + h {
+            (Vec2::new(x1, y0 + s - w), Vec2::Y)
+        } else if s < 2.0 * w + h {
+            (Vec2::new(x1 - (s - w - h), y1), Vec2::NEG_X)
+        } else {
+            (Vec2::new(x0, y1 - (s - 2.0 * w - h)), Vec2::NEG_Y)
+        };
+        let d = if v.clockwise { d } else { -d };
+        tf.translation = cell_to_world(p, 0.05, &layout);
+        tf.rotation = Quat::from_rotation_y(d.x.atan2(d.y));
     }
 }
 
@@ -219,95 +234,114 @@ pub fn rebuild_world(
         b.flat(e);
     }
 
-    // Ville : des pâtés de maisons (immeubles bas ou petits parcs côté caméra) entre les rues, qui se prolongent au-delà du plateau.
-    if l.blocks > 0 {
+    // Centre-ville : un grand parc entouré d'une avenue (voitures, tramway) et d'un horizon de tours.
+    if universe == Universe::Ville {
         let mut rng = Rng::new(universe as u64 * 7919 + shape as u64 * 31);
-        let pitch = crate::layout::CITY_BLOCK + crate::layout::CITY_STREET;
-        let street = crate::layout::CITY_STREET;
-        let pavement = b.mat(Color::srgb(0.80, 0.78, 0.74));
-        let lawn = b.mat(Color::srgb(0.50, 0.72, 0.38));
-        let line = b.mat(Color::srgb(0.95, 0.93, 0.85));
-        let low = ["city-kit-commercial/building-a", "city-kit-commercial/building-d", "city-kit-commercial/building-g", "city-kit-commercial/building-k", "city-kit-commercial/building-c", "city-kit-commercial/building-h", "city-kit-commercial/building-b"];
-        let towers = ["city-kit-commercial/building-skyscraper-b", "city-kit-commercial/building-skyscraper-d", "city-kit-commercial/building-skyscraper-a", "city-kit-commercial/building-skyscraper-c"];
-        let parks = ["city-kit-suburban/tree-small", "city-kit-suburban/tree-large", "city-kit-suburban/planter", "coaster-kit/bench", "coaster-kit/flowers"];
-        // Traits de rue : un pointillé au milieu de chaque rue du plateau.
-        for k in 0..=l.blocks {
-            let c = (k * pitch) as f32 + 0.5;
-            for t in (0..l.w).filter(|t| t % 2 == 0) {
-                for (x, y, yaw) in [(t as f32, c, 0.0), (c, t as f32, FRAC_PI_2)] {
-                    if l.walkable(IVec2::new(x as i32, y as i32)) {
-                        let e = b.block_rot(Color::srgb(0.95, 0.93, 0.85), cell_to_world(Vec2::new(x, y), 0.05, l), Vec3::new(0.5, 0.01, 0.07), yaw);
-                        b.flat(e);
-                    }
-                }
+        let (w, h) = (l.w as f32, l.h as f32);
+        let (ex0, ey0, ex1, ey1) = (-0.5, -0.5, w - 0.5, h - 0.5);
+        // Avenue : des tuiles de route Kenney (droites et virages) en boucle autour du parc ; l'axe est à `centre` du bord.
+        let centre = 3.5;
+        let (rx0, ry0, rx1, ry1) = (ex0 - centre, ey0 - centre, ex1 + centre, ey1 + centre);
+        let road = 3.0;
+        let mut tile = |b: &mut Builder, file: &str, p: Vec2, size: Vec3, yaw: f32| {
+            let scene = b.server.load(GltfAssetLabel::Scene(0).from_asset(format!("kenney/{file}.glb")));
+            b.commands.spawn((WorldAssetRoot(scene), Transform::from_translation(cell_to_world(p, GROUND_Y + 0.2, l)).with_rotation(Quat::from_rotation_y(yaw)).with_scale(size), NotShadowCaster, WorldPart));
+        };
+        // Quatre virages aux coins (chacun relie deux côtés) ; l'orientation de la tuile de base va vers +x et +z.
+        for (x, y, yaw) in [(rx0, ry0, 0.0), (rx1, ry0, FRAC_PI_2), (rx1, ry1, 2.0 * FRAC_PI_2), (rx0, ry1, 3.0 * FRAC_PI_2)] {
+            tile(&mut b, "city-kit-roads/road-bend", Vec2::new(x, y), Vec3::splat(road), yaw);
+        }
+        // Les côtés : des tuiles droites étirées pour remplir exactement l'espace entre deux virages.
+        let nx = (((rx1 - rx0) - road) / road).ceil().max(1.0);
+        let ny = (((ry1 - ry0) - road) / road).ceil().max(1.0);
+        let (lx, ly) = (((rx1 - rx0) - road) / nx, ((ry1 - ry0) - road) / ny);
+        for i in 0..nx as i32 {
+            let x = rx0 + road / 2.0 + lx * (i as f32 + 0.5);
+            for y in [ry0, ry1] {
+                tile(&mut b, "city-kit-roads/road-straight", Vec2::new(x, y), Vec3::new(lx, road, road), 0.0);
             }
         }
-        let _ = line;
-        // Circulation : des voitures sur les rues autour du plateau, et un tramway sur la rue du fond.
+        for i in 0..ny as i32 {
+            let y = ry0 + road / 2.0 + ly * (i as f32 + 0.5);
+            for x in [rx0, rx1] {
+                tile(&mut b, "city-kit-roads/road-straight", Vec2::new(x, y), Vec3::new(ly, road, road), FRAC_PI_2);
+            }
+        }
+        let _ = &mut tile;
+        // Circulation : deux voies de voitures et un tramway, qui font le tour du parc.
         let cars = ["car-kit/sedan", "car-kit/taxi", "car-kit/suv", "car-kit/van", "car-kit/hatchback-sports", "car-kit/police", "car-kit/delivery", "car-kit/truck", "car-kit/sedan-sports", "car-kit/suv-luxury"];
         let trams = ["train-kit/train-electric-city-a", "train-kit/train-electric-subway-a", "train-kit/train-electric-subway-a", "train-kit/train-electric-city-a"];
-        let (span, from) = (l.w as f32 + 40.0, -20.0);
-        let vehicle = |b: &mut Builder, file: &str, scale: Vec3, start: Vec2, dir: Vec2, speed: f32, phase: f32| {
+        let lane = |d: f32| (ex0 - d, ey0 - d, ex1 + d, ey1 + d);
+        let per = |r: (f32, f32, f32, f32)| 2.0 * ((r.2 - r.0) + (r.3 - r.1));
+        let mut vehicle = |b: &mut Builder, file: &str, scale: Vec3, v: Traffic| {
             let scene = b.server.load(GltfAssetLabel::Scene(0).from_asset(format!("kenney/{file}.glb")));
-            let yaw = dir.x.atan2(dir.y);
-            b.commands.spawn((WorldAssetRoot(scene), Transform::from_rotation(Quat::from_rotation_y(yaw)).with_scale(scale), Traffic { start, dir, len: span, speed, phase }, WorldPart));
+            b.commands.spawn((WorldAssetRoot(scene), Transform::from_scale(scale), v, WorldPart));
         };
-        for k in [-1, l.blocks + 1] {
-            for lane in 0..2 {
-                let row = (k * pitch + lane) as f32;
-                let sign = if lane == 0 { 1.0 } else { -1.0 };
-                let speed = 2.5 + rng.below(20) as f32 / 10.0;
-                for horizontal in [true, false] {
-                    // Le tramway roule sur la rue du fond, dans un seul sens.
-                    if horizontal && k == -1 && lane == 0 {
-                        for (i, t) in trams.iter().enumerate() {
-                            vehicle(&mut b, t, Vec3::new(0.6, 0.5, 0.52), Vec2::new(from, row), Vec2::X, 2.2, 18.0 - i as f32 * 1.35);
-                        }
-                        continue;
-                    }
-                    let (start, dir) = if horizontal { (Vec2::new(if sign > 0.0 { from } else { from + span }, row), Vec2::new(sign, 0.0)) } else { (Vec2::new(row, if sign > 0.0 { from } else { from + span }), Vec2::new(0.0, sign)) };
-                    for i in 0..3 {
-                        let file = cars[rng.below(cars.len() as u32) as usize];
-                        vehicle(&mut b, file, Vec3::splat(0.5), start, dir, speed, i as f32 * span / 3.0 + rng.below(100) as f32 / 10.0);
-                    }
-                }
-            }
+        let (a, c) = (lane(centre - 0.7), lane(centre + 0.7));
+        for (i, t) in trams.iter().enumerate() {
+            vehicle(&mut b, t, Vec3::new(0.6, 0.5, 0.52), Traffic { rect: a, clockwise: true, speed: 2.2, phase: 12.0 - i as f32 * 1.35 });
         }
-        let ring = 2;
-        for by in -ring..l.blocks + ring {
-            for bx in -ring..l.blocks + ring {
-                let (x0, y0) = (bx * pitch + street, by * pitch + street);
-                let inside = (0..l.blocks).contains(&bx) && (0..l.blocks).contains(&by);
-                let centre = cell_to_world(Vec2::new(x0 as f32 + 1.5, y0 as f32 + 1.5), 0.0, l);
-                // Du côté de la caméra, rien de haut : on garde la vue sur la rue.
-                let front = centre.x * 0.4 + centre.z > 0.0;
-                let park = front && (inside || rng.below(5) == 0);
-                let (mat, base) = (if park { lawn.clone() } else { pavement.clone() }, if inside { -0.05 } else { GROUND_Y });
-                let h = if inside { 0.1 } else { 0.25 };
-                let e = b.block_with(mat, Vec3::new(centre.x, base, centre.z), Vec3::new(3.9, h, 3.9), 0.0);
-                b.flat(e);
-                for (dx, dy) in [(0.0, 0.0), (2.0, 0.0), (0.0, 2.0), (2.0, 2.0)] {
-                    let at = cell_to_world(Vec2::new(x0 as f32 + 0.5 + dx, y0 as f32 + 0.5 + dy), 0.05, l);
-                    let yaw = rng.below(4) as f32 * FRAC_PI_2;
-                    if park {
-                        if rng.below(3) > 0 {
-                            b.model(parks[rng.below(parks.len() as u32) as usize], at, 1.8, yaw);
-                        }
-                    } else if !front && (dx, dy) == (0.0, 0.0) && !inside && rng.below(3) > 0 {
-                        // Quartier d'affaires : une tour par pâté, qui remplit tout le pâté.
-                        let centre = cell_to_world(Vec2::new(x0 as f32 + 1.5, y0 as f32 + 1.5), 0.05, l);
-                        b.model(towers[rng.below(towers.len() as u32) as usize], centre, 2.3, yaw);
-                        break;
-                    } else if !front && inside && rng.below(3) == 0 {
-                        b.model(towers[rng.below(towers.len() as u32) as usize], at, 1.2, yaw);
-                    } else {
-                        b.model(low[rng.below(low.len() as u32) as usize], at, if front { 1.0 } else { 1.25 }, yaw);
-                    }
+        for i in 0..6 {
+            let file = cars[rng.below(cars.len() as u32) as usize];
+            vehicle(&mut b, file, Vec3::splat(0.5), Traffic { rect: a, clockwise: true, speed: 2.2, phase: 18.0 + i as f32 * per(a) / 6.0 });
+        }
+        for i in 0..7 {
+            let file = cars[rng.below(cars.len() as u32) as usize];
+            vehicle(&mut b, file, Vec3::splat(0.5), Traffic { rect: c, clockwise: false, speed: 3.0, phase: i as f32 * per(c) / 7.0 + rng.below(30) as f32 / 10.0 });
+        }
+        let _ = &mut vehicle;
+        // Bordure du parc : arbres (côtés et fond) et mobilier bas (côté caméra).
+        let tall = ["city-kit-suburban/tree-large", "city-kit-suburban/tree-small", "city-kit-suburban/tree-large"];
+        let lowp = ["coaster-kit/bench", "city-kit-suburban/planter", "coaster-kit/flowers", "nature-kit/plant_bush"];
+        let edge = |b: &mut Builder, p: Vec2, rng: &mut Rng| {
+            let at = cell_to_world(p, 0.0, l);
+            let front = at.x * 0.4 + at.z > 0.0;
+            let file = if front { lowp[rng.below(lowp.len() as u32) as usize] } else { tall[rng.below(tall.len() as u32) as usize] };
+            b.model(file, at, if front { 1.8 } else { 2.2 }, rng.below(628) as f32 / 100.0);
+        };
+        let mut x = ex0 - 0.5;
+        while x < ex1 + 1.0 {
+            for y in [ey0 - 0.9, ey1 + 0.9] {
+                edge(&mut b, Vec2::new(x, y), &mut rng);
+            }
+            x += 1.7;
+        }
+        let mut y = ey0 + 0.8;
+        while y < ey1 {
+            for x in [ex0 - 0.9, ex1 + 0.9] {
+                edge(&mut b, Vec2::new(x, y), &mut rng);
+            }
+            y += 1.7;
+        }
+        // L'horizon : plusieurs rangées de tours autour de l'avenue (basses du côté caméra, pour garder la vue).
+        let low = ["city-kit-commercial/building-a", "city-kit-commercial/building-d", "city-kit-commercial/building-g", "city-kit-commercial/building-k", "city-kit-commercial/building-c", "city-kit-commercial/building-h", "city-kit-commercial/building-b", "city-kit-commercial/building-e"];
+        let towers = ["city-kit-commercial/building-skyscraper-a", "city-kit-commercial/building-skyscraper-b", "city-kit-commercial/building-skyscraper-c", "city-kit-commercial/building-skyscraper-d", "city-kit-commercial/building-skyscraper-e"];
+        let first = centre + 3.2;
+        for row in 0..3 {
+            let d = first + row as f32 * 3.6;
+            let (rx0, ry0, rx1, ry1) = (ex0 - d, ey0 - d, ex1 + d, ey1 + d);
+            let put = |b: &mut Builder, p: Vec2, rng: &mut Rng| {
+                let at = cell_to_world(p, 0.0, l);
+                let front = at.x * 0.4 + at.z > 0.0;
+                if front {
+                    b.model(low[rng.below(low.len() as u32) as usize], at, 1.5 + rng.below(6) as f32 / 10.0, rng.below(4) as f32 * FRAC_PI_2);
+                } else if rng.below(4) > 0 {
+                    b.model(towers[rng.below(towers.len() as u32) as usize], at, 1.9 + rng.below(12) as f32 / 10.0, rng.below(4) as f32 * FRAC_PI_2);
+                } else {
+                    b.model(low[rng.below(low.len() as u32) as usize], at, 1.8, rng.below(4) as f32 * FRAC_PI_2);
                 }
-                // Un lampadaire au coin du pâté.
-                if rng.below(2) == 0 {
-                    b.model("city-kit-roads/light-square", cell_to_world(Vec2::new(x0 as f32 - 0.5, y0 as f32 - 0.5), 0.05, l), 1.8, 0.0);
-                }
+            };
+            let mut x = rx0;
+            while x <= rx1 {
+                put(&mut b, Vec2::new(x, ry0), &mut rng);
+                put(&mut b, Vec2::new(x, ry1), &mut rng);
+                x += 3.4;
+            }
+            let mut y = ry0 + 3.4;
+            while y < ry1 {
+                put(&mut b, Vec2::new(rx0, y), &mut rng);
+                put(&mut b, Vec2::new(rx1, y), &mut rng);
+                y += 3.4;
             }
         }
         return;
