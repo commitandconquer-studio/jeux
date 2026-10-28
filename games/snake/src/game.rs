@@ -42,7 +42,7 @@ impl Plugin for GamePlugin {
                     (sync_guest, sync_segments).run_if(|s: Res<State<GameState>>| {
                         matches!(s.get(), GameState::Playing | GameState::GameOver)
                     }),
-                    (animate_guest, animate_pop, people::start_animations, crate::dress::dress),
+                    (animate_guest, animate_pop, people::start_animations, crate::dress::dress, people::attach_guide),
                 )
                     .chain(),
             );
@@ -152,6 +152,8 @@ struct Conga {
     kinds: Vec<usize>,
     /// Numéro d'apparence de chaque membre (couleurs de peau, cheveux, vêtements).
     looks: Vec<u32>,
+    /// Pour un membre arrivé par un téléporteur : la case d'entrée (il y disparaît, puis ressort à la sienne).
+    vias: Vec<Option<IVec2>>,
     dir: IVec2,
     queued: VecDeque<IVec2>,
 }
@@ -162,7 +164,7 @@ impl Conga {
         let cells = layout.start_cells();
         let kinds = vec![leader, pal(leader), pal(pal(leader) + 2)];
         let looks = vec![leader as u32 * 7 + 3, 11, 58];
-        Self { prev: cells.clone(), cells, kinds, looks, dir: layout.dir, queued: VecDeque::new() }
+        Self { prev: cells.clone(), vias: vec![None; cells.len()], cells, kinds, looks, dir: layout.dir, queued: VecDeque::new() }
     }
 
     /// Mémorise un virage ; renvoie `true` s'il est accepté.
@@ -310,6 +312,7 @@ fn new_run(
         conga.prev = path;
         conga.kinds = (0..conga.cells.len()).map(|_| pool[rng.below(pool.len() as u32) as usize]).collect();
         conga.looks = (0..conga.cells.len() as u32).map(|i| i * 5 % LOOKS).collect();
+        conga.vias = vec![None; conga.cells.len()];
         conga.dir = if conga.cells.len() > 1 { conga.cells[0] - conga.cells[1] } else { IVec2::X };
         timer.0 = Timer::from_seconds(5.0, TimerMode::Repeating);
     }
@@ -462,9 +465,11 @@ fn step(
         outside = false;
     }
     let deadly = matches!(board.tiles.get(&head), Some(Tile::Obstacle(_) | Tile::Hole));
+    let mut via = None;
     if let Some(Tile::Teleport(id)) = board.tiles.get(&head).copied()
         && let Some(exit) = board.partner(head, id)
     {
+        via = Some(head);
         head = exit;
         sfx.write(Sfx::Teleport);
     }
@@ -478,6 +483,7 @@ fn step(
 
     conga.prev = conga.cells.clone();
     conga.cells.insert(0, head);
+    conga.vias.insert(0, via);
     if voyage.run.exit == Some(head) {
         voyage.run.exiting = true;
         info!("voyage : la file passe la sortie ({} personnes)", conga.cells.len());
@@ -527,6 +533,7 @@ fn step(
         }
     } else {
         conga.cells.pop();
+        conga.vias.pop();
     }
     if board.tiles.get(&head) == Some(&Tile::Speeder) {
         boost.0 = 5;
@@ -549,6 +556,8 @@ fn exit_sequence(
     voyage.run.stepped = false;
     let old = conga.cells.clone();
     conga.cells.pop();
+    conga.vias.pop();
+    conga.vias.remove(0);
     conga.kinds.remove(0);
     conga.looks.remove(0);
     conga.prev = old[1..].to_vec();
@@ -649,7 +658,7 @@ fn sync_guest(
         Ring,
         ChildOf(root),
     ));
-    people::spawn_model(&mut commands, &server, &mut graphs, root, food.kind, Pose::Wave, 1.0, food.look);
+    people::spawn_model(&mut commands, &server, &mut graphs, root, food.kind, Pose::Wave, 1.0, food.look, false);
 }
 
 fn animate_guest(time: Res<Time>, mut rings: Query<&mut Transform, With<Ring>>) {
@@ -687,28 +696,43 @@ fn sync_segments(
     crash: Res<Crash>,
     server: Res<AssetServer>,
     mut graphs: ResMut<Assets<AnimationGraph>>,
-    mut segments: Query<(Entity, &mut Segment, &mut Transform)>,
+    mut segments: Query<(Entity, &mut Segment, &mut Transform, Has<Pop>)>,
 ) {
     let grid = &*layout;
     let t = if *state.get() == GameState::Playing && !crash.active { timer.0.fraction() } else { 1.0 };
     // Choc : la tête avance d'une demi-case, jusqu'au mur.
     let nudge = if crash.active { crash.dir.as_vec2() * 0.5 * (1.0 - crash.left / CRASH_TIME).clamp(0.0, 1.0) } else { Vec2::ZERO };
+    let via = |i: usize| conga.vias.get(i).copied().flatten();
+    // Téléporteur : le membre rentre dans la case d'entrée (il rapetisse), puis ressort de l'autre côté (il regrandit).
+    let size_of = |i: usize| match via(i) {
+        Some(_) if t < 1.0 => (if t < 0.5 { 1.0 - 2.0 * t } else { 2.0 * t - 1.0 }).max(0.02),
+        _ => 1.0,
+    };
     let pos = |i: usize| {
         let from = conga.prev.get(i).copied().unwrap_or(conga.cells[i]).as_vec2();
         let to = conga.cells[i].as_vec2();
+        if let Some(v) = via(i)
+            && t < 1.0
+        {
+            return if t < 0.5 { from.lerp(v.as_vec2(), t * 2.0) } else { to };
+        }
         // Saut d'un bord à l'autre : pas de glissement à travers le plateau.
         let p = if from.distance_squared(to) > 1.5 { to } else { from.lerp(to, t) };
         if i == 0 { p + nudge } else { p }
     };
     // Direction de marche d'un membre : de la case précédente vers la case actuelle.
     let heading = |i: usize| {
+        if let Some(v) = via(i) {
+            let d = v - conga.prev.get(i).copied().unwrap_or(v);
+            return if t < 0.5 && d != IVec2::ZERO && d.abs().max_element() <= 1 { Some(d) } else { None };
+        }
         let d = conga.cells[i] - conga.prev.get(i).copied().unwrap_or(conga.cells[i]);
         if d == IVec2::ZERO || d.abs().max_element() > 1 { None } else { Some(d) }
     };
     let dt = time.delta_secs();
 
     let mut present = vec![false; conga.cells.len()];
-    for (e, mut seg, mut tf) in &mut segments {
+    for (e, mut seg, mut tf, popping) in &mut segments {
         if seg.index >= conga.cells.len() {
             commands.entity(e).despawn();
             continue;
@@ -721,6 +745,9 @@ fn sync_segments(
             seg.yaw += delta * (1.0 - (-dt * 16.0).exp());
         }
         tf.rotation = Quat::from_rotation_y(seg.yaw);
+        if !popping {
+            tf.scale = Vec3::splat(size_of(seg.index));
+        }
     }
     for (i, _) in present.iter().enumerate().filter(|(_, p)| !**p) {
         let yaw = heading(i).map_or(PI / 2.0, |d| (d.x as f32).atan2(d.y as f32));
@@ -735,6 +762,6 @@ fn sync_segments(
             root.insert((Pop(0.0), Transform::from_translation(cell_to_world(pos(i), 0.05, grid)).with_scale(Vec3::splat(0.01))));
         }
         let id = root.id();
-        people::spawn_model(&mut commands, &server, &mut graphs, id, conga.kinds[i], Pose::Walk, size, conga.looks[i]);
+        people::spawn_model(&mut commands, &server, &mut graphs, id, conga.kinds[i], Pose::Walk, size, conga.looks[i], i == 0);
     }
 }

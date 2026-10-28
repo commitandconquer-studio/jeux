@@ -60,6 +60,8 @@ pub struct Person {
     pose: Pose,
     /// (modèle de base Mini Characters, numéro d'apparence) ; `None` : couleurs d'origine.
     look: Option<(usize, u32)>,
+    /// Le guide porte une casquette et un drapeau.
+    guide: bool,
 }
 
 impl Person {
@@ -84,6 +86,7 @@ pub fn spawn_model(
     pose: Pose,
     size: f32,
     look: u32,
+    guide: bool,
 ) {
     let k = &KINDS[kind % KINDS.len()];
     let file = format!("kenney/{}/{}.glb", k.pack, k.file);
@@ -102,7 +105,7 @@ pub fn spawn_model(
     commands.spawn((
         WorldAssetRoot(scene),
         Transform::from_scale(Vec3::splat(k.scale * size)),
-        Person { graph: graphs.add(graph), walk, wave, die, pose, look: base_model(kind % KINDS.len()).map(|m| (m, look)) },
+        Person { graph: graphs.add(graph), walk, wave, die, pose, look: base_model(kind % KINDS.len()).map(|m| (m, look)), guide },
         ChildOf(parent),
     ));
 }
@@ -174,4 +177,45 @@ pub fn name(kind: usize) -> &'static str {
         _ => tx!("Sam", "Sam", "Sam", "Sam", "Sam"),
     }
     .t()
+}
+
+/// Casquette rouge et petit drapeau jaune : ce qui fait le guide, sur n'importe quel personnage.
+pub fn attach_guide(
+    mut commands: Commands,
+    mut meshes: ResMut<Assets<Mesh>>,
+    mut materials: ResMut<Assets<StandardMaterial>>,
+    heads: Query<(Entity, &Name), Added<Name>>,
+    parents: Query<&ChildOf>,
+    persons: Query<&Person>,
+) {
+    for (head, name) in &heads {
+        if name.as_str() != "head" {
+            continue;
+        }
+        let mut up = head;
+        let guide = loop {
+            if let Ok(p) = persons.get(up) {
+                break p.guide;
+            }
+            match parents.get(up) {
+                Ok(p) => up = p.parent(),
+                Err(_) => break false,
+            }
+        };
+        if !guide {
+            continue;
+        }
+        let cube = meshes.add(Cuboid::new(1.0, 1.0, 1.0));
+        let mut mat = |c: Color| materials.add(game_common::flat_material(c));
+        let (red, yellow, dark) = (mat(Color::srgb(0.88, 0.16, 0.14)), mat(Color::srgb(1.0, 0.82, 0.1)), mat(Color::srgb(0.25, 0.2, 0.18)));
+        let mut part = |m: &Handle<StandardMaterial>, pos: Vec3, size: Vec3| {
+            commands.spawn((Mesh3d(cube.clone()), MeshMaterial3d(m.clone()), Transform::from_translation(pos).with_scale(size), ChildOf(head)));
+        };
+        // Casquette : calotte et visière (le modèle regarde vers +Z).
+        part(&red, Vec3::new(0.0, 0.30, 0.0), Vec3::new(0.30, 0.11, 0.30));
+        part(&red, Vec3::new(0.0, 0.26, 0.19), Vec3::new(0.24, 0.025, 0.13));
+        // Drapeau dans le dos : une hampe et un fanion.
+        part(&dark, Vec3::new(0.0, 0.55, -0.22), Vec3::new(0.03, 0.7, 0.03));
+        part(&yellow, Vec3::new(0.0, 0.80, -0.35), Vec3::new(0.025, 0.16, 0.26));
+    }
 }
