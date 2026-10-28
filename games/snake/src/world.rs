@@ -21,10 +21,11 @@ pub enum Universe {
     Parc,
     Ville,
     Gare,
+    Port,
 }
 
 impl Universe {
-    pub const ALL: [Universe; 8] = [Universe::Prairie, Universe::Desert, Universe::Ruines, Universe::Cimetiere, Universe::Ocean, Universe::Parc, Universe::Ville, Universe::Gare];
+    pub const ALL: [Universe; 9] = [Universe::Prairie, Universe::Desert, Universe::Ruines, Universe::Cimetiere, Universe::Ocean, Universe::Parc, Universe::Ville, Universe::Gare, Universe::Port];
 
     pub fn next(self) -> Self {
         let i = Self::ALL.iter().position(|u| *u == self).unwrap_or(0);
@@ -41,6 +42,7 @@ impl Universe {
             Universe::Parc => tx!("Parc de loisirs", "Theme park", "Freizeitpark", "Parco divertimenti", "Parque de atracciones"),
             Universe::Ville => tx!("Centre-ville", "Downtown", "Innenstadt", "Centro città", "Centro urbano"),
             Universe::Gare => tx!("Gare", "Train station", "Bahnhof", "Stazione", "Estación"),
+            Universe::Port => tx!("Port", "Harbour", "Hafen", "Porto", "Puerto"),
         }
         .t()
     }
@@ -112,6 +114,14 @@ impl Universe {
                 ground: c(0.55, 0.52, 0.46),
                 sun: (c(1.0, 0.96, 0.9), 6_800.0),
                 ambient: (c(0.54, 0.52, 0.62), 1000.0),
+            },
+            Universe::Port => Theme {
+                sky: c(0.74, 0.84, 0.92),
+                tiles: (c(0.72, 0.56, 0.36), c(0.66, 0.50, 0.32)),
+                rim: c(0.38, 0.28, 0.20),
+                ground: c(0.18, 0.42, 0.58),
+                sun: (Color::WHITE, 6_800.0),
+                ambient: (c(0.55, 0.60, 0.70), 1000.0),
             },
         }
     }
@@ -376,6 +386,17 @@ fn decor_models(u: Universe) -> &'static [(&'static str, f32)] {
             ("city-kit-roads/construction-cone", 2.0),
             ("city-kit-suburban/tree-small", 1.8),
         ],
+        Universe::Port => &[
+            ("city-kit-industrial/shipping-container-a", 1.2),
+            ("city-kit-industrial/shipping-container-b", 1.2),
+            ("city-kit-industrial/shipping-container-c", 1.2),
+            ("city-kit-industrial/detail-tank-large", 1.2),
+            ("pirate-kit/boat-row-small", 1.4),
+            ("pirate-kit/ship-small", 1.0),
+            ("pirate-kit/barrel", 1.6),
+            ("pirate-kit/crate", 1.6),
+            ("city-kit-roads/light-square", 2.0),
+        ],
     }
 }
 
@@ -393,7 +414,7 @@ fn spawn_decor(u: Universe, b: &mut Builder, rng: &mut Rng, pos: Vec3) {
     };
     let yaw = rng.below(628) as f32 / 100.0;
     // Sur l'île des pirates, les objets flottent un peu au-dessus de l'eau.
-    let pos = if u == Universe::Ocean { pos + Vec3::Y * 0.05 } else { pos };
+    let pos = if matches!(u, Universe::Ocean | Universe::Port) { pos + Vec3::Y * 0.05 } else { pos };
     b.model(file, pos, scale, yaw);
 }
 

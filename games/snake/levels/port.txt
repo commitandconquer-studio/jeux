@@ -1,0 +1,80 @@
+# Port — des pontons fragiles : ils s'effondrent (trous dans l'eau) dès que toute la file les a quittés.
+# Cases (nombre) : blocs, trous, teleporteurs (paires), accelerateurs, tapis, barrieres, rivaux, trains, pontons.
+
+[Le ponton]
+lieu = port
+forme = carre 18
+touristes = 8
+pontons = 1
+pas = 0.33
+
+[Deux pontons]
+lieu = port
+forme = carre 18
+touristes = 10
+pontons = 2
+pas = 0.32
+
+[Le quai de pêche]
+lieu = port
+forme = carre 16
+touristes = 12
+pontons = 3
+pas = 0.32
+
+[Les conteneurs]
+lieu = port
+forme = carre 16
+touristes = 14
+pontons = 2
+blocs = 5
+pas = 0.31
+
+[La jetée]
+lieu = port
+forme = rectangle 22x10
+touristes = 16
+pontons = 3
+pas = 0.3
+
+[Le départ du ferry]
+lieu = port
+forme = carre 16
+touristes = 14
+pontons = 3
+sortie = oui
+pas = 0.3
+
+[Le bassin]
+lieu = port
+forme = carre 18
+touristes = 18
+pontons = 4
+accelerateurs = 2
+pas = 0.3
+
+[La criée]
+lieu = port
+forme = allees
+touristes = 20
+pontons = 3
+blocs = 4
+pas = 0.29
+
+[La marée]
+lieu = port
+forme = carre 18
+touristes = 24
+pontons = 5
+blocs = 5
+pas = 0.28
+
+[Le grand port]
+lieu = port
+forme = carre 18
+touristes = 28
+pontons = 5
+teleporteurs = 1
+accelerateurs = 3
+sortie = oui
+pas = 0.26

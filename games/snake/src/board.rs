@@ -24,6 +24,8 @@ pub enum Tile {
     Portal,
     /// Barrière qui s'ouvre et se ferme au rythme des pas (décalage de phase).
     Gate(u8),
+    /// Ponton fragile : un trou après le passage.
+    Plank,
     /// Chemin du guide rival (vrai : le long de x).
     Lane(bool),
 }
@@ -43,6 +45,8 @@ pub enum Feature {
     Rival,
     /// Un train mortel qui traverse le plateau.
     Train,
+    /// Ponton : s'effondre (devient un trou) dès que toute la file l'a quitté.
+    Plank,
 }
 
 /// Un guide rival et ses deux touristes : il traverse tout le plateau le long d'une ligne de cases, puis revient après une pause.
@@ -141,7 +145,7 @@ impl Board {
                         | (Feature::Teleport, Tile::Teleport(_))
                         | (Feature::Speeder, Tile::Speeder)
                         | (Feature::Belt, Tile::Belt(_))
-                        | (Feature::Portal, Tile::Portal) | (Feature::Gate, Tile::Gate(_))
+                        | (Feature::Portal, Tile::Portal) | (Feature::Gate, Tile::Gate(_)) | (Feature::Plank, Tile::Plank)
                 )
             })
             .count()
@@ -211,6 +215,17 @@ impl Board {
                     self.tiles.insert(d, Tile::Teleport(id));
                     return true;
                 }
+                Feature::Plank => {
+                    let dir = [IVec2::X, IVec2::Y][rng.below(2) as usize];
+                    let cells: Vec<IVec2> = (0..3).map(|i| c + dir * i).collect();
+                    // Les deux bouts doivent rester praticables : le ponton ne doit pas enfermer la file.
+                    if cells.iter().all(|p| layout.walkable(*p) && self.is_free(*p, busy, head) && !self.next_to_blocker(*p)) && layout.walkable(c - dir) && layout.walkable(c + dir * 3) {
+                        for p in cells {
+                            self.tiles.insert(p, Tile::Plank);
+                        }
+                        return true;
+                    }
+                }
                 Feature::Belt => {
                     let dir = [IVec2::X, IVec2::NEG_X, IVec2::Y, IVec2::NEG_Y][rng.below(4) as usize];
                     let cells: Vec<IVec2> = (0..4).map(|i| c + dir * i).collect();
@@ -249,6 +264,7 @@ pub fn obstacle_models(u: Universe) -> &'static [(&'static str, f32)] {
         Universe::Parc => &[("coaster-kit/bench", 2.2), ("coaster-kit/trash", 2.4), ("coaster-kit/flowers", 2.4), ("fantasy-town-kit/stall-bench", 2.0)],
         Universe::Ville => &[("city-kit-roads/construction-barrier", 2.0), ("city-kit-roads/construction-cone", 2.6), ("city-kit-suburban/planter", 2.2)],
         Universe::Gare => &[("city-kit-industrial/shipping-container-a", 1.0), ("city-kit-industrial/detail-tank", 1.2), ("city-kit-roads/construction-barrier", 2.0)],
+        Universe::Port => &[("pirate-kit/barrel", 1.6), ("pirate-kit/crate", 1.6), ("city-kit-industrial/shipping-container-a", 1.0)],
     }
 }
 
@@ -310,6 +326,8 @@ pub fn sync_tiles(
     let rail_bed = mk(Color::srgb(0.60, 0.62, 0.66), 0.0);
     let rail_steel = mk(Color::WHITE, 0.0);
     let rail_lamp = mk(Color::srgb(1.0, 0.25, 0.15), 2.0);
+    let plank_wood = mk(Color::srgb(0.66, 0.46, 0.27), 0.0);
+    let plank_dark = mk(Color::srgb(0.40, 0.27, 0.15), 0.0);
     let speed_plate = mk(Color::srgb(1.0, 0.8, 0.1), 0.6);
     let speed_core = mk(Color::WHITE, 2.0);
     *count = board.tiles.len();
@@ -412,6 +430,12 @@ pub fn sync_tiles(
                 spawn(&mut commands, plate.clone(), speed_plate.clone(), at(0.0), None);
                 let core = spawn(&mut commands, cube.clone(), speed_core.clone(), at(0.06).with_scale(Vec3::new(0.34, 0.05, 0.34)).with_rotation(Quat::from_rotation_y(FRAC_PI_4)), None);
                 commands.entity(core).insert(Pulse(cell.x as f32 * 0.7));
+            }
+            Tile::Plank => {
+                spawn(&mut commands, plate.clone(), plank_wood.clone(), at(0.0), None);
+                for z in [-0.3_f32, 0.0, 0.3] {
+                    spawn(&mut commands, cube.clone(), plank_dark.clone(), { let mut t = at(0.04); t.translation.z += z; t.with_scale(Vec3::new(0.9, 0.02, 0.04)) }, None);
+                }
             }
             Tile::Belt(d) => {
                 let yaw = (d.x as f32).atan2(d.y as f32);

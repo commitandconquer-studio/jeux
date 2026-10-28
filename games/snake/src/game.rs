@@ -144,6 +144,7 @@ fn cap(f: Feature) -> usize {
         Feature::Gate => 6,
         Feature::Rival => 2,
         Feature::Train => 2,
+        Feature::Plank => 4,
     }
 }
 
@@ -155,6 +156,7 @@ pub fn feature_name(f: Feature) -> &'static str {
         Feature::Teleport => tx!("Téléporteurs !", "Teleporters!", "Teleporter!", "Teletrasporti!", "¡Teletransportadores!"),
         Feature::Speeder => tx!("Accélérateurs !", "Speed pads!", "Turbo-Felder!", "Acceleratori!", "¡Aceleradores!"),
         Feature::Portal => tx!("Un portail !", "A portal!", "Ein Portal!", "Un portale!", "¡Un portal!"),
+        Feature::Plank => tx!("Pontons fragiles !", "Fragile docks!", "Brüchige Stege!", "Moli fragili!", "¡Muelles frágiles!"),
         Feature::Train => tx!("Un train arrive !", "A train is coming!", "Ein Zug kommt!", "Arriva un treno!", "¡Llega un tren!"),
         Feature::Rival => tx!("Un guide rival !", "A rival guide!", "Ein Konkurrenzführer!", "Una guida rivale!", "¡Un guía rival!"),
         Feature::Gate => tx!("Barrières !", "Barriers!", "Schranken!", "Barriere!", "¡Barreras!"),
@@ -596,7 +598,13 @@ fn step(
             timer.0.set_duration(Duration::from_secs_f32(faster));
         }
     } else {
-        conga.cells.pop();
+        if let Some(gone) = conga.cells.pop()
+            && board.tiles.get(&gone) == Some(&Tile::Plank)
+            && !conga.cells.contains(&gone)
+        {
+            // Le ponton s'effondre une fois que toute la file l'a quitté.
+            board.tiles.insert(gone, Tile::Hole);
+        }
         conga.vias.pop();
     }
     // Un train écrase la file s'il touche l'un de ses membres.
