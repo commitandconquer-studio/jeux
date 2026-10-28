@@ -50,6 +50,30 @@ pub enum Pose {
     Wave,
     /// Debout, au repos (scènes).
     Idle,
+    /// N'importe quelle animation du modèle (indice du clip : voir `CLIPS`).
+    Clip(u8),
+}
+
+/// Les animations des personnages Mini Characters, avec leur nom dans les fichiers de scène (`animation = …`) et leur indice de clip.
+pub const CLIPS: [(&str, u8); 32] = [
+    ("fixe", 0), ("repos", 1), ("marche", 2), ("court", 3), ("saute", 4), ("tombe", 5), ("accroupi", 6), ("assis", 7),
+    ("conduit", 8), ("mort", 9), ("ramasse", 10), ("salut", 11), ("non", 12), ("tient-droite", 13), ("tient-gauche", 14),
+    ("tient-deux", 15), ("vise-droite", 16), ("vise-gauche", 17), ("vise-deux", 18), ("frappe-droite", 19), ("frappe-gauche", 20),
+    ("coup-pied-droite", 21), ("coup-pied-gauche", 22), ("interagit-droite", 23), ("interagit-gauche", 24), ("fauteuil-assis", 25),
+    ("fauteuil-regarde-gauche", 26), ("fauteuil-regarde-droite", 27), ("fauteuil-avance", 28), ("fauteuil-recule", 29),
+    ("fauteuil-gauche", 30), ("fauteuil-droite", 31),
+];
+
+impl Pose {
+    /// La pose d'un nom d'animation de scène.
+    pub fn from_name(name: &str) -> Option<Pose> {
+        Some(match name {
+            "repos" => Pose::Idle,
+            "salut" => Pose::Wave,
+            "marche" => Pose::Walk,
+            other => Pose::Clip(CLIPS.iter().find(|(n, _)| *n == other)?.1),
+        })
+    }
 }
 
 /// Graphe d'animation d'un personnage (clips des GLB : 1 repos, 2 marche, 9 mort, 11 « oui »).
@@ -59,6 +83,8 @@ pub struct Person {
     walk: AnimationNodeIndex,
     wave: AnimationNodeIndex,
     idle: AnimationNodeIndex,
+    /// Le clip demandé pour une pose `Clip` (scènes).
+    extra: Option<AnimationNodeIndex>,
     die: AnimationNodeIndex,
     pose: Pose,
     /// (modèle de base Mini Characters, numéro d'apparence) ; `None` : couleurs d'origine.
@@ -102,6 +128,7 @@ pub fn spawn_model(
     let wave = graph.add_clip(clip(wave_clip), 1.0, graph.root);
     let idle = graph.add_clip(clip(if k.chair.is_some() { 25 } else { 1 }), 1.0, graph.root);
     let die = graph.add_clip(clip(9), 1.0, graph.root);
+    let extra = if let Pose::Clip(i) = pose { Some(graph.add_clip(clip(i as usize), 1.0, graph.root)) } else { None };
     if let Some(chair) = k.chair {
         let scene = server.load(GltfAssetLabel::Scene(0).from_asset(format!("kenney/mini-characters/{chair}.glb")));
         commands.spawn((WorldAssetRoot(scene), Transform::from_scale(Vec3::splat(k.scale * size)), ChildOf(parent)));
@@ -109,7 +136,7 @@ pub fn spawn_model(
     commands.spawn((
         WorldAssetRoot(scene),
         Transform::from_scale(Vec3::splat(k.scale * size)),
-        Person { graph: graphs.add(graph), walk, wave, idle, die, pose, look: base_model(kind % KINDS.len()).map(|m| (m, look)), guide },
+        Person { graph: graphs.add(graph), walk, wave, idle, extra, die, pose, look: base_model(kind % KINDS.len()).map(|m| (m, look)), guide },
         ChildOf(parent),
     ));
 }
@@ -137,6 +164,14 @@ pub fn start_animations(
             Pose::Walk => player.play(p.walk).repeat().set_speed(1.6),
             Pose::Wave => player.play(p.wave).repeat().set_speed(1.0),
             Pose::Idle => player.play(p.idle).repeat().set_speed(1.0),
+            Pose::Clip(i) => {
+                // La mort ne se répète pas : le personnage reste au sol.
+                let a = player.play(p.extra.unwrap_or(p.idle));
+                if i != 9 {
+                    a.repeat();
+                }
+                a
+            }
         };
     }
 }

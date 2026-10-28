@@ -89,6 +89,7 @@
       <button id="large" title="Cache la grille pour agrandir l’aperçu">Agrandir</button>
       <button id="fs">Plein écran</button>
       <label><input type="checkbox" id="auto" checked> mise à jour automatique</label>
+      <label title="Rejoue cette étape au lieu d’enchaîner la suivante : pratique pour régler une caméra"><input type="checkbox" id="seul" checked> cette étape seulement</label>
       <span class="hint" id="aperçuinfo"></span>
     </div>
     <iframe id="jeu" title="Aperçu 3D" allow="autoplay; fullscreen" allowfullscreen></iframe>
@@ -141,7 +142,10 @@ const LEGEND = CELLS.map(c => c[0]).join('');
 const KEYS = ['rivaux','trains','eboulements'];
 const KINDS = ['Léo','Lola','Max','Inès','Noé','Zoé','Hugo','Jade','Sacha','Maya','Théo','Lou','Zombie','Squelette','Vampire','Fantôme','Rémi (fauteuil)','Camille (fauteuil)','Sam (fauteuil)'];
 const CAMS = [['large','Large (tout le décor)'],['moyen','Moyen'],['gros','Gros plan'],['plongee','Plongée'],['bas','Contre-plongée']];
-const POSES = [['repos','Au repos'],['salut','Salue'],['marche','Marche']];
+const POSES = [['repos','Au repos'],['salut','Salue / dit oui'],['non','Dit non'],['marche','Marche'],['court','Court'],['saute','Saute'],['tombe','Tombe'],['accroupi','Accroupi'],['assis','Assis'],['conduit','Conduit'],
+  ['mort','Au sol (mort)'],['ramasse','Ramasse'],['tient-droite','Tient (main droite)'],['tient-gauche','Tient (main gauche)'],['tient-deux','Tient (deux mains)'],['vise-droite','Vise (droite)'],['vise-gauche','Vise (gauche)'],['vise-deux','Vise (deux mains)'],
+  ['frappe-droite','Frappe (droite)'],['frappe-gauche','Frappe (gauche)'],['coup-pied-droite','Coup de pied (droit)'],['coup-pied-gauche','Coup de pied (gauche)'],['interagit-droite','Manipule (droite)'],['interagit-gauche','Manipule (gauche)'],
+  ['fauteuil-assis','Fauteuil : assis'],['fauteuil-regarde-gauche','Fauteuil : regarde à gauche'],['fauteuil-regarde-droite','Fauteuil : regarde à droite'],['fauteuil-avance','Fauteuil : avance'],['fauteuil-recule','Fauteuil : recule'],['fauteuil-gauche','Fauteuil : tourne à gauche'],['fauteuil-droite','Fauteuil : tourne à droite'],['fixe','Immobile (pose neutre)']];
 const POSITIONS = ['gauche2','gauche','centre','droite','droite2'].flatMap(p => [p, p + '-fond']);
 let meta = { titre:'', description:'' };
 const isScene = l => l && l.type === 'scene';
@@ -522,7 +526,7 @@ function refreshPreview(ok = check()) {
   try { localStorage.setItem('cc-save-snake-editeur', serialize()); }
   catch (e) { info.textContent = 'Impossible d’enregistrer pour l’aperçu (stockage du navigateur bloqué).'; return; }
   info.textContent = `Niveau ${cur + 1} : « ${L().name} » — le jeu se recharge ; jouez avec les flèches.`;
-  $('jeu').src = `${GAME}?editeur=${cur + 1}&t=${Date.now()}`;
+  $('jeu').src = `${GAME}?editeur=${cur + 1}&seul=${$('seul').checked ? 1 : 0}&t=${Date.now()}`;
 }
 $('preview').onclick = () => {
   const on = document.body.classList.toggle('preview');
@@ -530,6 +534,7 @@ $('preview').onclick = () => {
   if (on) refreshPreview(); else $('jeu').src = 'about:blank';
 };
 $('refresh').onclick = () => refreshPreview();
+$('seul').onchange = () => refreshPreview();
 $('large').onclick = () => { document.body.classList.toggle('large'); $('large').classList.toggle('on'); };
 $('fs').onclick = () => { const f = $('jeu'); (f.requestFullscreen || f.webkitRequestFullscreen || (() => {})).call(f); };
 

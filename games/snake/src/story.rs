@@ -68,7 +68,8 @@ fn load_progress(mut p: ResMut<StoryProgress>) {
 /// Passe à l'étape suivante de l'aventure en cours.
 pub fn advance(mode: &mut Mode, progress: &mut StoryProgress, next: &mut NextState<GameState>) {
     let Mode::Scenario { scenario, step } = *mode else { return };
-    let step = step + 1;
+    // Aperçu d'une seule étape : on la rejoue au lieu de passer à la suivante.
+    let step = if crate::levels::single_step() { step } else { step + 1 };
     if let Some(sc) = SCENARIOS.get(scenario) {
         progress.set(&sc.title, step);
     }

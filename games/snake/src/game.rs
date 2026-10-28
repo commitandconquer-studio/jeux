@@ -33,6 +33,9 @@ impl Plugin for GamePlugin {
             .add_systems(Startup, (setup, load_best, crate::dress::setup))
             .add_systems(OnEnter(GameState::Playing), (crate::voyage::sync_layout, new_game, new_run).chain())
             .add_systems(OnEnter(GameState::Menu), clear_board)
+            // Les personnages du niveau qu'on vient de finir ne restent pas dans la scène suivante.
+            .add_systems(OnEnter(GameState::Step), clear_board)
+            .add_systems(OnEnter(GameState::Scenarios), clear_board)
             .add_systems(OnEnter(GameState::GameOver), (people::all_die, save_best))
             .add_systems(
                 Update,

@@ -321,12 +321,11 @@ pub fn parse_file(text: &str) -> Result<(Meta, Vec<Level>), String> {
                         let kind: usize = f[1].parse().map_err(|_| err("modèle : un numéro (0 à 18)"))?;
                         let look: u32 = f[2].parse().map_err(|_| err("apparence : un numéro (0 à 95)"))?;
                         let (x, z) = parse_position(f[3]).ok_or_else(|| err("position : gauche2, gauche, centre, droite, droite2 (+ « -fond »), ou x,z"))?;
-                        let pose = match f.get(4).copied().unwrap_or("repos") {
-                            "repos" | "" => crate::people::Pose::Idle,
-                            "salut" => crate::people::Pose::Wave,
-                            "marche" => crate::people::Pose::Walk,
-                            _ => return Err(err("animation : repos, salut ou marche")),
-                        };
+                        let pose = crate::people::Pose::from_name(match f.get(4).copied() {
+                            Some("") | None => "repos",
+                            Some(n) => n,
+                        })
+                        .ok_or_else(|| err("animation inconnue (repos, salut, marche, court, saute, mort… voir l'éditeur)"))?;
                         scene.actors.push(Actor { name: f[0].to_owned(), kind, look, x, z, pose, guide: f.get(5).copied() == Some("guide") });
                     }
                     _ => {
@@ -387,6 +386,12 @@ pub fn editor_request() -> Option<usize> {
     static R: LazyLock<Option<usize>> = LazyLock::new(|| {
         game_common::save::url_param("editeur").or_else(|| std::env::var("SNAKE_EDITEUR").ok()).and_then(|v| v.parse().ok()).map(|n: usize| n.max(1))
     });
+    *R
+}
+
+/// Aperçu d'une seule étape (`&seul=1` dans l'adresse, ou `SNAKE_SEUL=1`) : elle recommence au lieu d'enchaîner la suivante.
+pub fn single_step() -> bool {
+    static R: LazyLock<bool> = LazyLock::new(|| game_common::save::url_param("seul").is_some_and(|v| v == "1") || std::env::var("SNAKE_SEUL").is_ok());
     *R
 }
 
