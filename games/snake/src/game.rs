@@ -84,9 +84,20 @@ struct Crash {
     left: f32,
     dir: IVec2,
     active: bool,
+    /// Chute dans un trou : la case du trou ; toute la file y tombe, l'un après l'autre.
+    hole: Option<IVec2>,
+    /// Durée totale de la chute.
+    total: f32,
 }
 
 const CRASH_TIME: f32 = 0.14;
+/// Durée de la chute d'un personnage dans le trou.
+const FALL_TIME: f32 = 0.4;
+
+/// Vitesse (cases par seconde) à laquelle la file s'avance vers le trou : plus vite quand elle est longue.
+fn fall_speed(n: usize) -> f32 {
+    (n as f32 / 2.5).max(6.0)
+}
 
 /// Pas restants d'élan donné par un accélérateur.
 #[derive(Resource)]
@@ -363,10 +374,12 @@ fn autopilot(
     if demo.auto.is_none() || !conga.queued.is_empty() {
         return;
     }
-    let target = run.exit.unwrap_or(food.cell);
     let head = conga.cells[0];
+    // Essai de la chute (`SNAKE_TROU=1`) : le pilote vise le trou le plus proche.
+    let hole = std::env::var("SNAKE_TROU").is_ok().then(|| board.tiles.iter().filter(|(_, t)| **t == Tile::Hole).map(|(c, _)| *c).min_by_key(|c| (*c - head).abs().element_sum())).flatten();
+    let target = hole.or(run.exit).unwrap_or(food.cell);
     let body = &conga.cells[..conga.cells.len() - 1];
-    let safe = |c: IVec2| layout.walkable(c) && !body.contains(&c) && !matches!(board.tiles.get(&c), Some(Tile::Obstacle(_) | Tile::Hole));
+    let safe = |c: IVec2| layout.walkable(c) && !body.contains(&c) && !matches!(board.tiles.get(&c), Some(Tile::Obstacle(_))) && (hole.is_some() || board.tiles.get(&c) != Some(&Tile::Hole));
     let best = [IVec2::X, IVec2::NEG_X, IVec2::Y, IVec2::NEG_Y]
         .into_iter()
         .filter(|d| *d != -conga.dir && safe(head + *d))
@@ -478,6 +491,7 @@ fn step(
         outside = false;
     }
     let deadly = matches!(board.tiles.get(&head), Some(Tile::Obstacle(_) | Tile::Hole));
+    let hole_at = (board.tiles.get(&head) == Some(&Tile::Hole)).then_some(head);
     let mut via = None;
     if let Some(Tile::Teleport(id)) = board.tiles.get(&head).copied()
         && let Some(exit) = board.partner(head, id)
@@ -489,8 +503,15 @@ fn step(
     // La queue va bouger : on peut avancer sur sa case actuelle.
     let body = &conga.cells[..conga.cells.len() - 1];
     if (outside && !settings.wrap) || deadly || body.contains(&head) {
-        *crash = Crash { left: CRASH_TIME, dir: conga.dir, active: true };
-        sfx.write(Sfx::GameOver);
+        if let Some(h) = hole_at {
+            // Toute la file tombe dans le trou, l'un après l'autre, avant la fin de partie.
+            let total = (conga.cells.len() as f32 + 1.0) / fall_speed(conga.cells.len()) + FALL_TIME;
+            *crash = Crash { left: total, dir: conga.dir, active: true, hole: Some(h), total };
+            sfx.write(Sfx::Fall);
+        } else {
+            *crash = Crash { left: CRASH_TIME, dir: conga.dir, active: true, hole: None, total: CRASH_TIME };
+            sfx.write(Sfx::GameOver);
+        }
         return;
     }
 
@@ -643,13 +664,16 @@ fn level_up(board: &mut Board, progress: &Progress, conga: &Conga, food: IVec2, 
 }
 
 /// Laisse la tête finir sa glissade contre l'obstacle, puis termine la partie.
-fn finish_crash(time: Res<Time>, mut crash: ResMut<Crash>, mut next: ResMut<NextState<GameState>>) {
+fn finish_crash(time: Res<Time>, mut crash: ResMut<Crash>, mut next: ResMut<NextState<GameState>>, mut sfx: MessageWriter<Sfx>) {
     if !crash.active {
         return;
     }
     crash.left -= time.delta_secs();
     if crash.left <= 0.0 {
         crash.active = false;
+        if crash.hole.is_some() {
+            sfx.write(Sfx::GameOver);
+        }
         next.set(GameState::GameOver);
     }
 }
@@ -774,6 +798,28 @@ fn sync_segments(
     };
     let dt = time.delta_secs();
 
+    // Chute dans un trou : chacun avance vers le trou en suivant le chemin de la file, puis y tombe.
+    let fall = crash.hole.map(|hole| {
+        let elapsed = if crash.active { crash.total - crash.left } else { crash.total };
+        let v = fall_speed(conga.cells.len());
+        let mut path = vec![hole.as_vec2()];
+        path.extend(conga.cells.iter().map(|c| c.as_vec2()));
+        // (position, direction, taille, profondeur) du membre i.
+        move |i: usize| {
+            let s = (i as f32 + 1.0) - v * elapsed;
+            if s > 0.0 {
+                let k = (s.floor() as usize).min(path.len() - 2);
+                let p = path[k + 1].lerp(path[k], 1.0 - (s - k as f32).clamp(0.0, 1.0));
+                // path[k] est plus près du trou que path[k + 1].
+                let p = if k + 1 < path.len() { path[k].lerp(path[k + 1], (s - k as f32).clamp(0.0, 1.0)) } else { p };
+                (p, (path[k] - path[k + 1]).normalize_or_zero(), 1.0, 0.0)
+            } else {
+                let q = ((-s / v) / FALL_TIME).clamp(0.0, 1.0);
+                (hole.as_vec2(), Vec2::ZERO, (1.0 - q).max(0.02), q * 0.6)
+            }
+        }
+    });
+
     let mut present = vec![false; conga.cells.len()];
     for (e, mut seg, mut tf, popping) in &mut segments {
         if seg.index >= conga.cells.len() {
@@ -781,6 +827,17 @@ fn sync_segments(
             continue;
         }
         present[seg.index] = true;
+        if let Some(f) = &fall {
+            let (p, d, size, depth) = f(seg.index);
+            tf.translation = cell_to_world(p, 0.05 - depth, grid);
+            if d != Vec2::ZERO {
+                let target = d.x.atan2(d.y);
+                seg.yaw += ((target - seg.yaw + PI).rem_euclid(TAU) - PI) * (1.0 - (-dt * 20.0).exp());
+            }
+            tf.rotation = Quat::from_rotation_y(seg.yaw);
+            tf.scale = Vec3::splat(size);
+            continue;
+        }
         tf.translation = cell_to_world(pos(seg.index), 0.05, grid);
         if let Some(d) = heading(seg.index) {
             let target = (d.x as f32).atan2(d.y as f32);
