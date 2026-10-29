@@ -99,13 +99,14 @@ pub struct LaneGen {
     corridor: i32,
     /// La rivière précédente avait des rondins (le crapaud arrive n'importe où).
     prev_logs: bool,
-    /// Nombre de voies de route d'affilée juste avant la prochaine rangée.
-    route: u32,
+    /// Type de la dernière rangée et nombre de rangées de ce type d'affilée.
+    dernier: LaneKind,
+    serie: u32,
 }
 
 impl LaneGen {
     pub fn new(seed: u64) -> Self {
-        Self { next_row: -8, rng: Rng::new(seed), queue: Vec::new(), prev: LaneKind::Grass, reset: true, corridor: 0, prev_logs: false, route: 0 }
+        Self { next_row: -8, rng: Rng::new(seed), queue: Vec::new(), prev: LaneKind::Grass, reset: true, corridor: 0, prev_logs: false, dernier: LaneKind::Grass, serie: 0 }
     }
 
     /// Repart de zéro (appliqué au prochain passage de `ensure_lanes`).
@@ -119,7 +120,8 @@ impl LaneGen {
 
     fn next_kind(&mut self, row: i32, points: u32) -> LaneKind {
         let kind = self.choisir(row, points);
-        self.route = if kind == LaneKind::Road { self.route + 1 } else { 0 };
+        self.serie = if kind != LaneKind::Grass && kind == self.dernier { self.serie + 1 } else { 1 };
+        self.dernier = kind;
         kind
     }
 
@@ -139,27 +141,33 @@ impl LaneGen {
             self.queue.clear();
             return LaneKind::Road;
         }
-        // Le nombre de voies d'affilée est plafonné (1 au début, jusqu'à 4 au plus) : de l'herbe coupe les autoroutes.
+        // Le nombre de rangées d'un même type (routes, rivières, voies ferrées) d'affilée est un MAXIMUM : 1 jusqu'à la ligne 200,
+        // puis 2, 3, 4 au plus. Chaque série en tire un nombre au hasard entre 1 et ce maximum. Route puis rivière reste permis.
         let plafond = voies_max(row);
-        if self.prev == LaneKind::Road && self.route >= plafond {
-            self.queue.clear();
-            return LaneKind::Grass;
-        }
         if self.queue.is_empty() {
             let d = difficulty(row);
             let r = self.rand();
-            let (kind, max) = if r < 0.30 - 0.1 * d {
+            let (mut kind, mut max) = if r < 0.30 - 0.1 * d {
                 (LaneKind::Grass, 2)
             } else if r < 0.68 {
                 (LaneKind::Road, plafond)
             } else if r < 0.88 {
-                // Pas de rivière avant la ligne 20 ; une seule à la fois avant les troncs.
-                if row < PREMIERS_NENUPHARS { (LaneKind::Grass, 1) } else { (LaneKind::River, if row < PREMIERS_TRONCS { 1 } else { 2 + (d * 2.0) as u32 }) }
+                // Pas de rivière avant la ligne 20.
+                if row < PREMIERS_NENUPHARS { (LaneKind::Grass, 1) } else { (LaneKind::River, plafond) }
             } else if row >= PREMIERE_VOIE_FERREE {
-                (LaneKind::Rail, 1)
+                (LaneKind::Rail, plafond)
             } else {
                 (LaneKind::Grass, 1)
             };
+            if kind != LaneKind::Grass && kind == self.dernier {
+                // La série précédente est du même type : on ne dépasse pas le maximum en les mettant bout à bout.
+                let place = plafond.saturating_sub(self.serie);
+                if place == 0 {
+                    (kind, max) = (LaneKind::Grass, 1);
+                } else {
+                    max = max.min(place);
+                }
+            }
             let n = 1 + self.rng.below(max);
             self.queue.extend(std::iter::repeat_n(kind, n as usize));
         }
@@ -178,12 +186,13 @@ pub const PREMIER_MONDE: i32 = 200;
 /// L'aigle peut arriver à partir de cette ligne (s'il est débloqué).
 pub const PREMIER_AIGLE: i32 = 250;
 
-/// Nombre maximal de voies de route d'affilée : 1 avant la ligne 50, puis 2, 3 et 4 (jamais plus).
+/// Nombre maximal de rangées d'un même type d'affilée (routes, rivières, voies ferrées) : 1 avant la ligne 100,
+/// puis un de plus tous les 100 points, jamais plus de 4.
 pub fn voies_max(row: i32) -> u32 {
     match row {
-        ..50 => 1,
-        50..100 => 2,
-        100..150 => 3,
+        ..100 => 1,
+        100..200 => 2,
+        200..300 => 3,
         _ => 4,
     }
 }
@@ -877,15 +886,34 @@ mod tests {
                 if kind == LaneKind::Rail {
                     assert!(row >= PREMIERE_VOIE_FERREE, "train trop tôt : graine {seed}, ligne {row}");
                 }
-                if kind == LaneKind::Road && prev == LaneKind::Road {
-                    assert!(row >= ROUTE_DEUX_VOIES, "deux voies trop tôt : graine {seed}, ligne {row}");
+                if kind != LaneKind::Grass {
+                    assert!(g.serie <= voies_max(row), "trop de rangées {kind:?} d'affilée : graine {seed}, ligne {row}, {} d'affilée", g.serie);
                 }
-                assert!(g.route <= voies_max(row), "trop de voies d'affilée : graine {seed}, ligne {row}, {} voies", g.route);
-                assert!(g.route <= 4);
+                if row < 100 && kind != LaneKind::Grass {
+                    assert_ne!(kind, prev, "deux {kind:?} d'affilée avant la ligne 100 : graine {seed}, ligne {row}");
+                }
                 prev = kind;
             }
             assert!(vu_route);
         }
+    }
+
+    /// Le plafond est un maximum : les séries sont de longueurs variées et atteignent ce maximum sans le dépasser.
+    #[test]
+    fn les_series_atteignent_le_plafond_sans_le_depasser() {
+        let mut vu = [0u32; 5];
+        for seed in 0..200u64 {
+            let mut g = LaneGen::new(seed);
+            for row in -8..520 {
+                let kind = g.next_kind(row, 0);
+                if kind != LaneKind::Grass {
+                    let tranche = (voies_max(row)) as usize;
+                    vu[tranche] = vu[tranche].max(g.serie);
+                }
+            }
+        }
+        assert_eq!(vu[1], 1);
+        assert_eq!(&vu[2..], &[2, 3, 4]);
     }
 
     #[test]

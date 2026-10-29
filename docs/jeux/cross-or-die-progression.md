@@ -20,7 +20,7 @@ Règle de liaison : un modèle débloqué en cumulatif n'apparaît que sur un ty
 | 13 | **Première route** : une voie, un seul modèle (Pépette), lente. |
 | 20 | **Premiers nénuphars** (rivière facile). |
 | 30 | **Premiers troncs**. |
-| 50 | **Route à deux voies**, avec **deux modèles de camions**. |
+| 50 | Les autres modèles de voitures (selon le cumul) peuvent apparaître. |
 
 À placer (proposé, à confirmer) :
 - Première voie ferrée : à la **100e ligne** (valeur d'Olivier), après la route à deux voies, avec l'annonce « Ce train ne fait pas de livraison ».
@@ -69,3 +69,16 @@ Dans la partie (`lanes.rs`, constantes `PREMIERE_ROUTE`, etc.) : herbe jusqu'à 
 Cumulatif (`progress.rs`, valeurs finales, sans étirement) : nouveauté tous les 250 points : camion 250, lapin 500, taxi 750, moto 1000, **Désert 1250 (premier monde)**, bus 1500, blaireau 1750, **aigle 2000**, cadeaux dorés 2250, pick-up 2500, raton 2750, neige 3000, etc. Les trains ne sont plus bloqués par le cumul (seulement par la ligne 100).
 
 Pas encore fait : pop-ups « Nouveau modèle gagné » et « jamais vu », liste des modèles vus, compteur.
+
+## 8. Plafond de rangées d'un même type d'affilée (29 octobre, valeur d'Olivier)
+
+Un MAXIMUM, pas un nombre fixe : chaque série (routes, rivières, voies ferrées) tire un nombre au hasard entre 1 et le maximum, et deux séries du même type bout à bout ne dépassent pas ce maximum. Route puis rivière (types différents) reste permis.
+
+| Ligne | Maximum d'affilée |
+|---|---|
+| avant 100 | 1 (une seule route, une seule rivière, une seule voie ferrée à la fois) |
+| 100 à 199 | 2 |
+| 200 à 299 | 3 |
+| 300 et plus | 4 (jamais plus) |
+
+Règle simplifiée par Olivier (29 octobre) : un de plus tous les 100 points. Remplace la route à deux voies à 50. Tests : `cargo test -p traversee lanes::tests`.

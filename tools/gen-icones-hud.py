@@ -57,6 +57,15 @@ d.ellipse([p(56, 70), p(72, 86)], fill=BLANC)
 d.rectangle([p(61, 80), p(67, 98)], fill=BLANC)
 sauver(im, "cadenas")
 
+# Distance : une route en perspective avec ses pointillés, un fanion au bout
+im, d = toile()
+d.polygon([p(52, 30), p(76, 30), p(118, 118), p(10, 118)], fill=GRIS)
+for y0, y1, w0, w1 in [(40, 50, 2, 3), (62, 78, 3, 4), (92, 114, 4, 6)]:
+    d.polygon([p(64 - w0, y0), p(64 + w0, y0), p(64 + w1, y1), p(64 - w1, y1)], fill=BLANC)
+d.rectangle([p(62, 4), p(66, 32)], fill=OR_FONCE)
+d.polygon([p(66, 4), p(92, 12), p(66, 20)], fill=(236, 70, 60, 255))
+sauver(im, "distance")
+
 # Flèche (vers le haut) blanche
 im, d = toile()
 d.polygon([p(64, 10), p(112, 62), p(80, 62), p(80, 118), p(48, 118), p(48, 62), p(16, 62)], fill=BLANC)

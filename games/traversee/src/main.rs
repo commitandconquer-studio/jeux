@@ -136,6 +136,8 @@ fn main() {
             )
                 .chain(),
         )
+        // Le modèle gagné apparaît au-dessus du personnage.
+        .add_systems(Update, (kenney::reveler, kenney::animer_reveles))
         .run();
 }
 

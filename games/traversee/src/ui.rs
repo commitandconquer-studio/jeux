@@ -411,6 +411,10 @@ pub fn spawn_game_over(mut commands: Commands, score: Res<Score>, death: Res<Dea
 struct HudScore;
 #[derive(Component)]
 struct HudRecord;
+
+/// La distance parcourue, dans le bandeau de jeu.
+#[derive(Component)]
+struct HudDistance;
 #[derive(Component)]
 struct HudSuivant;
 #[derive(Component)]
@@ -437,7 +441,7 @@ fn hud_icone(commands: &mut Commands, parent: Entity, image: Handle<Image>, cote
 fn setup_hud(mut commands: Commands, server: Res<AssetServer>) {
     let carte = commands
         .spawn((
-            Node { position_type: PositionType::Absolute, top: px(14), left: px(14), width: px(470), flex_direction: FlexDirection::Column, row_gap: px(8), padding: UiRect::axes(px(18), px(12)), border_radius: BorderRadius::all(px(22)), ..default() },
+            Node { position_type: PositionType::Absolute, top: px(14), left: px(14), width: px(590), flex_direction: FlexDirection::Column, row_gap: px(8), padding: UiRect::axes(px(18), px(12)), border_radius: BorderRadius::all(px(22)), ..default() },
             BackgroundColor(CARTE),
             BoxShadow::new(Color::srgba(0.0, 0.0, 0.0, 0.25), px(0), px(4), px(0), px(10)),
             GlobalZIndex(10),
@@ -458,6 +462,10 @@ fn setup_hud(mut commands: Commands, server: Res<AssetServer>) {
     commands.spawn((Node { width: px(2), height: px(44), margin: UiRect::horizontal(px(6)), ..default() }, BackgroundColor(Color::srgb(0.85, 0.83, 0.78)), Pickable::IGNORE, ChildOf(haut)));
     let record = bloc(&mut commands, "branding/hud/trophee.png", tx!("Record", "Best", "Rekord", "Record", "Récord").t());
     commands.entity(record).insert(HudRecord);
+    commands.spawn((Node { width: px(2), height: px(44), margin: UiRect::horizontal(px(6)), ..default() }, BackgroundColor(Color::srgb(0.85, 0.83, 0.78)), Pickable::IGNORE, ChildOf(haut)));
+    // La distance parcourue (les lignes avancées) : à part des points, que les aliments font monter.
+    let distance = bloc(&mut commands, "branding/hud/distance.png", tx!("Distance", "Distance", "Strecke", "Distanza", "Distancia").t());
+    commands.entity(distance).insert(HudDistance);
     // Prochain déblocage
     let ligne = commands.spawn((Node { flex_direction: FlexDirection::Column, row_gap: px(5), ..default() }, Pickable::IGNORE, HudLigneSuivant, ChildOf(carte))).id();
     let titres = commands.spawn((Node { justify_content: JustifyContent::SpaceBetween, align_items: AlignItems::Center, ..default() }, Pickable::IGNORE, ChildOf(ligne))).id();
@@ -495,10 +503,12 @@ fn update_hud(
     progress: Res<Progress>,
     state: Res<State<GameState>>,
     mut hud: Query<&mut Visibility, With<Hud>>,
-    mut scores: Query<&mut Text, (With<HudScore>, Without<HudRecord>, Without<HudSuivant>, Without<HudCompte>)>,
-    mut records: Query<&mut Text, (With<HudRecord>, Without<HudScore>, Without<HudSuivant>, Without<HudCompte>)>,
-    mut suivants: Query<&mut Text, (With<HudSuivant>, Without<HudScore>, Without<HudRecord>, Without<HudCompte>)>,
-    mut comptes: Query<&mut Text, (With<HudCompte>, Without<HudScore>, Without<HudRecord>, Without<HudSuivant>)>,
+    frog: Res<crate::frog::Frog>,
+    mut scores: Query<&mut Text, (With<HudScore>, Without<HudRecord>, Without<HudSuivant>, Without<HudCompte>, Without<HudDistance>)>,
+    mut records: Query<&mut Text, (With<HudRecord>, Without<HudScore>, Without<HudSuivant>, Without<HudCompte>, Without<HudDistance>)>,
+    mut suivants: Query<&mut Text, (With<HudSuivant>, Without<HudScore>, Without<HudRecord>, Without<HudCompte>, Without<HudDistance>)>,
+    mut comptes: Query<&mut Text, (With<HudCompte>, Without<HudScore>, Without<HudRecord>, Without<HudSuivant>, Without<HudDistance>)>,
+    mut distances: Query<&mut Text, (With<HudDistance>, Without<HudScore>, Without<HudRecord>, Without<HudSuivant>, Without<HudCompte>)>,
     mut barres: Query<&mut Node, With<HudBarre>>,
     mut lignes: Query<&mut Node, (With<HudLigneSuivant>, Without<HudBarre>)>,
 ) {
@@ -514,6 +524,9 @@ fn update_hud(
     }
     for mut t in &mut records {
         t.0 = score.best.to_string();
+    }
+    for mut t in &mut distances {
+        t.0 = frog.max_row_i().max(0).to_string();
     }
     let cumul = progress.total + score.current;
     let suite = crate::progress::UNLOCKS.iter().filter(|(t, _)| cumul < *t).min_by_key(|(t, _)| *t).copied();

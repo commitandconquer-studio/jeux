@@ -687,6 +687,106 @@ pub fn cadeau(c: &mut Commands, k: &crate::models::Kit, x: &crate::extra::Extra,
     }
 }
 
+/// Le modèle qu'on vient de gagner : il apparaît au-dessus du personnage, tourne, brille, puis s'en va.
+#[derive(Component)]
+pub struct Revele {
+    age: f32,
+}
+
+const REVELE_DUREE: f32 = 3.4;
+
+/// À chaque déblocage (véhicule, personnage, nourriture), montre le modèle gagné au-dessus du personnage.
+#[allow(clippy::too_many_arguments)]
+pub fn reveler(
+    mut commands: Commands,
+    mut lecteur: MessageReader<crate::fx::Fx>,
+    server: Res<AssetServer>,
+    eclairage: Res<Eclairage>,
+    kit: Res<crate::models::Kit>,
+    extra: Res<crate::extra::Extra>,
+    mut graphs: ResMut<Assets<AnimationGraph>>,
+    deja: Query<&Revele>,
+) {
+    use crate::progress::Item;
+    let mut file = deja.iter().count();
+    for fx in lecteur.read() {
+        let crate::fx::Fx::Unlock(item) = *fx else { continue };
+        let racine = commands.spawn((Transform::from_scale(Vec3::ZERO), Visibility::Hidden, Revele { age: -(file as f32) * 1.1 })).id();
+        let mut brille = false;
+        match item {
+            Item::Vehicle(v) => {
+                if !car(&mut commands, &server, Some(&eclairage), racine, v, 0) {
+                    commands.entity(racine).despawn();
+                    continue;
+                }
+            }
+            Item::Character(ch) => humain(&mut commands, &server, &mut graphs, racine, ch.index()),
+            Item::Flies | Item::GoldFlies => {
+                let scene = server.load(GltfAssetLabel::Scene(0).from_asset("kenney/food-kit/burger.glb"));
+                let (_, centre, taille) = TAILLES.iter().find(|t| t.0 == "burger").copied().unwrap_or(("burger", [0.0; 3], 1.0));
+                let echelle = 1.3 / taille;
+                let mut m = commands.spawn((WorldAssetRoot(scene), Transform::from_translation(-Vec3::from(centre) * echelle).with_scale(Vec3::splat(echelle)), Brille(0.5), ChildOf(racine)));
+                if item == Item::GoldFlies {
+                    m.insert(Dore);
+                }
+                brille = true;
+            }
+            Item::World(_) | Item::Eagle => {
+                commands.entity(racine).despawn();
+                continue;
+            }
+        }
+        let _ = brille;
+        // La lumière change de couleur et des étincelles tournent autour, comme les bonus.
+        commands.spawn((PointLight { color: Color::WHITE, intensity: 220_000.0, range: 7.0, shadow_maps_enabled: false, ..default() }, Transform::from_xyz(0.0, 0.8, 0.0), LueurCadeau { phase: file as f32, base: 220_000.0, dore: false }, ChildOf(racine)));
+        for i in 0..8 {
+            let a = i as f32 * 0.785;
+            commands.spawn((
+                Mesh3d(kit.ball.clone()),
+                MeshMaterial3d(extra.arcs[i % extra.arcs.len()].1.clone()),
+                Transform::from_xyz(a.cos() * 1.3, 0.0, a.sin() * 1.3).with_scale(Vec3::splat(0.12)),
+                Etincelle { phase: a, rayon: 1.3 + 0.2 * (i % 2) as f32 },
+                ChildOf(racine),
+            ));
+        }
+        file += 1;
+    }
+}
+
+/// Le modèle gagné est épinglé à l'écran, à droite du pop-up (il ne gêne pas la vue du personnage) :
+/// il grossit d'un coup, tourne, puis rapetisse.
+pub fn animer_reveles(
+    mut commands: Commands,
+    time: Res<Time<Real>>,
+    camera: Query<(&Camera, &GlobalTransform), With<Camera3d>>,
+    fenetre: Query<&Window, With<bevy::window::PrimaryWindow>>,
+    mut q: Query<(Entity, &mut Revele, &mut Transform, &mut Visibility)>,
+) {
+    let (Ok((cam, cam_tf)), Ok(w)) = (camera.single(), fenetre.single()) else { return };
+    for (e, mut r, mut tf, mut vis) in &mut q {
+        r.age += time.delta_secs();
+        if r.age < 0.0 {
+            continue;
+        }
+        if r.age > REVELE_DUREE {
+            commands.entity(e).despawn();
+            continue;
+        }
+        *vis = Visibility::Inherited;
+        let entree = (r.age / 0.45).min(1.0);
+        // Rebond à l'arrivée : dépasse un peu sa taille puis se pose.
+        let pop = 1.0 + 2.7 * (entree - 1.0).powi(3) + 1.7 * (entree - 1.0).powi(2);
+        let sortie = ((REVELE_DUREE - r.age) / 0.4).clamp(0.0, 1.0);
+        tf.scale = Vec3::splat(pop.max(0.0) * sortie * 1.25);
+        // Le pop-up est centré, large de 500 : on se place juste à sa droite, à mi-hauteur.
+        let ecran = Vec2::new(w.width() / 2.0 + 250.0 + 80.0, 184.0 + 42.0);
+        if let Ok(rayon) = cam.viewport_to_world(cam_tf, ecran) {
+            tf.translation = rayon.origin + *rayon.direction * 6.0 + Vec3::Y * 0.1 * (r.age * 3.0).sin();
+        }
+        tf.rotation = Quat::from_rotation_y(r.age * 1.4);
+    }
+}
+
 /// Fait gonfler et dégonfler les bonus, en rebond (ressort).
 #[derive(Component)]
 pub struct Ressort {
