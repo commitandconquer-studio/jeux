@@ -49,7 +49,7 @@ captures = [
 Every successful delivery is worth **25 points**, on top of the point for each step forward. And to get there, you have to cross.
 
 ## A world that gets more dangerous
-A run **builds up gently**. Grass up to row 12, then the **first road** (one lane) at 13, **lily pads** at 20, **logs** at 30, **trains**, which warn you before they pass, at 100, then the first **change of world**. The number of lanes of the same kind in a row (roads, rivers, railways) never exceeds a maximum that grows with distance: 1 at first, then up to 2, 3 and 4. **Parcels** only show up from row 25.
+A run **builds up gently**. Grass up to row 12, then the **first road** (one lane) at 13, **lily pads** at 20, **logs** at 30, **trains**, which warn you before they pass, at 100. The **world** changes every 400 cumulative rows among the ones you have won. The number of lanes of the same kind in a row (roads, rivers, railways) never exceeds a maximum that grows with distance: 1 at first, then up to 2, 3 and 4. **Parcels** only show up from row 25.
 
 As your **points add up from game to game**, the game grows: trucks, taxis, motorbikes, then an **eagle** sweeping a whole column. Everything unlocks: enemies, worlds, characters.
 

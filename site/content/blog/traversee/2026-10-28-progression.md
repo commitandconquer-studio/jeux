@@ -16,7 +16,6 @@ Dans une série, les nouveautés apparaissent selon la **ligne** où vous êtes 
 - **Ligne 20** : les premiers **nénuphars** sur la rivière.
 - **Ligne 30** : les premiers **troncs**.
 - **Ligne 100** : la première **voie ferrée**.
-- **Ligne 200** : le premier changement de monde.
 
 Le nombre de rangées du même type d'affilée est plafonné, et ce plafond évolue (voir l'article suivant).
 
@@ -33,4 +32,4 @@ Les cadeaux ramassés pour gagner des points faisaient doublon avec les colis. P
 Les modèles viennent du *Food Kit* de Kenney (licence CC0).
 
 ## Les nouveautés s'annoncent
-Quand vous débloquez quelque chose, un pop-up sous le compteur annonce **« Nouveau modèle gagné ! »** (véhicule), **« Nouveau monde gagné ! »** ou **« Nouveau personnage gagné ! »**, et la barre *Prochain déblocage* repart de zéro. L'**aigle** se débloque à 2 000 points cumulés, puis peut apparaître à partir de la ligne 250.
+Quand vous débloquez quelque chose, un pop-up sous le compteur annonce **« Nouveau modèle gagné ! »** (véhicule), **« Nouveau monde gagné ! »** ou **« Nouveau personnage gagné ! »**, et la barre *Prochain déblocage* repart de zéro. L'**aigle** se débloque à 2 500 points cumulés, puis peut apparaître à partir de la ligne 250.
