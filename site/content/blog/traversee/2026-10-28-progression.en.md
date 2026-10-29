@@ -15,11 +15,10 @@ In a run, new things appear depending on the **row** you have reached:
 - **Row 13**: the **first road**, a single lane, always followed by grass.
 - **Row 20**: the first **lily pads** on the river.
 - **Row 30**: the first **logs**.
-- **Row 50**: the **two-lane road**, then three lanes at row 100 and four at row 150.
 - **Row 100**: the first **railway**.
 - **Row 200**: the first change of world.
 
-The number of road lanes in a row is capped: grass always breaks up the highways.
+The number of lanes of the same kind in a row is capped, and the cap changes (see the next article).
 
 ## Parcels come later
 **Parcels** no longer show up in the very first rows: you have to learn to cross first. They appear **from row 25**, and an **arrow** now floats above the recipient so you can spot them from afar.

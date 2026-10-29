@@ -15,11 +15,10 @@ Dans une série, les nouveautés apparaissent selon la **ligne** où vous êtes 
 - **Ligne 13** : la **première route**, une seule voie, toujours suivie d'herbe.
 - **Ligne 20** : les premiers **nénuphars** sur la rivière.
 - **Ligne 30** : les premiers **troncs**.
-- **Ligne 50** : la **route à deux voies**, puis trois voies à la ligne 100 et quatre à la ligne 150.
 - **Ligne 100** : la première **voie ferrée**.
 - **Ligne 200** : le premier changement de monde.
 
-Le nombre de voies de route d'affilée est plafonné : de l'herbe vient toujours couper les autoroutes.
+Le nombre de rangées du même type d'affilée est plafonné, et ce plafond évolue (voir l'article suivant).
 
 ## Des colis plus tard
 Les **colis** n'arrivent plus dès les premières rangées : il faut d'abord apprendre à traverser. Ils apparaissent **à partir de la ligne 25**, et une **flèche** flotte maintenant au-dessus du destinataire pour le repérer de loin.
