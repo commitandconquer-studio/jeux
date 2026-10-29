@@ -256,10 +256,10 @@ pub fn update_frog(
                 sfx.write(Sfx::Chime);
             }
             // Un nouveau monde commence : on le dit à l'écran.
-            if to_row > 0 && crate::extra::Biome::segment(to_row) != crate::extra::Biome::segment(to_row - 1) {
+            if to_row > 0 {
                 let points = progress.total + frog.max_row as u32 + frog.bonus;
                 let world = crate::extra::Biome::of(to_row, points);
-                if world != crate::extra::Biome::Prairie {
+                if world != crate::extra::Biome::of(to_row - 1, points) {
                     sfx.write(Sfx::Start);
                     fx.write(Fx::World(world));
                 }

@@ -496,6 +496,8 @@ pub fn animate_flies(time: Res<Time>, mut flies: Query<(&Fly, &mut Transform, Ha
 // ---- Décors par monde ------------------------------------------------------
 
 /// Les mondes se suivent tous les 60 rangs : prairie, désert, neige, automne.
+/// Les anciens mondes (désert, automne, jurassique…) restent décrits en attendant d'être refaits : ils ne sont pas dans `Biome::ALL`.
+#[allow(dead_code)]
 #[derive(Clone, Copy, PartialEq, Eq, Debug)]
 pub enum Biome {
     Prairie,
@@ -520,7 +522,10 @@ pub enum Biome {
     Pirate,
 }
 
-pub const BIOME_LEN: i32 = 60;
+/// Lignes parcourues par toutes les parties précédentes (la partie en cours s'y ajoute).
+pub static DISTANCE_AVANT: std::sync::atomic::AtomicU32 = std::sync::atomic::AtomicU32::new(0);
+/// Graine de la partie en cours (idem).
+pub static RUN_SEED: std::sync::atomic::AtomicU64 = std::sync::atomic::AtomicU64::new(1);
 
 /// Cercueils et citrouilles flottantes d'Halloween.
 pub const HALLOWEEN_COLORS: [[u8; 3]; 4] = [[84, 52, 34], [230, 190, 60], [255, 128, 30], [60, 120, 50]];
@@ -629,38 +634,37 @@ impl Biome {
 }
 
 impl Biome {
-    /// Le numéro de la tranche du parcours : 0 jusqu'à la ligne 200, puis un de plus tous les `BIOME_LEN`.
-    pub fn segment(row: i32) -> i32 {
-        let premier = crate::lanes::PREMIER_MONDE;
-        if row < premier { 0 } else { 1 + (row - premier) / BIOME_LEN }
+    /// Le monde de ce rang. La distance compte en cumul (toutes les parties) : on change de monde tous les
+    /// `LONGUEUR_MONDE` lignes cumulées, parmi ceux gagnés ; une partie commence donc là où les précédentes se sont arrêtées.
+    pub fn of(row: i32, points: u32) -> Self {
+        // TRAVERSEE_BIOME=1..3 : commencer dans ce monde (essais et captures, avec TRAVERSEE_POINTS pour le débloquer).
+        static ENV: std::sync::OnceLock<usize> = std::sync::OnceLock::new();
+        let depart = *ENV.get_or_init(|| std::env::var("TRAVERSEE_BIOME").ok().and_then(|s| s.parse().ok()).unwrap_or(0)) + START_WORLD.load(std::sync::atomic::Ordering::Relaxed) as usize;
+        let avant = DISTANCE_AVANT.load(std::sync::atomic::Ordering::Relaxed);
+        Biome::monde(avant + row.max(0) as u32, points, RUN_SEED.load(std::sync::atomic::Ordering::Relaxed), depart)
     }
 
-    /// Le monde de ce rang ; un monde pas encore débloqué reste de la prairie.
-    pub fn of(row: i32, points: u32) -> Self {
-        // TRAVERSEE_BIOME=1..3 : voir un monde tout de suite (essais et captures).
-        static ENV: std::sync::OnceLock<i32> = std::sync::OnceLock::new();
-        let start = *ENV.get_or_init(|| std::env::var("TRAVERSEE_BIOME").ok().and_then(|s| s.parse().ok()).unwrap_or(0)) + START_WORLD.load(std::sync::atomic::Ordering::Relaxed);
-        let biome = match (Biome::segment(row) + start) % 12 {
-            0 => Biome::Prairie,
-            1 => Biome::Desert,
-            2 => Biome::Snow,
-            3 => Biome::Autumn,
-            4 => Biome::Jurassic,
-            5 => Biome::Nippon,
-            6 => Biome::Space,
-            7 => Biome::FarWest,
-            8 => Biome::Halloween,
-            9 => Biome::Cyber,
-            10 => Biome::Medieval,
-            _ => Biome::Pirate,
-        };
-        let _ = biome;
-        let biome = Biome::ALL[((Biome::segment(row) + start) as usize) % Biome::ALL.len()];
-        if biome != Biome::Prairie && !crate::progress::unlocked(points, crate::progress::Item::World(biome)) {
-            Biome::Prairie
-        } else {
-            biome
+    /// Le monde à une distance cumulée donnée : avec deux mondes gagnés on alterne, avec plus on tire au hasard
+    /// un autre que le précédent (tirage fixé par la graine). `depart` : le monde de la première tranche.
+    pub fn monde(distance: u32, points: u32, graine: u64, depart: usize) -> Self {
+        let gagnes: Vec<Biome> = Biome::ALL.iter().copied().filter(|b| *b == Biome::Prairie || crate::progress::unlocked(points, crate::progress::Item::World(*b))).collect();
+        let mut actuel = Biome::ALL[depart % Biome::ALL.len()];
+        if !gagnes.contains(&actuel) {
+            actuel = Biome::Prairie;
         }
+        for tranche in 1..=(distance / crate::lanes::LONGUEUR_MONDE as u32) {
+            let autres: Vec<Biome> = gagnes.iter().copied().filter(|b| *b != actuel).collect();
+            actuel = match autres.len() {
+                0 => actuel,
+                1 => autres[0],
+                n => {
+                    // Un mélange simple de la graine et du numéro de tranche.
+                    let h = (graine ^ (tranche as u64).wrapping_mul(0x9E37_79B9_7F4A_7C15)).wrapping_mul(0xBF58_476D_1CE4_E5B9);
+                    autres[((h >> 33) as usize) % n]
+                }
+            };
+        }
+        actuel
     }
 
     pub fn name(self) -> &'static str {

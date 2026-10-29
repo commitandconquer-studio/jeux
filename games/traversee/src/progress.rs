@@ -30,45 +30,43 @@ pub fn rescale(t: u32) -> u32 {
     (t * 1.5 + t * t / 1500.0).round() as u32
 }
 
-/// Points cumulés nécessaires, dans l'ordre d'arrivée : une nouveauté tous les 250 points, et les grosses
-/// (premier monde, aigle) aux paliers de 1 000 à 2 000. Valeurs finales, sans étirement.
+/// Points cumulés nécessaires, dans l'ordre d'arrivée : une nouveauté tous les 250 points, un nouveau monde
+/// tous les 1 000 (les six mondes refaits en Kenney). Valeurs finales, sans étirement.
 const BASE_UNLOCKS: &[(u32, Item)] = &[
     (20, Item::Flies),
     (250, Item::Vehicle(Vehicle::Truck)),
     (500, Item::Character(Character::Rabbit)),
     (750, Item::Vehicle(Vehicle::Taxi)),
-    (1000, Item::Vehicle(Vehicle::Moto)),
-    (1250, Item::World(Biome::Desert)),
+    (1000, Item::World(Biome::Pirate)),
+    (1250, Item::Vehicle(Vehicle::Moto)),
     (1500, Item::Vehicle(Vehicle::Bus)),
     (1750, Item::Character(Character::Badger)),
-    (2000, Item::Eagle),
+    (2000, Item::World(Biome::FarWest)),
     (2250, Item::GoldFlies),
-    (2500, Item::Vehicle(Vehicle::Pickup)),
-    (2750, Item::Character(Character::Raccoon)),
-    (3000, Item::World(Biome::Snow)),
-    (3250, Item::Character(Character::Noe)),
-    (3500, Item::Vehicle(Vehicle::Sport)),
-    (3750, Item::Character(Character::Ines)),
-    (4000, Item::Vehicle(Vehicle::Police)),
-    (4250, Item::Character(Character::Hedgehog)),
-    (4500, Item::World(Biome::Autumn)),
-    (4750, Item::Vehicle(Vehicle::Tractor)),
-    (5000, Item::Character(Character::Sacha)),
-    (5250, Item::Character(Character::Fox)),
-    (5500, Item::Character(Character::Panda)),
-    (5750, Item::Character(Character::Maya)),
-    (6000, Item::Character(Character::Duck)),
-    (6250, Item::Vehicle(Vehicle::Sheriff)),
+    (2500, Item::Eagle),
+    (2750, Item::Vehicle(Vehicle::Pickup)),
+    (3000, Item::World(Biome::Medieval)),
+    (3250, Item::Character(Character::Raccoon)),
+    (3500, Item::Character(Character::Noe)),
+    (3750, Item::Vehicle(Vehicle::Sport)),
+    (4000, Item::World(Biome::Halloween)),
+    (4250, Item::Character(Character::Ines)),
+    (4500, Item::Vehicle(Vehicle::Police)),
+    (4750, Item::Character(Character::Hedgehog)),
+    (5000, Item::World(Biome::Space)),
+    (5250, Item::Vehicle(Vehicle::Tractor)),
+    (5500, Item::Character(Character::Sacha)),
+    (5750, Item::Character(Character::Fox)),
+    (6000, Item::World(Biome::Cyber)),
+    (6250, Item::Character(Character::Panda)),
+    (6500, Item::Character(Character::Maya)),
+    (6750, Item::Character(Character::Duck)),
+    (7000, Item::Vehicle(Vehicle::Sheriff)),
 ];
 
 /// Tous les déblocages, par ordre de points : ceux ci-dessus et les véhicules décrits en pièces.
 pub static UNLOCKS: LazyLock<Vec<(u32, Item)>> = LazyLock::new(|| {
     let mut all: Vec<(u32, Item)> = BASE_UNLOCKS.to_vec();
-    for b in Biome::ALL {
-        if let Some(t) = b.theme() {
-            all.push((rescale(t.points), Item::World(b)));
-        }
-    }
     all.sort_by_key(|(t, _)| *t);
     all
 });
@@ -123,6 +121,8 @@ pub struct Progress {
     pub new_record: bool,
     /// Points atteints en cours de partie : ce qui vient d'être gagné est déjà utilisable.
     pub live: u32,
+    /// Lignes parcourues par toutes les parties terminées (le monde change tous les 400 lignes cumulées).
+    pub distance: u32,
 }
 
 impl Default for Progress {
@@ -131,7 +131,11 @@ impl Default for Progress {
         let forced = std::env::var("TRAVERSEE_POINTS").ok().and_then(|s| s.parse().ok());
         let total = forced.or_else(|| game_common::save::load(SAVE, "total").and_then(|s| s.parse().ok())).unwrap_or(0);
         let best_before = game_common::save::load(SAVE, "best").and_then(|s| s.parse().ok()).unwrap_or(0);
-        Self { total, fresh: Vec::new(), best_before, new_record: false, live: 0 }
+        // TRAVERSEE_DISTANCE=390 : commencer comme si on avait déjà parcouru ces lignes (essais des changements de monde).
+        let forced = std::env::var("TRAVERSEE_DISTANCE").ok().and_then(|s| s.parse().ok());
+        let distance = forced.or_else(|| game_common::save::load(SAVE, "distance").and_then(|s| s.parse().ok())).unwrap_or(0);
+        crate::extra::DISTANCE_AVANT.store(distance, std::sync::atomic::Ordering::Relaxed);
+        Self { total, fresh: Vec::new(), best_before, new_record: false, live: 0, distance }
     }
 }
 
@@ -184,11 +188,13 @@ fn load_best(mut score: ResMut<Score>) {
 }
 
 /// Fin de partie : les points s'ajoutent au total ; ce qui passe un seuil se débloque.
-fn commit(mut progress: ResMut<Progress>, score: Res<Score>) {
+fn commit(mut progress: ResMut<Progress>, score: Res<Score>, frog: Res<crate::frog::Frog>) {
     let before = progress.total;
     progress.new_record = score.current > progress.best_before && score.current > 0;
     progress.best_before = progress.best_before.max(score.current);
     progress.total += score.current;
+    progress.distance += frog.max_row_i().max(0) as u32;
+    crate::extra::DISTANCE_AVANT.store(progress.distance, std::sync::atomic::Ordering::Relaxed);
     let after = progress.total;
     progress.fresh = UNLOCKS.iter().filter(|(t, _)| before < *t && *t <= after).map(|(_, i)| *i).collect();
     // Les modes d'essai (captures, mesures, points forcés) ne touchent pas la sauvegarde.
@@ -197,6 +203,7 @@ fn commit(mut progress: ResMut<Progress>, score: Res<Score>) {
     }
     game_common::save::store(SAVE, "total", &after.to_string());
     game_common::save::store(SAVE, "best", &score.best.to_string());
+    game_common::save::store(SAVE, "distance", &progress.distance.to_string());
 }
 
 /// Pendant la partie : dès qu'un seuil est franchi, on l'annonce à l'écran.
@@ -254,6 +261,21 @@ impl Item {
             Item::Flies | Item::GoldFlies | Item::Eagle => Color::srgb(0.2, 0.7, 0.7),
         }
     }
+}
+
+/// Version du barème de progression. Quand les seuils changent, on repart de zéro une fois (tous les joueurs) :
+/// les anciens totaux ne voudraient plus rien dire.
+const VERSION_PROGRESSION: &str = "2";
+
+/// À appeler tout au début du programme : si la sauvegarde date d'un ancien barème, la progression est remise à zéro.
+pub fn migrer_sauvegarde() {
+    if test_mode() || game_common::save::load(SAVE, "version").as_deref() == Some(VERSION_PROGRESSION) {
+        return;
+    }
+    for (cle, valeur) in [("total", "0"), ("best", "0"), ("distance", "0"), ("stats", "0 0"), ("perso", "0"), ("costume", "0")] {
+        game_common::save::store(SAVE, cle, valeur);
+    }
+    game_common::save::store(SAVE, "version", VERSION_PROGRESSION);
 }
 
 fn test_mode() -> bool {

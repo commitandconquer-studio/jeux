@@ -66,6 +66,8 @@ fn style_pour_test(mut r: ResMut<game_common::audio::Reglages>) {
 }
 
 fn main() {
+    // Nouveau barème de progression : une seule fois, la progression des joueurs repart de zéro.
+    progress::migrer_sauvegarde();
     let mut app = App::new();
     app.add_plugins(
         DefaultPlugins
@@ -174,13 +176,14 @@ fn reset_if_needed(
     mut death: ResMut<Death>,
     mut cam: ResMut<CamZ>,
     mut score: ResMut<Score>,
+    progress: Res<progress::Progress>,
 ) {
     if !needs.0 {
         return;
     }
     needs.0 = false;
-    info!("nouvelle partie : le monde de départ est {:?}", extra::Biome::of(0, u32::MAX));
     generator.request_reset(rng.next_u64());
+    info!("nouvelle partie : le monde de départ est {:?} ({} lignes déjà parcourues)", extra::Biome::of(0, progress.points()), progress.distance);
     *frog = Frog::default();
     *death = Death::default();
     cam.0 = 0.0;

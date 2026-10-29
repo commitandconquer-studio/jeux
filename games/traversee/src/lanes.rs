@@ -102,16 +102,26 @@ pub struct LaneGen {
     /// Type de la dernière rangée et nombre de rangées de ce type d'affilée.
     dernier: LaneKind,
     serie: u32,
+    /// Longueur de la série en cours (tirée quand elle commence) et vitesse de base partagée par toutes ses voies.
+    serie_n: u32,
+    serie_hasard: f32,
 }
 
 impl LaneGen {
     pub fn new(seed: u64) -> Self {
-        Self { next_row: -8, rng: Rng::new(seed), queue: Vec::new(), prev: LaneKind::Grass, reset: true, corridor: 0, prev_logs: false, dernier: LaneKind::Grass, serie: 0 }
+        Self { next_row: -8, rng: Rng::new(seed), queue: Vec::new(), prev: LaneKind::Grass, reset: true, corridor: 0, prev_logs: false, dernier: LaneKind::Grass, serie: 0, serie_n: 1, serie_hasard: 0.5 }
     }
 
     /// Repart de zéro (appliqué au prochain passage de `ensure_lanes`).
     pub fn request_reset(&mut self, seed: u64) {
+        // Les mondes successifs de la partie dépendent de cette graine.
+        crate::extra::RUN_SEED.store(seed, std::sync::atomic::Ordering::Relaxed);
         *self = Self::new(seed);
+    }
+
+    /// Combien d'obstacles du même type s'enchaînent autour de cette voie : plus il y en a, plus on y va doucement.
+    fn charge(&self) -> u32 {
+        self.serie_n.max(self.serie).max(1)
     }
 
     fn rand(&mut self) -> f32 {
@@ -139,6 +149,8 @@ impl LaneGen {
         }
         if row == PREMIERE_ROUTE {
             self.queue.clear();
+            self.serie_n = 1;
+            self.serie_hasard = self.rand();
             return LaneKind::Road;
         }
         // Le nombre de rangées d'un même type (routes, rivières, voies ferrées) d'affilée est un MAXIMUM : 1 jusqu'à la ligne 200,
@@ -169,6 +181,8 @@ impl LaneGen {
                 }
             }
             let n = 1 + self.rng.below(max);
+            self.serie_n = n;
+            self.serie_hasard = self.rand();
             self.queue.extend(std::iter::repeat_n(kind, n as usize));
         }
         self.queue.pop().unwrap()
@@ -181,8 +195,8 @@ pub const PREMIERS_NENUPHARS: i32 = 20;
 pub const PREMIERS_TRONCS: i32 = 30;
 pub const ROUTE_DEUX_VOIES: i32 = 50;
 pub const PREMIERE_VOIE_FERREE: i32 = 100;
-/// Premier changement de monde (si autorisé par les points cumulés), puis un monde tous les `BIOME_LEN`.
-pub const PREMIER_MONDE: i32 = 200;
+/// Tous les 400 lignes, on change de monde parmi ceux qu'on a gagnés (on alterne s'il y en a deux, au hasard s'il y en a plus).
+pub const LONGUEUR_MONDE: i32 = 400;
 /// L'aigle peut arriver à partir de cette ligne (s'il est débloqué).
 pub const PREMIER_AIGLE: i32 = 250;
 
@@ -194,6 +208,32 @@ pub fn voies_max(row: i32) -> u32 {
         100..200 => 2,
         200..300 => 3,
         _ => 4,
+    }
+}
+
+/// Montée lente de la vitesse et de la densité : de 0 (début) à 1 (à la ligne 300).
+fn montee(row: i32) -> f32 {
+    (row as f32 / 300.0).clamp(0.0, 1.0)
+}
+
+/// Plus une série enchaîne d'obstacles, plus les voitures y roulent doucement : une seule voie peut être rapide,
+/// quatre d'affilée restent faisables (règle d'Olivier : nombre d'obstacles d'affilée, densité et vitesse vont ensemble).
+fn facteur_vitesse(charge: u32) -> f32 {
+    match charge {
+        0 | 1 => 1.0,
+        2 => 0.85,
+        3 => 0.72,
+        _ => 0.62,
+    }
+}
+
+/// … et plus elles sont espacées.
+fn facteur_ecart(charge: u32) -> f32 {
+    match charge {
+        0 | 1 => 1.0,
+        2 => 1.25,
+        3 => 1.5,
+        _ => 1.8,
     }
 }
 
@@ -507,9 +547,11 @@ fn spawn_lane(c: &mut Commands, kit: &Kit, x: &Extra, server: &AssetServer, grap
                     x += 1.6;
                 }
             }
-            let d = difficulty(row);
+            let d = montee(row);
+            let charge = g.charge();
             let dir = if g.rng.below(2) == 0 { 1.0 } else { -1.0 };
-            let speed = (1.8 + g.rand() * 1.6 + d * 3.0) * dir;
+            // Vitesse de base commune à la série (les voies voisines se ressemblent), petite variation par voie.
+            let speed = (2.0 + g.serie_hasard + d * 3.0) * facteur_vitesse(charge) * (0.93 + 0.14 * g.rand()) * dir;
             let mut x_pos = -WRAP + g.rand() * 3.0;
             loop {
                 let mut vehicle = pick_vehicle(g.rng.below(1000), points);
@@ -574,7 +616,7 @@ fn spawn_lane(c: &mut Commands, kit: &Kit, x: &Extra, server: &AssetServer, grap
                     Vehicle::Truck => spawn_truck(c, kit, mover, color),
                     v => spawn_vehicle(c, kit, x, mover, v, color),
                 }
-                x_pos += len + 2.6 + g.rand() * (5.5 - 2.0 * d);
+                x_pos += len + (2.4 + g.rand() * (5.2 - 2.4 * d)) * facteur_ecart(charge);
             }
         }
         LaneKind::River => {
@@ -637,9 +679,10 @@ fn spawn_lane(c: &mut Commands, kit: &Kit, x: &Extra, server: &AssetServer, grap
                 }
             } else {
                 g.prev_logs = true;
-                let d = difficulty(row);
+                let d = montee(row);
+                let charge = g.charge();
                 let dir = if g.rng.below(2) == 0 { 1.0 } else { -1.0 };
-                let speed = (1.0 + g.rand() * 1.2 + d * 1.5) * dir;
+                let speed = (1.0 + g.serie_hasard * 0.8 + d * 1.5) * facteur_vitesse(charge) * (0.93 + 0.14 * g.rand()) * dir;
                 let mut x_pos = -WRAP + g.rand() * 2.0;
                 loop {
                     let len = [2.0, 3.0, 4.0][g.rng.below(3) as usize];
@@ -666,7 +709,7 @@ fn spawn_lane(c: &mut Commands, kit: &Kit, x: &Extra, server: &AssetServer, grap
                     } else {
                         log(c, kit, server, mover, len);
                     }
-                    x_pos += len + 1.2 + g.rand() * (2.6 - d);
+                    x_pos += len + (1.2 + g.rand() * (2.6 - d)) * facteur_ecart(charge);
                 }
             }
         }
@@ -916,11 +959,36 @@ mod tests {
         assert_eq!(&vu[2..], &[2, 3, 4]);
     }
 
+    /// Plus on enchaîne d'obstacles, plus on va doucement et plus c'est espacé.
     #[test]
-    fn les_mondes_changent_a_200() {
-        assert_eq!(Biome::segment(0), 0);
-        assert_eq!(Biome::segment(199), 0);
-        assert_eq!(Biome::segment(200), 1);
-        assert_eq!(Biome::segment(200 + crate::extra::BIOME_LEN), 2);
+    fn la_difficulte_se_repartit_entre_vitesse_densite_et_enchainement() {
+        for c in 1..4 {
+            assert!(facteur_vitesse(c + 1) < facteur_vitesse(c));
+            assert!(facteur_ecart(c + 1) > facteur_ecart(c));
+        }
+        assert!(montee(150) < difficulty(150));
+    }
+
+    /// Les mondes : tous les 400 lignes cumulées, ceux qu'on a gagnés alternent ; jamais le même deux fois de suite ; sans cumul, la prairie.
+    #[test]
+    fn les_mondes_alternent_tous_les_400_cumules() {
+        use crate::extra::Biome;
+        // Rien de gagné : la prairie partout.
+        assert_eq!(Biome::monde(0, 0, 1, 0), Biome::Prairie);
+        assert_eq!(Biome::monde(900, 0, 1, 0), Biome::Prairie);
+        // Un monde gagné (1000 points) : prairie puis pirates, en alternance.
+        assert_eq!(Biome::monde(399, 1000, 1, 0), Biome::Prairie);
+        assert_eq!(Biome::monde(400, 1000, 1, 0), Biome::Pirate);
+        assert_eq!(Biome::monde(799, 1000, 1, 0), Biome::Pirate);
+        assert_eq!(Biome::monde(800, 1000, 1, 0), Biome::Prairie);
+        // Plusieurs mondes : un autre à chaque tranche, jamais deux fois le même d'affilée.
+        for graine in 0..50u64 {
+            let mut avant = Biome::monde(0, 6000, graine, 0);
+            for tranche in 1..30u32 {
+                let b = Biome::monde(tranche * LONGUEUR_MONDE as u32, 6000, graine, 0);
+                assert_ne!(b, avant, "graine {graine}, tranche {tranche}");
+                avant = b;
+            }
+        }
     }
 }

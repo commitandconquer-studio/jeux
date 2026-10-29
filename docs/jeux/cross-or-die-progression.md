@@ -82,3 +82,11 @@ Un MAXIMUM, pas un nombre fixe : chaque série (routes, rivières, voies ferrée
 | 300 et plus | 4 (jamais plus) |
 
 Règle simplifiée par Olivier (29 octobre) : un de plus tous les 100 points. Remplace la route à deux voies à 50. Tests : `cargo test -p traversee lanes::tests`.
+
+## 9. Mondes (29 octobre)
+
+- Un nouveau monde se débloque tous les 1000 points cumulés : pirates 1000, Far West 2000, Moyen Âge 3000, Halloween 4000, Espace 5000, Cyber 6000 (seuls les six mondes refaits en Kenney existent ; désert, neige, automne, Nippon et jurassique ne sont pas dans `Biome::ALL`). Aigle à 2500.
+- Le monde change tous les 400 lignes **cumulées** (toutes parties) : avec deux mondes gagnés on alterne, avec plus on tire au hasard un autre que le précédent (`Biome::monde`, tirage fixé par la graine de la partie). Une partie commence là où les précédentes se sont arrêtées. Essais : `TRAVERSEE_DISTANCE=390`.
+- Vitesse et densité des voitures : montée lente (maximum à la ligne 300), et plus une série enchaîne d'obstacles, plus elle est lente et espacée (facteurs 1, 0,85, 0,72, 0,62 pour la vitesse).
+- Compteur « Distance » dans le bandeau ; le modèle gagné apparaît à droite du pop-up.
+- Barème de progression versionné (`VERSION_PROGRESSION`) : le 29 octobre, la progression de tous les joueurs a été remise à zéro (nouveaux seuils).
