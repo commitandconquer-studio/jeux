@@ -32,4 +32,4 @@ Les cadeaux ramassés pour gagner des points faisaient doublon avec les colis. P
 Les modèles viennent du *Food Kit* de Kenney (licence CC0).
 
 ## Les nouveautés s'annoncent
-Quand vous débloquez quelque chose, un pop-up sous le compteur annonce **« Nouveau modèle gagné ! »** (véhicule), **« Nouveau monde gagné ! »** ou **« Nouveau personnage gagné ! »**, et la barre *Prochain déblocage* repart de zéro. L'**aigle** se débloque à 2 500 points cumulés, puis peut apparaître à partir de la ligne 250.
+Quand vous débloquez quelque chose, un pop-up sous le compteur annonce **« Nouveau modèle gagné ! »** (véhicule), **« Nouveau monde gagné ! »** ou **« Nouveau personnage gagné ! »**, et la barre *Prochain déblocage* repart de zéro. L'**aigle** se débloque à 2 250 points cumulés, puis peut apparaître à partir de la ligne 250.

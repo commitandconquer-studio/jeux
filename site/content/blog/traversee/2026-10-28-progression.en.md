@@ -32,4 +32,4 @@ The gifts you picked up for points overlapped with the parcels. Enter **food**: 
 The models come from Kenney's *Food Kit* (CC0 licence).
 
 ## New things announced
-When you unlock something, a pop-up under the counter says **"New model won!"** (vehicle), **"New world won!"** or **"New character won!"**, and the *Next unlock* bar starts again from zero. The **eagle** unlocks at 2,500 cumulative points, then can appear from row 250.
+When you unlock something, a pop-up under the counter says **"New model won!"** (vehicle), **"New world won!"** or **"New character won!"**, and the *Next unlock* bar starts again from zero. The **eagle** unlocks at 2,250 cumulative points, then can appear from row 250.
