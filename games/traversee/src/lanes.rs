@@ -114,8 +114,6 @@ impl LaneGen {
 
     /// Repart de zéro (appliqué au prochain passage de `ensure_lanes`).
     pub fn request_reset(&mut self, seed: u64) {
-        // Les mondes successifs de la partie dépendent de cette graine.
-        crate::extra::RUN_SEED.store(seed, std::sync::atomic::Ordering::Relaxed);
         *self = Self::new(seed);
     }
 
@@ -973,22 +971,39 @@ mod tests {
     #[test]
     fn les_mondes_alternent_tous_les_400_cumules() {
         use crate::extra::Biome;
+        let m = |d, pts| Biome::monde(d, pts, 0, LONGUEUR_MONDE as u32).0;
         // Rien de gagné : la prairie partout.
-        assert_eq!(Biome::monde(0, 0, 1, 0), Biome::Prairie);
-        assert_eq!(Biome::monde(900, 0, 1, 0), Biome::Prairie);
-        // Un monde gagné (1000 points) : prairie puis pirates, en alternance.
-        assert_eq!(Biome::monde(399, 1000, 1, 0), Biome::Prairie);
-        assert_eq!(Biome::monde(400, 1000, 1, 0), Biome::Pirate);
-        assert_eq!(Biome::monde(799, 1000, 1, 0), Biome::Pirate);
-        assert_eq!(Biome::monde(800, 1000, 1, 0), Biome::Prairie);
+        assert_eq!(m(0, 0), Biome::Prairie);
+        assert_eq!(m(900, 0), Biome::Prairie);
+        // Un monde gagné (1500 points) : prairie puis pirates, en alternance.
+        assert_eq!(m(399, 1500), Biome::Prairie);
+        assert_eq!(m(400, 1500), Biome::Pirate);
+        assert_eq!(m(799, 1500), Biome::Pirate);
+        assert_eq!(m(800, 1500), Biome::Prairie);
         // Plusieurs mondes : un autre à chaque tranche, jamais deux fois le même d'affilée.
-        for graine in 0..50u64 {
-            let mut avant = Biome::monde(0, 6000, graine, 0);
-            for tranche in 1..30u32 {
-                let b = Biome::monde(tranche * LONGUEUR_MONDE as u32, 6000, graine, 0);
-                assert_ne!(b, avant, "graine {graine}, tranche {tranche}");
-                avant = b;
+        let mut avant = m(0, 9000);
+        for tranche in 1..40u32 {
+            let b = m(tranche * LONGUEUR_MONDE as u32, 9000);
+            assert_ne!(b, avant, "tranche {tranche}");
+            avant = b;
+        }
+    }
+
+    /// Mourir dans un monde, c'est y réapparaître ; on en sort quand sa tranche est parcourue (règle d'Olivier).
+    #[test]
+    fn on_reapparait_dans_le_monde_ou_l_on_est_mort() {
+        use crate::extra::Biome;
+        let l = LONGUEUR_MONDE as u32;
+        for pts in [1500u32, 3000, 4500, 9000] {
+            // On part de la prairie, on meurt à 625 lignes cumulées : on est dans le monde de la 2e tranche.
+            let (mort, fin) = Biome::monde(625, pts, 0, l);
+            assert_eq!(fin, 2 * l);
+            // À la partie suivante (état sauvegardé : ce monde, jusqu'à `fin`), on y est toujours à 625…
+            for d in 625..fin {
+                assert_eq!(Biome::monde(d, pts, mort.index(), fin).0, mort, "pts {pts}, distance {d}");
             }
+            // … et on en sort à la frontière.
+            assert_ne!(Biome::monde(fin, pts, mort.index(), fin).0, mort, "pts {pts}");
         }
     }
 }

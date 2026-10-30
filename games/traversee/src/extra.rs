@@ -523,9 +523,10 @@ pub enum Biome {
 }
 
 /// Lignes parcourues par toutes les parties précédentes (la partie en cours s'y ajoute).
+/// Le monde où l'on se trouve à la fin de la dernière partie (numéro dans `Biome::ALL`) et la distance cumulée où il se termine.
+pub static MONDE: std::sync::atomic::AtomicUsize = std::sync::atomic::AtomicUsize::new(0);
+pub static MONDE_FIN: std::sync::atomic::AtomicU32 = std::sync::atomic::AtomicU32::new(crate::lanes::LONGUEUR_MONDE as u32);
 pub static DISTANCE_AVANT: std::sync::atomic::AtomicU32 = std::sync::atomic::AtomicU32::new(0);
-/// Graine de la partie en cours (idem).
-pub static RUN_SEED: std::sync::atomic::AtomicU64 = std::sync::atomic::AtomicU64::new(1);
 
 /// Cercueils et citrouilles flottantes d'Halloween.
 pub const HALLOWEEN_COLORS: [[u8; 3]; 4] = [[84, 52, 34], [230, 190, 60], [255, 128, 30], [60, 120, 50]];
@@ -602,9 +603,6 @@ pub struct Theme {
     pub hat: Model,
 }
 
-/// Le monde où commence la partie (choisi au garage, pour jouer ou tester un univers précis).
-pub static START_WORLD: std::sync::atomic::AtomicI32 = std::sync::atomic::AtomicI32::new(0);
-
 impl Biome {
     /// On refait les mondes un à un avec les modèles Kenney : la prairie, la baie des pirates, Halloween, le Moyen Âge, l'espace, le Far West, la ville futuriste.
     pub const ALL: [Biome; 7] = [Biome::Prairie, Biome::Pirate, Biome::Halloween, Biome::Medieval, Biome::Space, Biome::FarWest, Biome::Cyber];
@@ -628,43 +626,53 @@ impl Biome {
         }
     }
 
-    pub fn index(self) -> i32 {
-        Biome::ALL.iter().position(|b| *b == self).unwrap_or(0) as i32
+    /// Le numéro du monde dans `Biome::ALL` (pour la sauvegarde).
+    pub fn index(self) -> usize {
+        Biome::ALL.iter().position(|b| *b == self).unwrap_or(0)
     }
 }
 
 impl Biome {
     /// Le monde de ce rang. La distance compte en cumul (toutes les parties) : on change de monde tous les
-    /// `LONGUEUR_MONDE` lignes cumulées, parmi ceux gagnés ; une partie commence donc là où les précédentes se sont arrêtées.
+    /// `LONGUEUR_MONDE` lignes, parmi ceux gagnés. Le monde courant et la distance où il se termine sont sauvegardés :
+    /// quand on meurt dans un monde, on y réapparaît, et on en sort une fois sa tranche parcourue.
     pub fn of(row: i32, points: u32) -> Self {
         // TRAVERSEE_BIOME=1..3 : commencer dans ce monde (essais et captures, avec TRAVERSEE_POINTS pour le débloquer).
-        static ENV: std::sync::OnceLock<usize> = std::sync::OnceLock::new();
-        let depart = *ENV.get_or_init(|| std::env::var("TRAVERSEE_BIOME").ok().and_then(|s| s.parse().ok()).unwrap_or(0)) + START_WORLD.load(std::sync::atomic::Ordering::Relaxed) as usize;
-        let avant = DISTANCE_AVANT.load(std::sync::atomic::Ordering::Relaxed);
-        Biome::monde(avant + row.max(0) as u32, points, RUN_SEED.load(std::sync::atomic::Ordering::Relaxed), depart)
+        static ENV: std::sync::OnceLock<Option<usize>> = std::sync::OnceLock::new();
+        let essai = *ENV.get_or_init(|| std::env::var("TRAVERSEE_BIOME").ok().and_then(|s| s.parse().ok()));
+        let (depart, fin) = match essai {
+            Some(i) => (i, crate::lanes::LONGUEUR_MONDE as u32),
+            None => (MONDE.load(std::sync::atomic::Ordering::Relaxed), MONDE_FIN.load(std::sync::atomic::Ordering::Relaxed)),
+        };
+        let avant = if essai.is_some() { 0 } else { DISTANCE_AVANT.load(std::sync::atomic::Ordering::Relaxed) };
+        Biome::monde(avant + row.max(0) as u32, points, depart, fin).0
     }
 
-    /// Le monde à une distance cumulée donnée : avec deux mondes gagnés on alterne, avec plus on tire au hasard
-    /// un autre que le précédent (tirage fixé par la graine). `depart` : le monde de la première tranche.
-    pub fn monde(distance: u32, points: u32, graine: u64, depart: usize) -> Self {
+    /// Le monde à une distance cumulée donnée, et la distance où il se termine. On part du monde `depart` (numéro dans
+    /// `Biome::ALL`) qui dure jusqu'à la distance `fin`, puis à chaque tranche de `LONGUEUR_MONDE` : avec deux mondes gagnés
+    /// on alterne, avec plus on tire au hasard un autre que le précédent (tirage fixé par la distance de la frontière,
+    /// donc le même d'une partie à l'autre).
+    pub fn monde(distance: u32, points: u32, depart: usize, fin: u32) -> (Self, u32) {
         let gagnes: Vec<Biome> = Biome::ALL.iter().copied().filter(|b| *b == Biome::Prairie || crate::progress::unlocked(points, crate::progress::Item::World(*b))).collect();
         let mut actuel = Biome::ALL[depart % Biome::ALL.len()];
         if !gagnes.contains(&actuel) {
             actuel = Biome::Prairie;
         }
-        for tranche in 1..=(distance / crate::lanes::LONGUEUR_MONDE as u32) {
+        let mut frontiere = fin;
+        while distance >= frontiere {
             let autres: Vec<Biome> = gagnes.iter().copied().filter(|b| *b != actuel).collect();
             actuel = match autres.len() {
                 0 => actuel,
                 1 => autres[0],
                 n => {
-                    // Un mélange simple de la graine et du numéro de tranche.
-                    let h = (graine ^ (tranche as u64).wrapping_mul(0x9E37_79B9_7F4A_7C15)).wrapping_mul(0xBF58_476D_1CE4_E5B9);
+                    // Un mélange simple de la distance de la frontière.
+                    let h = (frontiere as u64).wrapping_mul(0x9E37_79B9_7F4A_7C15).wrapping_mul(0xBF58_476D_1CE4_E5B9);
                     autres[((h >> 33) as usize) % n]
                 }
             };
+            frontiere += crate::lanes::LONGUEUR_MONDE as u32;
         }
-        actuel
+        (actuel, frontiere)
     }
 
     pub fn name(self) -> &'static str {

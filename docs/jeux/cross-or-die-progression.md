@@ -85,8 +85,10 @@ Règle simplifiée par Olivier (29 octobre) : un de plus tous les 100 points. Re
 
 ## 9. Mondes (29 octobre)
 
-- Un nouveau monde se débloque tous les 1000 points cumulés : pirates 1000, Far West 2000, Moyen Âge 3000, Halloween 4000, Espace 5000, Cyber 6000 (seuls les six mondes refaits en Kenney existent ; désert, neige, automne, Nippon et jurassique ne sont pas dans `Biome::ALL`). Aigle à 2500.
+- Un nouveau monde se débloque tous les **1500** points cumulés (30 octobre, valeur d'Olivier) : pirates 1500, Far West 3000, Moyen Âge 4500, Halloween 6000, Espace 7500, Cyber 9000 (seuls les six mondes refaits en Kenney existent ; désert, neige, automne, Nippon et jurassique ne sont pas dans `Biome::ALL`). Aigle à 2250. Les petites nouveautés restent tous les 250 points entre deux mondes.
 - Le monde change tous les 400 lignes **cumulées** (toutes parties) : avec deux mondes gagnés on alterne, avec plus on tire au hasard un autre que le précédent (`Biome::monde`, tirage fixé par la graine de la partie). Une partie commence là où les précédentes se sont arrêtées. Essais : `TRAVERSEE_DISTANCE=390`.
+- **Mourir dans un monde, c'est y réapparaître** (30 octobre) : le monde où l'on est mort et la distance cumulée où il se termine sont sauvegardés (`monde`, `monde_fin`). Exemple : mort à 625 lignes cumulées dans la 2e tranche (400 à 800) : on réapparaît dans ce monde et on en sort à 800. Le tirage du monde suivant ne dépend que de la distance de la frontière (plus de graine de partie), donc il est identique d'une partie à l'autre.
+- **Plus de choix du monde de départ** : l'onglet Décors de la collection est une simple collection ; on commence en prairie (puis les mondes s'enchaînent selon la distance cumulée).
 - Vitesse et densité des voitures : montée lente (maximum à la ligne 300), et plus une série enchaîne d'obstacles, plus elle est lente et espacée (facteurs 1, 0,85, 0,72, 0,62 pour la vitesse).
 - Compteur « Distance » dans le bandeau ; le modèle gagné apparaît à droite du pop-up.
 - Barème de progression versionné (`VERSION_PROGRESSION`) : le 29 octobre, la progression de tous les joueurs a été remise à zéro (nouveaux seuils).

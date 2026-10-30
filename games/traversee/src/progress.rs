@@ -31,37 +31,37 @@ pub fn rescale(t: u32) -> u32 {
 }
 
 /// Points cumulés nécessaires, dans l'ordre d'arrivée : une nouveauté tous les 250 points, un nouveau monde
-/// tous les 1 000 (les six mondes refaits en Kenney). Valeurs finales, sans étirement.
+/// tous les 1 500 (les six mondes refaits en Kenney). Valeurs finales, sans étirement.
 const BASE_UNLOCKS: &[(u32, Item)] = &[
     (20, Item::Flies),
     (250, Item::Vehicle(Vehicle::Truck)),
     (500, Item::Character(Character::Rabbit)),
     (750, Item::Vehicle(Vehicle::Taxi)),
-    (1000, Item::World(Biome::Pirate)),
-    (1250, Item::Vehicle(Vehicle::Moto)),
-    (1500, Item::Vehicle(Vehicle::Bus)),
+    (1000, Item::Vehicle(Vehicle::Moto)),
+    (1250, Item::Vehicle(Vehicle::Bus)),
+    (1500, Item::World(Biome::Pirate)),
     (1750, Item::Character(Character::Badger)),
-    (2000, Item::World(Biome::FarWest)),
-    (2250, Item::GoldFlies),
-    (2500, Item::Eagle),
-    (2750, Item::Vehicle(Vehicle::Pickup)),
-    (3000, Item::World(Biome::Medieval)),
-    (3250, Item::Character(Character::Raccoon)),
-    (3500, Item::Character(Character::Noe)),
-    (3750, Item::Vehicle(Vehicle::Sport)),
-    (4000, Item::World(Biome::Halloween)),
-    (4250, Item::Character(Character::Ines)),
-    (4500, Item::Vehicle(Vehicle::Police)),
-    (4750, Item::Character(Character::Hedgehog)),
-    (5000, Item::World(Biome::Space)),
-    (5250, Item::Vehicle(Vehicle::Tractor)),
-    (5500, Item::Character(Character::Sacha)),
-    (5750, Item::Character(Character::Fox)),
-    (6000, Item::World(Biome::Cyber)),
-    (6250, Item::Character(Character::Panda)),
-    (6500, Item::Character(Character::Maya)),
-    (6750, Item::Character(Character::Duck)),
-    (7000, Item::Vehicle(Vehicle::Sheriff)),
+    (2000, Item::GoldFlies),
+    (2250, Item::Eagle),
+    (2500, Item::Vehicle(Vehicle::Pickup)),
+    (2750, Item::Character(Character::Raccoon)),
+    (3000, Item::World(Biome::FarWest)),
+    (3250, Item::Character(Character::Noe)),
+    (3500, Item::Vehicle(Vehicle::Sport)),
+    (3750, Item::Character(Character::Ines)),
+    (4000, Item::Vehicle(Vehicle::Police)),
+    (4250, Item::Character(Character::Hedgehog)),
+    (4500, Item::World(Biome::Medieval)),
+    (4750, Item::Vehicle(Vehicle::Tractor)),
+    (5000, Item::Character(Character::Sacha)),
+    (5250, Item::Character(Character::Fox)),
+    (5500, Item::Character(Character::Panda)),
+    (5750, Item::Character(Character::Maya)),
+    (6000, Item::World(Biome::Halloween)),
+    (6250, Item::Character(Character::Duck)),
+    (6500, Item::Vehicle(Vehicle::Sheriff)),
+    (7500, Item::World(Biome::Space)),
+    (9000, Item::World(Biome::Cyber)),
 ];
 
 /// Tous les déblocages, par ordre de points : ceux ci-dessus et les véhicules décrits en pièces.
@@ -123,6 +123,9 @@ pub struct Progress {
     pub live: u32,
     /// Lignes parcourues par toutes les parties terminées (le monde change tous les 400 lignes cumulées).
     pub distance: u32,
+    /// Le monde où l'on était à la fin de la dernière partie (numéro dans `Biome::ALL`) et la distance où il se termine.
+    pub monde: usize,
+    pub monde_fin: u32,
 }
 
 impl Default for Progress {
@@ -134,8 +137,12 @@ impl Default for Progress {
         // TRAVERSEE_DISTANCE=390 : commencer comme si on avait déjà parcouru ces lignes (essais des changements de monde).
         let forced = std::env::var("TRAVERSEE_DISTANCE").ok().and_then(|s| s.parse().ok());
         let distance = forced.or_else(|| game_common::save::load(SAVE, "distance").and_then(|s| s.parse().ok())).unwrap_or(0);
+        let monde = game_common::save::load(SAVE, "monde").and_then(|s| s.parse().ok()).unwrap_or(0);
+        let monde_fin = game_common::save::load(SAVE, "monde_fin").and_then(|s| s.parse().ok()).unwrap_or(crate::lanes::LONGUEUR_MONDE as u32);
         crate::extra::DISTANCE_AVANT.store(distance, std::sync::atomic::Ordering::Relaxed);
-        Self { total, fresh: Vec::new(), best_before, new_record: false, live: 0, distance }
+        crate::extra::MONDE.store(monde, std::sync::atomic::Ordering::Relaxed);
+        crate::extra::MONDE_FIN.store(monde_fin, std::sync::atomic::Ordering::Relaxed);
+        Self { total, fresh: Vec::new(), best_before, new_record: false, live: 0, distance, monde, monde_fin }
     }
 }
 
@@ -192,8 +199,15 @@ fn commit(mut progress: ResMut<Progress>, score: Res<Score>, frog: Res<crate::fr
     let before = progress.total;
     progress.new_record = score.current > progress.best_before && score.current > 0;
     progress.best_before = progress.best_before.max(score.current);
+    // Le monde où l'on est mort est celui où l'on réapparaît : on retient lequel c'était et où il se termine.
+    let parcouru = progress.distance + frog.max_row_i().max(0) as u32;
+    let (monde, fin) = crate::extra::Biome::monde(parcouru, progress.total + score.current, progress.monde, progress.monde_fin);
+    progress.monde = monde.index();
+    progress.monde_fin = fin;
+    crate::extra::MONDE.store(progress.monde, std::sync::atomic::Ordering::Relaxed);
+    crate::extra::MONDE_FIN.store(fin, std::sync::atomic::Ordering::Relaxed);
     progress.total += score.current;
-    progress.distance += frog.max_row_i().max(0) as u32;
+    progress.distance = parcouru;
     crate::extra::DISTANCE_AVANT.store(progress.distance, std::sync::atomic::Ordering::Relaxed);
     let after = progress.total;
     progress.fresh = UNLOCKS.iter().filter(|(t, _)| before < *t && *t <= after).map(|(_, i)| *i).collect();
@@ -204,6 +218,8 @@ fn commit(mut progress: ResMut<Progress>, score: Res<Score>, frog: Res<crate::fr
     game_common::save::store(SAVE, "total", &after.to_string());
     game_common::save::store(SAVE, "best", &score.best.to_string());
     game_common::save::store(SAVE, "distance", &progress.distance.to_string());
+    game_common::save::store(SAVE, "monde", &progress.monde.to_string());
+    game_common::save::store(SAVE, "monde_fin", &progress.monde_fin.to_string());
 }
 
 /// Pendant la partie : dès qu'un seuil est franchi, on l'annonce à l'écran.

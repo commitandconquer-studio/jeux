@@ -142,7 +142,6 @@ enum Act {
     Tab(Tab),
     Char(Character),
     Page(i32),
-    World(Biome),
 }
 
 fn scope() -> impl Bundle {
@@ -266,15 +265,9 @@ fn build(
                 if !open {
                     commands.entity(slot).insert(Locked);
                 }
-                let chosen = open && crate::extra::START_WORLD.load(std::sync::atomic::Ordering::Relaxed) == b.index();
-                let sub = if !open {
-                    pts(threshold(Item::World(*b)))
-                } else if chosen {
-                    tx!("— départ ici —", "— start here —", "— Start hier —", "— si parte qui —", "— se empieza aquí —").t().to_string()
-                } else {
-                    String::new()
-                };
-                label(&mut commands, center + Vec3::new(0.0, 0.0, 2.1), if open { b.name() } else { "???" }, sub, open, chosen, open.then_some(Act::World(*b)), false);
+                // Le monde de départ n'est pas au choix : cet onglet est une simple collection.
+                let sub = if open { String::new() } else { pts(threshold(Item::World(*b))) };
+                label(&mut commands, center + Vec3::new(0.0, 0.0, 2.1), if open { b.name() } else { "???" }, sub, open, false, None, false);
             }
         }
     }
@@ -443,13 +436,6 @@ fn on_click(
             if unlocked_character(&progress, c) {
                 selection.character = c;
                 selection.save();
-                view.dirty = true;
-            }
-        }
-        Act::World(b) => {
-            if progress.has(Item::World(b)) {
-                crate::extra::START_WORLD.store(b.index(), std::sync::atomic::Ordering::Relaxed);
-                info!("monde de départ choisi : {:?}", b);
                 view.dirty = true;
             }
         }
