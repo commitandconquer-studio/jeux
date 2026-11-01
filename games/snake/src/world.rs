@@ -136,10 +136,10 @@ impl Universe {
                 ambient: (c(0.56, 0.54, 0.62), 1000.0),
             },
             Universe::Cave => Theme {
-                sky: c(0.16, 0.14, 0.22),
+                sky: c(0.04, 0.03, 0.06),
                 tiles: (c(0.46, 0.42, 0.44), c(0.40, 0.36, 0.40)),
                 rim: c(0.22, 0.20, 0.24),
-                ground: c(0.22, 0.20, 0.25),
+                ground: c(0.07, 0.06, 0.09),
                 sun: (c(0.80, 0.86, 1.0), 3_800.0),
                 ambient: (c(0.52, 0.46, 0.70), 1200.0),
             },
@@ -172,6 +172,21 @@ pub fn animate_traffic(time: Res<Time>, layout: Res<Layout>, mut q: Query<(&Traf
         let s = (v.phase + t * v.speed).rem_euclid(v.len);
         tf.translation = cell_to_world(v.start + v.dir * s, 0.05, &layout);
         tf.rotation = Quat::from_rotation_y(v.dir.x.atan2(v.dir.y));
+    }
+}
+
+/// Une lumière qui vacille (braseros, lanternes des grottes) : intensité de base et déphasage.
+#[derive(Component)]
+pub struct Flicker {
+    base: f32,
+    phase: f32,
+}
+
+pub fn flicker(time: Res<Time>, mut q: Query<(&Flicker, &mut PointLight)>) {
+    let t = time.elapsed_secs();
+    for (f, mut light) in &mut q {
+        let s = (t * 7.3 + f.phase).sin() * 0.5 + (t * 13.1 + f.phase * 2.0).sin() * 0.3 + (t * 2.1 + f.phase).sin() * 0.2;
+        light.intensity = f.base * (0.78 + 0.22 * s);
     }
 }
 
@@ -424,22 +439,6 @@ pub fn rebuild_world(
     }
 
     // Grotte : des parois de roche tout autour du fond et des côtés (le côté caméra reste ouvert).
-    if universe == Universe::Cave {
-        let (w, h) = (l.w as f32, l.h as f32);
-        let (ex0, ey0, ex1, ey1) = (-0.5, -0.5, w - 0.5, h - 0.5);
-        let (d, piece) = (1.6, 2.8);
-        let mut x = ex0 - d;
-        while x <= ex1 + d + piece {
-            b.model("modular-cave-kit/template-wall", cell_to_world(Vec2::new(x + piece / 2.0, ey0 - d), GROUND_Y, l), 0.7, 0.0);
-            x += piece;
-        }
-        let mut y = ey0 - d;
-        while y <= ey1 + d + piece {
-            b.model("modular-cave-kit/template-wall", cell_to_world(Vec2::new(ex0 - d, y + piece / 2.0), GROUND_Y, l), 0.7, FRAC_PI_2);
-            y += piece;
-        }
-    }
-
     // Prairie : une clairière au milieu de la forêt. Autour du plateau, une pelouse dégagée avec quelques touffes de fleurs
     // bien placées et un petit campement au fond ; puis la forêt, dense, qui remplit tout le bord de l'écran.
     if universe == Universe::Prairie {
@@ -952,6 +951,107 @@ pub fn rebuild_world(
         return;
     }
 
+    // Grottes : une salle fermée par des parois de roche (basses devant), une entrée au fond, des braseros et des lanternes
+    // qui vacillent, des stalagmites par groupes au pied des parois, des champignons lumineux, un petit lac dans un coin.
+    // Au-delà des parois, le noir.
+    if universe == Universe::Cave {
+        let mut rng = Rng::new(universe as u64 * 7919 + shape as u64 * 31);
+        let d = 3.4;
+        slab(&mut b, Color::srgb(0.24, 0.22, 0.27), ex0 - d, ey0 - d, ex1 + d, ey1 + d, 0.0);
+        let (k, piece) = (0.8_f32, 3.2_f32);
+        let wall = |b: &mut Builder, file: &str, p: Vec2, yaw: f32| {
+            // La base des pièces du kit est une unité sous leur origine.
+            b.model(file, cell_to_world(p, GROUND_Y + k, l), k, yaw);
+        };
+        // Le fond : des pans de mur, l'entrée au milieu.
+        let n = ((ex1 - ex0 + 2.0 * d) / piece).ceil() as i32;
+        let n = if n % 2 == 0 { n + 1 } else { n };
+        let x0 = mx - (n as f32 - 1.0) / 2.0 * piece;
+        for i in 0..n {
+            let x = x0 + i as f32 * piece;
+            if i == n / 2 {
+                wall(&mut b, "modular-cave-kit/gate-rock", Vec2::new(x, ey0 - d), 0.0);
+            } else {
+                wall(&mut b, "modular-cave-kit/template-wall", Vec2::new(x, ey0 - d), 0.0);
+            }
+        }
+        // Les côtés : des pans de mur jusqu'au-devant, puis un rang de rochers bas côté caméra.
+        let m = ((ey1 - ey0 + 2.0 * d) / piece).ceil() as i32;
+        for j in 0..m {
+            let y = ey0 - d + piece / 2.0 + j as f32 * piece;
+            wall(&mut b, "modular-cave-kit/template-wall", Vec2::new(ex0 - d, y), FRAC_PI_2);
+            wall(&mut b, "modular-cave-kit/template-wall", Vec2::new(ex1 + d, y), -FRAC_PI_2);
+        }
+        for (c, yaw) in [(Vec2::new(ex0 - d, ey0 - d), 0.0), (Vec2::new(ex1 + d, ey0 - d), -FRAC_PI_2)] {
+            wall(&mut b, "modular-cave-kit/template-wall-corner", c, yaw);
+        }
+        for p in along(Vec2::new(ex0 - d, ey1 + d), Vec2::new(ex1 + d, ey1 + d), 2.0) {
+            b.model("graveyard-kit/rocks", at(p), 1.0 + rng.below(30) as f32 / 100.0, rng.below(628) as f32 / 100.0);
+        }
+        // La lumière : des braseros le long des parois, une lanterne à chaque coin du plateau ; tout vacille.
+        let mut lamp = |b: &mut Builder, p: Vec2, file: &str, scale: f32, color: Color, lumens: f32, lift: f32| {
+            b.model(file, at(p), scale, toward_centre(p));
+            let phase = rng.below(628) as f32 / 100.0;
+            b.commands.spawn((PointLight { color, intensity: lumens, range: 15.0, shadow_maps_enabled: false, ..default() }, Transform::from_translation(at(p) + Vec3::Y * lift), Flicker { base: lumens, phase }, WorldPart));
+        };
+        let fire = Color::srgb(1.0, 0.62, 0.30);
+        for p in along(Vec2::new(ex0 - d + 1.2, ey0 - d + 1.2), Vec2::new(ex1 + d - 1.2, ey0 - d + 1.2), 6.0) {
+            if (p.x - mx).abs() > 2.0 {
+                lamp(&mut b, p, "graveyard-kit/fire-basket", 0.7, fire, 140_000.0, 1.0);
+            }
+        }
+        for x in [ex0 - d + 1.2, ex1 + d - 1.2] {
+            for p in along(Vec2::new(x, ey0 - d + 7.2), Vec2::new(x, ey1 + 1.0), 6.0) {
+                lamp(&mut b, p, "graveyard-kit/fire-basket", 0.7, fire, 140_000.0, 1.0);
+            }
+        }
+        let warm = Color::srgb(1.0, 0.85, 0.55);
+        for c in [Vec2::new(ex0 - 1.2, ey0 - 1.2), Vec2::new(ex1 + 1.2, ey0 - 1.2), Vec2::new(ex1 + 1.2, ey1 + 1.2), Vec2::new(ex0 - 1.2, ey1 + 1.2)] {
+            lamp(&mut b, c, "fantasy-town-kit/lantern", 1.4, warm, 70_000.0, 1.6);
+        }
+        // Une lueur derrière l'entrée.
+        b.commands.spawn((PointLight { color: Color::srgb(0.55, 0.75, 1.0), intensity: 80_000.0, range: 14.0, shadow_maps_enabled: false, ..default() }, Transform::from_translation(at(Vec2::new(mx, ey0 - d - 1.5)) + Vec3::Y * 1.5), Flicker { base: 80_000.0, phase: 1.0 }, WorldPart));
+        // Les stalagmites : par groupes de trois au pied des parois, en alternance avec des champignons.
+        let mut k2 = 0;
+        let mut foot = |b: &mut Builder, p: Vec2, rng: &mut Rng| {
+            k2 += 1;
+            if k2 % 2 == 0 {
+                for (dx, dy, sc) in [(0.0, 0.0, 1.1), (0.9, 0.4, 0.8), (-0.7, 0.5, 0.65)] {
+                    b.model("graveyard-kit/rocks-tall", at(p + Vec2::new(dx, dy)), sc, rng.below(628) as f32 / 100.0);
+                }
+            } else {
+                b.model("nature-kit/mushroom_redGroup", at(p), 3.2, rng.below(628) as f32 / 100.0);
+                b.model("nature-kit/mushroom_tanGroup", at(p + Vec2::new(0.9, 0.3)), 2.8, rng.below(628) as f32 / 100.0);
+            }
+        };
+        for p in along(Vec2::new(ex0 - d + 1.0, ey0 - d + 1.4), Vec2::new(ex1 + d - 1.0, ey0 - d + 1.4), 3.0) {
+            if (p.x - mx).abs() > 2.6 && dist(p) > 1.6 {
+                foot(&mut b, p + Vec2::new(0.0, 0.6), &mut rng);
+            }
+        }
+        for x in [ex0 - d + 1.2, ex1 + d - 1.2] {
+            for p in along(Vec2::new(x, ey0 - d + 4.4), Vec2::new(x, ey1 + d - 1.0), 3.0) {
+                if dist(p) > 1.6 && !(x > mx && p.y < ey0 + 2.5) {
+                    foot(&mut b, p, &mut rng);
+                }
+            }
+        }
+        // Le lac, dans le coin du fond à droite, avec deux rochers qui en sortent.
+        slab(&mut b, Color::srgb(0.10, 0.20, 0.34), ex1 + 0.3, ey0 - d + 0.3, ex1 + d - 0.3, ey0 + 2.5, 0.03);
+        b.model("graveyard-kit/rocks", at(Vec2::new(ex1 + 1.6, ey0 - 1.0)), 0.8, 0.4);
+        b.model("graveyard-kit/rocks", at(Vec2::new(ex1 + 2.4, ey0 + 1.2)), 0.6, 2.1);
+        // Les creux de la figure : des champignons, pas de rochers.
+        for y in 0..l.h {
+            for x in 0..l.w {
+                let c = IVec2::new(x, y);
+                if !l.walkable(c) && x % 3 == 1 && y % 3 == 1 {
+                    b.model("nature-kit/mushroom_tanGroup", at(c.as_vec2()), 3.0, rng.below(628) as f32 / 100.0);
+                }
+            }
+        }
+        return;
+    }
+
     // Décor autour du plateau, par bandes : petit près du plateau, de plus en plus gros en s'éloignant (profondeur homogène).
     // Chaque bande ne sert que quelques modèles, rangés dans un ordre régulier, tournés vers le centre.
     let mut rng = Rng::new(universe as u64 * 7919 + shape as u64 * 31);
@@ -1008,11 +1108,7 @@ fn bands(u: Universe) -> [&'static [(&'static str, f32)]; 3] {
             &[("fantasy-town-kit/stall-red", 1.6), ("fantasy-town-kit/stall-green", 1.6), ("fantasy-town-kit/cart", 1.6), ("mini-forest/tent", 2.0), ("fantasy-town-kit/lantern", 2.2)],
             &[("castle-kit/tower-hexagon-base", 2.0), ("castle-kit/tree-large", 2.4), ("fantasy-town-kit/windmill", 1.2)],
         ],
-        Universe::Cave => [
-            &[("nature-kit/rock_smallA", 2.6), ("nature-kit/mushroom_redGroup", 3.0)],
-            &[("nature-kit/rock_largeA", 2.4), ("nature-kit/mushroom_tanTall", 3.0), ("nature-kit/rock_largeB", 2.4), ("nature-kit/mushroom_redTall", 3.0), ("nature-kit/rock_largeD", 2.4)],
-            &[("nature-kit/rock_largeC", 2.4), ("nature-kit/rock_largeA", 2.4), ("nature-kit/rock_largeD", 2.4)],
-        ],
+        Universe::Cave => [&[], &[], &[]],
     }
 }
 

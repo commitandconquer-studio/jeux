@@ -99,6 +99,8 @@ impl Plugin for CapturePlugin {
     fn build(&self, app: &mut App) {
         let press = std::env::var("SNAKE_PRESSE").ok();
         if let Some(dir) = press.clone().or_else(|| std::env::var("SNAKE_CAPTURE").ok()).or_else(|| std::env::var("SNAKE_FORMES").ok()).or_else(|| std::env::var("SNAKE_VOYAGE").ok()) {
+            // Le dossier est créé s'il manque (sinon chaque capture échoue en silence).
+            let _ = std::fs::create_dir_all(&dir);
             app.insert_resource(Capture { dir, shots: shots(press.is_some()), index: 0, since: 0.0, started: false, shot: false })
                 .add_systems(Update, run_capture);
             if press.is_some() {
