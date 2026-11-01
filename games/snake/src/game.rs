@@ -221,7 +221,7 @@ struct Food {
 }
 
 #[derive(Resource)]
-struct StepTimer(Timer);
+pub struct StepTimer(pub Timer);
 
 #[derive(Resource)]
 struct GuestAssets {

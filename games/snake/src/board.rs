@@ -511,6 +511,8 @@ pub fn animate_rivals(
     time: Res<Time>,
     board: Res<Board>,
     layout: Res<Layout>,
+    timer: Res<crate::game::StepTimer>,
+    state: Res<State<crate::GameState>>,
     mut cars: Query<(&RivalCar, &mut Transform, &mut Visibility), Without<RivalMarker>>,
     mut marks: Query<(&RivalMarker, &mut Visibility), Without<RivalCar>>,
 ) {
@@ -519,18 +521,18 @@ pub fn animate_rivals(
         let on = board.rivals.get(l.0).is_some_and(|t| t.warning(board.clock)) && blink;
         *v = if on { Visibility::Inherited } else { Visibility::Hidden };
     }
+    // Comme la file du joueur : une case par pas, glissant sans à-coup entre deux cases au rythme du jeu.
+    let frac = if *state.get() == crate::GameState::Playing { timer.0.fraction() } else { 1.0 };
     for (c, mut tf, mut v) in &mut cars {
         let Some(t) = board.rivals.get(c.rival) else { continue };
-        let i = t.front(board.clock) - c.car;
-        if i < -1 || i > t.cells.len() as i32 {
+        let i = t.front(board.clock) as f32 - 1.0 + frac - c.car as f32;
+        if i < -1.0 || i > t.cells.len() as f32 {
             *v = Visibility::Hidden;
             continue;
         }
         *v = Visibility::Inherited;
         // Au-delà des extrémités, on prolonge en ligne droite : il entre et sort du décor en marchant.
-        let target = cell_to_world(t.cells[0].as_vec2() + c.dir.as_vec2() * i as f32, 0.05, &layout);
-        let jump = tf.translation.distance(target) > 2.5;
-        tf.translation = if jump { target } else { tf.translation.lerp(target, (time.delta_secs() * 14.0).min(1.0)) };
+        tf.translation = cell_to_world(t.cells[0].as_vec2() + c.dir.as_vec2() * i, 0.05, &layout);
     }
 }
 
