@@ -724,7 +724,8 @@ fn step(
                 level_up(&mut board, &progress, &conga, food.cell, &settings, &layout, &mut banner, &mut sfx, &mut rng, score.current / LEVEL_EVERY);
             }
             let min = settings.speed.step_times().1;
-            let faster = (timer.0.duration().as_secs_f32() * 0.96).max(min);
+            // Chaque invité accélère un peu la file, doucement (2 % seulement).
+            let faster = (timer.0.duration().as_secs_f32() * 0.98).max(min);
             timer.0.set_duration(Duration::from_secs_f32(faster));
         }
     } else {

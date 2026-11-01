@@ -20,19 +20,23 @@ pub struct Settings {
 
 #[derive(Clone, Copy, PartialEq, Eq, Default)]
 pub enum Speed {
+    TresLente,
     Lente,
     #[default]
     Normale,
     Rapide,
+    TresRapide,
 }
 
 impl Speed {
     /// (durée d'un pas au départ, durée minimale) en secondes.
     pub fn step_times(self) -> (f32, f32) {
         match self {
-            Speed::Lente => (0.22, 0.10),
-            Speed::Normale => (0.16, 0.07),
-            Speed::Rapide => (0.11, 0.05),
+            Speed::TresLente => (0.42, 0.30),
+            Speed::Lente => (0.32, 0.22),
+            Speed::Normale => (0.24, 0.16),
+            Speed::Rapide => (0.17, 0.11),
+            Speed::TresRapide => (0.11, 0.07),
         }
     }
 }
@@ -64,9 +68,11 @@ impl OptionKind {
             OptionKind::Speed => (
                 tx!("Vitesse :", "Speed:", "Tempo:", "Velocità:", "Velocidad:"),
                 match s.speed {
+                    Speed::TresLente => tx!("Très lente", "Very slow", "Sehr langsam", "Molto lenta", "Muy lenta"),
                     Speed::Lente => tx!("Lente", "Slow", "Langsam", "Lenta", "Lenta"),
                     Speed::Normale => tx!("Normale", "Normal", "Normal", "Normale", "Normal"),
                     Speed::Rapide => tx!("Rapide", "Fast", "Schnell", "Veloce", "Rápida"),
+                    Speed::TresRapide => tx!("Très rapide", "Very fast", "Sehr schnell", "Molto veloce", "Muy rápida"),
                 }
                 .t(),
             ),
@@ -114,9 +120,11 @@ impl OptionKind {
             }
             OptionKind::Speed => {
                 s.speed = match s.speed {
+                    Speed::TresLente => Speed::Lente,
                     Speed::Lente => Speed::Normale,
                     Speed::Normale => Speed::Rapide,
-                    Speed::Rapide => Speed::Lente,
+                    Speed::Rapide => Speed::TresRapide,
+                    Speed::TresRapide => Speed::TresLente,
                 }
             }
             OptionKind::Size => s.shape = s.shape.next(),
