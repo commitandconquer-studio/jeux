@@ -13,7 +13,7 @@ commandes = ["ZQSD ou flèches : se déplacer, une case par pas", "F : allumer o
 chiffres = [
   { n = "3", t = "missions (version de test)" },
   { n = "8", t = "univers" },
-  { n = "7 × 9 × 8", t = "lentilles, batteries, lampes" },
+  { n = "8 × 9 × 9", t = "lampes, lentilles, batteries" },
 ]
 +++
 

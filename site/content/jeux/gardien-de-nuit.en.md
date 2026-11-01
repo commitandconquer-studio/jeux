@@ -13,7 +13,7 @@ commandes = ["WASD or arrows: move, one tile per step", "F: flashlight on or off
 chiffres = [
   { n = "3", t = "missions (test version)" },
   { n = "8", t = "worlds" },
-  { n = "7 × 9 × 8", t = "lenses, batteries, lamps" },
+  { n = "8 × 9 × 9", t = "lamps, lenses, batteries" },
 ]
 +++
 
