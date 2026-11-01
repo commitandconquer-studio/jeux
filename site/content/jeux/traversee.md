@@ -51,7 +51,7 @@ Chaque livraison réussie rapporte **25 points**, en plus du point par pas en av
 ## Un monde qui devient dangereux
 Une partie **monte en douceur**. De l'herbe jusqu'à la ligne 12, puis la **première route** (une voie) en 13, les **nénuphars** en 20, les **troncs** en 30, les **trains**, qui préviennent avant de passer, en 100. Le **monde** change tous les 400 lignes cumulées parmi ceux que vous avez gagnés. Le nombre de rangées du même type d'affilée (routes, rivières, voies ferrées) ne dépasse jamais un maximum qui monte avec la distance : 1 au début, puis jusqu'à 2, 3 et 4. Les **colis** n'arrivent qu'à partir de la ligne 25.
 
-À mesure que vos **points s'accumulent d'une partie à l'autre**, le jeu s'enrichit : camions, taxis, motos, puis un **aigle** qui balaie une colonne entière. Tout se débloque : ennemis, mondes, personnages.
+À mesure que vos **points s'accumulent d'une partie à l'autre**, le jeu s'enrichit : camions, taxis, motos, puis un **aigle** qui balaie une colonne entière. Tout se débloque : ennemis, personnages, et un **nouveau monde tous les 1 500 points** cumulés. Mourir dans un monde, c'est y réapparaître, jusqu'à la fin de sa tranche de 400 lignes.
 
 ## De la nourriture plutôt que des cadeaux
 Pour gagner des points en route, ramassez de la **nourriture** (fruits, légumes, burgers, donuts…), différente **dans chaque monde**. Chaque bonus tourne lentement dans un halo de lumière colorée.
