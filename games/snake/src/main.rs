@@ -67,7 +67,11 @@ fn main() {
         .init_resource::<Settings>()
         .init_resource::<layout::Layout>()
         .init_resource::<Score>()
-        .add_systems(Startup, |mut commands: Commands| {
+        .add_systems(Startup, |mut commands: Commands, mut reglages: ResMut<game_common::audio::Reglages>| {
+            // Musique coupée par défaut : seulement tant que le joueur n'a encore rien réglé (le réglage est commun au studio).
+            if game_common::save::load("studio", "son").is_none() {
+                reglages.musique = false;
+            }
             let mut cam = commands.spawn((iso_camera(Vec3::ZERO, 24.0, 18.0), bevy::core_pipeline::tonemapping::Tonemapping::AcesFitted));
             if miniature::actif() {
                 cam.insert(miniature::Miniature::default());
