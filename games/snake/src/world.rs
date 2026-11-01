@@ -506,6 +506,72 @@ pub fn rebuild_world(
         return;
     }
 
+    // Désert : du sable nu autour du plateau, quelques grands cactus bien espacés, un bivouac avec trois palmiers au fond,
+    // et seulement quelques rochers, au loin. Les creux de la figure (centre vide) reçoivent de petits cactus, pas des rochers.
+    if universe == Universe::Desert {
+        let mut rng = Rng::new(universe as u64 * 7919 + shape as u64 * 31);
+        let (cx, cz) = ((l.w - 1) as f32 / 2.0, (l.h - 1) as f32 / 2.0);
+        let reach = (l.w.max(l.h) as f32) / 2.0 + 36.0;
+        let dist = |p: Vec3| l.distance_to_walkable(Vec2::new(p.x + cx, p.z + cz));
+        let front = |p: Vec3| p.x * 0.4 + p.z > 0.0;
+        // Les cases vides à l'intérieur de la figure : un petit cactus par carré de trois cases, pas plus.
+        for y in 0..l.h {
+            for x in 0..l.w {
+                let c = IVec2::new(x, y);
+                if l.walkable(c) || x % 3 != 1 || y % 3 != 1 {
+                    continue;
+                }
+                let p = cell_to_world(c.as_vec2() + Vec2::new(rng.below(40) as f32 / 100.0 - 0.2, rng.below(40) as f32 / 100.0 - 0.2), GROUND_Y, l);
+                b.model("nature-kit/cactus_short", p, 1.3 + rng.below(40) as f32 / 100.0, rng.below(628) as f32 / 100.0);
+            }
+        }
+        // Les grands cactus : un anneau régulier, bien espacés, un petit cactus au pied de chacun.
+        let n = ((l.w + l.h) as f32 / 4.0).round().max(5.0) as i32;
+        for i in 0..n {
+            let a = i as f32 / n as f32 * std::f32::consts::TAU + 0.7;
+            let centre = Vec3::new(a.cos() * (cx + 5.5), GROUND_Y, a.sin() * (cz + 5.5));
+            if dist(centre) < 3.0 || front(centre) && a.sin() > 0.6 {
+                continue;
+            }
+            b.model("nature-kit/cactus_tall", centre, 2.6, rng.below(628) as f32 / 100.0);
+            b.model("nature-kit/cactus_short", centre + Vec3::new(1.1, 0.0, 0.5), 1.6, rng.below(628) as f32 / 100.0);
+        }
+        // Au loin : des rochers de sable, rares et gros, en quinconce ; côté caméra, plus loin encore.
+        let (step, mut row) = (4.0_f32, 0);
+        let mut z = -reach;
+        while z <= reach {
+            let mut x = -reach + if row % 2 == 0 { 0.0 } else { step / 2.0 };
+            while x <= reach {
+                let p = Vec3::new(x + (rng.below(100) as f32 / 100.0 - 0.5) * 2.0, GROUND_Y, z + (rng.below(100) as f32 / 100.0 - 0.5) * 2.0);
+                let d = dist(p);
+                let edge = if front(p) { 16.0 } else { 12.0 };
+                if d >= edge && rng.below(5) == 0 {
+                    let t = ((d - edge) / 20.0).min(1.0);
+                    let file = ["pirate-kit/rocks-sand-a", "pirate-kit/rocks-sand-b", "pirate-kit/rocks-sand-c"][rng.below(3) as usize];
+                    b.model(file, p, 2.0 + t * 2.0, rng.below(628) as f32 / 100.0);
+                } else if d >= edge - 4.0 && rng.below(4) == 0 {
+                    b.model("nature-kit/cactus_tall", p, 2.4, rng.below(628) as f32 / 100.0);
+                }
+                x += step;
+            }
+            z += step;
+            row += 1;
+        }
+        // Le bivouac : au fond, une tente face au plateau, un feu, un panneau, et trois palmiers derrière (l'oasis).
+        let back = Vec3::new(-0.37, 0.0, -0.93);
+        let side = Vec3::new(0.93, 0.0, -0.37);
+        let camp = back * ((cx * back.x.abs() + cz * back.z.abs()) + 6.0);
+        let yaw = (-camp.x).atan2(-camp.z);
+        let g = Vec3::Y * GROUND_Y;
+        b.model("survival-kit/tent-canvas", camp + g - side * 2.2, 2.0, yaw + 0.3);
+        b.model("survival-kit/campfire-pit", camp + g + side * 0.6 + back * 0.4, 1.8, 0.0);
+        b.model("survival-kit/signpost", camp + g + side * 2.6 - back * 0.8, 2.0, yaw - 0.5);
+        for (k, file) in ["pirate-kit/palm-straight", "pirate-kit/palm-detailed-bend", "pirate-kit/palm-bend"].iter().enumerate() {
+            b.model(file, camp + g + back * 3.2 + side * ((k as f32 - 1.0) * 2.8), 2.4, rng.below(628) as f32 / 100.0);
+        }
+        return;
+    }
+
     // Décor autour du plateau, par bandes : petit près du plateau, de plus en plus gros en s'éloignant (profondeur homogène).
     // Chaque bande ne sert que quelques modèles, rangés dans un ordre régulier, tournés vers le centre.
     let mut rng = Rng::new(universe as u64 * 7919 + shape as u64 * 31);
@@ -549,11 +615,7 @@ pub fn rebuild_world(
 fn bands(u: Universe) -> [&'static [(&'static str, f32)]; 3] {
     match u {
         Universe::Prairie => [&[], &[], &[]],
-        Universe::Desert => [
-            &[("nature-kit/cactus_short", 2.4), ("pirate-kit/rocks-sand-a", 1.4), ("pirate-kit/rocks-sand-b", 1.4), ("pirate-kit/rocks-sand-c", 1.4)],
-            &[("nature-kit/cactus_tall", 2.8), ("nature-kit/cactus_short", 3.2), ("survival-kit/tent-canvas", 1.6), ("survival-kit/campfire-pit", 1.8), ("survival-kit/signpost", 2.4)],
-            &[("pirate-kit/rocks-sand-a", 1.8), ("nature-kit/cactus_tall", 3.0), ("pirate-kit/rocks-sand-c", 1.8), ("pirate-kit/rocks-sand-b", 1.8)],
-        ],
+        Universe::Desert => [&[], &[], &[]],
         Universe::Ruines => [
             &[("mini-arena/bricks", 2.0), ("prototype-kit/column-low", 2.6), ("mini-arena/column-damaged", 2.6)],
             &[("prototype-kit/column", 2.6), ("mini-arena/statue", 2.6), ("prototype-kit/column-rounded", 2.6), ("fantasy-town-kit/fountain-round", 2.2), ("mini-arena/trophy", 2.4)],
