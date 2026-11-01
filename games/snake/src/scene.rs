@@ -250,9 +250,13 @@ fn spawn_scenarios(mut commands: Commands, server: Res<AssetServer>, progress: R
             DespawnOnExit(GameState::Scenarios),
         ))
         .id();
-    let title = spawn_text(&mut commands, root, "Mode scénario", 48.0);
+    let title = spawn_text(&mut commands, root, "Mode scénario", 42.0);
     commands.entity(title).insert(TextColor(Color::srgb(1.0, 0.96, 0.84)));
-    spawn_gap(&mut commands, root, 6.0);
+    spawn_gap(&mut commands, root, 4.0);
+    // Les aventures sont nombreuses : deux colonnes, des panneaux plus compacts.
+    let list = commands
+        .spawn((Node { flex_wrap: FlexWrap::Wrap, justify_content: JustifyContent::Center, column_gap: Val::Px(24.0), row_gap: Val::Px(6.0), width: Val::Px(900.0), ..default() }, ChildOf(root)))
+        .id();
     for (i, sc) in SCENARIOS.iter().enumerate() {
         let done = progress.next_step(&sc.title);
         let status = if done == 0 {
@@ -262,16 +266,16 @@ fn spawn_scenarios(mut commands: Commands, server: Res<AssetServer>, progress: R
         } else {
             format!("Reprendre : étape {} sur {}", done + 1, sc.steps.len())
         };
-        let row = commands.spawn((Node { column_gap: Val::Px(10.0), align_items: AlignItems::Center, ..default() }, ChildOf(root))).id();
-        let (b, _) = plank(&mut commands, &server, row, "panneau_bois_dore_large", "icone_carte", 460.0, sc.title.clone(), Some(&status));
+        let row = commands.spawn((Node { column_gap: Val::Px(6.0), align_items: AlignItems::Center, width: Val::Px(420.0), ..default() }, ChildOf(list))).id();
+        let (b, _) = plank(&mut commands, &server, row, if done >= sc.steps.len() { "panneau_bois_fonce_large" } else { "panneau_bois_dore_large" }, "icone_carte", 300.0, sc.title.clone(), Some(&status));
         commands.entity(b).insert(ScenarioBtn(i, false));
         if done > 0 && done < sc.steps.len() {
-            let (b, _) = plank(&mut commands, &server, row, "panneau_bois_fonce_large", "icone_infini", 200.0, "Recommencer", None);
+            let (b, _) = plank(&mut commands, &server, row, "panneau_bois_fonce_large", "icone_infini", 110.0, "Reprendre à zéro", None);
             commands.entity(b).insert(ScenarioBtn(i, true));
         }
     }
-    spawn_gap(&mut commands, root, 8.0);
-    let (b, _) = plank(&mut commands, &server, root, "panneau_bois_fonce_large", "fleche_precedent", 230.0, "Retour", None);
+    spawn_gap(&mut commands, root, 4.0);
+    let (b, _) = plank(&mut commands, &server, root, "panneau_bois_fonce_large", "fleche_precedent", 200.0, "Retour", None);
     commands.entity(b).insert(ScenarioBack);
 }
 

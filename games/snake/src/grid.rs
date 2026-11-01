@@ -68,6 +68,44 @@ impl Grid {
         self.rows.iter().enumerate().flat_map(|(y, r)| r.iter().enumerate().map(move |(x, c)| (IVec2::new(x as i32, y as i32), *c)))
     }
 
+    #[cfg(test)]
+    fn char_at(&self, x: i32, y: i32) -> char {
+        if x < 0 || y < 0 || x >= self.w || y >= self.h { '0' } else { self.rows[y as usize][x as usize] }
+    }
+
+    /// Les défauts qui rendraient le niveau injouable (mêmes contrôles que l'éditeur) : cases inaccessibles
+    /// (les téléporteurs relient les îlots), culs-de-sac, place pour la file. Les herses comptent comme fermées.
+    #[cfg(test)]
+    pub fn problems(&self, tourists: u32) -> Vec<String> {
+        let open = |x: i32, y: i32| !matches!(self.char_at(x, y), '0' | '2'..='7' | 'o' | 'h' | 'H');
+        let cells: Vec<IVec2> = (0..self.h).flat_map(|y| (0..self.w).map(move |x| IVec2::new(x, y))).filter(|c| open(c.x, c.y)).collect();
+        let mut out = Vec::new();
+        if (cells.len() as u32) <= tourists + 13 {
+            out.push(format!("trop étroit ({} cases libres pour {tourists} touristes)", cells.len()));
+        }
+        let start = self.find('S').unwrap_or_default();
+        let mut seen = std::collections::HashSet::new();
+        let mut stack = vec![start];
+        while let Some(c) = stack.pop() {
+            if !open(c.x, c.y) || !seen.insert(c) {
+                continue;
+            }
+            stack.extend([IVec2::X, IVec2::NEG_X, IVec2::Y, IVec2::NEG_Y].map(|d| c + d));
+            let ch = self.char_at(c.x, c.y);
+            if ('A'..='D').contains(&ch) {
+                stack.extend(self.cells().filter(|(p, k)| *k == ch && *p != c).map(|(p, _)| p));
+            }
+        }
+        if seen.len() != cells.len() {
+            out.push(format!("{} cases inaccessibles", cells.len() - seen.len()));
+        }
+        let dead = cells.iter().filter(|c| [IVec2::X, IVec2::NEG_X, IVec2::Y, IVec2::NEG_Y].iter().filter(|d| open(c.x + d.x, c.y + d.y)).count() < 2).count();
+        if dead > 0 {
+            out.push(format!("{dead} culs-de-sac"));
+        }
+        out
+    }
+
     pub fn exit(&self) -> Option<IVec2> {
         self.find('E')
     }

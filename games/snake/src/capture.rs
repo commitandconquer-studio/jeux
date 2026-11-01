@@ -34,7 +34,7 @@ fn shots(press: bool) -> Vec<Shot> {
         let at = |name: &'static str, state: GameState, mode: Mode| Shot { name, state, universe: Universe::Prairie, long: Some(12), features: false, shape: Shape::Medium, mode };
         return vec![
             at("scene-1", GameState::Scene, Mode::Scenario { scenario: 0, step: 0 }),
-            at("scene-2", GameState::Scene, Mode::Scenario { scenario: 0, step: 1 }),
+            at("scene-2", GameState::Scene, Mode::Scenario { scenario: 0, step: 2 }),
             at("scenarios", GameState::Scenarios, Mode::Infinite),
         ];
     }
@@ -51,7 +51,7 @@ fn shots(press: bool) -> Vec<Shot> {
             shot("01-menu", Menu, Prairie, None, false),
             at("02-mode-scenario", GameState::Scenarios, Mode::Infinite, None),
             at("16-scene-bienvenue", GameState::Scene, Mode::Scenario { scenario: 0, step: 0 }, None),
-            at("17-scene-visite", GameState::Scene, Mode::Scenario { scenario: 0, step: 1 }, None),
+            at("17-scene-visite", GameState::Scene, Mode::Scenario { scenario: 0, step: 2 }, None),
             rich("03-jardin-public", 5, 30, true),
             rich("04-desert", 19, 30, false),
             rich("05-ruines-antiques", 29, 30, false),

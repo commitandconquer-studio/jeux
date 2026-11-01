@@ -34,7 +34,19 @@ pub static SCENARIOS: LazyLock<Vec<Scenario>> = LazyLock::new(|| {
         return vec![build(&format!("[Aperçu illisible]\ntype = scene\nreplique = Aperçu | Le fichier d'aperçu est illisible — {shown}\n"), "Aperçu").expect("aventure de repli")];
     }
     let mut all = Vec::new();
-    for (name, text) in [("Découverte", include_str!("../scenarios/decouverte.txt"))] {
+    for (name, text) in [
+        ("Tutoriel", include_str!("../scenarios/tutoriel.txt")),
+        ("Le désert", include_str!("../scenarios/lieu_desert.txt")),
+        ("Les ruines", include_str!("../scenarios/lieu_ruines.txt")),
+        ("Le cimetière", include_str!("../scenarios/lieu_cimetiere.txt")),
+        ("L'île des pirates", include_str!("../scenarios/lieu_pirates.txt")),
+        ("Le parc de loisirs", include_str!("../scenarios/lieu_parc.txt")),
+        ("La ville", include_str!("../scenarios/lieu_ville.txt")),
+        ("La gare", include_str!("../scenarios/lieu_gare.txt")),
+        ("Le port", include_str!("../scenarios/lieu_port.txt")),
+        ("Le village médiéval", include_str!("../scenarios/lieu_medieval.txt")),
+        ("Les grottes", include_str!("../scenarios/lieu_grottes.txt")),
+    ] {
         all.push(build(text, name).unwrap_or_else(|e| panic!("aventure « {name} » illisible : {e}")));
     }
     all
@@ -117,5 +129,33 @@ impl Plugin for StoryPlugin {
             .add_systems(Startup, load_progress)
             .add_systems(OnEnter(GameState::Step), enter_step)
             .add_systems(OnEnter(GameState::GameOver), after_win.after(crate::voyage::conclude));
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn builtin_adventures_are_sound() {
+        assert_eq!(SCENARIOS.len(), 11, "le tutoriel et dix lieux");
+        for sc in SCENARIOS.iter() {
+            let levels = sc.steps.iter().filter(|l| l.scene.is_none()).count();
+            assert!(levels >= 6, "{} : {levels} niveaux seulement", sc.title);
+            for step in &sc.steps {
+                if let Some(g) = &step.grid {
+                    let p = g.problems(step.tourists);
+                    assert!(p.is_empty(), "{} / {} : {p:?}", sc.title, step.name);
+                    // Départ valide, sortie voulue présente quand le niveau en a une.
+                    assert!(step.layout(0).start_cells().iter().all(|c| step.layout(0).walkable(*c)), "{} : départ", step.name);
+                } else if step.scene.is_none() {
+                    panic!("{} / {} : niveau sans carte", sc.title, step.name);
+                }
+                if let Some(scene) = &step.scene {
+                    assert!(!scene.lines.is_empty() && scene.actors.len() <= 5, "{} / {} : scène vide ou trop de personnages", sc.title, step.name);
+                    assert!(scene.lines.iter().all(|l| l.text.chars().count() <= 200), "{} / {} : réplique trop longue", sc.title, step.name);
+                }
+            }
+        }
     }
 }

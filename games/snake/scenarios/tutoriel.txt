@@ -1,0 +1,273 @@
+# Généré par tools/gen-aventures.py — ne pas modifier à la main (relancer le script).
+titre = Tutoriel
+description = Apprends à guider ta file de touristes, pas à pas
+
+[Bienvenue]
+type = scene
+decor = jardin
+camera = moyen
+personnage = Léa | 1 | 1.6.1.0.2 | centre | salut | guide | bequille
+replique = Léa | Bonjour et bienvenue ! Je suis Léa, ton guide dans le jeu.
+replique = Léa | Ça va être très simple : ton but, c'est d'attraper les touristes. Déplace-toi avec les flèches du clavier. | gros
+replique = Léa | Essayons avec un seul touriste. Il t'attend quelque part dans le parc ! | moyen
+
+[Mon premier touriste]
+lieu = jardin
+touristes = 1
+pas = 0.36
+depart = est
+carte:
+001111111111111100
+011111111111111110
+111111111111111111
+111111111111111111
+111111111111111111
+111111111111111111
+111111111111111111
+111111111111111111
+111111111111111111
+1111S1111111111111
+111111111111111111
+111111111111111111
+111111111111111111
+111111111111111111
+111111111111111111
+111111111111111111
+011111111111111110
+001111111111111100
+
+[Deux touristes]
+type = scene
+decor = jardin
+camera = moyen
+personnage = Léa | 1 | 1.6.1.0.2 | centre | salut | guide | bequille
+personnage = Max | 2 | 5.0.3.2.1 | gauche | repos | - | lunettes-soleil
+personnage = Zoé | 5 | 0.8.5.0.2 | droite | repos | - | canne-blanche
+personnage = Rémi | 16 | 2.3.4.1.1 | gauche2 | fauteuil-assis | -
+replique = Léa | Bravo, il te suit ! Tu vois, la file s'allonge derrière toi.
+replique = Léa | Maintenant, essayons d'en attraper deux. Dès que le premier a rejoint la file, le deuxième apparaît. | gros
+replique = Léa | Attention : ne touche ni les bords, ni ta propre file. | moyen
+
+[Deux touristes]
+lieu = jardin
+touristes = 2
+pas = 0.36
+depart = est
+carte:
+001111111111111100
+011111111111111110
+111111111111111111
+111111111111111111
+111111111111111111
+111111111111111111
+111111111111111111
+111111111111111111
+111111111111111111
+1111S1111111111111
+111111111111111111
+111111111111111111
+111111111111111111
+111111111111111111
+111111111111111111
+111111111111111111
+011111111111111110
+001111111111111100
+
+[Dix touristes]
+type = scene
+decor = jardin
+camera = moyen
+personnage = Léa | 1 | 1.6.1.0.2 | centre | salut | guide | bequille
+personnage = Max | 2 | 5.0.3.2.1 | gauche | repos | - | lunettes-soleil
+personnage = Zoé | 5 | 0.8.5.0.2 | droite | repos | - | canne-blanche
+personnage = Rémi | 16 | 2.3.4.1.1 | gauche2 | fauteuil-assis | -
+replique = Léa | Très bien ! Tu as compris le principe.
+replique = Max | Alors, tu arriveras à en attraper dix ?
+replique = Léa | On voit ça tout de suite. Courage ! | gros
+
+[Dix touristes]
+lieu = jardin
+touristes = 10
+pas = 0.34
+depart = est
+carte:
+001111111111111100
+011111111111111110
+111111111111111111
+111111111111111111
+111111111111111111
+111111111111111111
+111111111111111111
+111111111111111111
+111111111111111111
+1111S1111111111111
+111111111111111111
+111111111111111111
+111111111111111111
+111111111111111111
+111111111111111111
+111111111111111111
+011111111111111110
+001111111111111100
+
+[Les formes de terrain]
+type = scene
+decor = jardin
+camera = large
+personnage = Léa | 1 | 1.6.1.0.2 | centre | salut | guide | bequille
+personnage = Max | 2 | 5.0.3.2.1 | gauche | repos | - | lunettes-soleil
+personnage = Zoé | 5 | 0.8.5.0.2 | droite | repos | - | canne-blanche
+personnage = Rémi | 16 | 2.3.4.1.1 | gauche2 | fauteuil-assis | -
+replique = Léa | Dix touristes, bravo ! Le groupe est déjà bien long.
+replique = Léa | Et si on essayait d'autres formes de terrain ? On commence par un grand L.
+replique = Zoé | J'entends que le chemin tourne. Fais attention aux virages. | moyen
+
+[Le grand L]
+lieu = jardin
+touristes = 10
+pas = 0.34
+depart = est
+carte:
+01111111111000000000
+11111111111000000000
+11111111111000000000
+11111111111000000000
+11111111111000000000
+11111111111000000000
+11111111111000000000
+11111111111000000000
+11111111111111111111
+11111111111111111111
+11111S11111111111111
+11111111111111111111
+11111111111111111111
+11111111111111111111
+11111111111111111111
+11111111111111111111
+11111111111111111111
+11111111111111111111
+11111111111111111111
+01111111111111111110
+
+[Le carré creux]
+type = scene
+decor = jardin
+camera = moyen
+personnage = Léa | 1 | 1.6.1.0.2 | centre | salut | guide | bequille
+personnage = Max | 2 | 5.0.3.2.1 | gauche | repos | - | lunettes-soleil
+personnage = Zoé | 5 | 0.8.5.0.2 | droite | repos | - | canne-blanche
+personnage = Rémi | 16 | 2.3.4.1.1 | gauche2 | fauteuil-assis | -
+replique = Léa | Pas mal ! Maintenant, un carré creux : on tourne autour d'un massif de fleurs.
+replique = Léa | Et cette fois, quinze touristes ! | gros
+
+[Le carré creux]
+lieu = jardin
+touristes = 15
+pas = 0.33
+depart = est
+carte:
+00111111111111111100
+01111111111111111110
+11111111111111111111
+11111111111111111111
+11111111111111111111
+11111000000000011111
+11111000000000011111
+11111000000000011111
+11111000000000011111
+11111000000000011111
+11111000000000011111
+11111000000000011111
+11111000000000011111
+11111000000000011111
+11111000000000011111
+11111S11111111111111
+11111111111111111111
+11111111111111111111
+01111111111111111110
+00111111111111111100
+
+[Le huit]
+type = scene
+decor = jardin
+camera = large
+personnage = Léa | 1 | 1.6.1.0.2 | centre | salut | guide | bequille
+personnage = Max | 2 | 5.0.3.2.1 | gauche | repos | - | lunettes-soleil
+personnage = Zoé | 5 | 0.8.5.0.2 | droite | repos | - | canne-blanche
+personnage = Rémi | 16 | 2.3.4.1.1 | gauche2 | fauteuil-assis | -
+replique = Léa | Dernière forme : le 8. Deux massifs, une seule file, et vingt touristes.
+replique = Max | Ça ressemble à un rond-point. Ne te perds pas ! | moyen
+
+[Le huit]
+lieu = jardin
+touristes = 20
+pas = 0.33
+depart = est
+carte:
+0011111111111111111100
+0111111111111111111110
+1111111111111111111111
+11111S1111111111111111
+1111000001111000001111
+1111000001111000001111
+1111000001111000001111
+1111000001111000001111
+1111000001111000001111
+1111111111111111111111
+1111111111111111111111
+0111111111111111111110
+0011111111111111111100
+
+[La grande récupération]
+type = scene
+decor = jardin
+camera = moyen
+personnage = Léa | 1 | 1.6.1.0.2 | centre | salut | guide | bequille
+personnage = Max | 2 | 5.0.3.2.1 | gauche | repos | - | lunettes-soleil
+personnage = Zoé | 5 | 0.8.5.0.2 | droite | repos | - | canne-blanche
+personnage = Rémi | 16 | 2.3.4.1.1 | gauche2 | fauteuil-assis | -
+replique = Léa | Tu es prêt pour la grande récupération.
+replique = Léa | Trente touristes dispersés sur tout le terrain, puis la sortie. Tu les rassembles tous, et ils sortent derrière toi. | gros
+replique = Rémi | Les allées sont larges, on te suit ! | moyen
+
+[La grande récupération]
+lieu = jardin
+touristes = 30
+pas = 0.32
+depart = est
+sortie = oui
+carte:
+001111111111111111E100
+0111111111111111111110
+1111111111111111111111
+1111111111111111111111
+1111111111111111111111
+1111111111111111111111
+1111111111111111111111
+1111111111111111111111
+1111111111111111111111
+1111111111111111111111
+1111111111111111111111
+11111S1111111111111111
+1111111111111111111111
+1111111111111111111111
+1111111111111111111111
+1111111111111111111111
+1111111111111111111111
+1111111111111111111111
+1111111111111111111111
+1111111111111111111111
+0111111111111111111110
+0011111111111111111100
+
+[En route]
+type = scene
+decor = jardin
+camera = large
+personnage = Léa | 1 | 1.6.1.0.2 | centre | salut | guide | bequille
+personnage = Max | 2 | 5.0.3.2.1 | gauche | salut | - | lunettes-soleil
+personnage = Zoé | 5 | 0.8.5.0.2 | droite | repos | - | canne-blanche
+personnage = Rémi | 16 | 2.3.4.1.1 | gauche2 | fauteuil-assis | -
+replique = Léa | Félicitations, tu connais toutes les bases !
+replique = Léa | Maintenant, on change de lieu. Il y aura des obstacles, des trous, des pièges... et toujours plus de touristes.
+replique = Max | En route pour l'aventure ! | moyen
