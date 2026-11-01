@@ -1,6 +1,6 @@
 +++
 title = "Suivez le guide !"
-updated = 2026-10-28T17:00:00+01:00
+updated = 2026-11-01T15:00:00+01:00
 description = "Guidez une file de touristes à travers 11 décors : attrapez les isolés, évitez les pièges et suivez l'histoire."
 [extra]
 web = true
@@ -27,13 +27,13 @@ mondes = [
 ]
 chiffres = [
   { n = "11", t = "décors" },
+  { n = "67", t = "niveaux d'aventure" },
   { n = "19", t = "personnages" },
-  { n = "10", t = "sortes de pièges" },
 ]
 visuels = ["03-jardin-public", "16-scene-bienvenue", "14-longue-file", "09-centre-ville", "15-cases-speciales", "07-ile-des-pirates"]
 captures = [
   { img = "01-menu", t = "Le menu : mode scénario, mode infini et choix du paysage" },
-  { img = "02-mode-scenario", t = "La liste des aventures du mode scénario" },
+  { img = "02-mode-scenario", t = "Le mode scénario : l'aventure « Le grand voyage »" },
   { img = "17-scene-visite", t = "Une scène parlée : personnages animés et sous-titres" },
   { img = "14-longue-file", t = "Une file de cent touristes" },
   { img = "15-cases-speciales", t = "Téléporteurs, accélérateurs, tapis roulants et trous" },
@@ -43,14 +43,14 @@ captures = [
 **Suivez le guide !** est la nouvelle vie de notre Snake (il s'appelait *À la queue leu leu*). Vous êtes le **guide** d'une file de touristes qui s'allonge à chacun de vos pas, comme une chenille de bal populaire. Attrapez les isolés pour les faire entrer dans la file, et ne touchez ni un mur ni la file elle-même.
 
 ## Le mode scénario
-Des aventures faites de **scènes parlées** (décors, personnages animés, sous-titres) qui alternent avec des **niveaux**. La première aventure, *Découverte*, est un court tutoriel. Un éditeur de niveaux nous permet d'en écrire d'autres.
+Des aventures faites de **scènes parlées** (décors, personnages animés, sous-titres) qui alternent avec des **niveaux**. Une seule aventure, **« Le grand voyage »** : un tutoriel au jardin public (7 niveaux, avec Léa, Max, Zoé et Rémi), puis les dix autres lieux, **6 niveaux chacun** : **67 niveaux** et **38 scènes parlées** en tout.
 
 ## Le mode infini
-Jouez sans fin : une nouvelle case spéciale arrive tous les quelques invités, et la file s'allonge, s'allonge…
+Jouez sans fin : une nouvelle case spéciale arrive tous les quelques invités, et la file s'allonge, s'allonge… Vous choisissez le **paysage** et l'une des **cinq vitesses**, de très lente à très rapide. L'accélération à chaque invité est plus douce, et le rival comme les trains avancent au rythme de la file.
 
 ## Onze décors
-Jardin public, désert, ruines antiques, cimetière, île des pirates, parc de loisirs, centre-ville (avenue et tramway), gare, port, village médiéval et grottes. Chacun a son décor et ses pièges.
+Jardin public, désert, ruines antiques, cimetière, île des pirates, parc de loisirs, centre-ville (avenue et tramway), gare, port, village médiéval et grottes. Chacun a son décor, recomposé à la main : clairière et campement, oasis, colonnade, cimetière clos, allées du parc, rues en croix, voies de gare, pontons, château, grotte aux lumières vacillantes.
 
 ## Pièges et personnages
 **10 sortes de pièges** : blocs, trous, téléporteurs par paires, accélérateurs, tapis roulants, pontons fragiles, herses, éboulements, guide rival qui emmène vos touristes, et trains. Les plateaux prennent toutes les formes, jusqu'aux îlots reliés par des téléporteurs.
-**19 personnages** : 12 touristes, 4 monstres du cimetière et 3 personnes en fauteuil roulant, chacun avec **96 apparences**. L'interface existe en **5 langues** (les aventures sont en français pour l'instant).
+**19 personnages** : 12 touristes, 4 monstres du cimetière et 3 personnes en fauteuil roulant, chacun avec **96 apparences**. L'interface existe en **5 langues** (l'aventure est en français pour l'instant).

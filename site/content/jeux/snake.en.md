@@ -1,6 +1,6 @@
 +++
 title = "Follow the Guide!"
-updated = 2026-10-28T17:00:00+01:00
+updated = 2026-11-01T15:00:00+01:00
 description = "Lead a line of tourists through 11 different settings: catch the stragglers, dodge the traps, and follow the story."
 [extra]
 web = true
@@ -27,13 +27,13 @@ mondes = [
 ]
 chiffres = [
   { n = "11", t = "settings" },
+  { n = "67", t = "adventure levels" },
   { n = "19", t = "characters" },
-  { n = "10", t = "kinds of traps" },
 ]
 visuels = ["03-jardin-public", "16-scene-bienvenue", "14-longue-file", "09-centre-ville", "15-cases-speciales", "07-ile-des-pirates"]
 captures = [
   { img = "01-menu", t = "The menu: story mode, endless mode and scenery choice" },
-  { img = "02-mode-scenario", t = "The story mode adventure list" },
+  { img = "02-mode-scenario", t = "Story mode: the adventure The Grand Journey" },
   { img = "17-scene-visite", t = "A spoken scene: animated characters and subtitles" },
   { img = "14-longue-file", t = "A line of a hundred tourists" },
   { img = "15-cases-speciales", t = "Teleporters, boosters, conveyors and holes" },
@@ -43,14 +43,14 @@ captures = [
 **Follow the Guide!** is the new life of our Snake (it used to be *Conga Line*). You are the **guide** of a line of tourists that grows with every step, like a conga line at a village dance. Catch the stragglers to bring them into the line, and never touch a wall or the line itself.
 
 ## Story mode
-Adventures made of **spoken scenes** (settings, animated characters, subtitles) alternating with **levels**. The first adventure, *Discovery*, is a short tutorial. A level editor lets us write more.
+Adventures made of **spoken scenes** (settings, animated characters, subtitles) alternating with **levels**. A single adventure, **"The Grand Journey"**: a tutorial in the public garden (7 levels, with Léa, Max, Zoé and Rémi), then the ten other settings, **6 levels each**: **67 levels** and **38 spoken scenes** in all.
 
 ## Endless mode
-Play without end: a new special tile arrives every few guests, and the line gets longer and longer.
+Play without end: a new special tile arrives every few guests, and the line gets longer and longer. You pick the **scenery** and one of **five speeds**, from very slow to very fast. The speed-up per guest is gentler, and the rival and the trains move to the line's rhythm.
 
 ## Eleven settings
-Public garden, desert, ancient ruins, graveyard, pirate island, theme park, downtown (avenue and tram), station, harbour, medieval village and caves. Each one has its own scenery and its own traps.
+Public garden, desert, ancient ruins, graveyard, pirate island, theme park, downtown (avenue and tram), station, harbour, medieval village and caves. Each one has its own hand-composed scenery: clearing and camp, oasis, colonnade, walled graveyard, park paths, crossing streets, station tracks, jetties, castle, a cave with flickering lights.
 
 ## Traps and characters
 **10 kinds of traps**: blocks, holes, paired teleporters, boosters, conveyors, fragile jetties, portcullises, rockfalls, a rival guide who takes your tourists, and trains. Boards come in every shape, even islands linked by teleporters.
-**19 characters**: 12 tourists, 4 graveyard monsters and 3 wheelchair users, each with **96 appearances**. The interface comes in **5 languages** (adventures are in French for now).
+**19 characters**: 12 tourists, 4 graveyard monsters and 3 wheelchair users, each with **96 appearances**. The interface comes in **5 languages** (the adventure is in French for now).
