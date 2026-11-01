@@ -431,168 +431,98 @@ pub fn rebuild_world(
         }
     }
 
-    // Décor autour du plateau, y compris dans les creux des formes en L, en U ou en route.
+    // Décor autour du plateau, par bandes : petit près du plateau, de plus en plus gros en s'éloignant (profondeur homogène).
+    // Chaque bande ne sert que quelques modèles, rangés dans un ordre régulier, tournés vers le centre.
     let mut rng = Rng::new(universe as u64 * 7919 + shape as u64 * 31);
-    let reach_x = l.w as f32 / 2.0 + 10.0;
-    let reach_z = l.h as f32 / 2.0 + 10.0;
-    let mut x = -reach_x;
-    while x <= reach_x {
-        let mut z = -reach_z;
-        while z <= reach_z {
-            let jitter = Vec3::new(rng.below(100) as f32 / 100.0 - 0.5, 0.0, rng.below(100) as f32 / 100.0 - 0.5);
-            let pos = Vec3::new(x, GROUND_Y, z) + jitter;
-            // Position sur la grille de jeu, pour savoir à quelle distance du plateau on se trouve.
-            let on_grid = Vec2::new(pos.x + (l.w - 1) as f32 / 2.0, pos.z + (l.h - 1) as f32 / 2.0);
-            let free = l.distance_to_walkable(on_grid) > if matches!(universe, Universe::Medieval | Universe::Cave) { 4.2 } else { 3.0 };
-            if free && rng.below(10) < 6 {
-                spawn_decor(universe, &mut b, &mut rng, pos);
-            }
-            z += 3.0;
+    let [near, mid, far] = bands(universe);
+    let (cx, cz) = ((l.w - 1) as f32 / 2.0, (l.h - 1) as f32 / 2.0);
+    let reach = (l.w.max(l.h) as f32) / 2.0 + 34.0;
+    // (modèles, pas de la grille, distance minimale, distance maximale, échelle, saute les grands objets côté caméra)
+    for (list, step, lo, hi, k, low_front) in [(near, 2.2_f32, 1.8_f32, 6.0_f32, 0.8_f32, true), (mid, 3.8, 6.0, 14.0, 1.0, true), (far, 9.0, 14.0, 32.0, 2.2, true)] {
+        if list.is_empty() {
+            continue;
         }
-        x += 3.0;
+        let (mut ix, mut x) = (0usize, -reach);
+        while x <= reach {
+            let (mut iz, mut z) = (0usize, -reach);
+            while z <= reach {
+                let jitter = |rng: &mut Rng| (rng.below(100) as f32 / 100.0 - 0.5) * step * 0.35;
+                let pos = Vec3::new(x + jitter(&mut rng), GROUND_Y, z + jitter(&mut rng));
+                let d = l.distance_to_walkable(Vec2::new(pos.x + cx, pos.z + cz));
+                if d >= lo && d < hi {
+                    let (file, scale) = list[(ix * 7 + iz * 13) % list.len()];
+                    // Côté caméra, rien de haut qui cacherait le plateau.
+                    let front = pos.x * 0.4 + pos.z > 0.0;
+                    if !(low_front && front && is_tall(file)) {
+                        // Tourné vers le centre, à un petit écart près.
+                        let yaw = (-pos.x).atan2(-pos.z) + (rng.below(100) as f32 / 100.0 - 0.5) * 0.4;
+                        let pos = if matches!(universe, Universe::Ocean | Universe::Port) { pos + Vec3::Y * 0.05 } else { pos };
+                        b.model(file, pos, scale * k, yaw);
+                    }
+                }
+                z += step;
+                iz += 1;
+            }
+            x += step;
+            ix += 1;
+        }
     }
 }
 
-/// Le décor autour du plateau : modèles Kenney (CC0), (fichier, échelle).
-fn decor_models(u: Universe) -> &'static [(&'static str, f32)] {
+/// Les trois bandes du décor autour du plateau (près, au milieu, au loin) : modèles Kenney (CC0), (fichier, échelle de base).
+/// Les échelles de bande (petit, normal, gros) sont appliquées par `rebuild_world`.
+fn bands(u: Universe) -> [&'static [(&'static str, f32)]; 3] {
     match u {
-        Universe::Prairie => &[
-            ("mini-forest/tree", 2.2),
-            ("mini-forest/tree-high", 2.2),
-            ("mini-forest/tree", 2.8),
-            ("mini-forest/tent", 2.0),
-            ("nature-kit/rock_largeA", 2.2),
-            ("nature-kit/plant_bush", 2.4),
-            ("nature-kit/stump_round", 2.4),
-            ("nature-kit/flower_redA", 2.5),
-            ("nature-kit/flower_yellowB", 2.5),
-            ("nature-kit/log_large", 2.2),
+        Universe::Prairie => [
+            &[("nature-kit/flower_redA", 2.5), ("nature-kit/flower_yellowB", 2.5), ("nature-kit/plant_bush", 2.4), ("nature-kit/stump_round", 2.4), ("fantasy-town-kit/fence", 1.8)],
+            &[("mini-forest/tree", 2.8), ("mini-forest/tent", 2.0), ("nature-kit/rock_largeA", 2.2), ("mini-forest/tree-high", 2.4), ("nature-kit/log_large", 2.2)],
+            &[("mini-forest/tree-high", 2.6), ("mini-forest/tree", 3.0), ("fantasy-town-kit/windmill", 1.2)],
         ],
-        Universe::Desert => &[
-            ("nature-kit/cactus_tall", 2.8),
-            ("nature-kit/cactus_short", 2.8),
-            ("nature-kit/cactus_tall", 3.4),
-            ("pirate-kit/rocks-sand-a", 1.4),
-            ("pirate-kit/rocks-sand-b", 1.4),
-            ("pirate-kit/rocks-sand-c", 1.4),
-            ("survival-kit/tent-canvas", 1.6),
-            ("survival-kit/campfire-pit", 1.8),
-            ("survival-kit/signpost", 2.4),
+        Universe::Desert => [
+            &[("nature-kit/cactus_short", 2.4), ("pirate-kit/rocks-sand-a", 1.4), ("pirate-kit/rocks-sand-b", 1.4), ("pirate-kit/rocks-sand-c", 1.4)],
+            &[("nature-kit/cactus_tall", 2.8), ("nature-kit/cactus_short", 3.2), ("survival-kit/tent-canvas", 1.6), ("survival-kit/campfire-pit", 1.8), ("survival-kit/signpost", 2.4)],
+            &[("pirate-kit/rocks-sand-a", 1.8), ("nature-kit/cactus_tall", 3.0), ("pirate-kit/rocks-sand-c", 1.8), ("pirate-kit/rocks-sand-b", 1.8)],
         ],
-        Universe::Ruines => &[
-            ("prototype-kit/column", 2.6),
-            ("prototype-kit/column-rounded", 2.6),
-            ("prototype-kit/column-low", 2.6),
-            ("mini-arena/column", 2.6),
-            ("mini-arena/column-damaged", 2.6),
-            ("mini-arena/statue", 2.6),
-            ("mini-arena/trophy", 2.4),
-            ("fantasy-town-kit/pillar-stone", 2.6),
-            ("fantasy-town-kit/wall-arch", 2.2),
-            ("fantasy-town-kit/fountain-round", 2.2),
-            ("nature-kit/rock_largeA", 2.2),
-            ("nature-kit/cactus_short", 2.4),
+        Universe::Ruines => [
+            &[("mini-arena/bricks", 2.0), ("prototype-kit/column-low", 2.6), ("mini-arena/column-damaged", 2.6)],
+            &[("prototype-kit/column", 2.6), ("mini-arena/statue", 2.6), ("prototype-kit/column-rounded", 2.6), ("fantasy-town-kit/fountain-round", 2.2), ("mini-arena/trophy", 2.4)],
+            &[("fantasy-town-kit/wall-arch", 2.2), ("fantasy-town-kit/pillar-stone", 2.6), ("mini-arena/column", 2.6)],
         ],
-        Universe::Cimetiere => &[
-            ("graveyard-kit/pine-fall", 2.4),
-            ("graveyard-kit/pine", 2.4),
-            ("graveyard-kit/pine-crooked", 2.4),
-            ("graveyard-kit/gravestone-cross", 2.4),
-            ("graveyard-kit/gravestone-round", 2.4),
-            ("graveyard-kit/gravestone-broken", 2.4),
-            ("graveyard-kit/crypt-small", 2.2),
-            ("graveyard-kit/pumpkin-carved", 2.4),
-            ("graveyard-kit/lightpost-single", 2.4),
-            ("graveyard-kit/iron-fence", 2.4),
+        Universe::Cimetiere => [
+            &[("graveyard-kit/pumpkin-carved", 2.4), ("graveyard-kit/gravestone-round", 2.4), ("graveyard-kit/gravestone-broken", 2.4)],
+            &[("graveyard-kit/gravestone-cross", 2.4), ("graveyard-kit/lightpost-single", 2.4), ("graveyard-kit/iron-fence", 2.4), ("graveyard-kit/pine-crooked", 2.4)],
+            &[("graveyard-kit/crypt-small", 2.2), ("graveyard-kit/pine", 2.4), ("graveyard-kit/pine-fall", 2.4)],
         ],
-        Universe::Ocean => &[
-            ("pirate-kit/palm-straight", 1.9),
-            ("pirate-kit/palm-bend", 1.9),
-            ("pirate-kit/palm-detailed-straight", 1.9),
-            ("pirate-kit/barrel", 1.6),
-            ("pirate-kit/crate", 1.6),
-            ("pirate-kit/chest", 1.6),
-            ("pirate-kit/rocks-a", 1.3),
-            ("pirate-kit/boat-row-small", 1.4),
-            ("pirate-kit/ship-small", 1.0),
+        Universe::Ocean => [
+            &[("pirate-kit/barrel", 1.6), ("pirate-kit/crate", 1.6), ("pirate-kit/chest", 1.6)],
+            &[("pirate-kit/boat-row-small", 1.4), ("pirate-kit/palm-straight", 1.9), ("pirate-kit/rocks-a", 1.3), ("pirate-kit/palm-bend", 1.9)],
+            &[("pirate-kit/ship-small", 1.0), ("pirate-kit/palm-detailed-straight", 1.9), ("pirate-kit/rocks-a", 1.3)],
         ],
-        Universe::Parc => &[
-            ("coaster-kit/tree", 2.2),
-            ("coaster-kit/tree-large", 2.0),
-            ("coaster-kit/flowers", 2.4),
-            ("coaster-kit/bench", 2.2),
-            ("coaster-kit/trash", 2.2),
-            ("coaster-kit/stall-food", 2.0),
-            ("coaster-kit/stall-drinks", 2.0),
-            ("coaster-kit/stall-information", 2.0),
-            ("coaster-kit/support-large", 1.6),
-            ("coaster-kit/park-entrance", 1.2),
-            ("fantasy-town-kit/lantern", 2.4),
-            ("fantasy-town-kit/fountain-round", 2.2),
+        Universe::Parc => [
+            &[("coaster-kit/bench", 2.2), ("coaster-kit/flowers", 2.4), ("coaster-kit/trash", 2.2)],
+            &[("coaster-kit/stall-food", 2.0), ("coaster-kit/stall-drinks", 2.0), ("coaster-kit/tree", 2.2), ("coaster-kit/stall-information", 2.0), ("fantasy-town-kit/lantern", 2.4)],
+            &[("coaster-kit/support-large", 1.6), ("coaster-kit/park-entrance", 1.2), ("coaster-kit/tree-large", 2.0), ("coaster-kit/station", 1.0)],
         ],
-        Universe::Ville => &[
-            ("city-kit-commercial/building-a", 1.3),
-            ("city-kit-commercial/building-d", 1.3),
-            ("city-kit-commercial/building-g", 1.3),
-            ("city-kit-commercial/building-k", 1.3),
-            ("city-kit-commercial/building-skyscraper-b", 1.2),
-            ("city-kit-commercial/building-skyscraper-d", 1.2),
-            ("city-kit-roads/light-square", 2.0),
-            ("city-kit-roads/traffic-light", 2.0),
-            ("city-kit-roads/construction-cone", 2.0),
-            ("city-kit-suburban/tree-small", 1.8),
-            ("city-kit-suburban/planter", 2.0),
+        Universe::Ville => [&[], &[], &[]],
+        Universe::Gare => [
+            &[("city-kit-roads/construction-cone", 2.0), ("city-kit-industrial/shipping-container-a", 1.0), ("city-kit-industrial/detail-tank", 1.4)],
+            &[("train-kit/train-carriage-box", 0.6), ("city-kit-industrial/building-a", 1.3), ("city-kit-industrial/shipping-container-b", 1.2), ("city-kit-industrial/building-c", 1.3)],
+            &[("city-kit-industrial/chimney-medium", 1.2), ("city-kit-industrial/water-tower", 1.2), ("city-kit-industrial/building-e", 1.3)],
         ],
-        Universe::Gare => &[
-            ("city-kit-industrial/building-a", 1.3),
-            ("city-kit-industrial/building-c", 1.3),
-            ("city-kit-industrial/building-e", 1.3),
-            ("city-kit-industrial/shipping-container-a", 1.2),
-            ("city-kit-industrial/shipping-container-b", 1.2),
-            ("city-kit-industrial/shipping-container-c", 1.2),
-            ("city-kit-industrial/water-tower", 1.2),
-            ("city-kit-industrial/chimney-medium", 1.2),
-            ("city-kit-industrial/detail-tank", 1.4),
-            ("city-kit-roads/light-square", 2.0),
-            ("city-kit-roads/construction-cone", 2.0),
-            ("city-kit-suburban/tree-small", 1.8),
+        Universe::Port => [
+            &[("pirate-kit/barrel", 1.6), ("pirate-kit/crate", 1.6)],
+            &[("city-kit-industrial/shipping-container-a", 1.2), ("pirate-kit/boat-row-small", 1.4), ("city-kit-industrial/shipping-container-c", 1.2)],
+            &[("pirate-kit/ship-small", 1.0), ("city-kit-industrial/detail-tank-large", 1.2), ("city-kit-industrial/water-tower", 1.2)],
         ],
-        Universe::Port => &[
-            ("city-kit-industrial/shipping-container-a", 1.2),
-            ("city-kit-industrial/shipping-container-b", 1.2),
-            ("city-kit-industrial/shipping-container-c", 1.2),
-            ("city-kit-industrial/detail-tank-large", 1.2),
-            ("pirate-kit/boat-row-small", 1.4),
-            ("pirate-kit/ship-small", 1.0),
-            ("pirate-kit/barrel", 1.6),
-            ("pirate-kit/crate", 1.6),
-            ("city-kit-roads/light-square", 2.0),
+        Universe::Medieval => [
+            &[("fantasy-town-kit/fence", 1.8), ("fantasy-town-kit/planks", 1.8), ("castle-kit/tree-small", 2.0)],
+            &[("fantasy-town-kit/stall-red", 1.6), ("fantasy-town-kit/stall-green", 1.6), ("fantasy-town-kit/cart", 1.6), ("mini-forest/tent", 2.0), ("fantasy-town-kit/lantern", 2.2)],
+            &[("castle-kit/tower-hexagon-base", 2.0), ("castle-kit/tree-large", 2.4), ("fantasy-town-kit/windmill", 1.2)],
         ],
-        Universe::Medieval => &[
-            ("castle-kit/tower-hexagon-base", 2.2),
-            ("castle-kit/tree-large", 2.4),
-            ("castle-kit/tree-large", 2.8),
-            ("mini-forest/tent", 2.0),
-            ("castle-kit/tree-large", 2.0),
-            ("castle-kit/tree-small", 2.0),
-            ("castle-kit/rocks-large", 1.6),
-            ("castle-kit/flag", 1.6),
-            ("fantasy-town-kit/stall-red", 1.6),
-            ("fantasy-town-kit/stall-green", 1.6),
-            ("fantasy-town-kit/cart", 1.6),
-            ("fantasy-town-kit/windmill", 1.2),
-            ("fantasy-town-kit/lantern", 2.2),
-            ("fantasy-town-kit/fence", 1.8),
-        ],
-        Universe::Cave => &[
-            ("nature-kit/rock_largeA", 2.4),
-            ("nature-kit/rock_largeB", 2.4),
-            ("nature-kit/rock_largeC", 2.4),
-            ("nature-kit/rock_largeD", 2.4),
-            ("nature-kit/rock_smallA", 2.6),
-            ("nature-kit/mushroom_redGroup", 3.0),
-            ("nature-kit/mushroom_tanTall", 3.0),
-            ("nature-kit/mushroom_redTall", 3.0),
+        Universe::Cave => [
+            &[("nature-kit/rock_smallA", 2.6), ("nature-kit/mushroom_redGroup", 3.0)],
+            &[("nature-kit/rock_largeA", 2.4), ("nature-kit/mushroom_tanTall", 3.0), ("nature-kit/rock_largeB", 2.4), ("nature-kit/mushroom_redTall", 3.0), ("nature-kit/rock_largeD", 2.4)],
+            &[("nature-kit/rock_largeC", 2.4), ("nature-kit/rock_largeA", 2.4), ("nature-kit/rock_largeD", 2.4)],
         ],
     }
 }
@@ -600,19 +530,6 @@ fn decor_models(u: Universe) -> &'static [(&'static str, f32)] {
 /// Hauts ou larges : ils cacheraient le plateau s'ils étaient devant (côté caméra).
 fn is_tall(file: &str) -> bool {
     ["tree", "pine", "palm", "cactus_tall", "prototype-kit/column", "mini-arena/column", "wall-arch", "pillar-stone", "statue", "ship", "boat", "crypt", "tent", "lightpost", "log_large", "fence", "rocks", "rock_large", "building", "tower", "castle-kit/wall", "windmill", "water-tower", "chimney", "traffic-light", "stall", "support", "park-entrance"].iter().any(|k| file.contains(k))
-}
-
-fn spawn_decor(u: Universe, b: &mut Builder, rng: &mut Rng, pos: Vec3) {
-    let models = decor_models(u);
-    // La caméra est du côté +x/+z : là, on ne pose que du bas.
-    let front = pos.x * 0.4 + pos.z > 0.0;
-    let Some(&(file, scale)) = (0..6).map(|_| &models[rng.below(models.len() as u32) as usize]).find(|(f, _)| !front || !is_tall(f)) else {
-        return;
-    };
-    let yaw = rng.below(628) as f32 / 100.0;
-    // Sur l'île des pirates, les objets flottent un peu au-dessus de l'eau.
-    let pos = if matches!(u, Universe::Ocean | Universe::Port) { pos + Vec3::Y * 0.05 } else { pos };
-    b.model(file, pos, scale, yaw);
 }
 
 /// Aide à la construction de blocs, avec un cache de matériaux.
