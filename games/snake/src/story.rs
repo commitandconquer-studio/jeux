@@ -34,19 +34,7 @@ pub static SCENARIOS: LazyLock<Vec<Scenario>> = LazyLock::new(|| {
         return vec![build(&format!("[Aperçu illisible]\ntype = scene\nreplique = Aperçu | Le fichier d'aperçu est illisible — {shown}\n"), "Aperçu").expect("aventure de repli")];
     }
     let mut all = Vec::new();
-    for (name, text) in [
-        ("Tutoriel", include_str!("../scenarios/tutoriel.txt")),
-        ("Le désert", include_str!("../scenarios/lieu_desert.txt")),
-        ("Les ruines", include_str!("../scenarios/lieu_ruines.txt")),
-        ("Le cimetière", include_str!("../scenarios/lieu_cimetiere.txt")),
-        ("L'île des pirates", include_str!("../scenarios/lieu_pirates.txt")),
-        ("Le parc de loisirs", include_str!("../scenarios/lieu_parc.txt")),
-        ("La ville", include_str!("../scenarios/lieu_ville.txt")),
-        ("La gare", include_str!("../scenarios/lieu_gare.txt")),
-        ("Le port", include_str!("../scenarios/lieu_port.txt")),
-        ("Le village médiéval", include_str!("../scenarios/lieu_medieval.txt")),
-        ("Les grottes", include_str!("../scenarios/lieu_grottes.txt")),
-    ] {
+    for (name, text) in [("Le grand voyage", include_str!("../scenarios/aventure.txt"))] {
         all.push(build(text, name).unwrap_or_else(|e| panic!("aventure « {name} » illisible : {e}")));
     }
     all
@@ -138,10 +126,12 @@ mod tests {
 
     #[test]
     fn builtin_adventures_are_sound() {
-        assert_eq!(SCENARIOS.len(), 11, "le tutoriel et dix lieux");
+        assert_eq!(SCENARIOS.len(), 1, "une seule aventure : le tutoriel puis dix lieux");
         for sc in SCENARIOS.iter() {
             let levels = sc.steps.iter().filter(|l| l.scene.is_none()).count();
-            assert!(levels >= 6, "{} : {levels} niveaux seulement", sc.title);
+            assert_eq!(levels, 7 + 10 * 6, "{} : le tutoriel (7) et six niveaux par lieu", sc.title);
+            let mut names = std::collections::HashSet::new();
+            assert!(sc.steps.iter().all(|s| names.insert(s.name.clone())), "{} : des étapes ont le même nom", sc.title);
             for step in &sc.steps {
                 if let Some(g) = &step.grid {
                     let p = g.problems(step.tourists);

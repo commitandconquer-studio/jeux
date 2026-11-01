@@ -4,6 +4,8 @@ de six niveaux par lieu. Chaque carte est vérifiée (accessibilité à travers 
 place pour la file) avant d'être écrite ; le jeu refait ces contrôles dans un test.
 
     python3 tools/gen-aventures.py
+
+Un seul fichier, `aventure.txt` : une aventure continue (tutoriel puis dix lieux), à ouvrir dans l'éditeur du site.
 """
 import os
 import random
@@ -331,12 +333,12 @@ def tutoriel():
     s.append(groupe("jardin", "moyen", [
         ("Léa", "Bravo, il te suit ! Tu vois, la file s'allonge derrière toi."),
         ("Léa", "Maintenant, essayons d'en attraper deux. Dès que le premier a rejoint la file, le deuxième apparaît.", "gros"),
-        ("Léa", "Attention : ne touche ni les bords, ni ta propre file.", "moyen")], "Deux touristes"))
+        ("Léa", "Attention : ne touche ni les bords, ni ta propre file.", "moyen")], "Léa : deux touristes"))
     s.append(level("Deux touristes", "jardin", square(18), 2, 0.36, 2))
     s.append(groupe("jardin", "moyen", [
         ("Léa", "Très bien ! Tu as compris le principe."),
         ("Max", "Alors, tu arriveras à en attraper dix ?"),
-        ("Léa", "On voit ça tout de suite. Courage !", "gros")], "Dix touristes"))
+        ("Léa", "On voit ça tout de suite. Courage !", "gros")], "Léa : dix touristes"))
     s.append(level("Dix touristes", "jardin", square(18), 10, 0.34, 3))
     s.append(groupe("jardin", "large", [
         ("Léa", "Dix touristes, bravo ! Le groupe est déjà bien long."),
@@ -345,22 +347,22 @@ def tutoriel():
     s.append(level("Le grand L", "jardin", shape_l(20), 10, 0.34, 4))
     s.append(groupe("jardin", "moyen", [
         ("Léa", "Pas mal ! Maintenant, un carré creux : on tourne autour d'un massif de fleurs."),
-        ("Léa", "Et cette fois, quinze touristes !", "gros")], "Le carré creux"))
+        ("Léa", "Et cette fois, quinze touristes !", "gros")], "Léa : le carré creux"))
     s.append(level("Le carré creux", "jardin", ring(20, 5), 15, 0.33, 5))
     s.append(groupe("jardin", "large", [
         ("Léa", "Dernière forme : le 8. Deux massifs, une seule file, et vingt touristes."),
-        ("Max", "Ça ressemble à un rond-point. Ne te perds pas !", "moyen")], "Le huit"))
+        ("Max", "Ça ressemble à un rond-point. Ne te perds pas !", "moyen")], "Léa : le huit"))
     s.append(level("Le huit", "jardin", eight(4, 5), 20, 0.33, 6))
     s.append(groupe("jardin", "moyen", [
         ("Léa", "Tu es prêt pour la grande récupération."),
         ("Léa", "Trente touristes dispersés sur tout le terrain, puis la sortie. Tu les rassembles tous, et ils sortent derrière toi.", "gros"),
-        ("Rémi", "Les allées sont larges, on te suit !", "moyen")], "La grande récupération"))
+        ("Rémi", "Les allées sont larges, on te suit !", "moyen")], "Léa : la grande récupération"))
     s.append(level("La grande récupération", "jardin", square(22), 30, 0.32, 7, exit_=True))
     s.append(groupe("jardin", "large", [
         ("Léa", "Félicitations, tu connais toutes les bases !"),
         ("Léa", "Maintenant, on change de lieu. Il y aura des obstacles, des trous, des pièges... et toujours plus de touristes."),
         ("Max", "En route pour l'aventure !", "moyen")], "En route", leader_anim="salut", pose=("salut", "repos", "fauteuil-assis")))
-    ecrire("tutoriel.txt", "Tutoriel", "Apprends à guider ta file de touristes, pas à pas", s)
+    return s
 
 
 # ---------------------------------------------------------------- les lieux
@@ -372,13 +374,15 @@ def scenes_lieu(decor, camera_intro, intro, milieu, fin, anim_fin="salut"):
 def lieu(fichier, titre, description, decor, place, intro, milieu, fin, niveaux):
     """niveaux : liste de 6 dicts d'arguments pour `level`."""
     a, m, f = scenes_lieu(decor, "large", intro, milieu, fin)
+    # Noms uniques dans le fichier : on préfixe par le lieu.
+    a, m, f = (x.replace("[Arrivée]", f"[{titre} : arrivée]").replace("[En chemin]", f"[{titre} : en chemin]").replace("[Fin de la visite]", f"[{titre} : fin de la visite]") for x in (a, m, f))
     secs = [a]
     for i, spec in enumerate(niveaux):
         secs.append(level(spec.pop("nom"), place, spec.pop("mask"), spec.pop("t"), spec.pop("pas"), spec.pop("seed"), **spec))
         if i == 2:
             secs.append(m)
     secs.append(f)
-    ecrire(fichier, titre, description, secs)
+    return secs
 
 
 def six(prefix, seed0, t0, **extra):
@@ -400,9 +404,9 @@ T = (6, 10, 14, 18, 22)
 
 def main():
     os.makedirs(SORTIE, exist_ok=True)
-    tutoriel()
+    tout = tutoriel()
 
-    lieu("lieu_desert.txt", "Le désert", "Cactus et rochers : on ne les touche pas", "desert", "desert",
+    tout += lieu("lieu_desert.txt", "Le désert", "Cactus et rochers : on ne les touche pas", "desert", "desert",
          [("Léa", "Voilà le désert ! Il fait chaud, mais la visite est magnifique."),
           ("Léa", "Attention aux cactus et aux gros rochers : si on les touche, c'est raté. Contournez-les !", "gros"),
           ("Max", "J'ai mis mes lunettes de soleil. Je suis prêt.", "moyen")],
@@ -412,7 +416,7 @@ def main():
           ("Rémi", "Mon fauteuil a ramassé du sable partout, mais quelle belle balade.", "moyen")],
          six("Dans le désert", 100, T, blocs=(4, 12)))
 
-    lieu("lieu_ruines.txt", "Les ruines", "Le sol est fissuré : attention aux trous", "ruines", "ruines",
+    tout += lieu("lieu_ruines.txt", "Les ruines", "Le sol est fissuré : attention aux trous", "ruines", "ruines",
          [("Léa", "Nous voici dans les ruines antiques. Admirez les colonnes !"),
           ("Léa", "Le sol est fissuré : les trous sont mortels. Regardez où vous mettez les pieds.", "gros"),
           ("Rémi", "Je roule doucement, ces dalles sont inégales.", "moyen")],
@@ -434,7 +438,7 @@ def main():
     m_two, b_two = two_islands(20, 16, 7)
     m_r20, (a20, b20) = ring_with_island(20, 5, 2)
     m_r24, (a24, b24) = ring_with_island(24, 5, 2)
-    lieu("lieu_cimetiere.txt", "Le cimetière", "Passages mystérieux : entrez par un côté, sortez par l'autre", "cimetiere", "cimetiere",
+    tout += lieu("lieu_cimetiere.txt", "Le cimetière", "Passages mystérieux : entrez par un côté, sortez par l'autre", "cimetiere", "cimetiere",
          [("Léa", "Bienvenue au cimetière. Ne vous inquiétez pas, les fantômes sont plutôt timides."),
           ("Léa", "Vous voyez ces lueurs ? Ce sont des passages : entrez dans l'une, vous ressortez par l'autre. Toute la file suit !", "gros"),
           ("Zoé", "Je sens un courant d'air frais, comme une porte invisible.", "moyen")],
@@ -449,7 +453,7 @@ def main():
           dict(nom="Dans le cimetière 5", mask=m_r24, t=22, pas=0.30, seed=305, paires=3, blocs=4, regions=regions(m_r24, (a24, b24, a24, b24))),
           dict(nom="Dans le cimetière 6", mask=square(24), t=30, pas=0.30, seed=306, exit_=True, paires=4, blocs=7, trous=6)])
 
-    lieu("lieu_pirates.txt", "L'île des pirates", "Des courants vous poussent : impossible de les remonter", "pirates", "pirates",
+    tout += lieu("lieu_pirates.txt", "L'île des pirates", "Des courants vous poussent : impossible de les remonter", "pirates", "pirates",
          [("Léa", "Ohé ! Nous voici sur l'île des pirates."),
           ("Léa", "Ces planches sont des courants qui vous poussent. Vous ne pouvez pas les prendre à contresens !", "gros"),
           ("Max", "Je prends le courant, c'est comme un tapis roulant.", "moyen")],
@@ -459,7 +463,7 @@ def main():
           ("Rémi", "Enfin quelque chose de plus calme... j'espère.", "moyen")],
          six("Chez les pirates", 400, T, blocs=(2, 6), trous=(0, 3), tapis=(2, 7)))
 
-    lieu("lieu_parc.txt", "Le parc de loisirs", "Des plaques qui donnent un coup de vitesse", "parc", "parc",
+    tout += lieu("lieu_parc.txt", "Le parc de loisirs", "Des plaques qui donnent un coup de vitesse", "parc", "parc",
          [("Léa", "Bienvenue au parc de loisirs : manèges, barbe à papa et sensations fortes !"),
           ("Léa", "Les plaques jaunes donnent un coup de vitesse à toute la file. Utilisez-les, mais ne vous laissez pas dépasser par elles.", "gros"),
           ("Max", "Je veux faire le grand huit !", "moyen")],
@@ -469,7 +473,7 @@ def main():
           ("Rémi", "Quelle journée ! Mon fauteuil a le tournis.", "moyen")],
          six("Au parc", 500, T, blocs=(2, 5), trous=(0, 3), tapis=(0, 4), accel=(3, 10)))
 
-    lieu("lieu_ville.txt", "La ville", "Un guide rival traverse le parc", "ville", "ville",
+    tout += lieu("lieu_ville.txt", "La ville", "Un guide rival traverse le parc", "ville", "ville",
          [("Léa", "Nous voilà en ville, au milieu d'un grand parc entouré d'immeubles."),
           ("Léa", "Attention : un guide rival traverse parfois le terrain. Son entrée clignote juste avant. S'il touche votre file, il emmène vos touristes !", "gros"),
           ("Max", "Un rival ? Il ne nous volera personne.", "moyen")],
@@ -479,7 +483,7 @@ def main():
           ("Rémi", "Les routes étaient larges, c'est agréable.", "moyen")],
          six("En ville", 600, T, blocs=(2, 5), trous=(0, 2), accel=(0, 4), rivaux=(1, 3)))
 
-    lieu("lieu_gare.txt", "La gare", "Des trains traversent le terrain", "gare", "gare",
+    tout += lieu("lieu_gare.txt", "La gare", "Des trains traversent le terrain", "gare", "gare",
          [("Léa", "Bienvenue à la gare. Prochain départ dans quelques minutes."),
           ("Léa", "Des trains traversent le terrain : la voie clignote avant leur passage. Un train, ça ne s'arrête pas : n'y touchez pas !", "gros"),
           ("Zoé", "J'entends le sifflement au loin.", "moyen")],
@@ -489,7 +493,7 @@ def main():
           ("Rémi", "Enfin un peu de calme sur les quais.", "moyen")],
          six("À la gare", 700, T, blocs=(2, 4), trous=(0, 2), accel=(0, 3), trains=(1, 3)))
 
-    lieu("lieu_port.txt", "Le port", "Pontons pourris : une seule traversée", "port", "port",
+    tout += lieu("lieu_port.txt", "Le port", "Pontons pourris : une seule traversée", "port", "port",
          [("Léa", "Voici le port, avec ses bateaux et ses conteneurs."),
           ("Léa", "Ces pontons sont pourris : on ne peut les traverser qu'une fois, ensuite ils s'effondrent dans l'eau.", "gros"),
           ("Max", "Ça craque sous mes pieds !", "moyen")],
@@ -499,7 +503,7 @@ def main():
           ("Rémi", "J'ai évité les pontons grâce à mes roues.", "moyen")],
          six("Au port", 800, T, blocs=(2, 4), trous=(0, 2), tapis=(0, 3), pontons=(2, 6)))
 
-    lieu("lieu_medieval.txt", "Le village médiéval", "Des herses qui s'ouvrent et se ferment", "medieval", "medieval",
+    tout += lieu("lieu_medieval.txt", "Le village médiéval", "Des herses qui s'ouvrent et se ferment", "medieval", "medieval",
          [("Léa", "Nous entrons dans le village médiéval, derrière ses remparts."),
           ("Léa", "Ces herses se ferment au rythme de vos pas : vertes, elles sont ouvertes ; oranges, elles vont se fermer ; rouges, elles sont fermées.", "gros"),
           ("Max", "Je ne veux pas me retrouver coincé !", "moyen")],
@@ -509,7 +513,7 @@ def main():
           ("Rémi", "Les pavés, ce n'est pas pour mon fauteuil... mais quel bel endroit.", "moyen")],
          six("Au village", 900, T, blocs=(2, 4), trous=(0, 2), herses=(4, 10)))
 
-    lieu("lieu_grottes.txt", "Les grottes", "Des pierres tombent du plafond", "grottes", "grottes",
+    tout += lieu("lieu_grottes.txt", "Les grottes", "Des pierres tombent du plafond", "grottes", "grottes",
          [("Léa", "Bienvenue dans les grottes. Il fait sombre, prenez garde."),
           ("Léa", "De temps en temps, une case clignote : une pierre va tomber et elle restera là. Ne restez pas dessous !", "gros"),
           ("Zoé", "J'entends les cailloux rouler. Ça gronde.", "moyen")],
@@ -518,6 +522,7 @@ def main():
          [("Léa", "Nous voilà de retour à la lumière. Quelle aventure !"),
           ("Rémi", "Je n'en reviens pas. On a traversé tous ces lieux ensemble.", "moyen")],
          six("Dans les grottes", 1000, T, blocs=(2, 4), trous=(0, 2), eboulements=(6, 16)))
+    ecrire("aventure.txt", "Le grand voyage", "Du tutoriel aux grottes : une visite guidée en onze lieux, avec Léa, Max, Zoé et Rémi", tout)
 
 
 if __name__ == "__main__":
