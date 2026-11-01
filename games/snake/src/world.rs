@@ -441,6 +441,71 @@ pub fn rebuild_world(
         }
     }
 
+    // Prairie : une clairière au milieu de la forêt. Autour du plateau, une pelouse dégagée avec quelques touffes de fleurs
+    // bien placées et un petit campement au fond ; puis la forêt, dense, qui remplit tout le bord de l'écran.
+    if universe == Universe::Prairie {
+        let mut rng = Rng::new(universe as u64 * 7919 + shape as u64 * 31);
+        let (cx, cz) = ((l.w - 1) as f32 / 2.0, (l.h - 1) as f32 / 2.0);
+        let reach = (l.w.max(l.h) as f32) / 2.0 + 36.0;
+        let dist = |p: Vec3| l.distance_to_walkable(Vec2::new(p.x + cx, p.z + cz));
+        let front = |p: Vec3| p.x * 0.4 + p.z > 0.0;
+        let facing = |p: Vec3, rng: &mut Rng| (-p.x).atan2(-p.z) + (rng.below(100) as f32 / 100.0 - 0.5) * 0.5;
+        // La forêt : un semis serré en quinconce, arbres un peu plus grands à mesure qu'on s'éloigne.
+        // Côté caméra elle commence plus loin pour ne pas cacher le plateau.
+        let (step, mut row) = (2.6_f32, 0);
+        let mut z = -reach;
+        while z <= reach {
+            let mut x = -reach + if row % 2 == 0 { 0.0 } else { step / 2.0 };
+            while x <= reach {
+                let p = Vec3::new(x + (rng.below(100) as f32 / 100.0 - 0.5) * 1.2, GROUND_Y, z + (rng.below(100) as f32 / 100.0 - 0.5) * 1.2);
+                let d = dist(p);
+                let edge = if front(p) { 11.0 } else { 6.5 };
+                if d >= edge {
+                    let t = ((d - edge) / 22.0).min(1.0);
+                    let file = if rng.below(3) == 0 { "mini-forest/tree-high" } else { "mini-forest/tree" };
+                    b.model(file, p, 2.2 + t * 1.6 + rng.below(40) as f32 / 100.0, rng.below(628) as f32 / 100.0);
+                } else if d >= edge - 2.2 && rng.below(3) == 0 {
+                    // La lisière : souches, champignons et buissons au pied des premiers arbres.
+                    let file = ["nature-kit/stump_round", "nature-kit/mushroom_redGroup", "nature-kit/plant_bush", "nature-kit/mushroom_tanGroup"][rng.below(4) as usize];
+                    b.model(file, p, 2.0, facing(p, &mut rng));
+                }
+                x += step;
+            }
+            z += step;
+            row += 1;
+        }
+        // Les fleurs : des touffes de trois, en anneau régulier autour du plateau.
+        let flowers = ["nature-kit/flower_redA", "nature-kit/flower_yellowB", "nature-kit/flower_purpleA"];
+        let n = ((l.w + l.h) as f32 / 3.0).round().max(6.0) as i32;
+        for i in 0..n {
+            let a = i as f32 / n as f32 * std::f32::consts::TAU + 0.3;
+            let (sx, sz) = (cx + 3.5, cz + 3.5);
+            let centre = Vec3::new(a.cos() * sx, GROUND_Y, a.sin() * sz);
+            if dist(centre) < 1.8 {
+                continue;
+            }
+            let file = flowers[i as usize % flowers.len()];
+            b.model(file, centre, 3.0, rng.below(628) as f32 / 100.0);
+            for k in 0..4 {
+                let off = (k as f32) * std::f32::consts::FRAC_PI_2 + 0.4;
+                let p = centre + Vec3::new(off.cos() * 1.1, 0.0, off.sin() * 1.1);
+                b.model(file, p, 3.0, rng.below(628) as f32 / 100.0);
+            }
+        }
+        // Le campement : au fond, deux tentes face au plateau, un feu entre elles, un rondin et une terre battue.
+        let back = Vec3::new(-0.37, 0.0, -0.93);
+        let side = Vec3::new(0.93, 0.0, -0.37);
+        let half = (cx * back.x.abs() + cz * back.z.abs()) + 5.5;
+        let camp = back * half;
+        b.model("mini-forest/patch-dirt", camp + Vec3::Y * GROUND_Y, 2.8, 0.0);
+        let yaw = (-camp.x).atan2(-camp.z);
+        b.model("mini-forest/tent", camp + Vec3::Y * GROUND_Y - side * 2.6 - back * 1.0, 2.2, yaw + 0.4);
+        b.model("survival-kit/tent-canvas", camp + Vec3::Y * GROUND_Y + side * 2.6 - back * 1.0, 2.0, yaw - 0.4);
+        b.model("survival-kit/campfire-pit", camp + Vec3::Y * GROUND_Y + back * 0.6, 1.8, 0.0);
+        b.model("nature-kit/log_large", camp + Vec3::Y * GROUND_Y - back * 1.4, 1.8, yaw + FRAC_PI_2);
+        return;
+    }
+
     // Décor autour du plateau, par bandes : petit près du plateau, de plus en plus gros en s'éloignant (profondeur homogène).
     // Chaque bande ne sert que quelques modèles, rangés dans un ordre régulier, tournés vers le centre.
     let mut rng = Rng::new(universe as u64 * 7919 + shape as u64 * 31);
@@ -483,11 +548,7 @@ pub fn rebuild_world(
 /// Les échelles de bande (petit, normal, gros) sont appliquées par `rebuild_world`.
 fn bands(u: Universe) -> [&'static [(&'static str, f32)]; 3] {
     match u {
-        Universe::Prairie => [
-            &[("nature-kit/flower_redA", 2.5), ("nature-kit/flower_yellowB", 2.5), ("nature-kit/plant_bush", 2.4), ("nature-kit/stump_round", 2.4), ("fantasy-town-kit/fence", 1.8)],
-            &[("mini-forest/tree", 2.8), ("mini-forest/tent", 2.0), ("nature-kit/rock_largeA", 2.2), ("mini-forest/tree-high", 2.4), ("nature-kit/log_large", 2.2)],
-            &[("mini-forest/tree-high", 2.6), ("mini-forest/tree", 3.0), ("fantasy-town-kit/windmill", 1.2)],
-        ],
+        Universe::Prairie => [&[], &[], &[]],
         Universe::Desert => [
             &[("nature-kit/cactus_short", 2.4), ("pirate-kit/rocks-sand-a", 1.4), ("pirate-kit/rocks-sand-b", 1.4), ("pirate-kit/rocks-sand-c", 1.4)],
             &[("nature-kit/cactus_tall", 2.8), ("nature-kit/cactus_short", 3.2), ("survival-kit/tent-canvas", 1.6), ("survival-kit/campfire-pit", 1.8), ("survival-kit/signpost", 2.4)],
