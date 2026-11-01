@@ -397,7 +397,7 @@ pub fn rebuild_world(
             b.model("castle-kit/wall", cell_to_world(Vec2::new(ex0 - d, y), GROUND_Y + 0.2, l), piece, FRAC_PI_2);
             y += piece;
         }
-        // Tours : hautes au fond et sur les côtés, petites devant (elles cacheraient le plateau).
+        // Tours : hautes au fond et sur les côtés, petite devant à gauche ; pas de tour devant à droite (elle cacherait le plateau).
         let tower = |b: &mut Builder, p: Vec2, floors: i32| {
             let base = cell_to_world(p, GROUND_Y + 0.2, l);
             let s = 2.2;
@@ -410,16 +410,15 @@ pub fn rebuild_world(
         tower(&mut b, Vec2::new(ex0 - d, ey0 - d), 3);
         tower(&mut b, Vec2::new(ex1 + d, ey0 - d), 1);
         tower(&mut b, Vec2::new(ex0 - d, ey1 + d), 1);
-        tower(&mut b, Vec2::new(ex1 + d, ey1 + d), 0);
         // Devant : une clôture basse et des fanions.
         let mut x = ex0;
         while x < ex1 {
-            b.model("fantasy-town-kit/fence", cell_to_world(Vec2::new(x, ey1 + d), GROUND_Y + 0.2, l), 1.8, 0.0);
+            b.model("fantasy-town-kit/fence", cell_to_world(Vec2::new(x, ey1 + d), GROUND_Y + 0.2, l), 1.8, FRAC_PI_2);
             x += 1.8;
         }
         let mut y = ey0;
         while y < ey1 {
-            b.model("fantasy-town-kit/fence", cell_to_world(Vec2::new(ex1 + d, y), GROUND_Y + 0.2, l), 1.8, FRAC_PI_2);
+            b.model("fantasy-town-kit/fence", cell_to_world(Vec2::new(ex1 + d, y), GROUND_Y + 0.2, l), 1.8, 0.0);
             y += 1.8;
         }
     }
@@ -572,6 +571,387 @@ pub fn rebuild_world(
         return;
     }
 
+    // Outils communs aux décors composés : points régulièrement espacés entre deux coins, cadre du plateau, côté caméra.
+    let (w, h) = (l.w as f32, l.h as f32);
+    let (ex0, ey0, ex1, ey1) = (-0.5, -0.5, w - 0.5, h - 0.5);
+    let (cx, cz) = ((l.w - 1) as f32 / 2.0, (l.h - 1) as f32 / 2.0);
+    let (mx, my) = ((ex0 + ex1) / 2.0, (ey0 + ey1) / 2.0);
+    let reach = (l.w.max(l.h) as f32) / 2.0 + 36.0;
+    let at = |p: Vec2| cell_to_world(p, GROUND_Y, l);
+    let dist = |p: Vec2| l.distance_to_walkable(p);
+    let front = |p: Vec2| (p.x - cx) * 0.4 + (p.y - cz) > 0.0;
+    let toward_centre = |p: Vec2| (cx - p.x).atan2(cz - p.y);
+    let along = |a: Vec2, c: Vec2, step: f32| -> Vec<Vec2> {
+        let n = (a.distance(c) / step).round().max(1.0) as i32;
+        (0..=n).map(|i| a.lerp(c, i as f32 / n as f32)).collect()
+    };
+    // Une dalle plate posée au sol (sans ombre portée).
+    let slab = |b: &mut Builder, color: Color, x0: f32, y0: f32, x1: f32, y1: f32, lift: f32| {
+        let centre = cell_to_world(Vec2::new((x0 + x1) / 2.0, (y0 + y1) / 2.0), GROUND_Y - 0.12 + lift, l);
+        let e = b.block(color, centre, Vec3::new(x1 - x0, 0.16, y1 - y0));
+        b.flat(e);
+    };
+
+    // Ruines antiques : une esplanade dallée bordée d'une colonnade régulière, des statues aux coins, une arche au fond.
+    if universe == Universe::Ruines {
+        let mut rng = Rng::new(universe as u64 * 7919 + shape as u64 * 31);
+        let d = 2.8;
+        slab(&mut b, Color::srgb(0.88, 0.85, 0.76), ex0 - d - 1.2, ey0 - d - 1.2, ex1 + d + 1.2, ey1 + d + 1.2, 0.0);
+        let corners = [Vec2::new(ex0 - d, ey0 - d), Vec2::new(ex1 + d, ey0 - d), Vec2::new(ex1 + d, ey1 + d), Vec2::new(ex0 - d, ey1 + d)];
+        let mut k = 0;
+        for i in 0..4 {
+            let (a, c) = (corners[i], corners[(i + 1) % 4]);
+            for p in along(a, c, 2.4) {
+                if p.distance(a) < 0.5 || p.distance(c) < 0.5 {
+                    continue;
+                }
+                k += 1;
+                // Côté caméra, des colonnes basses pour ne pas cacher le plateau ; une colonne sur cinq est brisée.
+                let (file, k) = if front(p) && p.y > cz + 1.0 { ("mini-arena/column", 1.3) } else if k % 5 == 0 { ("mini-arena/column-damaged", 2.2) } else { ("mini-arena/column", 2.2) };
+                b.model(file, at(p), k, 0.0);
+            }
+        }
+        for c in corners {
+            b.model("mini-arena/statue", at(c), 2.4, toward_centre(c));
+        }
+        b.model("fantasy-town-kit/wall-arch", at(Vec2::new(mx, ey0 - d - 4.5)), 2.6, 0.0);
+        // Plus loin, quelques vestiges isolés, posés à intervalles réguliers.
+        let far = [(ex0 - 9.0, ey0 - 7.0, "mini-arena/column", 3.2), (ex1 + 9.0, ey0 - 7.0, "mini-arena/column-damaged", 3.2), (ex0 - 11.0, my, "mini-arena/bricks", 3.0), (ex1 + 11.0, my, "mini-arena/bricks", 3.0), (ex0 - 7.0, ey1 + 8.0, "mini-arena/bricks", 3.0), (ex1 + 7.0, ey1 + 8.0, "mini-arena/bricks", 3.0), (mx - 8.0, ey0 - 13.0, "mini-arena/column", 3.8), (mx + 8.0, ey0 - 13.0, "mini-arena/column", 3.8), (mx, ey0 - 14.0, "mini-arena/wall-gate", 3.2)];
+        for (x, y, file, k) in far {
+            b.model(file, at(Vec2::new(x, y)), k, rng.below(628) as f32 / 100.0);
+        }
+        return;
+    }
+
+    // Cimetière : un enclos de grilles en fer, des tombes en rangs alignés, des lampadaires aux coins, une grande crypte au fond,
+    // et une forêt de pins sombres tout autour. Si la figure a un creux au centre, un obélisque y prend place.
+    if universe == Universe::Cimetiere {
+        let mut rng = Rng::new(universe as u64 * 7919 + shape as u64 * 31);
+        let d = 5.6;
+        slab(&mut b, Color::srgb(0.27, 0.31, 0.27), ex0 - d, ey0 - d, ex1 + d, ey1 + d, 0.0);
+        let corners = [Vec2::new(ex0 - d, ey0 - d), Vec2::new(ex1 + d, ey0 - d), Vec2::new(ex1 + d, ey1 + d), Vec2::new(ex0 - d, ey1 + d)];
+        let fence = 2.0;
+        for i in 0..4 {
+            let (a, c) = (corners[i], corners[(i + 1) % 4]);
+            let horizontal = (a.y - c.y).abs() < 0.01;
+            let yaw = if horizontal { 0.0 } else { FRAC_PI_2 };
+            let n = (a.distance(c) / fence).ceil().max(1.0) as i32;
+            for j in 0..n {
+                let p = a.lerp(c, (j as f32 + 0.5) / n as f32);
+                let gate = i == 2 && (p.x - mx).abs() < fence * 0.6;
+                let file = if gate { "graveyard-kit/iron-fence-border-gate" } else { "graveyard-kit/iron-fence" };
+                b.model(file, at(p), fence, yaw);
+            }
+        }
+        for c in corners {
+            b.model("graveyard-kit/iron-fence-border-column", at(c), fence, 0.0);
+            b.model("graveyard-kit/lightpost-single", at(c.lerp(Vec2::new(mx, my), 0.12)), 2.2, toward_centre(c));
+        }
+        // Les tombes : des rangs alignés sur la grille, un modèle par rang.
+        let stones = ["graveyard-kit/gravestone-round", "graveyard-kit/gravestone-cross", "graveyard-kit/gravestone-bevel", "graveyard-kit/gravestone-wide", "graveyard-kit/gravestone-roof"];
+        let mut y = ey0 - d + 1.6;
+        let mut row = 0;
+        while y < ey1 + d - 1.0 {
+            let mut x = ex0 - d + 1.6;
+            while x < ex1 + d - 1.0 {
+                let p = Vec2::new(x, y);
+                let dd = dist(p);
+                if dd >= 1.7 && dd < d - 1.0 && !((p.x - mx).abs() < 1.5 && p.y > ey1) {
+                    b.model(stones[row % stones.len()], at(p), 2.0, 0.0);
+                }
+                x += 2.4;
+            }
+            y += 2.4;
+            row += 1;
+        }
+        // Un creux au centre de la figure : un obélisque ; sinon, la grande crypte au fond.
+        let centre = IVec2::new(l.w / 2, l.h / 2);
+        if !l.walkable(centre) {
+            b.model("graveyard-kit/pillar-obelisk", at(centre.as_vec2()), 2.6, 0.0);
+        }
+        b.model("graveyard-kit/crypt-large", at(Vec2::new(mx, ey0 - d - 4.5)), 2.6, 0.0);
+        b.model("graveyard-kit/crypt-small", at(Vec2::new(ex1 + d + 4.0, ey0 - 2.0)), 2.4, -FRAC_PI_2);
+        b.model("graveyard-kit/crypt-small", at(Vec2::new(ex0 - d - 4.0, ey0 - 2.0)), 2.4, FRAC_PI_2);
+        // Les pins : un semis serré au-delà de l'enclos, plus loin côté caméra.
+        let (step, mut r) = (3.2_f32, 0);
+        let mut y = ey0 - reach;
+        while y <= ey1 + reach {
+            let mut x = ex0 - reach + if r % 2 == 0 { 0.0 } else { step / 2.0 };
+            while x <= ex1 + reach {
+                let p = Vec2::new(x + (rng.below(100) as f32 / 100.0 - 0.5) * 1.4, y + (rng.below(100) as f32 / 100.0 - 0.5) * 1.4);
+                let dd = dist(p);
+                let edge = if front(p) { 14.0 } else { d + 3.0 };
+                let on_path = (p.x - mx).abs() < 2.0 && p.y > ey1;
+                if dd >= edge && !on_path {
+                    let file = ["graveyard-kit/pine", "graveyard-kit/pine", "graveyard-kit/pine-crooked", "graveyard-kit/pine-fall"][rng.below(4) as usize];
+                    b.model(file, at(p), 2.4 + ((dd - edge) / 20.0).min(1.0) * 1.4 + rng.below(40) as f32 / 100.0, rng.below(628) as f32 / 100.0);
+                }
+                x += step;
+            }
+            y += step;
+            r += 1;
+        }
+        return;
+    }
+
+    // Île des pirates : le plateau est sur la plage ; le sable s'étend vers le fond et les côtés, la mer est devant.
+    // Des palmiers en rangs, un campement de pirates au fond, un navire au large et une barque au bord.
+    if universe == Universe::Ocean {
+        let mut rng = Rng::new(universe as u64 * 7919 + shape as u64 * 31);
+        let shore = ey1 + 3.5;
+        slab(&mut b, Color::srgb(0.93, 0.85, 0.64), ex0 - reach, ey0 - reach, ex1 + reach, shore, 0.0);
+        // Sable mouillé au bord de l'eau.
+        slab(&mut b, Color::srgb(0.84, 0.76, 0.56), ex0 - reach, shore - 0.9, ex1 + reach, shore, 0.02);
+        let palms = ["pirate-kit/palm-straight", "pirate-kit/palm-bend", "pirate-kit/palm-detailed-straight", "pirate-kit/palm-detailed-bend"];
+        let mut k = 0;
+        let mut palm = |b: &mut Builder, p: Vec2, scale: f32, rng: &mut Rng| {
+            k += 1;
+            let p = p + Vec2::new((rng.below(100) as f32 / 100.0 - 0.5) * 0.8, (rng.below(100) as f32 / 100.0 - 0.5) * 0.8);
+            b.model(palms[k % palms.len()], at(p), scale, rng.below(628) as f32 / 100.0);
+        };
+        // Deux rangs de palmiers sur les côtés et un au fond, à distance régulière du plateau.
+        for p in along(Vec2::new(ex0 - 5.0, ey0 - 5.0), Vec2::new(ex1 + 5.0, ey0 - 5.0), 4.0) {
+            palm(&mut b, p, 1.1, &mut rng);
+        }
+        for x in [ex0 - 5.0, ex1 + 5.0] {
+            for p in along(Vec2::new(x, ey0 - 1.0), Vec2::new(x, ey1 + 1.5), 4.0) {
+                palm(&mut b, p, 1.1, &mut rng);
+            }
+        }
+        // Plus loin, la palmeraie : un semis serré, plus grand au loin.
+        let (step, mut r) = (4.2_f32, 0);
+        let mut y = ey0 - reach;
+        while y <= shore - 3.0 {
+            let mut x = ex0 - reach + if r % 2 == 0 { 0.0 } else { step / 2.0 };
+            while x <= ex1 + reach {
+                let p = Vec2::new(x, y);
+                let dd = dist(p);
+                if dd >= 10.0 {
+                    palm(&mut b, p, 1.2 + ((dd - 10.0) / 20.0).min(1.0) * 0.6, &mut rng);
+                }
+                x += step;
+            }
+            y += step;
+            r += 1;
+        }
+        // Le campement des pirates, au fond à gauche : drapeau, coffre, tonneaux et caisse, bien rangés.
+        let camp = Vec2::new(ex0 - 2.0, ey0 - 7.5);
+        b.model("pirate-kit/flag-pirate-high", at(camp), 1.2, 0.0);
+        b.model("pirate-kit/chest", at(camp + Vec2::new(2.0, 1.2)), 0.8, toward_centre(camp));
+        b.model("pirate-kit/barrel", at(camp + Vec2::new(-1.8, 0.8)), 0.8, 0.0);
+        b.model("pirate-kit/barrel", at(camp + Vec2::new(-2.8, 1.4)), 0.8, 0.0);
+        b.model("pirate-kit/crate", at(camp + Vec2::new(3.4, 0.2)), 0.8, 0.3);
+        b.model("survival-kit/campfire-pit", at(camp + Vec2::new(0.4, 2.2)), 1.8, 0.0);
+        // La mer : un navire au large, une barque tirée sur le sable, un rocher.
+        let sea = Vec3::Y * 0.06;
+        b.model("pirate-kit/ship-pirate-medium", at(Vec2::new(ex1 + 16.0, shore + 12.0)) + sea, 1.2, 0.9);
+        b.model("pirate-kit/boat-row-small", at(Vec2::new(ex1 + 3.0, shore - 0.6)), 0.8, 0.4);
+        b.model("pirate-kit/rocks-a", at(Vec2::new(ex0 - 9.0, shore + 7.0)) + sea, 1.0, 0.0);
+        return;
+    }
+
+    // Parc de loisirs : une allée fait le tour du plateau, quatre allées en partent vers les bords ; bancs et lanternes
+    // sont posés le long des allées, des massifs aux coins, des arbres partout ailleurs, des stands au fond, l'entrée devant.
+    if universe == Universe::Parc {
+        let mut rng = Rng::new(universe as u64 * 7919 + shape as u64 * 31);
+        let d = 3.0;
+        let path = Color::srgb(0.86, 0.80, 0.66);
+        let half = 0.8;
+        // Les allées : l'anneau, puis les quatre branches.
+        slab(&mut b, path, ex0 - d - half, ey0 - d - half, ex1 + d + half, ey0 - d + half, 0.02);
+        slab(&mut b, path, ex0 - d - half, ey1 + d - half, ex1 + d + half, ey1 + d + half, 0.02);
+        slab(&mut b, path, ex0 - d - half, ey0 - d, ex0 - d + half, ey1 + d, 0.02);
+        slab(&mut b, path, ex1 + d - half, ey0 - d, ex1 + d + half, ey1 + d, 0.02);
+        slab(&mut b, path, mx - half, ey0 - reach, mx + half, ey0 - d, 0.02);
+        slab(&mut b, path, mx - half, ey1 + d, mx + half, ey1 + reach, 0.02);
+        slab(&mut b, path, ex0 - reach, my - half, ex0 - d, my + half, 0.02);
+        slab(&mut b, path, ex1 + d, my - half, ex1 + reach, my + half, 0.02);
+        let near_path = |p: Vec2| {
+            let ring = ((p.x - (ex0 - d)).abs() < 2.2 || (p.x - (ex1 + d)).abs() < 2.2) && p.y > ey0 - d - 2.2 && p.y < ey1 + d + 2.2
+                || ((p.y - (ey0 - d)).abs() < 2.2 || (p.y - (ey1 + d)).abs() < 2.2) && p.x > ex0 - d - 2.2 && p.x < ex1 + d + 2.2;
+            ring || (p.x - mx).abs() < 2.2 || (p.y - my).abs() < 2.2
+        };
+        // Le mobilier le long de l'anneau, à l'extérieur : un banc puis une lanterne, en alternance, tournés vers l'allée.
+        let o = d + 1.5;
+        let corners = [Vec2::new(ex0 - o, ey0 - o), Vec2::new(ex1 + o, ey0 - o), Vec2::new(ex1 + o, ey1 + o), Vec2::new(ex0 - o, ey1 + o)];
+        let mut k = 0;
+        for i in 0..4 {
+            let (a, c) = (corners[i], corners[(i + 1) % 4]);
+            let n = (a.distance(c) / 2.6).round().max(2.0) as i32;
+            for j in 1..n {
+                let p = a.lerp(c, j as f32 / n as f32);
+                // Rien sur le passage des branches.
+                if (p.x - mx).abs() < 1.6 || (p.y - my).abs() < 1.6 {
+                    continue;
+                }
+                k += 1;
+                if k % 2 == 0 {
+                    // Le banc est parallèle à l'allée et lui fait face (normale du côté, pas direction du centre).
+                    b.model("coaster-kit/bench", at(p), 2.0, [0.0, -FRAC_PI_2, std::f32::consts::PI, FRAC_PI_2][i]);
+                } else {
+                    b.model("fantasy-town-kit/lantern", at(p), 2.2, toward_centre(p));
+                }
+            }
+            b.model("fantasy-town-kit/lantern", at(a), 2.2, toward_centre(a));
+        }
+        // Le long des branches : des lanternes de chaque côté, régulièrement.
+        for (dir, from) in [(Vec2::X, Vec2::new(ex1 + d + 3.0, my)), (Vec2::NEG_X, Vec2::new(ex0 - d - 3.0, my)), (Vec2::Y, Vec2::new(mx, ey1 + d + 3.0)), (Vec2::NEG_Y, Vec2::new(mx, ey0 - d - 3.0))] {
+            let side = Vec2::new(-dir.y, dir.x);
+            for j in 0..6 {
+                let p = from + dir * (j as f32 * 4.5);
+                for sgn in [-1.0, 1.0] {
+                    let q = p + side * sgn * 1.5;
+                    if j % 2 == 0 {
+                        b.model("fantasy-town-kit/lantern", at(q), 2.2, 0.0);
+                    } else {
+                        b.model("coaster-kit/bench", at(q), 2.0, (-side.x * sgn).atan2(-side.y * sgn));
+                    }
+                }
+            }
+        }
+        // Des massifs de fleurs dans les quatre coins, entre le plateau et l'allée.
+        for c in [Vec2::new(ex0 - 1.5, ey0 - 1.5), Vec2::new(ex1 + 1.5, ey0 - 1.5), Vec2::new(ex1 + 1.5, ey1 + 1.5), Vec2::new(ex0 - 1.5, ey1 + 1.5)] {
+            b.model("coaster-kit/flowers", at(c), 2.4, 0.0);
+            b.model("coaster-kit/trash", at(c + Vec2::new(0.0, if c.y < my { -1.1 } else { 1.1 })), 1.8, 0.0);
+        }
+        // Les stands, au fond, de part et d'autre de l'allée.
+        for (j, file) in ["coaster-kit/stall-food", "coaster-kit/stall-drinks", "coaster-kit/stall-information"].iter().enumerate() {
+            let x = if j % 2 == 0 { mx - 4.0 } else { mx + 4.0 };
+            let p = Vec2::new(x, ey0 - d - 7.0 - (j / 2) as f32 * 5.0);
+            b.model(file, at(p), 2.0, if x < mx { -FRAC_PI_2 } else { FRAC_PI_2 });
+        }
+        // L'entrée du parc, devant, au bout de l'allée.
+        b.model("coaster-kit/park-entrance", at(Vec2::new(mx, ey1 + d + 15.0)), 1.6, 0.0);
+        // Les arbres : un semis régulier partout où il n'y a pas d'allée, plus grands au loin.
+        let (step, mut r) = (4.4_f32, 0);
+        let mut y = ey0 - reach;
+        while y <= ey1 + reach {
+            let mut x = ex0 - reach + if r % 2 == 0 { 0.0 } else { step / 2.0 };
+            while x <= ex1 + reach {
+                let p = Vec2::new(x + (rng.below(100) as f32 / 100.0 - 0.5) * 1.6, y + (rng.below(100) as f32 / 100.0 - 0.5) * 1.6);
+                let dd = dist(p);
+                if dd >= d + 3.5 && !near_path(p) {
+                    let big = dd > 13.0 && !front(p);
+                    b.model(if big { "coaster-kit/tree-large" } else { "coaster-kit/tree" }, at(p), if big { 2.8 } else { 2.2 }, rng.below(628) as f32 / 100.0);
+                }
+                x += step;
+            }
+            y += step;
+            r += 1;
+        }
+        return;
+    }
+
+    // Gare : le plateau est le quai ; deux voies le longent (au fond et devant) avec des trains qui passent,
+    // la gare au fond, des lampadaires et des bancs sur le quai, des entrepôts derrière.
+    if universe == Universe::Gare {
+        slab(&mut b, Color::srgb(0.70, 0.68, 0.64), ex0 - 2.0, ey0 - 2.0, ex1 + 2.0, ey1 + 2.0, 0.0);
+        // Les deux voies.
+        let rail = 1.8;
+        let tile = |b: &mut Builder, p: Vec2| {
+            let scene = b.server.load(GltfAssetLabel::Scene(0).from_asset("kenney/train-kit/railroad-straight.glb".to_owned()));
+            // Le modèle est décalé d'une unité vers le bas et long de quatre unités à partir de son origine (vers +x une fois tourné).
+            b.commands.spawn((WorldAssetRoot(scene), Transform::from_translation(cell_to_world(p, GROUND_Y + 0.02 + rail, l)).with_rotation(Quat::from_rotation_y(FRAC_PI_2)).with_scale(Vec3::splat(rail)), NotShadowCaster, WorldPart));
+        };
+        let tracks = [ey0 - 3.6, ey1 + 3.6];
+        for y in tracks {
+            let mut x = ex0 - reach;
+            while x <= ex1 + reach {
+                tile(&mut b, Vec2::new(x, y));
+                x += rail * 4.0;
+            }
+        }
+        // Les trains : un convoi de marchandises au fond, un train de banlieue devant, en sens contraires.
+        let vehicle = |b: &mut Builder, file: &str, v: Traffic| {
+            let scene = b.server.load(GltfAssetLabel::Scene(0).from_asset(format!("kenney/{file}.glb")));
+            b.commands.spawn((WorldAssetRoot(scene), Transform::from_scale(Vec3::splat(0.95)), v, WorldPart));
+        };
+        // La boucle est courte (hors champ de peu) pour qu'un train passe souvent.
+        let len = w + 56.0;
+        for (i, file) in ["train-kit/train-locomotive-a", "train-kit/train-carriage-container-blue", "train-kit/train-carriage-lumber", "train-kit/train-carriage-container-red", "train-kit/train-carriage-tank"].iter().enumerate() {
+            vehicle(&mut b, file, Traffic { start: Vec2::new(ex0 - 28.0, tracks[0]), dir: Vec2::X, len, speed: 3.2, phase: 30.0 - i as f32 * 2.4 });
+        }
+        for (i, file) in ["train-kit/train-electric-city-a", "train-kit/train-electric-subway-a", "train-kit/train-electric-city-a"].iter().enumerate() {
+            vehicle(&mut b, file, Traffic { start: Vec2::new(ex1 + 28.0, tracks[1]), dir: Vec2::NEG_X, len, speed: 2.8, phase: 10.0 - i as f32 * 2.6 });
+        }
+        // Sur le quai : lampadaires et bancs en alternance, le long des deux bords.
+        for y in [ey0 - 1.4, ey1 + 1.4] {
+            let mut k = 0;
+            for p in along(Vec2::new(ex0 - 1.0, y), Vec2::new(ex1 + 1.0, y), 3.0) {
+                k += 1;
+                if k % 2 == 1 {
+                    b.model("graveyard-kit/lightpost-single", at(p), 2.0, 0.0);
+                } else {
+                    b.model("graveyard-kit/bench", at(p), 2.0, if y < my { 0.0 } else { std::f32::consts::PI });
+                }
+            }
+        }
+        // Au fond : la gare, puis une rangée d'entrepôts, un château d'eau et des conteneurs alignés.
+        b.model("coaster-kit/station", at(Vec2::new(mx, ey0 - 9.0)), 1.8, 0.0);
+        for p in along(Vec2::new(ex0 - 14.0, ey0 - 16.0), Vec2::new(ex1 + 14.0, ey0 - 16.0), 7.0) {
+            let file = ["city-kit-industrial/building-a", "city-kit-industrial/building-c", "city-kit-industrial/building-e"][((p.x + 100.0) / 7.0) as usize % 3];
+            b.model(file, at(p), 1.8, 0.0);
+        }
+        b.model("city-kit-industrial/water-tower", at(Vec2::new(ex1 + 12.0, ey0 - 9.0)), 1.8, 0.0);
+        for (j, file) in ["city-kit-industrial/shipping-container-a", "city-kit-industrial/shipping-container-b", "city-kit-industrial/shipping-container-c"].iter().enumerate() {
+            b.model(file, at(Vec2::new(ex0 - 9.0 - j as f32 * 3.4, ey0 - 8.5)), 2.4, 0.0);
+        }
+        // Devant, au-delà de la voie : une rangée d'arbres bas.
+        for p in along(Vec2::new(ex0 - 12.0, ey1 + 8.0), Vec2::new(ex1 + 12.0, ey1 + 8.0), 4.5) {
+            b.model("city-kit-suburban/tree-small", at(p), 3.2, 0.0);
+        }
+        return;
+    }
+
+    // Port : le plateau est sur le quai ; la mer est devant, avec trois pontons sur pilotis et des bateaux amarrés,
+    // des conteneurs et des tonneaux bien rangés sur le quai, des entrepôts derrière, un phare au bout.
+    if universe == Universe::Port {
+        let edge = ey1 + 2.5;
+        slab(&mut b, Color::srgb(0.62, 0.60, 0.56), ex0 - reach, ey0 - reach, ex1 + reach, edge, 0.0);
+        slab(&mut b, Color::srgb(0.46, 0.44, 0.40), ex0 - reach, edge - 0.5, ex1 + reach, edge, 0.03);
+        let wood = Color::srgb(0.55, 0.40, 0.26);
+        let post = Color::srgb(0.32, 0.24, 0.16);
+        for x in [ex0 + 1.0, mx, ex1 - 1.0] {
+            let e = b.block(wood, cell_to_world(Vec2::new(x, edge + 5.0), GROUND_Y + 0.02, l), Vec3::new(1.5, 0.18, 10.0));
+            b.flat(e);
+            let mut y = edge + 1.0;
+            while y <= edge + 10.0 {
+                for sgn in [-1.0, 1.0] {
+                    b.block(post, cell_to_world(Vec2::new(x + sgn * 0.75, y), GROUND_Y - 0.1, l), Vec3::new(0.22, 0.6, 0.22));
+                }
+                y += 2.0;
+            }
+        }
+        // Les bateaux amarrés le long des pontons, et un cargo au large.
+        let sea = Vec3::Y * 0.06;
+        b.model("pirate-kit/boat-row-large", at(Vec2::new(ex0 + 2.8, edge + 4.0)) + sea, 0.8, FRAC_PI_2);
+        b.model("pirate-kit/ship-small", at(Vec2::new(mx - 2.8, edge + 6.0)) + sea, 0.9, FRAC_PI_2);
+        b.model("pirate-kit/boat-row-small", at(Vec2::new(mx + 2.4, edge + 3.0)) + sea, 0.8, FRAC_PI_2);
+        b.model("pirate-kit/ship-medium", at(Vec2::new(ex1 + 1.2, edge + 7.5)) + sea, 1.0, FRAC_PI_2);
+        b.model("pirate-kit/ship-large", at(Vec2::new(ex0 - 12.0, edge + 22.0)) + sea, 1.3, 0.4);
+        // Sur le quai : tonneaux à gauche, caisses à droite, deux rangées de conteneurs au fond.
+        for p in along(Vec2::new(ex0 - 3.0, ey0), Vec2::new(ex0 - 3.0, ey1), 1.6) {
+            b.model("pirate-kit/barrel", at(p), 0.8, 0.0);
+        }
+        for p in along(Vec2::new(ex1 + 3.0, ey0 + 0.5), Vec2::new(ex1 + 3.0, ey1 - 0.5), 2.0) {
+            b.model("pirate-kit/crate", at(p), 0.8, 0.0);
+        }
+        let containers = ["city-kit-industrial/shipping-container-a", "city-kit-industrial/shipping-container-b", "city-kit-industrial/shipping-container-c"];
+        for (r, y) in [ey0 - 5.0, ey0 - 8.6].iter().enumerate() {
+            for (j, p) in along(Vec2::new(ex0 - 4.0, *y), Vec2::new(ex1 + 4.0, *y), 3.6).iter().enumerate() {
+                b.model(containers[(j + r) % 3], at(*p), 2.4, 0.0);
+            }
+        }
+        // Derrière : entrepôts, château d'eau, cheminée ; et le phare au bout du quai.
+        for (j, p) in along(Vec2::new(ex0 - 12.0, ey0 - 15.0), Vec2::new(ex1 + 12.0, ey0 - 15.0), 7.0).iter().enumerate() {
+            b.model(["city-kit-industrial/building-c", "city-kit-industrial/building-a", "city-kit-industrial/building-e"][j % 3], at(*p), 1.8, 0.0);
+        }
+        b.model("city-kit-industrial/water-tower", at(Vec2::new(ex0 - 12.0, ey0 - 7.0)), 1.8, 0.0);
+        b.model("city-kit-industrial/chimney-medium", at(Vec2::new(ex1 + 13.0, ey0 - 9.0)), 1.8, 0.0);
+        b.model("pirate-kit/tower-complete-small", at(Vec2::new(ex1 + 12.0, edge - 2.5)), 1.3, 0.0);
+        return;
+    }
+
     // Décor autour du plateau, par bandes : petit près du plateau, de plus en plus gros en s'éloignant (profondeur homogène).
     // Chaque bande ne sert que quelques modèles, rangés dans un ordre régulier, tournés vers le centre.
     let mut rng = Rng::new(universe as u64 * 7919 + shape as u64 * 31);
@@ -616,39 +996,15 @@ fn bands(u: Universe) -> [&'static [(&'static str, f32)]; 3] {
     match u {
         Universe::Prairie => [&[], &[], &[]],
         Universe::Desert => [&[], &[], &[]],
-        Universe::Ruines => [
-            &[("mini-arena/bricks", 2.0), ("prototype-kit/column-low", 2.6), ("mini-arena/column-damaged", 2.6)],
-            &[("prototype-kit/column", 2.6), ("mini-arena/statue", 2.6), ("prototype-kit/column-rounded", 2.6), ("fantasy-town-kit/fountain-round", 2.2), ("mini-arena/trophy", 2.4)],
-            &[("fantasy-town-kit/wall-arch", 2.2), ("fantasy-town-kit/pillar-stone", 2.6), ("mini-arena/column", 2.6)],
-        ],
-        Universe::Cimetiere => [
-            &[("graveyard-kit/pumpkin-carved", 2.4), ("graveyard-kit/gravestone-round", 2.4), ("graveyard-kit/gravestone-broken", 2.4)],
-            &[("graveyard-kit/gravestone-cross", 2.4), ("graveyard-kit/lightpost-single", 2.4), ("graveyard-kit/iron-fence", 2.4), ("graveyard-kit/pine-crooked", 2.4)],
-            &[("graveyard-kit/crypt-small", 2.2), ("graveyard-kit/pine", 2.4), ("graveyard-kit/pine-fall", 2.4)],
-        ],
-        Universe::Ocean => [
-            &[("pirate-kit/barrel", 1.6), ("pirate-kit/crate", 1.6), ("pirate-kit/chest", 1.6)],
-            &[("pirate-kit/boat-row-small", 1.4), ("pirate-kit/palm-straight", 1.9), ("pirate-kit/rocks-a", 1.3), ("pirate-kit/palm-bend", 1.9)],
-            &[("pirate-kit/ship-small", 1.0), ("pirate-kit/palm-detailed-straight", 1.9), ("pirate-kit/rocks-a", 1.3)],
-        ],
-        Universe::Parc => [
-            &[("coaster-kit/bench", 2.2), ("coaster-kit/flowers", 2.4), ("coaster-kit/trash", 2.2)],
-            &[("coaster-kit/stall-food", 2.0), ("coaster-kit/stall-drinks", 2.0), ("coaster-kit/tree", 2.2), ("coaster-kit/stall-information", 2.0), ("fantasy-town-kit/lantern", 2.4)],
-            &[("coaster-kit/support-large", 1.6), ("coaster-kit/park-entrance", 1.2), ("coaster-kit/tree-large", 2.0), ("coaster-kit/station", 1.0)],
-        ],
+        Universe::Ruines => [&[], &[], &[]],
+        Universe::Cimetiere => [&[], &[], &[]],
+        Universe::Ocean => [&[], &[], &[]],
+        Universe::Parc => [&[], &[], &[]],
         Universe::Ville => [&[], &[], &[]],
-        Universe::Gare => [
-            &[("city-kit-roads/construction-cone", 2.0), ("city-kit-industrial/shipping-container-a", 1.0), ("city-kit-industrial/detail-tank", 1.4)],
-            &[("train-kit/train-carriage-box", 0.6), ("city-kit-industrial/building-a", 1.3), ("city-kit-industrial/shipping-container-b", 1.2), ("city-kit-industrial/building-c", 1.3)],
-            &[("city-kit-industrial/chimney-medium", 1.2), ("city-kit-industrial/water-tower", 1.2), ("city-kit-industrial/building-e", 1.3)],
-        ],
-        Universe::Port => [
-            &[("pirate-kit/barrel", 1.6), ("pirate-kit/crate", 1.6)],
-            &[("city-kit-industrial/shipping-container-a", 1.2), ("pirate-kit/boat-row-small", 1.4), ("city-kit-industrial/shipping-container-c", 1.2)],
-            &[("pirate-kit/ship-small", 1.0), ("city-kit-industrial/detail-tank-large", 1.2), ("city-kit-industrial/water-tower", 1.2)],
-        ],
+        Universe::Gare => [&[], &[], &[]],
+        Universe::Port => [&[], &[], &[]],
         Universe::Medieval => [
-            &[("fantasy-town-kit/fence", 1.8), ("fantasy-town-kit/planks", 1.8), ("castle-kit/tree-small", 2.0)],
+            &[],
             &[("fantasy-town-kit/stall-red", 1.6), ("fantasy-town-kit/stall-green", 1.6), ("fantasy-town-kit/cart", 1.6), ("mini-forest/tent", 2.0), ("fantasy-town-kit/lantern", 2.2)],
             &[("castle-kit/tower-hexagon-base", 2.0), ("castle-kit/tree-large", 2.4), ("fantasy-town-kit/windmill", 1.2)],
         ],

@@ -2,6 +2,7 @@
 //! - `SNAKE_CAPTURE=dossier cargo run -p snake` : les écrans et paysages, tout débloqué.
 //! - `SNAKE_PRESSE=dossier cargo run -p snake` : dossier de presse en 1920×1080, sans interface
 //!   (sauf le menu), partie figée.
+//! - `SNAKE_CAPTURE=dossier SNAKE_LIEUX=1` : le menu dans chaque lieu (vue large, pour contrôler les décors).
 use bevy::prelude::*;
 use bevy::render::view::screenshot::{Screenshot, save_to_disk};
 use bevy::window::PrimaryWindow;
@@ -37,6 +38,10 @@ fn shots(press: bool) -> Vec<Shot> {
             at("scene-2", GameState::Scene, Mode::Scenario { scenario: 0, step: 2 }),
             at("scenarios", GameState::Scenarios, Mode::Infinite),
         ];
+    }
+    if std::env::var("SNAKE_LIEUX").is_ok() {
+        // Un lieu par image, vu du menu (la caméra est plus loin) : pour vérifier les décors.
+        return Universe::ALL.iter().map(|u| Shot { name: Box::leak(format!("lieu-{u:?}").into_boxed_str()), state: GameState::Menu, universe: *u, long: None, features: false, shape: Shape::Medium, mode: Mode::Infinite }).collect();
     }
     if std::env::var("SNAKE_FORMES").is_ok() {
         return Shape::ALL.iter().map(|s| Shot { name: Box::leak(format!("forme-{s:?}").into_boxed_str()), state: GameState::Playing, universe: Universe::Prairie, long: Some(12), features: true, shape: *s, mode: Mode::Infinite }).collect();
