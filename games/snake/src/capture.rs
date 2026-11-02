@@ -31,6 +31,11 @@ const fn shot(name: &'static str, state: GameState, universe: Universe, long: Op
 }
 
 fn shots(press: bool) -> Vec<Shot> {
+    // SNAKE_ETAPE=campagne:étape (numérotées depuis 0) : une image du niveau (ou de la scène) de cette étape.
+    if let Some((c, e)) = std::env::var("SNAKE_ETAPE").ok().and_then(|v| v.split_once(':').map(|(a, b)| (a.parse::<usize>().ok(), b.parse::<usize>().ok()))).and_then(|(a, b)| Some((a?, b?))) {
+        let state = if crate::story::SCENARIOS.get(c).and_then(|s| s.steps.get(e)).is_some_and(|l| l.scene.is_some()) { GameState::Scene } else { GameState::Playing };
+        return vec![Shot { name: "etape", state, universe: Universe::Prairie, long: Some(8), features: false, shape: Shape::Medium, mode: Mode::Scenario { scenario: c, step: e } }];
+    }
     if std::env::var("SNAKE_VOYAGE").is_ok() {
         let at = |name: &'static str, state: GameState, mode: Mode| Shot { name, state, universe: Universe::Prairie, long: Some(12), features: false, shape: Shape::Medium, mode };
         return vec![

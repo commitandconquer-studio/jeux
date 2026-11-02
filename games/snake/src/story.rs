@@ -35,7 +35,7 @@ pub static SCENARIOS: LazyLock<Vec<Scenario>> = LazyLock::new(|| {
         return vec![build(&format!("[Aperçu illisible]\ntype = scene\nreplique = Aperçu | Le fichier d'aperçu est illisible — {shown}\n"), "Aperçu").expect("aventure de repli")];
     }
     let mut all = Vec::new();
-    for (name, text) in [("Le grand voyage", include_str!("../scenarios/aventure.txt"))] {
+    for (name, text) in [("Le grand voyage", include_str!("../scenarios/aventure.txt")), ("Le labyrinthe du Minotaure", include_str!("../scenarios/labyrinthe.txt"))] {
         all.push(build(text, name).unwrap_or_else(|e| panic!("aventure « {name} » illisible : {e}")));
     }
     all
@@ -173,10 +173,11 @@ mod tests {
 
     #[test]
     fn builtin_adventures_are_sound() {
-        assert_eq!(SCENARIOS.len(), 1, "une seule aventure : le tutoriel puis dix lieux");
+        assert_eq!(SCENARIOS.len(), 2, "le grand voyage, puis le labyrinthe du Minotaure");
         for sc in SCENARIOS.iter() {
             let levels = sc.steps.iter().filter(|l| l.scene.is_none()).count();
-            assert_eq!(levels, 7 + 10 * 6, "{} : le tutoriel (7) et six niveaux par lieu", sc.title);
+            let expected = if sc.title == "Le grand voyage" { 7 + 10 * 6 } else { 8 };
+            assert_eq!(levels, expected, "{} : nombre de niveaux", sc.title);
             let mut names = std::collections::HashSet::new();
             assert!(sc.steps.iter().all(|s| names.insert(s.name.clone())), "{} : des étapes ont le même nom", sc.title);
             for step in &sc.steps {
@@ -193,6 +194,24 @@ mod tests {
                     assert!(scene.lines.iter().all(|l| l.text.chars().count() <= 200), "{} / {} : réplique trop longue", sc.title, step.name);
                 }
             }
+        }
+    }
+
+    /// Dans le labyrinthe, la sortie d'un niveau (à droite) se raccorde à l'entrée du suivant (à gauche), sur la même rangée.
+    #[test]
+    fn labyrinth_levels_connect() {
+        let sc = SCENARIOS.iter().find(|s| s.title == "Le labyrinthe du Minotaure").expect("campagne du labyrinthe");
+        let levels: Vec<_> = sc.steps.iter().filter(|l| l.scene.is_none()).collect();
+        for l in &levels {
+            let g = l.grid.as_ref().expect("carte");
+            let exit = g.exit().expect("une sortie");
+            assert_eq!(exit.x, g.w - 1, "{} : la sortie est au bord droit", l.name);
+            assert_eq!(l.layout(0).start.x, 2, "{} : l'entrée est au bord gauche", l.name);
+        }
+        for pair in levels.windows(2) {
+            let (a, b) = (pair[0].grid.as_ref().unwrap(), pair[1].grid.as_ref().unwrap());
+            assert_eq!(a.exit().unwrap().y, pair[1].layout(0).start.y, "{} → {} : la rangée de sortie ne correspond pas à l'entrée", pair[0].name, pair[1].name);
+            assert_eq!(a.h, b.h, "{} → {} : même hauteur", pair[0].name, pair[1].name);
         }
     }
 }
