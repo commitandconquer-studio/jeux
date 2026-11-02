@@ -105,6 +105,14 @@ fn after_win(mut mode: ResMut<Mode>, outcome: Res<Outcome>, mut progress: ResMut
             banner.text = "Réussi ! Aperçu d'une seule étape : le niveau recommence (décochez « cette étape seulement » pour enchaîner).".to_owned();
             banner.left = 5.0;
         }
+        // Un niveau déjà gagné qu'on rejoue : la progression ne bouge pas, retour à la liste.
+        if let Mode::Scenario { scenario, step } = *mode
+            && !crate::levels::preview_active()
+            && SCENARIOS.get(scenario).is_some_and(|sc| step + 1 < progress.next_step(&sc.title))
+        {
+            next.set(GameState::Scenarios);
+            return;
+        }
         advance(&mut mode, &mut progress, &mut next);
     }
 }

@@ -110,7 +110,7 @@ pub enum Form {
 }
 
 /// Les lieux du Voyage. Ceux qui n'ont pas encore leur décor empruntent celui d'un autre paysage.
-#[derive(Clone, Copy, PartialEq, Eq, Debug)]
+#[derive(Clone, Copy, PartialEq, Eq, Hash, Debug)]
 pub enum Place {
     Garden,
     Desert,

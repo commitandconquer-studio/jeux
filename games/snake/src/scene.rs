@@ -1,6 +1,6 @@
 //! L'écran de scène (décor, personnages, caméra de présentation, sous-titres) et la liste des aventures.
 use bevy::prelude::*;
-use game_common::ui::{spawn_gap, spawn_text};
+use game_common::ui::{spawn_button_sized, spawn_gap, spawn_text};
 
 use crate::GameState;
 use crate::audio::Sfx;
@@ -54,6 +54,10 @@ struct ScenarioBtn(usize, bool);
 
 #[derive(Component)]
 struct ScenarioBack;
+
+/// Rejouer un niveau déjà gagné : (aventure, étape).
+#[derive(Component)]
+struct ReplayBtn(usize, usize);
 
 /// Le cadrage d'une scène : où est la caméra et vers quoi elle regarde, selon les personnages.
 fn frame(scene: &Scene, cam: Cam) -> SceneCamera {
@@ -274,6 +278,37 @@ fn spawn_scenarios(mut commands: Commands, server: Res<AssetServer>, progress: R
             commands.entity(b).insert(ScenarioBtn(i, true));
         }
     }
+    // Les niveaux déjà gagnés se rejouent à volonté, sans toucher à la progression : une ligne par lieu, un bouton par niveau.
+    let mut rows: Vec<(crate::levels::Place, Vec<(usize, usize, usize)>)> = Vec::new();
+    for (i, sc) in SCENARIOS.iter().enumerate() {
+        let done = progress.next_step(&sc.title);
+        let mut number = std::collections::HashMap::new();
+        for (k, l) in sc.steps.iter().enumerate().filter(|(_, l)| l.scene.is_none()) {
+            let n = number.entry(l.place).or_insert(0usize);
+            *n += 1;
+            if k < done {
+                match rows.iter_mut().find(|(p, _)| *p == l.place) {
+                    Some((_, v)) => v.push((i, k, *n)),
+                    None => rows.push((l.place, vec![(i, k, *n)])),
+                }
+            }
+        }
+    }
+    if !rows.is_empty() {
+        spawn_gap(&mut commands, root, 2.0);
+        let t = spawn_text(&mut commands, root, "Rejouer un niveau gagné", 20.0);
+        commands.entity(t).insert(TextColor(Color::srgb(1.0, 0.92, 0.74)));
+        for (place, levels) in rows {
+            let row = commands.spawn((Node { column_gap: Val::Px(6.0), align_items: AlignItems::Center, ..default() }, ChildOf(root))).id();
+            let label = commands.spawn((Node { width: Val::Px(170.0), justify_content: JustifyContent::End, ..default() }, ChildOf(row))).id();
+            let t = spawn_text(&mut commands, label, place.scenery().label(), 17.0);
+            commands.entity(t).insert(TextColor(Color::srgb(1.0, 0.96, 0.84)));
+            for (i, k, n) in levels {
+                let (b, _) = spawn_button_sized(&mut commands, row, n.to_string(), 40.0, 32.0, 17.0);
+                commands.entity(b).insert(ReplayBtn(i, k));
+            }
+        }
+    }
     spawn_gap(&mut commands, root, 4.0);
     let (b, _) = plank(&mut commands, &server, root, "panneau_bois_fonce_large", "fleche_precedent", 200.0, "Retour", None);
     commands.entity(b).insert(ScenarioBack);
@@ -283,6 +318,7 @@ fn spawn_scenarios(mut commands: Commands, server: Res<AssetServer>, progress: R
 fn scenarios_click(
     click: On<PointerClick>,
     buttons: Query<&ScenarioBtn>,
+    replays: Query<&ReplayBtn>,
     back: Query<(), With<ScenarioBack>>,
     progress: Res<StoryProgress>,
     mut mode: ResMut<Mode>,
@@ -292,6 +328,12 @@ fn scenarios_click(
     if back.contains(click.entity) {
         sfx.write(Sfx::Click);
         next.set(GameState::Menu);
+        return;
+    }
+    if let Ok(ReplayBtn(i, k)) = replays.get(click.entity) {
+        sfx.write(Sfx::Click);
+        *mode = Mode::Scenario { scenario: *i, step: *k };
+        next.set(GameState::Step);
         return;
     }
     let Ok(ScenarioBtn(i, restart)) = buttons.get(click.entity) else { return };
