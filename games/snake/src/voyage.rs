@@ -128,11 +128,21 @@ impl VoyageProgress {
     }
 }
 
+/// Temps de référence d'un niveau ; les niveaux d'aventure n'en ont pas : on l'estime d'après les touristes, le pas et la sortie.
+pub fn par_of(level: &Level) -> f32 {
+    if level.par > 0.0 {
+        level.par
+    } else {
+        level.tourists as f32 * level.pace * 10.0 + if level.exit { 12.0 } else { 0.0 }
+    }
+}
+
 /// Étoiles gagnées : 1 pour l'objectif, 2 dans le temps de référence, 3 avec 25 % de moins.
 pub fn stars_for(level: &Level, time: f32) -> u8 {
-    if time <= level.par * 0.75 {
+    let par = par_of(level);
+    if time <= par * 0.75 {
         3
-    } else if time <= level.par {
+    } else if time <= par {
         2
     } else {
         1

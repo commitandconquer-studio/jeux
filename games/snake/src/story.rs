@@ -11,6 +11,7 @@ use crate::voyage::{Mode, Outcome};
 
 pub struct Scenario {
     pub title: String,
+    #[allow(dead_code)] // gardée pour la fiche de l'aventure (éditeur, futur écran de choix)
     pub description: String,
     pub steps: Vec<Level>,
 }
@@ -44,11 +45,33 @@ pub static SCENARIOS: LazyLock<Vec<Scenario>> = LazyLock::new(|| {
 #[derive(Resource, Default)]
 pub struct StoryProgress {
     next: HashMap<String, usize>,
+    /// Meilleur résultat par étape : (aventure, étape) → (étoiles, meilleur temps). Les anciennes sauvegardes n'en ont pas.
+    best: HashMap<(String, usize), (u8, f32)>,
 }
+
 
 impl StoryProgress {
     pub fn next_step(&self, title: &str) -> usize {
         self.next.get(title).copied().unwrap_or(0)
+    }
+
+    pub fn best(&self, title: &str, step: usize) -> Option<(u8, f32)> {
+        self.best.get(&(title.to_owned(), step)).copied()
+    }
+
+    pub fn total_stars(&self, title: &str) -> u32 {
+        self.best.iter().filter(|((t, _), _)| t == title).map(|(_, (s, _))| *s as u32).sum()
+    }
+
+    fn record(&mut self, title: &str, step: usize, stars: u8, time: f32) {
+        if crate::levels::preview_active() {
+            return;
+        }
+        let e = self.best.entry((title.to_owned(), step)).or_insert((0, f32::MAX));
+        e.0 = e.0.max(stars);
+        e.1 = e.1.min(time);
+        let text: Vec<String> = self.best.iter().map(|((t, k), (s, tm))| format!("{t}\t{k}\t{s}\t{tm:.1}")).collect();
+        game_common::save::store("snake", "scenarios-notes", &text.join("\n"));
     }
 
     fn set(&mut self, title: &str, step: usize) {
@@ -68,6 +91,16 @@ fn load_progress(mut p: ResMut<StoryProgress>) {
     }
     if let Some(text) = game_common::save::load("snake", "scenarios") {
         p.next = text.lines().filter_map(|l| l.split_once('\t')).filter_map(|(t, s)| Some((t.to_owned(), s.parse().ok()?))).collect();
+    }
+    if let Some(text) = game_common::save::load("snake", "scenarios-notes") {
+        for l in text.lines() {
+            let f: Vec<&str> = l.split('\t').collect();
+            if let [t, k, s, tm] = f[..]
+                && let (Ok(k), Ok(s), Ok(tm)) = (k.parse::<usize>(), s.parse::<u8>(), tm.parse::<f32>())
+            {
+                p.best.insert((t.to_owned(), k), (s, tm));
+            }
+        }
     }
 }
 
@@ -104,6 +137,12 @@ fn after_win(mut mode: ResMut<Mode>, outcome: Res<Outcome>, mut progress: ResMut
         if crate::levels::single_step() {
             banner.text = "Réussi ! Aperçu d'une seule étape : le niveau recommence (décochez « cette étape seulement » pour enchaîner).".to_owned();
             banner.left = 5.0;
+        }
+        if let Mode::Scenario { scenario, step } = *mode
+            && let Some(sc) = SCENARIOS.get(scenario)
+            && !crate::levels::single_step()
+        {
+            progress.record(&sc.title, step, outcome.stars, outcome.time);
         }
         // Un niveau déjà gagné qu'on rejoue : la progression ne bouge pas, retour à la liste.
         if let Mode::Scenario { scenario, step } = *mode

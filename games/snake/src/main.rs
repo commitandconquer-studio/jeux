@@ -10,6 +10,7 @@ mod levels;
 mod miniature;
 mod people;
 mod progress;
+mod scenarios;
 mod scene;
 mod settings;
 mod story;
@@ -60,7 +61,7 @@ fn main() {
         .init_state::<GameState>()
         .add_plugins(StudioPlugin::new(Univers::Croa, game_common::ambiance::AmbiancePlugin::exterieur()))
         .add_plugins(miniature::MiniaturePlugin)
-        .add_plugins((progress::ProgressPlugin, voyage::VoyagePlugin, game::GamePlugin, ui::UiPlugin, story::StoryPlugin, scene::ScenePlugin, audio::AudioPlugin, capture::CapturePlugin))
+        .add_plugins((progress::ProgressPlugin, voyage::VoyagePlugin, game::GamePlugin, ui::UiPlugin, story::StoryPlugin, scene::ScenePlugin, scenarios::ScenariosPlugin, audio::AudioPlugin, capture::CapturePlugin))
         .add_systems(Update, game_common::langue::rebatir_menu(GameState::Menu))
         .insert_resource(Rng::from_time())
         .insert_resource(bevy::light::DirectionalLightShadowMap { size: 2048 })

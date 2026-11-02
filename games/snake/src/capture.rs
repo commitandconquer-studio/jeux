@@ -105,6 +105,14 @@ impl Plugin for CapturePlugin {
                 .add_systems(Update, run_capture);
             if press.is_some() {
                 app.add_systems(Startup, full_hd);
+            } else if let Some((w, h)) = std::env::var("SNAKE_FENETRE").ok().and_then(|v| v.split_once('x').map(|(a, b)| (a.parse::<f32>().ok(), b.parse::<f32>().ok()))).and_then(|(a, b)| Some((a?, b?))) {
+                // SNAKE_FENETRE=1280x720 : taille exacte de la fenêtre, pour contrôler les menus aux petites résolutions.
+                app.add_systems(Startup, move |mut windows: Query<&mut Window, With<PrimaryWindow>>| {
+                    for mut win in &mut windows {
+                        win.resolution.set_scale_factor_override(Some(1.0));
+                        win.resolution.set(w, h);
+                    }
+                });
             }
         }
     }

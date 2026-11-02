@@ -1,12 +1,12 @@
 //! L'écran de scène (décor, personnages, caméra de présentation, sous-titres) et la liste des aventures.
 use bevy::prelude::*;
-use game_common::ui::{spawn_button_sized, spawn_gap, spawn_text};
+use game_common::ui::spawn_text;
 
 use crate::GameState;
 use crate::audio::Sfx;
 use crate::levels::{Cam, Scene};
 use crate::people::{self, Pose};
-use crate::story::{SCENARIOS, StoryProgress, advance};
+use crate::story::{StoryProgress, advance};
 use crate::ui::plank;
 use crate::voyage::Mode;
 use crate::world::cell_to_world;
@@ -47,17 +47,6 @@ enum SceneBtn {
     Next,
     Skip,
 }
-
-/// Un bouton de la liste des aventures : (aventure, recommencer depuis le début).
-#[derive(Component)]
-struct ScenarioBtn(usize, bool);
-
-#[derive(Component)]
-struct ScenarioBack;
-
-/// Rejouer un niveau déjà gagné : (aventure, étape).
-#[derive(Component)]
-struct ReplayBtn(usize, usize);
 
 /// Le cadrage d'une scène : où est la caméra et vers quoi elle regarde, selon les personnages.
 fn frame(scene: &Scene, cam: Cam) -> SceneCamera {
@@ -247,110 +236,6 @@ fn scene_keys(
 
 // ---------------------------------------------------------------- liste des aventures
 
-fn spawn_scenarios(mut commands: Commands, server: Res<AssetServer>, progress: Res<StoryProgress>) {
-    let root = commands
-        .spawn((
-            Node { width: Val::Percent(100.0), height: Val::Percent(100.0), flex_direction: FlexDirection::Column, align_items: AlignItems::Center, justify_content: JustifyContent::Center, row_gap: Val::Px(10.0), padding: UiRect::all(Val::Px(16.0)), ..default() },
-            DespawnOnExit(GameState::Scenarios),
-        ))
-        .id();
-    let title = spawn_text(&mut commands, root, "Mode scénario", 42.0);
-    commands.entity(title).insert(TextColor(Color::srgb(1.0, 0.96, 0.84)));
-    spawn_gap(&mut commands, root, 4.0);
-    // Les aventures sont nombreuses : deux colonnes, des panneaux plus compacts.
-    let list = commands
-        .spawn((Node { flex_wrap: FlexWrap::Wrap, justify_content: JustifyContent::Center, column_gap: Val::Px(24.0), row_gap: Val::Px(6.0), width: Val::Px(900.0), ..default() }, ChildOf(root)))
-        .id();
-    for (i, sc) in SCENARIOS.iter().enumerate() {
-        let done = progress.next_step(&sc.title);
-        let status = if done == 0 {
-            sc.description.clone()
-        } else if done >= sc.steps.len() {
-            "Terminée — rejouer".to_owned()
-        } else {
-            format!("Reprendre : étape {} sur {}", done + 1, sc.steps.len())
-        };
-        let row = commands.spawn((Node { column_gap: Val::Px(6.0), align_items: AlignItems::Center, width: Val::Px(420.0), ..default() }, ChildOf(list))).id();
-        let (b, _) = plank(&mut commands, &server, row, if done >= sc.steps.len() { "panneau_bois_fonce_large" } else { "panneau_bois_dore_large" }, "icone_carte", 300.0, sc.title.clone(), Some(&status));
-        commands.entity(b).insert(ScenarioBtn(i, false));
-        if done > 0 && done < sc.steps.len() {
-            let (b, _) = plank(&mut commands, &server, row, "panneau_bois_fonce_large", "icone_infini", 110.0, "Reprendre à zéro", None);
-            commands.entity(b).insert(ScenarioBtn(i, true));
-        }
-    }
-    // Les niveaux déjà gagnés se rejouent à volonté, sans toucher à la progression : une ligne par lieu, un bouton par niveau.
-    let mut rows: Vec<(crate::levels::Place, Vec<(usize, usize, usize)>)> = Vec::new();
-    for (i, sc) in SCENARIOS.iter().enumerate() {
-        let done = progress.next_step(&sc.title);
-        let mut number = std::collections::HashMap::new();
-        for (k, l) in sc.steps.iter().enumerate().filter(|(_, l)| l.scene.is_none()) {
-            let n = number.entry(l.place).or_insert(0usize);
-            *n += 1;
-            if k < done {
-                match rows.iter_mut().find(|(p, _)| *p == l.place) {
-                    Some((_, v)) => v.push((i, k, *n)),
-                    None => rows.push((l.place, vec![(i, k, *n)])),
-                }
-            }
-        }
-    }
-    if !rows.is_empty() {
-        spawn_gap(&mut commands, root, 2.0);
-        let t = spawn_text(&mut commands, root, "Rejouer un niveau gagné", 20.0);
-        commands.entity(t).insert(TextColor(Color::srgb(1.0, 0.92, 0.74)));
-        for (place, levels) in rows {
-            let row = commands.spawn((Node { column_gap: Val::Px(6.0), align_items: AlignItems::Center, ..default() }, ChildOf(root))).id();
-            let label = commands.spawn((Node { width: Val::Px(170.0), justify_content: JustifyContent::End, ..default() }, ChildOf(row))).id();
-            let t = spawn_text(&mut commands, label, place.scenery().label(), 17.0);
-            commands.entity(t).insert(TextColor(Color::srgb(1.0, 0.96, 0.84)));
-            for (i, k, n) in levels {
-                let (b, _) = spawn_button_sized(&mut commands, row, n.to_string(), 40.0, 32.0, 17.0);
-                commands.entity(b).insert(ReplayBtn(i, k));
-            }
-        }
-    }
-    spawn_gap(&mut commands, root, 4.0);
-    let (b, _) = plank(&mut commands, &server, root, "panneau_bois_fonce_large", "fleche_precedent", 200.0, "Retour", None);
-    commands.entity(b).insert(ScenarioBack);
-}
-
-#[allow(clippy::too_many_arguments)]
-fn scenarios_click(
-    click: On<PointerClick>,
-    buttons: Query<&ScenarioBtn>,
-    replays: Query<&ReplayBtn>,
-    back: Query<(), With<ScenarioBack>>,
-    progress: Res<StoryProgress>,
-    mut mode: ResMut<Mode>,
-    mut next: ResMut<NextState<GameState>>,
-    mut sfx: MessageWriter<Sfx>,
-) {
-    if back.contains(click.entity) {
-        sfx.write(Sfx::Click);
-        next.set(GameState::Menu);
-        return;
-    }
-    if let Ok(ReplayBtn(i, k)) = replays.get(click.entity) {
-        sfx.write(Sfx::Click);
-        *mode = Mode::Scenario { scenario: *i, step: *k };
-        next.set(GameState::Step);
-        return;
-    }
-    let Ok(ScenarioBtn(i, restart)) = buttons.get(click.entity) else { return };
-    sfx.write(Sfx::Click);
-    let sc = &SCENARIOS[*i];
-    let saved = progress.next_step(&sc.title);
-    let step = if *restart || saved >= sc.steps.len() { 0 } else { saved };
-    *mode = Mode::Scenario { scenario: *i, step };
-    next.set(GameState::Step);
-}
-
-fn scenarios_keys(keys: Res<ButtonInput<KeyCode>>, mut next: ResMut<NextState<GameState>>) {
-    if keys.just_pressed(KeyCode::Escape) {
-        next.set(GameState::Menu);
-    }
-}
-
 pub struct ScenePlugin;
 
 impl Plugin for ScenePlugin {
@@ -359,9 +244,6 @@ impl Plugin for ScenePlugin {
             .init_resource::<SceneRun>()
             .add_systems(OnEnter(GameState::Scene), (crate::voyage::sync_layout, spawn_scene).chain())
             .add_systems(Update, (update_scene, scene_keys).run_if(in_state(GameState::Scene)))
-            .add_systems(OnEnter(GameState::Scenarios), spawn_scenarios)
-            .add_systems(Update, scenarios_keys.run_if(in_state(GameState::Scenarios)))
-            .add_observer(scene_click)
-            .add_observer(scenarios_click);
+            .add_observer(scene_click);
     }
 }
