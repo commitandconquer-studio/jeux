@@ -176,7 +176,7 @@ mod tests {
         assert_eq!(SCENARIOS.len(), 2, "le grand voyage, puis le labyrinthe du Minotaure");
         for sc in SCENARIOS.iter() {
             let levels = sc.steps.iter().filter(|l| l.scene.is_none()).count();
-            let expected = if sc.title == "Le grand voyage" { 7 + 10 * 6 } else { 8 };
+            let expected = if sc.title == "Le grand voyage" { 7 + 10 * 6 } else { 20 };
             assert_eq!(levels, expected, "{} : nombre de niveaux", sc.title);
             let mut names = std::collections::HashSet::new();
             assert!(sc.steps.iter().all(|s| names.insert(s.name.clone())), "{} : des étapes ont le même nom", sc.title);
@@ -197,21 +197,50 @@ mod tests {
         }
     }
 
-    /// Dans le labyrinthe, la sortie d'un niveau (à droite) se raccorde à l'entrée du suivant (à gauche), sur la même rangée.
+    /// Dans le labyrinthe, la sortie d'un niveau se raccorde à l'entrée du suivant : si l'on sort en haut, on repart en bas, au même
+    /// endroit (à peu près) le long du bord.
     #[test]
     fn labyrinth_levels_connect() {
         let sc = SCENARIOS.iter().find(|s| s.title == "Le labyrinthe du Minotaure").expect("campagne du labyrinthe");
         let levels: Vec<_> = sc.steps.iter().filter(|l| l.scene.is_none()).collect();
-        for l in &levels {
+        assert_eq!(levels.len(), 20);
+        // Côté de la sortie et position le long de ce bord (0 à 1).
+        let exit_side = |l: &crate::levels::Level| {
             let g = l.grid.as_ref().expect("carte");
-            let exit = g.exit().expect("une sortie");
-            assert_eq!(exit.x, g.w - 1, "{} : la sortie est au bord droit", l.name);
-            assert_eq!(l.layout(0).start.x, 2, "{} : l'entrée est au bord gauche", l.name);
-        }
+            let e = g.exit().expect("une sortie");
+            let (side, t) = if e.x == 0 {
+                ('G', e.y as f32 / g.h as f32)
+            } else if e.x == g.w - 1 {
+                ('D', e.y as f32 / g.h as f32)
+            } else if e.y == 0 {
+                ('H', e.x as f32 / g.w as f32)
+            } else {
+                assert_eq!(e.y, g.h - 1, "{} : la sortie est au bord", l.name);
+                ('B', e.x as f32 / g.w as f32)
+            };
+            (side, t)
+        };
+        // Le côté par lequel on entre : le départ regarde vers l'intérieur.
+        let entry_side = |l: &crate::levels::Level| {
+            let g = l.grid.as_ref().expect("carte");
+            let s = l.layout(0).start;
+            match (l.dir.x, l.dir.y) {
+                (1, 0) => ('G', s.y as f32 / g.h as f32),
+                (-1, 0) => ('D', s.y as f32 / g.h as f32),
+                (0, 1) => ('H', s.x as f32 / g.w as f32),
+                _ => ('B', s.x as f32 / g.w as f32),
+            }
+        };
+        let opposite = |c: char| match c {
+            'G' => 'D',
+            'D' => 'G',
+            'H' => 'B',
+            _ => 'H',
+        };
         for pair in levels.windows(2) {
-            let (a, b) = (pair[0].grid.as_ref().unwrap(), pair[1].grid.as_ref().unwrap());
-            assert_eq!(a.exit().unwrap().y, pair[1].layout(0).start.y, "{} → {} : la rangée de sortie ne correspond pas à l'entrée", pair[0].name, pair[1].name);
-            assert_eq!(a.h, b.h, "{} → {} : même hauteur", pair[0].name, pair[1].name);
+            let ((out_side, out_t), (in_side, in_t)) = (exit_side(pair[0]), entry_side(pair[1]));
+            assert_eq!(in_side, opposite(out_side), "{} → {} : on doit repartir du côté opposé à la sortie", pair[0].name, pair[1].name);
+            assert!((out_t - in_t).abs() < 0.2, "{} → {} : l'entrée ne correspond pas à la sortie ({out_t:.2} / {in_t:.2})", pair[0].name, pair[1].name);
         }
     }
 }
