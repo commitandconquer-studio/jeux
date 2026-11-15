@@ -27,14 +27,18 @@
         {%- else %}
         <span class="btn btn-main disabled" title="{{ trans(key='a_venir', lang=lang) }}">▶ {{ trans(key="jouer_navigateur", lang=lang) }} · {{ trans(key="bientot", lang=lang) }}</span>
         {%- endif %}
+        {%- if not page.extra.jouer_url %}
         <a class="btn btn-ghost" href="{{ get_url(path='@/installer.md', lang=lang) }}">🐧 {{ trans(key="linux_dl", lang=lang) }}</a>
+        {%- endif %}
       </p>
       <ul class="badges">
         <li class="ok">🌐 {% if page.extra.web %}{{ trans(key="navigateur", lang=lang) }}{% else %}{{ trans(key="navigateur", lang=lang) }} · {{ trans(key="bientot", lang=lang) }}{% endif %}</li>
+        {%- if not page.extra.jouer_url %}
         <li class="ok">🐧 Linux</li>
         <li>🪟 Windows · {{ trans(key="bientot", lang=lang) }}</li>
         <li>🍎 macOS · {{ trans(key="bientot", lang=lang) }}</li>
         <li>🤖 Android · {{ trans(key="bientot", lang=lang) }}</li>
+        {%- endif %}
       </ul>
     </div>
     {%- if not image_fond %}
@@ -66,8 +70,8 @@
     <aside class="onglets-commandes">
       <h2>{{ trans(key="commandes", lang=lang) }}</h2>
       <ul class="commandes">{% for c in page.extra.commandes %}<li>{{ c }}</li>{% endfor %}</ul>
-      <p class="installer-lien"><a href="{{ get_url(path='@/installer.md', lang=lang) }}">{{ trans(key="voir_installation", lang=lang) }} →</a>
-      · <a href="{{ config.extra.github }}/tree/main/{{ page.extra.code }}">{{ trans(key="code_source", lang=lang) }} →</a></p>
+      <p class="installer-lien">{% if not page.extra.jouer_url %}<a href="{{ get_url(path='@/installer.md', lang=lang) }}">{{ trans(key="voir_installation", lang=lang) }} →</a>
+      · {% endif %}<a href="{{ config.extra.github }}/tree/main/{{ page.extra.code }}">{{ trans(key="code_source", lang=lang) }} →</a></p>
     </aside>
   </div>
 </section>
