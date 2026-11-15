@@ -5,6 +5,14 @@ description = "The game that makes you discover the world: flags, country shapes
 [extra]
 web = true
 jouer_url = "jeux-html/a-la-carte/"
+logo = "a-la-carte-logo"
+dossier = "a-la-carte"
+captures = [
+  { img = "1-accueil", t = "The six game modes" },
+  { img = "2-couleurs-et-pays", t = "The right colours, recolour and country silhouettes" },
+  { img = "3-villes-mystere", t = "Mystery cities: distances, arrows and circles on the map" },
+  { img = "4-capitales", t = "Mystery capitals, with the world map" },
+]
 icone = "a-la-carte"
 code = "site/static/jeux-html/a-la-carte"
 commandes = ["Mouse or finger: pick an answer", "Keyboard: type the name, arrows to choose, Enter to confirm", "Offline: can be installed like an app from your browser"]

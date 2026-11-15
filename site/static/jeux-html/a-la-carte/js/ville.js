@@ -102,7 +102,7 @@ const Ville = (() => {
     if (!q) return [];
     const debut = [], contient = [];
     index.forEach((n, i) => {
-      if (etat.essais.some(e => e.ville === villes[i])) return;
+      if (etat.essais.some(e => e.ville === villes[i]) || etat.refs.includes(villes[i])) return;   // ni une ville déjà proposée, ni une ville de départ
       if (n.startsWith(q)) debut.push(villes[i]);
       else if (n.includes(q)) contient.push(villes[i]);
     });
