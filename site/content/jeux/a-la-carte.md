@@ -4,6 +4,7 @@ updated = 2026-11-15T21:00:00+01:00
 description = "Le jeu qui vous fait découvrir le monde : drapeaux, silhouettes de pays et villes mystère, au calme, sans compte ni publicité."
 [extra]
 web = true
+jouer_url = "jeux-html/a-la-carte/"
 icone = "a-la-carte"
 code = "site/static/jeux-html/a-la-carte"
 commandes = ["Souris ou doigt : choisir une réponse", "Clavier : taper le nom, flèches pour choisir, Entrée pour valider", "Hors ligne : installable comme une application depuis le navigateur"]

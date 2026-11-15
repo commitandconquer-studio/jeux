@@ -23,7 +23,7 @@
       {%- endif %}
       <p class="actions">
         {%- if page.extra.web %}
-        <a class="btn btn-main jouer" href="{{ get_url(path='@/jouer/' ~ page.slug ~ '.md', lang=lang) }}">▶ {{ trans(key="jouer_maintenant", lang=lang) }}</a>
+        <a class="btn btn-main jouer" href="{% if page.extra.jouer_url %}{{ get_url(path=page.extra.jouer_url, trailing_slash=true) }}{% else %}{{ get_url(path='@/jouer/' ~ page.slug ~ '.md', lang=lang) }}{% endif %}">▶ {{ trans(key="jouer_maintenant", lang=lang) }}</a>
         {%- else %}
         <span class="btn btn-main disabled" title="{{ trans(key='a_venir', lang=lang) }}">▶ {{ trans(key="jouer_navigateur", lang=lang) }} · {{ trans(key="bientot", lang=lang) }}</span>
         {%- endif %}
@@ -102,7 +102,7 @@
   <h2>{{ page.title }}</h2>
   <p class="actions">
     {%- if page.extra.web %}
-    <a class="btn btn-main jouer" href="{{ get_url(path='@/jouer/' ~ page.slug ~ '.md', lang=lang) }}">▶ {{ trans(key="jouer_maintenant", lang=lang) }}</a>
+    <a class="btn btn-main jouer" href="{% if page.extra.jouer_url %}{{ get_url(path=page.extra.jouer_url, trailing_slash=true) }}{% else %}{{ get_url(path='@/jouer/' ~ page.slug ~ '.md', lang=lang) }}{% endif %}">▶ {{ trans(key="jouer_maintenant", lang=lang) }}</a>
     {%- endif %}
     <a class="btn btn-ghost" href="{{ get_url(path='@/jeux/_index.md', lang=lang) }}">← {{ trans(key="retour_jeux", lang=lang) }}</a>
   </p>

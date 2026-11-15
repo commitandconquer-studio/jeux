@@ -4,6 +4,7 @@ updated = 2026-11-15T21:00:00+01:00
 description = "The game that makes you discover the world: flags, country shapes and mystery cities — calm, with no account and no ads. In French."
 [extra]
 web = true
+jouer_url = "jeux-html/a-la-carte/"
 icone = "a-la-carte"
 code = "site/static/jeux-html/a-la-carte"
 commandes = ["Mouse or finger: pick an answer", "Keyboard: type the name, arrows to choose, Enter to confirm", "Offline: can be installed like an app from your browser"]

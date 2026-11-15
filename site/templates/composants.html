@@ -77,7 +77,7 @@
     {%- endif %}
     <p class="actions">
       {%- if j.extra.web %}
-      <a class="btn btn-main jouer" href="{{ get_url(path='@/jouer/' ~ j.slug ~ '.md', lang=lang) }}">▶ {{ trans(key="jouer_maintenant", lang=lang) }}</a>
+      <a class="btn btn-main jouer" href="{% if j.extra.jouer_url %}{{ get_url(path=j.extra.jouer_url, trailing_slash=true) }}{% else %}{{ get_url(path='@/jouer/' ~ j.slug ~ '.md', lang=lang) }}{% endif %}">▶ {{ trans(key="jouer_maintenant", lang=lang) }}</a>
       {%- endif %}
       <a class="btn btn-ghost" href="{{ j.permalink }}">{{ trans(key="voir_jeu", lang=lang) }}</a>
     </p>
@@ -161,7 +161,7 @@
       {%- endif %}
       <p class="actions">
         {%- if j.extra.web %}
-        <a class="btn btn-main jouer" href="{{ get_url(path='@/jouer/' ~ j.slug ~ '.md', lang=lang) }}">▶ {{ trans(key="jouer_maintenant", lang=lang) }}</a>
+        <a class="btn btn-main jouer" href="{% if j.extra.jouer_url %}{{ get_url(path=j.extra.jouer_url, trailing_slash=true) }}{% else %}{{ get_url(path='@/jouer/' ~ j.slug ~ '.md', lang=lang) }}{% endif %}">▶ {{ trans(key="jouer_maintenant", lang=lang) }}</a>
         {%- endif %}
         <a class="btn btn-ghost" href="{{ j.permalink }}">{{ trans(key="voir_jeu", lang=lang) }}</a>
       </p>
