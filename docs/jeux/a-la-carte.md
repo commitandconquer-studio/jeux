@@ -3,7 +3,7 @@
 Mini-jeux de géographie en français, en **HTML** (mobile et web). Idée
 d'Olivier, novembre 2026.
 
-> **État (15 novembre 2026) : les cinq modes codés, à tester par Olivier.**
+> **État (15 novembre 2026) : les cinq modes codés, plus les capitales du monde, à tester par Olivier.**
 > Dans `site/static/jeux-html/a-la-carte/` : accueil, **ville mystère**
 > jouable sur les préfectures et sous-préfectures de France (4 niveaux,
 > étoiles, déblocage, hors ligne) **Devine le pays** (163 silhouettes Natural Earth simplifiées par
@@ -113,8 +113,15 @@ d'octets par pays).
   arrondie au kilomètre.
 - **Indices facultatifs** (niveaux faciles) : flèche de direction.
   Aucune au niveau Expert.
-- Le **tracé des trois cercles de distance** sur une carte est une
-  option d'affichage à étudier après la première version.
+- **Carte de fin** (après chaque ville, trouvée ou abandonnée) : la carte de
+  France ou du monde (selon les villes en jeu) montre la ville cherchée, les
+  trois villes de départ et les villes proposées, avec les **cercles de
+  distance** autour des villes de départ (ils se croisent sur la réponse) et
+  des **flèches** qui pointent vers la réponse. Légende des distances dessous.
+- **Capitales mystère** : même principe sur les capitales du monde (195).
+  Facile et Difficile : capitales célèbres ; Moyen et Expert : toutes ;
+  flèche aux niveaux Facile et Moyen. Étoiles : 4 essais pour 3 étoiles, 8
+  pour 2 (3 et 6 pour la France).
 
 ### Mode 4 : Les bonnes couleurs (ajout d'Olivier)
 

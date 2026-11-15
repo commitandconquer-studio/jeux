@@ -73,4 +73,22 @@ assert.strictEqual(Recolorier.NIVEAUX.length, 4);
 const coul = JSON.parse(fs.readFileSync(path.join(dossier, "couleurs.json"), "utf8"));
 for (const p of pays) assert(Array.isArray(coul[p.code]), "couleurs " + p.code);
 assert(pays.filter(p => coul[p.code].length >= 1 && coul[p.code].length <= 2).length > 80, "assez de drapeaux simples");
+assert.strictEqual(V.niveaux("france").length, 4);
+assert.strictEqual(V.niveaux("monde").length, 4);
+const capitales = JSON.parse(fs.readFileSync(path.join(dossier, "capitales.json"), "utf8"));
+assert(capitales.length >= 190, "capitales : " + capitales.length);
+for (const c of capitales) assert(c.n && c.d && Math.abs(c.lat) <= 90 && Math.abs(c.lon) <= 180, "capitale " + c.n);
+assert.strictEqual(new Set(capitales.map(c => c.n)).size, capitales.length, "noms de capitales uniques");
+const Carte = require("../js/carte.js");
+const centre = { lat: 46.3, lon: 4.8 };
+for (const d of [150, 600, 5000, 12000]) {
+  for (const { lat, dlon } of Carte.cercle(centre, d)) {
+    const ecart = Math.abs(C.distance(centre, { lat, lon: centre.lon + dlon }) - d);
+    assert(ecart < 0.01 * d + 1, `cercle ${d} km : écart ${ecart}`);
+  }
+}
+for (const nom of ["carte-france", "carte-monde"]) {
+  const f = JSON.parse(fs.readFileSync(path.join(dossier, nom + ".json"), "utf8"));
+  assert(f.d.startsWith("M") && f.d.length > 10000, nom);
+}
 console.log("Tous les tests passent.");

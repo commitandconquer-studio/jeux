@@ -31,7 +31,7 @@ On vous donne un pays et **quatre drapeaux** dont les couleurs sont fausses, sau
 Le drapeau d'un pays est colorié n'importe comment : **redonnez-lui ses vraies couleurs** avec la palette. Facile avec deux couleurs, expert avec des nuances fines.
 
 ## La ville mystère
-Le jeu choisit une ville de France. Il vous donne **trois villes** et leur **distance** à la ville cherchée. Vous tapez le nom d'une ville : si ce n'est pas la bonne, vous obtenez sa distance (et une flèche vers la bonne, aux niveaux faciles), un indice de plus pour déduire la réponse. Autant d'essais que nécessaire, avec un bouton « Donne-moi la réponse ». Les parties portent sur les **préfectures** puis les **sous-préfectures**.
+Le jeu choisit une ville de France. Il vous donne **trois villes** et leur **distance** à la ville cherchée. Vous tapez le nom d'une ville : si ce n'est pas la bonne, vous obtenez sa distance (et une flèche vers la bonne, aux niveaux faciles), un indice de plus pour déduire la réponse. Autant d'essais que nécessaire, avec un bouton « Donne-moi la réponse ». Les parties portent sur les **préfectures**, les **sous-préfectures** ou les **capitales du monde**. À la fin de chaque ville, une **carte** montre les cercles de distance et des flèches qui pointent vers la réponse.
 
 ## Des niveaux pour tous
 Chaque mode a quatre niveaux, **Facile, Moyen, Difficile et Expert**. Dix questions par partie (trois villes pour la ville mystère), de une à trois étoiles, et un niveau se débloque avec deux étoiles au précédent. Les étoiles restent sur votre appareil.

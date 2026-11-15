@@ -31,7 +31,7 @@ You get a country and **four flags** whose colours are wrong, except one. Find t
 A country's flag is coloured all wrong: **give it back its real colours** using the palette. Easy with two colours, expert with fine shades.
 
 ## The mystery city
-The game picks a French town. It shows you **three towns** and their **distance** to the one you are looking for. You type the name of a town: if it is wrong you get its distance (and an arrow towards the right one on the easy levels), one more clue to work out the answer. As many tries as needed, with a “Give me the answer” button. Games cover French **prefectures** and then **sub-prefectures**.
+The game picks a French town. It shows you **three towns** and their **distance** to the one you are looking for. You type the name of a town: if it is wrong you get its distance (and an arrow towards the right one on the easy levels), one more clue to work out the answer. As many tries as needed, with a “Give me the answer” button. Games cover French **prefectures**, **sub-prefectures** or **world capitals**. At the end of each town, a **map** shows the distance circles and arrows pointing to the answer.
 
 ## Levels for everyone
 Each mode has four levels: **Easy, Medium, Hard and Expert**. Ten questions per game (three towns for the mystery city), one to three stars, and a level unlocks with two stars on the previous one. Your stars stay on your device.

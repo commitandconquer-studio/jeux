@@ -1,9 +1,9 @@
 // À la carte ! — service worker : tout le jeu fonctionne hors ligne.
 // Le scope est limité au dossier du jeu (chemins relatifs). Changer VERSION à chaque mise à jour.
-const VERSION = "alacarte-4";
+const VERSION = "alacarte-5";
 const FICHIERS = [
-  "./", "index.html", "css/style.css", "js/commun.js", "js/ville.js", "js/drapeau.js", "js/pays.js", "js/couleurs.js", "js/app-couleurs.js", "js/app.js",
-  "data/villes-france.json", "data/pays.json", "data/formes.json", "data/couleurs.json", "manifest.webmanifest",
+  "./", "index.html", "css/style.css", "js/commun.js", "js/ville.js", "js/drapeau.js", "js/pays.js", "js/couleurs.js", "js/carte.js", "js/app-couleurs.js", "js/app.js",
+  "data/villes-france.json", "data/pays.json", "data/formes.json", "data/couleurs.json", "data/capitales.json", "data/carte-france.json", "data/carte-monde.json", "manifest.webmanifest",
   "fonts/Baloo2.ttf", "fonts/Nunito.ttf",
   "img/logo.png", "img/icone-192.png", "img/icone-512.png",
 ];

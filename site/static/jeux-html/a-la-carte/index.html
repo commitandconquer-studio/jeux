@@ -34,6 +34,9 @@
       <button class="mode mode-villes" data-mode="villes">
         <span class="mode-titre">Villes mystère</span><span class="mode-sous" id="etoiles-villes"></span>
       </button>
+      <button class="mode mode-capitales" data-mode="capitales">
+        <span class="mode-titre">Capitales mystère</span><span class="mode-sous" id="etoiles-capitales"></span>
+      </button>
     </div>
     <p class="pied">Gratuit, sans publicité, sans compte. Tes étoiles restent sur cet appareil.<br>
       <a href="https://commitandconquer.fr/" target="_blank" rel="noopener">Commit &amp; Conquer</a> · logiciel libre GPL-3.0</p>
@@ -53,7 +56,7 @@
       <h1 id="jeu-titre">Ville mystère</h1><span id="jeu-compteur" class="compteur"></span>
     </header>
     <div class="progression"><div id="jeu-barre"></div></div>
-    <p class="consigne">Où se trouve la ville mystère ?</p>
+    <p class="consigne" id="jeu-consigne">Où se trouve la ville mystère ?</p>
     <ul id="refs" class="refs"></ul>
     <div class="saisie">
       <input id="champ" type="text" autocomplete="off" autocapitalize="off" spellcheck="false"
@@ -125,6 +128,10 @@
     <header class="barre"><h1 id="fin-titre">Résultat</h1></header>
     <div id="fin-etoiles" class="grandes-etoiles" aria-live="polite"></div>
     <p id="fin-texte" class="fin-texte"></p>
+    <div id="fin-carte" class="carte-fin" hidden>
+      <div id="fin-carte-svg" class="carte-zone"></div>
+      <ul id="fin-legende" class="legende"></ul>
+    </div>
     <div class="actions">
       <button id="fin-suite" class="bouton">Continuer</button>
       <button id="fin-menu" class="bouton secondaire">Retour aux niveaux</button>
@@ -138,6 +145,7 @@
 <script src="js/drapeau.js"></script>
 <script src="js/pays.js"></script>
 <script src="js/couleurs.js"></script>
+<script src="js/carte.js"></script>
 <script src="js/app.js"></script>
 <script src="js/app-couleurs.js"></script>
 </body>

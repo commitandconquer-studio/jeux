@@ -7,8 +7,13 @@
 
   const MODES = {
     villes: {
-      titre: "Villes mystère", niveaux: () => Ville.NIVEAUX,
+      titre: "Villes mystère", niveaux: () => Ville.niveaux("france"),
       aide: "Trouve la ville cherchée avec la distance qui la sépare de trois villes. Chaque mauvaise ville te donne un indice de plus.",
+    },
+    capitales: {
+      titre: "Capitales mystère", niveaux: () => Ville.niveaux("monde"), lancer: id => lancerVille(id, "monde"),
+      accueil: "3 capitales par partie",
+      aide: "Trouve la capitale cherchée avec la distance qui la sépare de trois autres capitales. Chaque mauvaise capitale te donne un indice de plus.",
     },
     drapeaux: {
       titre: "Drapeaux", niveaux: () => Drapeau.NIVEAUX,
@@ -23,7 +28,9 @@
   let modeCourant = "villes";
   let actionSuite = () => {};
 
+  let avecCarte = false;
   function montrer(id) {
+    if (id === "fin") { $("fin-carte").hidden = !avecCarte; avecCarte = false; }
     document.querySelectorAll(".ecran").forEach(e => e.classList.toggle("actif", e.id === id));
     window.scrollTo(0, 0);
   }
@@ -64,8 +71,8 @@
   const champ = $("champ"), listeSugg = $("suggestions");
   let sugg = [], actif = -1;
 
-  async function lancerVille(id) {
-    try { await Ville.charger(); }
+  async function lancerVille(id, jeu = "france") {
+    try { await Ville.charger(jeu); }
     catch (e) { alert("Les données des villes n'ont pas pu être chargées."); return; }
     Ville.demarrer(id);
     afficherVille();
@@ -76,7 +83,10 @@
   function afficherVille() {
     const { etat, niveau, partie } = Ville;
     $("jeu-titre").textContent = niveau.nom;
-    $("jeu-compteur").textContent = `Ville ${partie.numero} / ${Ville.VILLES_PAR_PARTIE}`;
+    const monde = partie.cle === "capitales";
+    $("jeu-compteur").textContent = `${monde ? "Capitale" : "Ville"} ${partie.numero} / ${Ville.VILLES_PAR_PARTIE}`;
+    $("jeu-consigne").textContent = monde ? "Où se trouve la capitale mystère ?" : "Où se trouve la ville mystère ?";
+    champ.placeholder = monde ? "Tape le nom d'une capitale…" : "Tape le nom d'une ville…";
     $("jeu-barre").style.width = ((partie.numero - 1) / Ville.VILLES_PAR_PARTIE * 100) + "%";
     $("refs").innerHTML = etat.refs.map(r =>
       `<li class="ref"><span class="nom">${r.n}</span><span class="dist">${Commun.km(Commun.distance(r, etat.cible))}</span></li>`).join("");
@@ -115,9 +125,13 @@
     $("fin-texte").textContent = trouve
       ? `${etat.cible.n} (${etat.cible.d}), trouvée en ${etat.essais.length} essai${etat.essais.length > 1 ? "s" : ""}.`
       : `${etat.cible.n} (${etat.cible.d}).`;
-    $("fin-suite").textContent = derniere ? "Voir mon résultat" : "Ville suivante";
+    $("fin-suite").textContent = derniere ? "Voir mon résultat" : (partie.cle === "capitales" ? "Capitale suivante" : "Ville suivante");
     actionSuite = suiteVille;
+    avecCarte = true;
     montrer("fin");
+    Carte.dessiner($("fin-carte-svg"), { cible: etat.cible, refs: etat.refs, essais: etat.essais })
+      .then(() => { $("fin-legende").innerHTML = Carte.legende(etat.cible, etat.refs, etat.essais); })
+      .catch(() => { $("fin-carte").hidden = true; });
   }
 
   function suiteVille() {
@@ -129,8 +143,9 @@
         ? "Bien joué ! Tu peux passer au niveau suivant."
         : "Encore un essai pour décrocher 2 étoiles et débloquer la suite.";
       $("fin-suite").textContent = "Rejouer ce niveau";
-      const id = Ville.niveau.id;
-      actionSuite = () => lancerVille(id);
+      $("fin-carte").hidden = true;
+      const id = Ville.niveau.id, jeu = Ville.partie.cle === "capitales" ? "monde" : "france";
+      actionSuite = () => lancerVille(id, jeu);
       majAccueil();
       return;
     }
@@ -313,6 +328,7 @@
   document.querySelector(".mode-villes").addEventListener("click", () => afficherNiveaux("villes"));
   document.querySelector(".mode-drapeaux").addEventListener("click", () => afficherNiveaux("drapeaux"));
   document.querySelector(".mode-pays").addEventListener("click", () => afficherNiveaux("pays"));
+  document.querySelector(".mode-capitales").addEventListener("click", () => afficherNiveaux("capitales"));
 
   // Les autres modes (js/app-couleurs.js) s'inscrivent ici.
   window.AppAPI = {
