@@ -1,7 +1,7 @@
 +++
 title = "À la carte!"
 updated = 2026-11-15T21:00:00+01:00
-description = "The game that makes you discover the world: flags, country shapes and mystery cities — calm, with no account and no ads. In French."
+description = "The game that makes you discover the world: flags, country shapes, mystery towns and capitals — calm, with no account and no ads. In French."
 [extra]
 web = true
 jouer_url = "jeux-html/a-la-carte/"
@@ -9,10 +9,11 @@ icone = "a-la-carte"
 code = "site/static/jeux-html/a-la-carte"
 commandes = ["Mouse or finger: pick an answer", "Keyboard: type the name, arrows to choose, Enter to confirm", "Offline: can be installed like an app from your browser"]
 chiffres = [
-  { n = "5", t = "game modes" },
+  { n = "6", t = "game modes" },
   { n = "4", t = "levels each" },
   { n = "196", t = "countries" },
   { n = "334", t = "French towns" },
+  { n = "195", t = "capitals" },
 ]
 +++
 
@@ -32,6 +33,9 @@ A country's flag is coloured all wrong: **give it back its real colours** using 
 
 ## The mystery city
 The game picks a French town. It shows you **three towns** and their **distance** to the one you are looking for. You type the name of a town: if it is wrong you get its distance (and an arrow towards the right one on the easy levels), one more clue to work out the answer. As many tries as needed, with a “Give me the answer” button. Games cover French **prefectures**, **sub-prefectures** or **world capitals**. At the end of each town, a **map** shows the distance circles and arrows pointing to the answer.
+
+## The mystery capital
+The same game on a world scale: **195 capitals**. The easy levels use famous capitals, with an arrow towards the right one; the others use every capital, with or without an arrow. After each town, a **map** shows the **distance circles** around the starting towns and the **arrows** towards the answer.
 
 ## Levels for everyone
 Each mode has four levels: **Easy, Medium, Hard and Expert**. Ten questions per game (three towns for the mystery city), one to three stars, and a level unlocks with two stars on the previous one. Your stars stay on your device.

@@ -1,7 +1,7 @@
 +++
 title = "À la carte !"
 updated = 2026-11-15T21:00:00+01:00
-description = "Le jeu qui vous fait découvrir le monde : drapeaux, silhouettes de pays et villes mystère, au calme, sans compte ni publicité."
+description = "Le jeu qui vous fait découvrir le monde : drapeaux, silhouettes de pays, villes et capitales mystère, au calme, sans compte ni publicité."
 [extra]
 web = true
 jouer_url = "jeux-html/a-la-carte/"
@@ -9,10 +9,11 @@ icone = "a-la-carte"
 code = "site/static/jeux-html/a-la-carte"
 commandes = ["Souris ou doigt : choisir une réponse", "Clavier : taper le nom, flèches pour choisir, Entrée pour valider", "Hors ligne : installable comme une application depuis le navigateur"]
 chiffres = [
-  { n = "5", t = "modes de jeu" },
+  { n = "6", t = "modes de jeu" },
   { n = "4", t = "niveaux chacun" },
   { n = "196", t = "pays" },
   { n = "334", t = "villes de France" },
+  { n = "195", t = "capitales" },
 ]
 +++
 
@@ -32,6 +33,9 @@ Le drapeau d'un pays est colorié n'importe comment : **redonnez-lui ses vraies 
 
 ## La ville mystère
 Le jeu choisit une ville de France. Il vous donne **trois villes** et leur **distance** à la ville cherchée. Vous tapez le nom d'une ville : si ce n'est pas la bonne, vous obtenez sa distance (et une flèche vers la bonne, aux niveaux faciles), un indice de plus pour déduire la réponse. Autant d'essais que nécessaire, avec un bouton « Donne-moi la réponse ». Les parties portent sur les **préfectures**, les **sous-préfectures** ou les **capitales du monde**. À la fin de chaque ville, une **carte** montre les cercles de distance et des flèches qui pointent vers la réponse.
+
+## La capitale mystère
+Même jeu, à l'échelle du monde : **195 capitales**. Aux niveaux faciles, ce sont les capitales célèbres, avec une flèche vers la bonne ; ensuite, toutes les capitales, avec ou sans flèche. Après chaque ville, une **carte** montre les **cercles de distance** autour des villes de départ et les **flèches** vers la réponse.
 
 ## Des niveaux pour tous
 Chaque mode a quatre niveaux, **Facile, Moyen, Difficile et Expert**. Dix questions par partie (trois villes pour la ville mystère), de une à trois étoiles, et un niveau se débloque avec deux étoiles au précédent. Les étoiles restent sur votre appareil.
