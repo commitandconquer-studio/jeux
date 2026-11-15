@@ -1,0 +1,106 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>À la carte ! — Commit &amp; Conquer</title>
+<meta name="description" content="Le jeu qui vous fait découvrir le monde : drapeaux, pays, villes mystère. Gratuit, sans publicité, hors ligne.">
+<meta name="theme-color" content="#0B3D91">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="img/icone-192.png">
+<link rel="apple-touch-icon" href="img/icone-192.png">
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<div id="app">
+
+  <!-- Accueil -->
+  <section id="accueil" class="ecran actif">
+    <img class="logo" src="img/logo.png" alt="À la carte !" width="900" height="590">
+    <p class="slogan">Le jeu qui vous fait découvrir le monde.</p>
+    <div class="modes">
+      <button class="mode mode-drapeaux" data-mode="drapeaux">
+        <span class="mode-titre">Drapeaux</span><span class="mode-sous" id="etoiles-drapeaux"></span>
+      </button>
+      <button class="mode mode-pays" data-mode="pays">
+        <span class="mode-titre">Pays</span><span class="mode-sous" id="etoiles-pays"></span>
+      </button>
+      <button class="mode mode-villes" data-mode="villes">
+        <span class="mode-titre">Villes mystère</span><span class="mode-sous" id="etoiles-villes"></span>
+      </button>
+    </div>
+    <p class="pied">Gratuit, sans publicité, sans compte. Tes étoiles restent sur cet appareil.<br>
+      <a href="https://commitandconquer.fr/" target="_blank" rel="noopener">Commit &amp; Conquer</a> · logiciel libre GPL-3.0</p>
+  </section>
+
+  <!-- Niveaux de la ville mystère -->
+  <section id="niveaux" class="ecran">
+    <header class="barre"><button class="retour" data-retour="accueil" aria-label="Retour">←</button><h1 id="niveaux-titre">Villes mystère</h1></header>
+    <p class="aide" id="niveaux-aide"></p>
+    <div id="liste-niveaux" class="niveaux"></div>
+  </section>
+
+  <!-- Partie -->
+  <section id="jeu" class="ecran">
+    <header class="barre">
+      <button class="retour" data-retour="niveaux" aria-label="Quitter la partie">←</button>
+      <h1 id="jeu-titre">Ville mystère</h1><span id="jeu-compteur" class="compteur"></span>
+    </header>
+    <div class="progression"><div id="jeu-barre"></div></div>
+    <p class="consigne">Où se trouve la ville mystère ?</p>
+    <ul id="refs" class="refs"></ul>
+    <div class="saisie">
+      <input id="champ" type="text" autocomplete="off" autocapitalize="off" spellcheck="false"
+             placeholder="Tape le nom d'une ville…" aria-label="Nom d'une ville" role="combobox"
+             aria-expanded="false" aria-controls="suggestions">
+      <ul id="suggestions" role="listbox" hidden></ul>
+    </div>
+    <p id="message" class="message" role="status"></p>
+    <ul id="essais" class="essais"></ul>
+    <button id="abandon" class="lien">Donne-moi la réponse</button>
+  </section>
+
+  <!-- Partie : drapeaux -->
+  <section id="drap" class="ecran">
+    <header class="barre">
+      <button class="retour" data-retour="niveaux" aria-label="Quitter la partie">←</button>
+      <h1 id="drap-titre">Drapeaux</h1><span id="drap-compteur" class="compteur"></span>
+    </header>
+    <div class="progression"><div id="drap-barre"></div></div>
+    <p class="consigne" id="drap-consigne">De quel pays est ce drapeau ?</p>
+    <div class="drap-zone">
+      <img id="drap-img" alt="Drapeau à deviner" width="320" height="240">
+      <div id="drap-prop" class="prop" hidden role="img" aria-label="Proportions des couleurs"></div>
+      <div id="drap-forme" class="forme" hidden></div>
+    </div>
+    <div id="drap-choix" class="choix"></div>
+    <div id="drap-saisie" class="saisie" hidden>
+      <input id="drap-champ" type="text" autocomplete="off" autocapitalize="off" spellcheck="false"
+             placeholder="Tape le nom d'un pays…" aria-label="Nom d'un pays" role="combobox"
+             aria-expanded="false" aria-controls="drap-sugg">
+      <ul id="drap-sugg" class="sugg" role="listbox" hidden></ul>
+    </div>
+    <p id="drap-retour" class="message" role="status"></p>
+    <button id="drap-suite" class="bouton" hidden>Suivant</button>
+  </section>
+
+  <!-- Résultat d'une ville / de la partie -->
+  <section id="fin" class="ecran">
+    <header class="barre"><h1 id="fin-titre">Résultat</h1></header>
+    <div id="fin-etoiles" class="grandes-etoiles" aria-live="polite"></div>
+    <p id="fin-texte" class="fin-texte"></p>
+    <div class="actions">
+      <button id="fin-suite" class="bouton">Continuer</button>
+      <button id="fin-menu" class="bouton secondaire">Retour aux niveaux</button>
+    </div>
+  </section>
+
+</div>
+<noscript><p style="padding:2rem">Ce jeu a besoin de JavaScript.</p></noscript>
+<script src="js/commun.js"></script>
+<script src="js/ville.js"></script>
+<script src="js/drapeau.js"></script>
+<script src="js/pays.js"></script>
+<script src="js/app.js"></script>
+</body>
+</html>
