@@ -17,3 +17,6 @@ Le principe de la ville mystère, à l'échelle du monde : **195 capitales**, tr
 
 ## Une carte après chaque ville
 À la fin de chaque ville ou capitale, une **carte** montre les **cercles de distance** autour des villes de départ et les **flèches** vers la réponse. De quoi comprendre comment on aurait pu la trouver.
+
+## Une interface plus joyeuse
+La mascotte **Globi** réagit à vos réponses dans une bulle, avec une **série** de bonnes réponses, des confettis, des étoiles animées et des sons. Chaque mode a son propre décor, et la **ville mystère** affiche une carte en direct, avec un cercle par ville proposée. Les animations respectent le réglage « réduire les animations » de votre appareil.

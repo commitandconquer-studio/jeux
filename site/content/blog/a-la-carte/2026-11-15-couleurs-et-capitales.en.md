@@ -17,3 +17,6 @@ The mystery-town idea on a world scale: **195 capitals**, three starting capital
 
 ## A map after every town
 At the end of each town or capital, a **map** shows the **distance circles** around the starting towns and the **arrows** towards the answer. A way to see how you could have found it.
+
+## A more cheerful interface
+The mascot **Globi** reacts to your answers in a speech bubble, with a **streak** of right answers, confetti, animated stars and sounds. Each mode has its own backdrop, and the **mystery town** mode shows a live map with one circle per town you try. Animations follow your device's "reduce motion" setting.
