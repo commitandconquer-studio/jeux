@@ -158,6 +158,22 @@ Demande d'Olivier : une interface moins triste. Réalisé sans rien alourdir
 - respect de `prefers-reduced-motion`.
 Pas fait : globe 3D, musique.
 
+## Mise en page (ajout du 15 novembre 2026)
+
+Feuille `css/mise-en-page.css`, chargée en dernier :
+- **Ordinateur** (largeur ≥ 900 px) : deux colonnes, tout tient dans la hauteur
+  de la fenêtre sans défiler (mesuré à 1280 x 720 et 1920 x 1080, tous les
+  écrans). Image à gauche et réponses à droite pour les drapeaux, les pays et
+  Recolorier ; quatre cartes postales sur une ligne pour les bonnes couleurs ;
+  questions à gauche et carte en direct à droite pour les villes ; texte et
+  boutons à gauche, carte à droite en fin de ville. Les tailles suivent la
+  hauteur de la fenêtre (`vh`) ;
+- **Téléphone en portrait** : une colonne, accueil en grille 2 x 3, images
+  dimensionnées sur la hauteur de l'écran (`dvh`) ; tout tient à 375 x 667 sauf
+  la partie de ville mystère (la carte en direct est sous la liste des essais) ;
+- **Téléphone en paysage** : deux colonnes comme sur ordinateur ;
+- en fin de ville, sur téléphone, le bouton « suivant » passe avant la carte.
+
 ## Les données et leurs licences (*à vérifier avant reprise*)
 
 | Donnée | Source envisagée | Conditions à noter |

@@ -1,0 +1,179 @@
+/* À la carte ! — mise en page : tout tient dans l'écran, sur ordinateur comme sur téléphone.
+   Licence GPL-3.0-or-later.
+   - Téléphone (portrait) : une colonne, accueil en grille 2 x 3, images dimensionnées sur la hauteur de l'écran.
+   - Ordinateur et téléphone en paysage : deux colonnes (image à gauche, questions à droite), sans défilement. */
+
+/* Le cadre prend toute la hauteur ; l'accueil et les niveaux se centrent verticalement, sans jamais déborder. */
+#app { display: flex; flex-direction: column; min-height: 100dvh; box-sizing: border-box; padding-bottom: calc(14px + env(safe-area-inset-bottom)); }
+#app > .ecran.actif { width: 100%; }
+#accueil.actif, #niveaux.actif { margin-block: auto; }
+
+/* ===== Téléphone : compact et visible ===== */
+#drap-img { width: auto; height: min(30dvh, 250px); max-width: 100%; }
+.forme { width: min(100%, 34dvh); }
+.prop { width: min(100%, 320px); height: min(17dvh, 120px); }
+.barre { padding: 8px 0 4px; }
+.consigne { margin: 8px 0 6px; }
+.drap-zone { margin: 6px 0 10px; }
+.grille-drapeaux { gap: 10px; margin-top: 8px; }
+.grille-drapeaux button { border-width: 6px; }
+.choix button { min-height: 52px; padding-top: 8px; padding-bottom: 8px; }
+.grandes-etoiles { font-size: 2.8rem; margin: 10px 0 4px; }
+.fin-texte { margin: 4px 0; }
+.actions { margin-top: 12px; }
+.message { margin: 4px 2px; min-height: 1.2em; }
+#rec-img { height: min(24dvh, 190px); width: auto; max-width: 100%; }
+
+/* Accueil en grille 2 x 3 sur téléphone */
+@media (max-width: 899px) {
+  .haut .logo { width: min(62%, 250px); margin-top: 8px; }
+  .globe-tourne { width: 190px; margin-left: -95px; }
+  .mascotte-accueil { width: 60px; }
+  .slogan { margin: 8px 0 12px; font-size: 1rem; }
+  .modes { grid-template-columns: 1fr 1fr; gap: 10px; }
+  .modes::before { display: none; }
+  .mode, .mode:nth-child(even), .mode:nth-child(odd) { margin: 0; flex-direction: column; justify-content: center; text-align: center; gap: 4px; min-height: 96px; padding: 10px 8px; }
+  .mode-icone { width: 38px; height: 38px; padding: 5px; }
+  .mode-texte { align-items: center; }
+  .mode-titre { font-size: 1.12rem; }
+  .mode-sous { font-size: .8rem; }
+  .pied { margin-top: 12px; font-size: .78rem; }
+  #son { margin-top: 4px; padding: 6px; }
+  .niveaux { gap: 10px; }
+  .niveau { min-height: 64px; padding: 10px 14px; }
+}
+/* Téléphone : à la fin d'une ville, le bouton passe avant la carte pour rester visible */
+@media (max-width: 899px) {
+  #fin.actif { display: flex; flex-direction: column; }
+  #fin > .actions { order: 3; }
+  #fin > .carte-fin { order: 4; margin-top: 14px; }
+  .grandes-etoiles { font-size: 2.3rem; margin: 4px 0 0; }
+  .carte-fin .carte-svg { max-height: 40dvh; }
+  .legende { grid-template-columns: 1fr 1fr; column-gap: 16px; font-size: .85rem; }
+}
+@media (max-height: 700px) and (max-width: 899px) {
+  #drap-img { height: min(26dvh, 210px); }
+  .forme { width: min(100%, 30dvh); }
+  .haut .logo { width: min(52%, 200px); }
+  .globe-tourne { width: 160px; margin-left: -80px; }
+  .mode, .mode:nth-child(even), .mode:nth-child(odd) { min-height: 80px; }
+  .choix button { min-height: 46px; font-size: 1rem; }
+  .barre h1 { font-size: 1.3rem; }
+  .retour { width: 40px; height: 40px; }
+}
+
+/* ===== Ordinateur et paysage : deux colonnes dans la hauteur de la fenêtre ===== */
+@media (min-width: 900px), (orientation: landscape) and (min-width: 560px) and (max-height: 520px) {
+  body { font-size: 17px; }
+  #app { max-width: 1120px; padding: 0 28px; }
+
+  /* Accueil : logo à gauche, modes à droite */
+  #accueil.actif { display: grid; grid-template-columns: minmax(280px, .9fr) 1.35fr; grid-template-areas: "haut modes" "slogan modes" "son modes" "pied modes";
+    column-gap: 44px; align-content: center; align-items: start; }
+  #accueil .haut { grid-area: haut; align-self: end; }
+  #accueil .slogan { grid-area: slogan; }
+  #accueil #son { grid-area: son; justify-self: center; }
+  #accueil .pied { grid-area: pied; }
+  #accueil .modes { grid-area: modes; grid-template-columns: 1fr 1fr; align-self: center; gap: 14px; }
+  .modes::before { display: none; }
+  .mode, .mode:nth-child(even), .mode:nth-child(odd) { margin: 0; flex-direction: row; text-align: left; min-height: 84px; }
+  .mode-icone { width: 48px; height: 48px; }
+  .haut .logo { width: auto; max-width: 100%; max-height: 34vh; }
+  .globe-tourne { width: min(230px, 30vh); margin-left: calc(min(230px, 30vh) / -2); }
+  .slogan { font-size: 1.1rem; }
+
+  /* Niveaux */
+  #niveaux.actif { max-width: 820px; margin-inline: auto; }
+  .niveaux { grid-template-columns: 1fr 1fr; gap: 14px; }
+
+  /* Parties : barre en haut, deux colonnes dessous */
+  #jeu.actif, #drap.actif, #cou.actif, #rec.actif, #fin.actif {
+    display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); column-gap: 36px; align-content: start; align-items: start; grid-auto-rows: auto;
+  }
+  #jeu > .barre, #drap > .barre, #cou > .barre, #rec > .barre,
+  #jeu > .progression, #drap > .progression, #cou > .progression, #rec > .progression { grid-column: 1 / -1; }
+
+  /* Villes : questions à gauche, carte en direct à droite */
+  #jeu > .consigne { grid-column: 1 / -1; }
+  #jeu > .refs, #jeu > .saisie, #jeu > .message, #jeu > .essais, #jeu > .lien { grid-column: 1; }
+  #jeu > #mini-carte { grid-column: 2; grid-row: 4 / span 6; margin: 0; }
+  #jeu > .essais { max-height: 26vh; overflow: auto; padding-right: 4px; }
+  #jeu > .lien { justify-self: start; margin: 8px 0 0; }
+  #mini-carte .carte-svg { max-height: 58vh; }
+  .carte-fin .carte-svg { max-height: 50vh; }
+
+  /* Drapeaux et pays : l'image à gauche, les réponses à droite */
+  #drap > .drap-zone { grid-column: 1; grid-row: 3 / span 6; align-self: start; justify-content: center; margin: 8px 0; }
+  #drap > .consigne, #drap > .choix, #drap > .saisie, #drap > .message, #drap > #drap-suite { grid-column: 2; }
+  #drap > .consigne { margin-top: 10px; font-size: 1.2rem; }
+  #drap-img { height: min(52vh, 400px); }
+  .forme { width: min(52vh, 410px); }
+  .prop { width: min(100%, 420px); height: min(26vh, 170px); }
+  #drap-choix { grid-template-columns: 1fr 1fr; }
+  #drap-suite, #cou-suite, #rec-suite, #rec-valider { max-width: 420px; }
+
+  /* Les bonnes couleurs : quatre cartes postales sur une ligne */
+  #cou > .consigne, #cou > .grille-drapeaux, #cou > .message { grid-column: 1 / -1; }
+  #cou > .grille-drapeaux { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 18px; margin-top: 18px; }
+  #cou > #cou-suite { grid-column: 1 / -1; justify-self: center; width: 100%; }
+
+  /* Recolorier : le drapeau à gauche, les couleurs à droite */
+  #rec > .drap-zone { grid-column: 1; grid-row: 3 / span 8; margin: 8px 0; justify-content: center; }
+  #rec > .consigne, #rec > .aide-rec, #rec > .pastilles, #rec > .palette, #rec > .message, #rec > .bouton { grid-column: 2; }
+  #rec-img { height: min(46vh, 340px); }
+  .palette { grid-template-columns: repeat(5, minmax(0, 1fr)); }
+
+  /* Fin : texte et boutons à gauche, carte à droite */
+  #fin > .barre, #fin > .grandes-etoiles, #fin > .fin-texte, #fin > .actions { grid-column: 1; }
+  #fin > .carte-fin { grid-column: 2; grid-row: 1 / span 4; margin: 0; align-self: center; }
+  #fin:has(> .carte-fin[hidden]) { grid-template-columns: minmax(0, 560px); justify-content: center; align-content: center; }
+  #fin:has(> .carte-fin[hidden]) > * { grid-column: 1; }
+  .grandes-etoiles { font-size: 3.2rem; }
+  .actions { max-width: 460px; }
+  .legende { grid-template-columns: 1fr 1fr; column-gap: 20px; }
+}
+
+/* Écrans bas (ordinateur portable, fenêtre peu haute) */
+@media (min-width: 900px) and (max-height: 700px) {
+  .mode, .mode:nth-child(even), .mode:nth-child(odd) { min-height: 70px; padding-top: 8px; padding-bottom: 8px; }
+  .haut .logo { max-height: 28vh; }
+  .barre { padding-top: 6px; }
+  .choix button { min-height: 52px; }
+}
+@media (orientation: landscape) and (max-height: 520px) and (max-width: 899px) {
+  .haut .logo { max-height: 30vh; }
+  .mode, .mode:nth-child(even), .mode:nth-child(odd) { min-height: 56px; padding: 6px 10px; }
+  .mode-icone { width: 36px; height: 36px; }
+  .barre h1 { font-size: 1.2rem; }
+  .barre { padding: 4px 0 2px; }
+  .retour { width: 36px; height: 36px; }
+  #drap-img { height: min(46vh, 190px); }
+  .forme { width: min(46vh, 190px); }
+  .choix button { min-height: 42px; padding-top: 4px; padding-bottom: 4px; }
+  #rec-img { height: min(40vh, 150px); }
+  #drap > .drap-zone { margin: 4px 0; }
+}
+
+/* Grands écrans : tout grandit avec la hauteur de la fenêtre */
+@media (min-width: 900px) and (min-height: 760px) {
+  #accueil .modes { gap: clamp(14px, 2vh, 24px); }
+  .mode, .mode:nth-child(even), .mode:nth-child(odd) { min-height: clamp(84px, 13vh, 132px); }
+  .mode-titre { font-size: clamp(1.3rem, 2.6vh, 1.9rem); }
+  .mode-sous { font-size: clamp(.95rem, 1.9vh, 1.25rem); }
+  .mode-icone { width: clamp(48px, 6.5vh, 74px); height: clamp(48px, 6.5vh, 74px); }
+  .haut .logo { max-height: 38vh; }
+  .slogan { font-size: clamp(1.1rem, 2.4vh, 1.6rem); }
+  #drap > .consigne, #cou > .consigne, #rec > .consigne, #jeu > .consigne { font-size: clamp(1.15rem, 2.7vh, 1.7rem); }
+  .choix button { font-size: clamp(1.05rem, 2.4vh, 1.45rem); min-height: clamp(52px, 8vh, 84px); }
+  #drap-img { height: min(56vh, 520px); }
+  .forme { width: min(56vh, 520px); }
+  .niveau { min-height: clamp(76px, 11vh, 120px); }
+  .niveau b { font-size: clamp(1.3rem, 2.6vh, 1.8rem); }
+  .ref { padding-top: clamp(10px, 1.6vh, 18px); padding-bottom: clamp(10px, 1.6vh, 18px); }
+  .ref .nom, .ref .dist { font-size: clamp(1.15rem, 2.4vh, 1.5rem); }
+  #champ, #drap-champ { font-size: clamp(1.1rem, 2.3vh, 1.45rem); padding: clamp(14px, 2vh, 22px) 16px; }
+}
+
+.bulle span { white-space: nowrap; }
+@media (max-width: 899px) { #mini-carte .carte-svg { max-height: 30dvh; } }
+@media (min-width: 1700px) { #app { max-width: 1400px; } }
