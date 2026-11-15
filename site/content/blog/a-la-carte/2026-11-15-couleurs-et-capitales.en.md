@@ -6,7 +6,7 @@ slug = "couleurs-et-capitales"
 image = "a-la-carte.png"
 +++
 
-**À la carte!** now has **six game modes**.
+**À la carte!** now has **seven game modes** (the last one, "Hidden country", is described on the game page).
 
 ## Two colour modes
 - **The right colours**: you get a country and four flags whose colours are wrong, except one. At the easy level they are very different, at the expert level almost the same.

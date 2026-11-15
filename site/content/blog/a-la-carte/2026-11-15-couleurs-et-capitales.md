@@ -6,7 +6,7 @@ slug = "couleurs-et-capitales"
 image = "a-la-carte.png"
 +++
 
-**À la carte !** passe à **six modes de jeu**.
+**À la carte !** passe à **sept modes de jeu** (le dernier, « Pays caché », est décrit sur la fiche du jeu).
 
 ## Deux modes de couleurs
 - **Les bonnes couleurs** : on vous donne un pays et quatre drapeaux dont les couleurs sont fausses, sauf un. Au niveau facile elles sont très différentes, au niveau expert presque les mêmes.

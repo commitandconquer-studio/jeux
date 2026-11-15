@@ -8,7 +8,7 @@ jouer_url = "jeux-html/a-la-carte/"
 logo = "a-la-carte-logo"
 dossier = "a-la-carte"
 captures = [
-  { img = "1-accueil", t = "Les six modes de jeu" },
+  { img = "1-accueil", t = "Le menu des modes de jeu" },
   { img = "2-couleurs-et-pays", t = "Les bonnes couleurs, recolorier et silhouettes de pays" },
   { img = "3-villes-mystere", t = "Villes mystère : distances, flèches et cercles sur la carte" },
   { img = "4-capitales", t = "Capitales mystère, avec la carte du monde" },
