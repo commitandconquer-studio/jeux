@@ -7,20 +7,20 @@
 
   const MODES = {
     villes: {
-      titre: "Villes mystère", niveaux: () => Ville.niveaux("france"),
+      titre: "Villes mystère", niveaux: () => Ville.niveaux("france"), lancer: (id, g) => lancerVille(id, "france", g),
       aide: "Trouve la ville cherchée avec la distance qui la sépare de trois villes. Chaque mauvaise ville te donne un indice de plus.",
     },
     capitales: {
-      titre: "Capitales mystère", niveaux: () => Ville.niveaux("monde"), lancer: id => lancerVille(id, "monde"),
+      titre: "Capitales mystère", niveaux: () => Ville.niveaux("monde"), lancer: (id, g) => lancerVille(id, "monde", g),
       accueil: "3 capitales par partie",
       aide: "Trouve la capitale cherchée avec la distance qui la sépare de trois autres capitales. Chaque mauvaise capitale te donne un indice de plus.",
     },
     drapeaux: {
-      titre: "Drapeaux", niveaux: () => Drapeau.NIVEAUX,
+      titre: "Drapeaux", niveaux: () => Drapeau.NIVEAUX, lancer: (id, g) => lancerDrapeau(id, g),
       aide: "Dix drapeaux par partie, au calme, sans chrono. Fais 9 bonnes réponses sur 10 pour 3 étoiles.",
     },
     pays: {
-      titre: "Pays", niveaux: () => Pays.NIVEAUX,
+      titre: "Pays", niveaux: () => Pays.NIVEAUX, lancer: (id, g) => lancerDrapeau(id, g),
       aide: "Dix silhouettes par partie, au calme, sans chrono. Fais 9 bonnes réponses sur 10 pour 3 étoiles.",
     },
   };
@@ -37,11 +37,64 @@
   }
 
   function majAccueil() {
+    const n = Commun.defisFaits(), serie = Commun.serieJours();
+    $("defis-resume").textContent = n || serie
+      ? `Défis du jour : ${n} sur ${Object.keys(MODES).length} faits${serie > 1 ? ` · ${serie} jours de suite` : ""}`
+      : "Un défi du jour t'attend dans chaque jeu !";
     for (const [mode, m] of Object.entries(MODES)) {
       const niv = m.niveaux();
       const n = niv.reduce((s, v) => s + Commun.etoilesDe(mode, v.id), 0);
       $("etoiles-" + mode).textContent = n ? `${n} / ${niv.length * 3} ★` : (m.accueil || (mode === "villes" ? "3 villes par partie" : mode === "pays" ? "10 silhouettes par partie" : "10 drapeaux par partie"));
     }
+  }
+
+  /* ===================== Défis du jour ===================== */
+
+  function emojis(resultats) {
+    return resultats.map(r => (typeof r === "boolean" ? (r ? "🟩" : "🟥") : r >= 3 ? "🟩" : r >= 1 ? "🟨" : "🟥")).join("");
+  }
+
+  async function partager(mode, res) {
+    const [, mois, jour] = res.date.split("-");
+    const texte = `À la carte ! — défi du jour ${jour}/${mois}\n${MODES[mode].titre} (${res.niveau}) : ${res.score}\n${emojis(res.resultats)}\n` +
+      (location.protocol.startsWith("http") ? location.origin + location.pathname : "");
+    if (navigator.share) { try { await navigator.share({ text: texte }); return; } catch (e) { /* annulé : on copie */ } }
+    try { await navigator.clipboard.writeText(texte); Fun.bulle("content", "Résultat copié !", 1800); }
+    catch (e) { window.prompt("Copie ce texte pour le partager :", texte); }
+  }
+
+  /** Affiche le résultat d'un défi du jour (à la fin de la partie, ou en revenant le voir). */
+  function montrerDefi(mode, res, nouveau) {
+    const serie = Commun.serieJours();
+    $("fin-titre").textContent = "Défi du jour";
+    $("fin-etoiles").innerHTML = `<span class="score-defi">${res.score}</span><span class="emojis-defi">${emojis(res.resultats)}</span>`;
+    $("fin-texte").textContent = `${MODES[mode].titre}, niveau ${res.niveau}. ` + (serie > 1 ? `${serie} jours de suite !` : "Reviens demain pour un nouveau défi.");
+    $("fin-carte").hidden = true;
+    $("fin-suite").textContent = "Partager mon résultat";
+    actionSuite = () => partager(mode, res);
+    if (nouveau) Fun.finPartie(res.etoiles ?? 1);
+    majAccueil();
+    montrer("fin");
+  }
+
+  function defiTermine(mode, niveau, resultats, score, etoiles) {
+    const res = { date: Commun.dateIso(), niveau, resultats, score, etoiles };
+    Commun.defiNoter(mode, res);
+    montrerDefi(mode, Commun.defiFait(mode), true);
+  }
+
+  function carteDefi(conteneur, mode, m, niveaux) {
+    const idNiveau = Commun.niveauDuJour();
+    const niv = niveaux.find(n => n.id === idNiveau) || niveaux[0];
+    const fait = Commun.defiFait(mode);
+    const b = document.createElement("button");
+    b.className = "niveau defi";
+    b.innerHTML = `<span class="corps"><b>Défi du jour</b><small>${fait
+      ? `Fait : ${fait.score}. Touche pour voir et partager`
+      : `Niveau ${niv.nom} aujourd'hui. Les mêmes questions pour tout le monde`}</small></span>` +
+      `<span class="etoiles" aria-hidden="true">${fait ? "✓" : "🏆"}</span>`;
+    b.addEventListener("click", () => (fait ? montrerDefi(mode, fait, false) : m.lancer(niv.id, Commun.graineDuJour(mode))));
+    conteneur.appendChild(b);
   }
 
   /* Niveaux */
@@ -53,6 +106,7 @@
     const conteneur = $("liste-niveaux");
     conteneur.innerHTML = "";
     const niveaux = m.niveaux();
+    carteDefi(conteneur, mode, m, niveaux);
     niveaux.forEach((n, i) => {
       const b = document.createElement("button");
       b.className = "niveau";
@@ -62,7 +116,7 @@
       b.disabled = !ouvert;
       b.innerHTML = `<span class="corps"><b>${n.nom}</b><small>${ouvert ? n.texte : "Fais 2 étoiles au niveau précédent"}</small></span>` +
         `<span class="etoiles" role="img" aria-label="${e} étoile${e > 1 ? "s" : ""} sur 3">${ouvert ? Commun.etoilesHtml(e) : "🔒"}</span>`;
-      b.addEventListener("click", () => (m.lancer || (mode === "villes" ? lancerVille : lancerDrapeau))(n.id));
+      b.addEventListener("click", () => m.lancer(n.id));
       conteneur.appendChild(b);
     });
     montrer("niveaux");
@@ -72,11 +126,11 @@
   const champ = $("champ"), listeSugg = $("suggestions");
   let sugg = [], actif = -1;
 
-  async function lancerVille(id, jeu = "france") {
+  async function lancerVille(id, jeu = "france", graine = null) {
     try { await Ville.charger(jeu); }
     catch (e) { alert("Les données des villes n'ont pas pu être chargées."); return; }
     Fun.nouvellePartie();
-    Ville.demarrer(id);
+    Ville.demarrer(id, graine);
     afficherVille();
     montrer("jeu");
     champ.focus({ preventScroll: true });
@@ -150,6 +204,11 @@
   function suiteVille() {
     if (Ville.partie.points.length >= Ville.VILLES_PAR_PARTIE) {
       const r = Ville.resumePartie();
+      if (Ville.partie.graine) {
+        const total = r.points.reduce((a, b) => a + b, 0);
+        defiTermine(Ville.partie.cle, Ville.niveau.id, r.points, `${total} ★ sur ${3 * r.points.length}`, Math.floor(total / r.points.length));
+        return;
+      }
       $("fin-titre").textContent = "Partie terminée";
       $("fin-etoiles").innerHTML = Commun.etoilesHtml(r.moyenne);
       Fun.finPartie(r.moyenne);
@@ -227,11 +286,11 @@
       $("drap-retour").textContent = "Je ne connais pas ce pays dans la liste.";
   });
 
-  async function lancerDrapeau(id) {
+  async function lancerDrapeau(id, graine = null) {
     $("drap-titre").textContent = "Chargement…";
     Fun.nouvellePartie();
     montrer("drap");
-    try { await Mo().demarrer(id); }
+    try { await Mo().demarrer(id, graine); }
     catch (e) { alert("Les données des drapeaux n'ont pas pu être chargées."); afficherNiveaux(modeCourant); return; }
     await afficherDrapeau();
   }
@@ -318,6 +377,7 @@
     const M = Mo();
     if (M.partie.numero >= M.QUESTIONS) {
       const r = M.resume();
+      if (M.partie.graine) { defiTermine(modeCourant, M.niveau.id, r.resultats, `${r.bonnes} / ${r.sur}`, r.etoiles); return; }
       $("fin-titre").textContent = "Partie terminée";
       $("fin-etoiles").innerHTML = Commun.etoilesHtml(r.etoiles);
       Fun.finPartie(r.etoiles);
@@ -352,6 +412,8 @@
     MODES, montrer, majAccueil, afficherNiveaux,
     boutonMode(mode) { document.querySelector(".mode-" + mode).addEventListener("click", () => afficherNiveaux(mode)); },
     suite(f) { actionSuite = f; },
+    defiTermine, creerSaisie,
+    carteFin() { avecCarte = true; },
   };
 
   const majSon = () => { $("son").textContent = "Son : " + (Fun.son ? "oui" : "non"); $("son").setAttribute("aria-pressed", String(Fun.son)); };

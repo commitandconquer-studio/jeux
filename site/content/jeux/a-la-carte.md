@@ -17,7 +17,7 @@ icone = "a-la-carte"
 code = "site/static/jeux-html/a-la-carte"
 commandes = ["Souris ou doigt : choisir une réponse", "Clavier : taper le nom, flèches pour choisir, Entrée pour valider", "Hors ligne : installable comme une application depuis le navigateur"]
 chiffres = [
-  { n = "6", t = "modes de jeu" },
+  { n = "7", t = "modes de jeu" },
   { n = "4", t = "niveaux chacun" },
   { n = "196", t = "pays" },
   { n = "334", t = "villes de France" },
@@ -38,6 +38,12 @@ On vous donne un pays et **quatre drapeaux** dont les couleurs sont fausses, sau
 
 ## Recolorier
 Le drapeau d'un pays est colorié n'importe comment : **redonnez-lui ses vraies couleurs** avec la palette. Facile avec deux couleurs, expert avec des nuances fines.
+
+## Le pays caché
+Un pays est caché. Vous tapez un pays et le jeu vous dit si le pays caché est **plus grand, plus peuplé, plus riche**, dans le **même hémisphère** ou le **même continent**, et à quelle **distance** il se trouve. À vous de le trouver en peu d'essais !
+
+## Un défi du jour dans chaque jeu
+Les **mêmes questions pour tout le monde** chaque jour, un seul essai, un niveau qui change avec le jour de la semaine, et un résultat en carrés de couleur à partager. Une série de jours de suite à faire durer.
 
 ## La ville mystère
 Le jeu choisit une ville de France. Il vous donne **trois villes** et leur **distance** à la ville cherchée. Vous tapez le nom d'une ville : si ce n'est pas la bonne, vous obtenez sa distance (et une flèche vers la bonne, aux niveaux faciles), un indice de plus pour déduire la réponse. Autant d'essais que nécessaire, avec un bouton « Donne-moi la réponse ». Les parties portent sur les **préfectures**, les **sous-préfectures** ou les **capitales du monde**. À la fin de chaque ville, une **carte** montre les cercles de distance et des flèches qui pointent vers la réponse.

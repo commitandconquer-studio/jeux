@@ -63,7 +63,57 @@ const Commun = (() => {
     return Array.from({ length: max }, (_, i) => `<span class="e${i < n ? "" : " vide"}" style="--i:${i}">★</span>`).join("");
   }
 
-  return { distance, cap, fleche, pointCardinal, normaliser, km, etoilesDe, noter, etoilesHtml };
+  /* ---------- Défis du jour : hasard à graine, date, résultats ---------- */
+  /** Générateur pseudo-aléatoire (mulberry32) à partir d'un texte : mêmes questions pour tout le monde. */
+  function prng(texte) {
+    let h = 1779033703 ^ texte.length;
+    for (let i = 0; i < texte.length; i++) { h = Math.imul(h ^ texte.charCodeAt(i), 3432918353); h = (h << 13) | (h >>> 19); }
+    let a = h >>> 0;
+    return () => {
+      a = (a + 0x6D2B79F5) >>> 0;
+      let t = Math.imul(a ^ (a >>> 15), 1 | a);
+      t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+      return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+    };
+  }
+  /** Date locale au format AAAA-MM-JJ. */
+  function dateIso(d = new Date()) {
+    const p = n => String(n).padStart(2, "0");
+    return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}`;
+  }
+  /** Niveau du défi : plus facile en début de semaine, expert le dimanche. */
+  const NIVEAU_DU_JOUR = ["expert", "facile", "moyen", "moyen", "difficile", "moyen", "difficile"]; // dimanche = 0
+  function niveauDuJour(date = dateIso()) {
+    const [a, m, j] = date.split("-").map(Number);
+    return NIVEAU_DU_JOUR[new Date(a, m - 1, j).getDay()];
+  }
+  const graineDuJour = (mode, date = dateIso()) => `defi:${date}:${mode}`;
+
+  function defiFait(mode, date = dateIso()) {
+    const s = lire();
+    return (s.defis && s.defis[date] && s.defis[date][mode]) || null;
+  }
+  function defiNoter(mode, resultat, date = dateIso()) {
+    const s = lire();
+    s.defis = s.defis || {};
+    s.defis[date] = s.defis[date] || {};
+    if (!s.defis[date][mode]) s.defis[date][mode] = resultat;   // un seul essai par jour et par mode
+    ecrire(s);
+  }
+  /** Nombre de jours de suite avec au moins un défi fait (aujourd'hui ou jusqu'à hier). */
+  function serieJours(date = dateIso()) {
+    const s = lire(), jours = s.defis || {};
+    const [a, m, j] = date.split("-").map(Number);
+    const d = new Date(a, m - 1, j);
+    if (!jours[dateIso(d)] || !Object.keys(jours[dateIso(d)]).length) d.setDate(d.getDate() - 1);
+    let n = 0;
+    while (jours[dateIso(d)] && Object.keys(jours[dateIso(d)]).length) { n++; d.setDate(d.getDate() - 1); }
+    return n;
+  }
+  const defisFaits = (date = dateIso()) => Object.keys((lire().defis || {})[date] || {}).length;
+
+  return { distance, cap, fleche, pointCardinal, normaliser, km, etoilesDe, noter, etoilesHtml,
+    prng, dateIso, niveauDuJour, graineDuJour, defiFait, defiNoter, serieJours, defisFaits };
 })();
 
 if (typeof module !== "undefined") module.exports = Commun; // pour les tests

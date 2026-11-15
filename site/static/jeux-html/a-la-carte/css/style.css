@@ -83,11 +83,11 @@ h1, .mode-titre, .bouton, .grandes-etoiles { font-family: "Baloo 2", "Nunito", s
 .ref .nom { font-family: "Baloo 2", sans-serif; font-size: 1.15rem; font-weight: 600; }
 .ref .dist { font-weight: 800; font-size: 1.15rem; white-space: nowrap; }
 .saisie { position: relative; margin-top: 16px; }
-#champ, #drap-champ {
+#champ, #drap-champ, #cache-champ {
   width: 100%; font: inherit; font-size: 1.1rem; font-weight: 700; padding: 14px 16px;
   border: 3px solid var(--bleu-vif); border-radius: 14px; background: #fff; color: var(--texte);
 }
-#champ:focus, #drap-champ:focus { outline: 3px solid var(--orange); outline-offset: 1px; }
+#champ:focus, #drap-champ:focus, #cache-champ:focus { outline: 3px solid var(--orange); outline-offset: 1px; }
 #suggestions, .sugg {
   position: absolute; left: 0; right: 0; top: calc(100% + 4px); z-index: 5; background: #fff;
   border-radius: 14px; box-shadow: 0 6px 18px rgba(11, 61, 145, .3); overflow: hidden;

@@ -3,7 +3,7 @@
 Mini-jeux de géographie en français, en **HTML** (mobile et web). Idée
 d'Olivier, novembre 2026.
 
-> **État (15 novembre 2026) : les cinq modes codés, plus les capitales du monde, à tester par Olivier.**
+> **État (15 novembre 2026) : sept modes codés (drapeaux, pays, bonnes couleurs, recolorier, villes, capitales, pays caché), défis du jour, à tester par Olivier.**
 > Dans `site/static/jeux-html/a-la-carte/` : accueil, **ville mystère**
 > jouable sur les préfectures et sous-préfectures de France (4 niveaux,
 > étoiles, déblocage, hors ligne) **Devine le pays** (163 silhouettes Natural Earth simplifiées par
@@ -173,6 +173,35 @@ Feuille `css/mise-en-page.css`, chargée en dernier :
   la partie de ville mystère (la carte en direct est sous la liste des essais) ;
 - **Téléphone en paysage** : deux colonnes comme sur ordinateur ;
 - en fin de ville, sur téléphone, le bouton « suivant » passe avant la carte.
+
+### Mode 7 : Pays caché (ajout d'Olivier, nom provisoire)
+
+Idée d'Olivier : « tu dois deviner un pays ; tu tapes le nom d'un pays et il te
+dit s'il est plus grand, plus peuplé, dans le même hémisphère, PIB plus grand,
+etc. » Un pays est caché ; à chaque pays proposé, le jeu compare avec le pays
+caché : **superficie**, **population**, **PIB**, **PIB par habitant**,
+**continent**, **hémisphères nord/sud et est/ouest** (d'après la capitale),
+**distance** entre les capitales et **boussole**. Pour les chiffres : ▲ plus
+grand, ▼ plus petit, ≈ à peu près pareil (à 15 % près). 3 pays par partie,
+autant d'essais que nécessaire, bouton « Donne-moi la réponse ». À la fin de
+chaque pays, la carte du monde montre les capitales avec des flèches vers le pays
+caché. Niveaux : Facile (pays célèbres, tous les indices), Moyen (tous les pays),
+Difficile (sans la boussole ni le PIB par habitant), Expert (sans la distance).
+Les très petits pays (moins de 500 km²) ne sont jamais le pays caché : les
+chiffres de Natural Earth y sont trop approximatifs. Chiffres de population et de
+PIB : Natural Earth (2018-2019, domaine public) ; superficie calculée sur les
+contours (tools/a-la-carte-faits.py).
+
+### Défis du jour (ajout d'Olivier)
+
+Dans chaque jeu, une carte « Défi du jour » en tête de la liste des niveaux :
+les **mêmes questions pour tout le monde** ce jour-là (hasard à graine tiré de la
+date et du jeu, aucun serveur), **un seul essai par jour et par jeu**, niveau selon
+le jour de la semaine (lundi facile, mardi moyen, mercredi moyen, jeudi difficile,
+vendredi moyen, samedi difficile, dimanche expert). Un défi ne débloque pas de
+niveau. Résultat avec une ligne de carrés 🟩🟨🟥 à **partager** (partage du
+système, sinon copie dans le presse-papiers) et **série de jours** de suite
+affichée sur l'accueil.
 
 ## Les données et leurs licences (*à vérifier avant reprise*)
 

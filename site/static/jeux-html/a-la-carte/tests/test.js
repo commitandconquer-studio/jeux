@@ -94,4 +94,56 @@ for (const nom of ["carte-france", "carte-monde"]) {
 assert.strictEqual((C.etoilesHtml(2).match(/class="e"/g) || []).length, 2);
 assert.strictEqual((C.etoilesHtml(2).match(/class="e vide"/g) || []).length, 1);
 assert.strictEqual((C.etoilesHtml(0).match(/vide/g) || []).length, 3);
-console.log("Tous les tests passent.");
+// défis du jour : même graine, mêmes tirages ; série de jours avec un stockage simulé
+{
+  const a = C.prng("defi:2026-11-15:villes"), b = C.prng("defi:2026-11-15:villes"), x = C.prng("defi:2026-11-16:villes");
+  const sa = [a(), a(), a()], sb = [b(), b(), b()];
+  assert.deepStrictEqual(sa, sb, "même graine = mêmes nombres");
+  assert.notDeepStrictEqual(sa, [x(), x(), x()], "autre jour = autres nombres");
+  assert(sa.every(v => v >= 0 && v < 1));
+  assert.strictEqual(C.dateIso(new Date(2026, 0, 5)), "2026-01-05");
+  assert.strictEqual(C.niveauDuJour("2026-11-16"), "facile", "lundi");
+  assert.strictEqual(C.niveauDuJour("2026-11-15"), "expert", "dimanche");
+  const mem = {};
+  global.localStorage = { getItem: k => (k in mem ? mem[k] : null), setItem: (k, v) => { mem[k] = String(v); } };
+  assert.strictEqual(C.serieJours("2026-11-15"), 0);
+  C.defiNoter("villes", { score: "5 ★ sur 9", resultats: [3, 1, 1] }, "2026-11-13");
+  C.defiNoter("pays", { score: "8 / 10", resultats: [true] }, "2026-11-14");
+  C.defiNoter("pays", { score: "1 / 10", resultats: [false] }, "2026-11-14");
+  assert.strictEqual(C.defiFait("pays", "2026-11-14").score, "8 / 10", "un seul essai par jour et par mode");
+  assert.strictEqual(C.serieJours("2026-11-14"), 2);
+  assert.strictEqual(C.serieJours("2026-11-15"), 2, "hier compte tant qu'on n'a pas joué aujourd'hui");
+  C.defiNoter("drapeaux", { score: "9 / 10", resultats: [true] }, "2026-11-15");
+  assert.strictEqual(C.serieJours("2026-11-15"), 3);
+  assert.strictEqual(C.serieJours("2026-11-18"), 0, "série rompue");
+  delete global.localStorage;
+}
+// Pays caché : données, comparaisons, déterminisme du défi du jour
+(async () => {
+  global.Commun = C;
+  global.fetch = async u => ({ json: async () => JSON.parse(fs.readFileSync(path.join(__dirname, "..", u), "utf8")) });
+  const PC = require("../js/decouverte.js");
+  await PC.charger();
+  assert(PC.liste.length >= 190, "pays comparables : " + PC.liste.length);
+  for (const p of PC.liste) assert(p.s > 0 && p.p > 0 && p.g > 0 && p.capitale && p.continent, "faits " + p.code);
+  const par = c => PC.liste.find(p => p.code === c);
+  const fr = par("fr"), de = par("de"), br = par("br"), au = par("au");
+  assert(fr.s > 5e5 && fr.s < 7e5, "superficie de la France : " + fr.s);
+  assert(br.p > 2e8 && br.p < 2.2e8);
+  PC.demarrer("moyen", "defi:2026-11-15:cache");
+  const secret1 = [PC.etat.secret.code]; PC.suivante(); secret1.push(PC.etat.secret.code);
+  PC.demarrer("moyen", "defi:2026-11-15:cache");
+  assert.deepStrictEqual([PC.etat.secret.code, (PC.suivante(), PC.etat.secret.code)], secret1, "défi du jour : mêmes pays secrets");
+  // comparaison : l'Allemagne par rapport au Brésil caché
+  PC.demarrer("moyen", "x");
+  const essai = PC.comparer(de, br);
+  const get = id => essai.find(i => i.id === id);
+  assert.strictEqual(get("surface").etat, "plus", "le Brésil est plus grand que l'Allemagne");
+  assert.strictEqual(get("pop").etat, "plus");
+  assert.strictEqual(get("continent").etat, "non");
+  assert.strictEqual(get("ns").etat, "non", "Berlin au nord, Brasilia au sud");
+  assert.strictEqual(get("eo").etat, "non", "Berlin à l'est, Brasilia à l'ouest");
+  assert.strictEqual(PC.comparer(fr, fr).find(i => i.id === "surface").etat, "proche");
+  const aucun = PC.comparer(au, au); assert(aucun.every(i => i.etat === "proche" || i.etat === "oui"));
+  console.log("Tous les tests passent (pays caché compris).");
+})().catch(e => { console.error(e); process.exit(1); });

@@ -87,7 +87,8 @@ const BonnesCouleurs = (() => {
   const QUESTIONS = 10;
   let pays = [], couleurs = {}, niveau = null, partie = null, q = null;
 
-  const hasard = n => Math.floor(Math.random() * n);
+  let alea = Math.random;   // remplacé par un générateur à graine pour les défis du jour
+  const hasard = n => Math.floor(alea() * n);
   function melange(a) {
     a = a.slice();
     for (let i = a.length - 1; i > 0; i--) { const j = hasard(i + 1); [a[i], a[j]] = [a[j], a[i]]; }
@@ -106,26 +107,28 @@ const BonnesCouleurs = (() => {
     for (let essai = 0; essai < 500; essai++) {
       const v = [];
       for (let i = 0; i < 3; i++) {
-        const m = n.min + Math.random() * (n.max - n.min);
-        v.push(Math.random() < 0.5 ? -m : m);
+        const m = n.min + alea() * (n.max - n.min);
+        v.push(alea() < 0.5 ? -m : m);
       }
       if (v.every((a, i) => v.every((b, j) => i === j || Math.abs(a - b) >= n.gap))) return v;
     }
     return [-n.max, n.min, n.max];
   }
 
-  async function demarrer(id) {
+  async function demarrer(id, graine = null) {
     await charger();
     niveau = NIVEAUX.find(n => n.id === id);
     const base = niveau.pool === "celebres" ? pays.slice().sort((a, b) => b.sl - a.sl).slice(0, 70) : pays;
-    partie = { pile: melange(base).slice(0, QUESTIONS), numero: 0, bonnes: 0 };
+    alea = graine ? Commun.prng(graine + ":pile") : Math.random;
+    partie = { pile: melange(base).slice(0, QUESTIONS), numero: 0, bonnes: 0, graine, resultats: [] };
     return suivante();
   }
 
   function suivante() {
+    alea = partie.graine ? Commun.prng(partie.graine + ":" + partie.numero) : Math.random;
     const cible = partie.pile[partie.numero++];
     const options = [{ dh: 0, dl: 0, vrai: true }, ...ecarts(niveau).map(dh => ({
-      dh, dl: niveau.lum ? (Math.random() < 0.5 ? -1 : 1) * niveau.lum : 0, vrai: false,
+      dh, dl: niveau.lum ? (alea() < 0.5 ? -1 : 1) * niveau.lum : 0, vrai: false,
     }))];
     q = { cible, options: melange(options), fini: false, bonne: false };
     return q;
@@ -141,14 +144,15 @@ const BonnesCouleurs = (() => {
     const ok = q.options[i].vrai;
     q.fini = true; q.bonne = ok; q.reponse = i;
     if (ok) partie.bonnes++;
+    partie.resultats.push(ok);
     return ok;
   }
 
   function etoilesPour(b) { return b >= 9 ? 3 : b >= 7 ? 2 : b >= 5 ? 1 : 0; }
   function resume() {
     const e = etoilesPour(partie.bonnes);
-    Commun.noter("couleurs", niveau.id, e);
-    return { etoiles: e, bonnes: partie.bonnes, sur: QUESTIONS };
+    if (!partie.graine) Commun.noter("couleurs", niveau.id, e);
+    return { etoiles: e, bonnes: partie.bonnes, sur: QUESTIONS, resultats: partie.resultats.slice() };
   }
 
   return {
@@ -176,7 +180,8 @@ const Recolorier = (() => {
   const QUESTIONS = 10;
   let pays = [], couleurs = {}, niveau = null, partie = null, q = null;
 
-  const hasard = n => Math.floor(Math.random() * n);
+  let alea = Math.random;   // remplacé par un générateur à graine pour les défis du jour
+  const hasard = n => Math.floor(alea() * n);
   function melange(a) {
     a = a.slice();
     for (let i = a.length - 1; i > 0; i--) { const j = hasard(i + 1); [a[i], a[j]] = [a[j], a[i]]; }
@@ -190,24 +195,26 @@ const Recolorier = (() => {
     pays = (await p.json()).filter(x => couleurs[x.code] && couleurs[x.code].length >= 1);
   }
 
-  async function demarrer(id) {
+  async function demarrer(id, graine = null) {
     await charger();
     niveau = NIVEAUX.find(n => n.id === id);
     const base = pays.filter(p => {
       const n = couleurs[p.code].length;
       return n <= niveau.maxG && n >= (niveau.minG || 1);
     });
-    partie = { pile: melange(base).slice(0, QUESTIONS), numero: 0, bonnes: 0 };
+    alea = graine ? Commun.prng(graine + ":pile") : Math.random;
+    partie = { pile: melange(base).slice(0, QUESTIONS), numero: 0, bonnes: 0, graine, resultats: [] };
     return suivante();
   }
 
   function suivante() {
+    alea = partie.graine ? Commun.prng(partie.graine + ":" + partie.numero) : Math.random;
     const cible = partie.pile[partie.numero++];
     const groupes = couleurs[cible.code].map(liste => {
       const rep = liste[0];
       const bon = Teinte.plusProche(rep, niveau.palette);
       // Couleur de départ : volontairement fausse (au moins 90° plus loin, et pas proche de la bonne).
-      let dh = (Math.random() < 0.5 ? -1 : 1) * (90 + hasard(80)), depart = Teinte.decaler(rep, dh);
+      let dh = (alea() < 0.5 ? -1 : 1) * (90 + hasard(80)), depart = Teinte.decaler(rep, dh);
       if (Teinte.plusProche(depart, niveau.palette) === bon) { dh = -dh; depart = Teinte.decaler(rep, dh); }
       return { liste, rep, bon, dh, choix: null };
     });
@@ -231,14 +238,15 @@ const Recolorier = (() => {
     const detail = q.groupes.map(g => g.choix === g.bon);
     q.fini = true; q.bonne = detail.every(Boolean);
     if (q.bonne) partie.bonnes++;
+    partie.resultats.push(q.bonne);
     return detail;
   }
 
   function etoilesPour(b) { return b >= 9 ? 3 : b >= 7 ? 2 : b >= 5 ? 1 : 0; }
   function resume() {
     const e = etoilesPour(partie.bonnes);
-    Commun.noter("recolorier", niveau.id, e);
-    return { etoiles: e, bonnes: partie.bonnes, sur: QUESTIONS };
+    if (!partie.graine) Commun.noter("recolorier", niveau.id, e);
+    return { etoiles: e, bonnes: partie.bonnes, sur: QUESTIONS, resultats: partie.resultats.slice() };
   }
 
   return {

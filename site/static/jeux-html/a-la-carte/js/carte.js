@@ -51,7 +51,7 @@ const Carte = (() => {
     const autres = refs.concat(essais.map(e => e.ville).filter(v => v !== cible && !refs.includes(v)));
     // En mode « secret » (pendant la partie), la ville cherchée n'est ni dessinée ni utilisée pour cadrer.
     const visibles = secret ? autres : [cible, ...autres];
-    const centre = secret ? refs[0] : cible;
+    const centre = secret ? (refs[0] || cible) : cible;
     const nom = secret && jeuCarte === "monde" ? "monde" : choisirCarte(visibles, FRANCE);
     const donnees = await fond(nom);
     const monde = nom === "monde";
@@ -150,7 +150,7 @@ const Carte = (() => {
     if (!secret) {
       point(cible, "#34C759", 1.7, cible.n, true);
       // Un avion en papier file vers la réponse.
-      const a = refs[0], x1 = px(a), y1 = py(a), x2 = px(cible), y2 = py(cible);
+      const a = refs[0] || (essais[0] && essais[0].ville) || cible, x1 = px(a), y1 = py(a), x2 = px(cible), y2 = py(cible);
       const avion = el("g", { class: "avion" }, svg);
       el("path", { d: `M${-u * 1.8} ${-u * 1.3}L${u * 2.2} 0L${-u * 1.8} ${u * 1.3}L${-u * 1.1} 0Z`, fill: "#fff", stroke: "#0B2A63", "stroke-width": u * 0.25, "stroke-linejoin": "round" }, avion);
       el("path", { d: `M${-u * 1.1} 0L${u * 2.2} 0`, stroke: "#0B2A63", "stroke-width": u * 0.2 }, avion);

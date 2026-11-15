@@ -9,6 +9,7 @@
 
   function fin(mode, M, rejouer) {
     const r = M.resume();
+    if (M.partie.graine) { A.defiTermine(mode, M.niveau.id, r.resultats, `${r.bonnes} / ${r.sur}`, r.etoiles); return; }
     $("fin-titre").textContent = "Partie terminée";
     $("fin-etoiles").innerHTML = Commun.etoilesHtml(r.etoiles);
     Fun.finPartie(r.etoiles);
@@ -22,11 +23,11 @@
   }
 
   /* ===================== Les bonnes couleurs ===================== */
-  async function lancerCouleurs(id) {
+  async function lancerCouleurs(id, graine = null) {
     $("cou-titre").textContent = "Chargement…";
     Fun.nouvellePartie();
     A.montrer("cou");
-    try { await BonnesCouleurs.demarrer(id); }
+    try { await BonnesCouleurs.demarrer(id, graine); }
     catch (e) { alert("Les données n'ont pas pu être chargées."); A.afficherNiveaux("couleurs"); return; }
     await afficherCouleurs();
   }
@@ -77,11 +78,11 @@
   /* ===================== Recolorier ===================== */
   let pastille = 0; // groupe de couleurs en cours de réglage
 
-  async function lancerRec(id) {
+  async function lancerRec(id, graine = null) {
     $("rec-titre").textContent = "Chargement…";
     Fun.nouvellePartie();
     A.montrer("rec");
-    try { await Recolorier.demarrer(id); }
+    try { await Recolorier.demarrer(id, graine); }
     catch (e) { alert("Les données n'ont pas pu être chargées."); A.afficherNiveaux("recolorier"); return; }
     await afficherRec();
   }

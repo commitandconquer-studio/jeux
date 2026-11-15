@@ -25,7 +25,8 @@ const Pays = (() => {
     index = pays.map(x => Commun.normaliser(x.nom));
   }
 
-  const hasard = n => Math.floor(Math.random() * n);
+  let alea = Math.random;   // remplacé par un générateur à graine pour les défis du jour
+  const hasard = n => Math.floor(alea() * n);
   function melange(a) {
     a = a.slice();
     for (let i = a.length - 1; i > 0; i--) { const j = hasard(i + 1); [a[i], a[j]] = [a[j], a[i]]; }
@@ -38,11 +39,12 @@ const Pays = (() => {
     return `<svg viewBox="-4 -4 108 108" role="img" aria-label="Silhouette d'un pays"><path d="${formes[p.code].d}" fill-rule="evenodd"/></svg>`;
   }
 
-  async function demarrer(id) {
+  async function demarrer(id, graine = null) {
     await charger();
     niveau = NIVEAUX.find(n => n.id === id);
     const base = niveau.pool === "celebres" ? celebres() : pays;
-    partie = { pile: melange(base).slice(0, QUESTIONS), numero: 0, bonnes: 0 };
+    alea = graine ? Commun.prng(graine + ":pile") : Math.random;
+    partie = { pile: melange(base).slice(0, QUESTIONS), numero: 0, bonnes: 0, graine, resultats: [] };
     return suivante();
   }
 
@@ -55,6 +57,7 @@ const Pays = (() => {
   }
 
   function suivante() {
+    alea = partie.graine ? Commun.prng(partie.graine + ":" + partie.numero) : Math.random;
     const cible = partie.pile[partie.numero++];
     const pool = niveau.pool === "celebres" ? celebres() : pays;
     // Rotation d'au moins 40° pour qu'elle se remarque ; miroir une fois sur deux.
@@ -71,6 +74,7 @@ const Pays = (() => {
     const ok = p === q.cible;
     q.fini = true; q.bonne = ok; q.reponse = p;
     if (ok) partie.bonnes++;
+    partie.resultats.push(ok);
     return ok;
   }
 
@@ -89,8 +93,8 @@ const Pays = (() => {
 
   function resume() {
     const e = etoilesPour(partie.bonnes);
-    Commun.noter("pays", niveau.id, e);
-    return { etoiles: e, bonnes: partie.bonnes, sur: QUESTIONS };
+    if (!partie.graine) Commun.noter("pays", niveau.id, e);
+    return { etoiles: e, bonnes: partie.bonnes, sur: QUESTIONS, resultats: partie.resultats.slice() };
   }
 
   return {

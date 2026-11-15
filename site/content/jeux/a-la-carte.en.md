@@ -17,7 +17,7 @@ icone = "a-la-carte"
 code = "site/static/jeux-html/a-la-carte"
 commandes = ["Mouse or finger: pick an answer", "Keyboard: type the name, arrows to choose, Enter to confirm", "Offline: can be installed like an app from your browser"]
 chiffres = [
-  { n = "6", t = "game modes" },
+  { n = "7", t = "game modes" },
   { n = "4", t = "levels each" },
   { n = "196", t = "countries" },
   { n = "334", t = "French towns" },
@@ -38,6 +38,12 @@ You get a country and **four flags** whose colours are wrong, except one. Find t
 
 ## Recolour
 A country's flag is coloured all wrong: **give it back its real colours** using the palette. Easy with two colours, expert with fine shades.
+
+## The hidden country
+A country is hidden. You type a country and the game tells you whether the hidden one is **bigger, more populated, richer**, in the **same hemisphere** or on the **same continent**, and how **far** away it is. Find it in as few tries as you can!
+
+## A daily challenge in every game
+The **same questions for everyone** every day, one try, a level that changes with the day of the week, and a result in coloured squares to share. Keep your streak of days going.
 
 ## The mystery city
 The game picks a French town. It shows you **three towns** and their **distance** to the one you are looking for. You type the name of a town: if it is wrong you get its distance (and an arrow towards the right one on the easy levels), one more clue to work out the answer. As many tries as needed, with a “Give me the answer” button. Games cover French **prefectures**, **sub-prefectures** or **world capitals**. At the end of each town, a **map** shows the distance circles and arrows pointing to the answer.

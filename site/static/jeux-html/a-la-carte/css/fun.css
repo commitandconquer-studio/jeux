@@ -149,3 +149,52 @@ body[data-mode="drapeaux"] .choix button:hover:not(:disabled), body[data-mode="p
 @media (prefers-reduced-motion: reduce) {
   .haut .logo, .mascotte-accueil, .continents, body[data-mode] #drap-img, .grille-drapeaux img, .ecran.actif { animation: none !important; }
 }
+
+/* ===== Défis du jour ===== */
+.niveau.defi { background: linear-gradient(120deg, #FF9800, #FFB84D); color: #3a2200; border: 3px solid #fff; }
+.niveau.defi small { color: #5a3600; }
+.niveau.defi .etoiles { color: #fff; font-size: 1.8rem; text-shadow: 0 1px 2px rgba(0,0,0,.25); }
+.defis-resume { text-align: center; font-weight: 800; font-size: .92rem; margin: 2px 0 10px; color: var(--bleu-fonce); }
+.score-defi { display: block; font-size: 2.6rem; letter-spacing: 0; color: var(--bleu-fonce); animation: etoile-pop .55s cubic-bezier(.3, 1.7, .5, 1) both; }
+.emojis-defi { display: block; font-size: 1.5rem; letter-spacing: 3px; margin-top: 4px; }
+
+/* ===== Pays caché ===== */
+.mode-cache { background: linear-gradient(120deg, #0B3D91, #FF9800 130%); }
+body[data-mode="cache"] {
+  background-color: #E3F1E0;
+  background-image: radial-gradient(circle at 15% 10%, rgba(52,199,89,.18) 0 70px, transparent 71px), radial-gradient(circle at 90% 60%, rgba(30,144,255,.15) 0 90px, transparent 91px),
+    repeating-linear-gradient(0deg, rgba(11,61,145,.05) 0 1px, transparent 1px 28px);
+}
+.devines { list-style: none; margin: 0; padding: 0; display: grid; gap: 12px; }
+.devine { background: #fff; border-radius: 14px; padding: 10px 12px; box-shadow: var(--ombre); border-left: 8px solid var(--orange); }
+.devine.gagne { border-left-color: var(--vert); background: #E4F8E9; }
+.devine-tete { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
+.devine-tete img { width: 40px; height: 30px; border-radius: 4px; box-shadow: 0 0 0 1px rgba(11,42,99,.25); object-fit: cover; }
+.devine-tete b { font-family: "Baloo 2", sans-serif; font-size: 1.15rem; flex: 1; }
+.devine-tete small { font-weight: 700; opacity: .7; }
+.devine-ok { margin: 0; font-weight: 800; color: #1d8f3d; }
+.indices { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px; }
+.ind { border-radius: 10px; padding: 6px 8px; display: grid; gap: 1px; line-height: 1.2; background: #FFF1DC; border: 2px solid #FFC978; animation: bon-pop .35s ease-out; }
+.ind-nom { font-size: .72rem; font-weight: 800; text-transform: uppercase; letter-spacing: .03em; opacity: .75; }
+.ind-val { font-weight: 800; font-size: .95rem; }
+.ind-mot { font-size: .82rem; font-weight: 700; }
+.ind-signe { display: inline-block; font-weight: 900; margin-right: 2px; }
+.ind.plus .ind-signe, .ind.moins .ind-signe { color: #D06A00; }
+.ind.proche, .ind.oui { background: #E4F8E9; border-color: #8ED7A2; }
+.ind.proche .ind-signe, .ind.oui .ind-signe { color: #1d8f3d; }
+.ind.non { background: #FFE6E0; border-color: #F2A99B; }
+.ind.non .ind-signe { color: var(--rouge); }
+.ind.dist { background: #E7F1FF; border-color: #A9CCF5; grid-column: 1 / -1; }
+.ind.dist .ind-mot { display: flex; align-items: center; }
+
+/* Pays caché sur téléphone : une ligne par indice, plus compact */
+@media (max-width: 899px) and (orientation: portrait) {
+  .indices { grid-template-columns: 1fr; gap: 4px; }
+  .ind { grid-template-columns: 5.2rem minmax(0, 1fr) auto; align-items: center; column-gap: 8px; padding: 4px 8px; }
+  .ind-nom { font-size: .68rem; }
+  .ind-val { font-size: .85rem; }
+  .ind-mot { font-size: .76rem; text-align: right; white-space: nowrap; }
+  .ind.dist { grid-column: auto; }
+  .devine-tete { margin-bottom: 6px; }
+  .devine-tete img { width: 34px; height: 26px; }
+}

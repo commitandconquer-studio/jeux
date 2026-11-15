@@ -43,7 +43,8 @@ const Ville = (() => {
     ({ villes, index } = cache[nom]);
   }
 
-  const hasard = n => Math.floor(Math.random() * n);
+  let alea = Math.random;   // remplacé par un générateur à graine pour les défis du jour
+  const hasard = n => Math.floor(alea() * n);
   const parNotoriete = liste => liste.slice().sort((a, b) => b.pop - a.pop);
 
   /** Villes connues, pouvant servir de références. */
@@ -69,7 +70,7 @@ const Ville = (() => {
       }
       if (refs.length === 3) return refs;
     }
-    return pool.sort(() => Math.random() - .5).slice(0, 3);
+    return pool.sort(() => alea() - .5).slice(0, 3);
   }
 
   function reserve() {
@@ -85,14 +86,15 @@ const Ville = (() => {
     return etat;
   }
 
-  function demarrer(id) {
+  function demarrer(id, graine = null) {
     niveau = jeu.niveaux.find(n => n.id === id);
-    partie = { deja: new Set(), points: [], numero: 0, cle: jeu.cle };
+    partie = { deja: new Set(), points: [], numero: 0, cle: jeu.cle, graine };
     return suivante();
   }
 
   function suivante() {
     partie.numero++;
+    alea = partie.graine ? Commun.prng(partie.graine + ":" + partie.numero) : Math.random;
     return nouvelleVille();
   }
 
@@ -128,7 +130,7 @@ const Ville = (() => {
   function resumePartie() {
     const total = partie.points.reduce((a, b) => a + b, 0);
     const moyenne = Math.floor(total / partie.points.length);
-    Commun.noter(partie.cle, niveau.id, moyenne);
+    if (!partie.graine) Commun.noter(partie.cle, niveau.id, moyenne);   // un défi du jour ne débloque rien
     return { moyenne, points: partie.points.slice() };
   }
 

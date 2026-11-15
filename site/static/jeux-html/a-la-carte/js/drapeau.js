@@ -30,7 +30,8 @@ const Drapeau = (() => {
     pays.forEach(p => { parCode[p.code] = p; });
   }
 
-  const hasard = n => Math.floor(Math.random() * n);
+  let alea = Math.random;   // remplacé par un générateur à graine pour les défis du jour
+  const hasard = n => Math.floor(alea() * n);
   function melange(a) {
     a = a.slice();
     for (let i = a.length - 1; i > 0; i--) { const j = hasard(i + 1); [a[i], a[j]] = [a[j], a[i]]; }
@@ -88,12 +89,13 @@ const Drapeau = (() => {
     return pays.filter(x => x !== p && ecartSig(sigs[x.code], sigs[p.code]) < 0.05);
   }
 
-  async function demarrer(id) {
+  async function demarrer(id, graine = null) {
     await charger();
     niveau = NIVEAUX.find(n => n.id === id);
     if (niveau.prop) await preparerSignatures();
     const base = niveau.pool === "celebres" ? celebres() : pays;
-    partie = { pile: melange(base).slice(0, QUESTIONS), numero: 0, bonnes: 0 };
+    alea = graine ? Commun.prng(graine + ":pile") : Math.random;
+    partie = { pile: melange(base).slice(0, QUESTIONS), numero: 0, bonnes: 0, graine, resultats: [] };
     return suivante();
   }
 
@@ -106,6 +108,7 @@ const Drapeau = (() => {
   }
 
   function suivante() {
+    alea = partie.graine ? Commun.prng(partie.graine + ":" + partie.numero) : Math.random;
     const cible = partie.pile[partie.numero++];
     const pool = niveau.pool === "celebres" ? celebres() : pays;
     q = {
@@ -121,6 +124,7 @@ const Drapeau = (() => {
     const ok = p === q.cible || q.equiv.includes(p);
     q.fini = true; q.bonne = ok; q.reponse = p;
     if (ok) partie.bonnes++;
+    partie.resultats.push(ok);
     return ok;
   }
 
@@ -139,8 +143,8 @@ const Drapeau = (() => {
 
   function resume() {
     const e = etoilesPour(partie.bonnes);
-    Commun.noter("drapeaux", niveau.id, e);
-    return { etoiles: e, bonnes: partie.bonnes, sur: QUESTIONS };
+    if (!partie.graine) Commun.noter("drapeaux", niveau.id, e);   // un défi du jour ne débloque rien
+    return { etoiles: e, bonnes: partie.bonnes, sur: QUESTIONS, resultats: partie.resultats.slice() };
   }
 
   return {
