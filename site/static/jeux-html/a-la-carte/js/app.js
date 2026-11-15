@@ -31,6 +31,7 @@
   let avecCarte = false;
   function montrer(id) {
     if (id === "fin") { $("fin-carte").hidden = !avecCarte; avecCarte = false; }
+    document.body.dataset.mode = id === "accueil" ? "accueil" : modeCourant;
     document.querySelectorAll(".ecran").forEach(e => e.classList.toggle("actif", e.id === id));
     window.scrollTo(0, 0);
   }
@@ -74,6 +75,7 @@
   async function lancerVille(id, jeu = "france") {
     try { await Ville.charger(jeu); }
     catch (e) { alert("Les données des villes n'ont pas pu être chargées."); return; }
+    Fun.nouvellePartie();
     Ville.demarrer(id);
     afficherVille();
     montrer("jeu");
@@ -95,13 +97,23 @@
     champ.value = "";
     fermerSugg();
     $("abandon").hidden = false;
+    majMiniCarte();
+  }
+
+  /** Carte en direct : les villes de départ, et un cercle de distance par ville proposée (la réponse reste cachée). */
+  function majMiniCarte() {
+    const { etat } = Ville;
+    Carte.dessiner($("mini-carte"), { cible: etat.cible, refs: etat.refs, essais: etat.essais, secret: true, jeuCarte: Ville.jeu.carte })
+      .then(() => { $("mini-carte").hidden = false; })
+      .catch(() => { $("mini-carte").hidden = true; });
   }
 
   function ligneEssai(e) {
     const li = document.createElement("li");
     li.className = "essai" + (e.gagne ? " gagne" : "");
     const fl = !e.gagne && Ville.niveau.fleche
-      ? `<span class="fleche" aria-label="direction : ${Commun.pointCardinal(e.cap)}">${Commun.fleche(e.cap)}</span>` : "";
+      ? `<svg class="boussole" viewBox="0 0 24 24" role="img" aria-label="direction : ${Commun.pointCardinal(e.cap)}" style="transform:rotate(${Math.round(e.cap)}deg)">` +
+        `<circle cx="12" cy="12" r="11" fill="#fff" stroke="#0B3D91" stroke-width="1.5"/><path d="M12 3l3.6 9h-7.2z" fill="#FF9800"/><path d="M12 21l-3.6-9h7.2z" fill="#8AA0C8"/></svg>` : "";
     li.innerHTML = `<span><span class="nom">${e.ville.n}</span><small>${e.ville.d}</small></span>` +
       `<span class="dist">${e.gagne ? "Trouvé !" : Commun.km(e.dist)}${fl}</span>`;
     return li;
@@ -110,6 +122,7 @@
   function jouerVille(ville) {
     const e = Ville.proposer(ville);
     $("essais").prepend(ligneEssai(e));
+    if (e.gagne) Fun.reponse(true); else { Fun.jouerSon("faux"); Fun.bulle("triste", "Pas encore !", 1000); majMiniCarte(); }
     champ.value = "";
     fermerSugg();
     $("message").textContent = "";
@@ -139,6 +152,7 @@
       const r = Ville.resumePartie();
       $("fin-titre").textContent = "Partie terminée";
       $("fin-etoiles").innerHTML = Commun.etoilesHtml(r.moyenne);
+      Fun.finPartie(r.moyenne);
       $("fin-texte").textContent = r.moyenne >= 2
         ? "Bien joué ! Tu peux passer au niveau suivant."
         : "Encore un essai pour décrocher 2 étoiles et débloquer la suite.";
@@ -202,7 +216,7 @@
       $("message").textContent = "Je ne connais pas cette ville dans la liste.";
   });
 
-  $("abandon").addEventListener("click", () => { Ville.abandonner(); finVille(false); });
+  $("abandon").addEventListener("click", () => { Ville.abandonner(); Fun.reponse(false); finVille(false); });
 
   /* ===================== Drapeaux ===================== */
   const dChamp = $("drap-champ");
@@ -215,6 +229,7 @@
 
   async function lancerDrapeau(id) {
     $("drap-titre").textContent = "Chargement…";
+    Fun.nouvellePartie();
     montrer("drap");
     try { await Mo().demarrer(id); }
     catch (e) { alert("Les données des drapeaux n'ont pas pu être chargées."); afficherNiveaux(modeCourant); return; }
@@ -274,6 +289,7 @@
     const { q, niveau } = M;
     if (q.fini) return;
     const ok = M.repondre(p);
+    Fun.reponse(ok);
     $("drap-img").style.filter = "";                // on rend les vraies couleurs
     if (modeCourant === "pays") {                   // on remet la silhouette à l'endroit
       $("drap-forme").firstChild.style.transform = "";
@@ -304,6 +320,7 @@
       const r = M.resume();
       $("fin-titre").textContent = "Partie terminée";
       $("fin-etoiles").innerHTML = Commun.etoilesHtml(r.etoiles);
+      Fun.finPartie(r.etoiles);
       $("fin-texte").textContent = `${r.bonnes} bonne${r.bonnes > 1 ? "s" : ""} réponse${r.bonnes > 1 ? "s" : ""} sur ${r.sur}. ` +
         (r.etoiles >= 2 ? "Tu peux passer au niveau suivant." : "Fais 7 bonnes réponses pour 2 étoiles et débloquer la suite.");
       $("fin-suite").textContent = "Rejouer ce niveau";
@@ -336,6 +353,10 @@
     boutonMode(mode) { document.querySelector(".mode-" + mode).addEventListener("click", () => afficherNiveaux(mode)); },
     suite(f) { actionSuite = f; },
   };
+
+  const majSon = () => { $("son").textContent = "Son : " + (Fun.son ? "oui" : "non"); $("son").setAttribute("aria-pressed", String(Fun.son)); };
+  $("son").addEventListener("click", () => { Fun.basculerSon(); majSon(); });
+  majSon();
 
   majAccueil();
   if ("serviceWorker" in navigator) navigator.serviceWorker.register("sw.js").catch(() => {});

@@ -138,6 +138,26 @@ moyen, 13 nuances ensuite). Facile : drapeaux à 2 couleurs ; moyen : 3 ;
 difficile : 4 ; expert : 3 ou 4. La bonne réponse est la couleur de la palette
 la plus proche (distance CIE Lab) de la vraie couleur.
 
+## L'interface fun (ajout du 15 novembre 2026)
+
+Demande d'Olivier : une interface moins triste. Réalisé sans rien alourdir
+(CSS, SVG et un peu de JavaScript, aucun fichier d'image ou de son en plus) :
+- **Mascotte** « Globi » (globe à casquette) qui réagit aux réponses dans une
+  bulle ; globe qui tourne derrière le logo, accueil en « escales » avec icônes ;
+- **Série** de bonnes réponses (flamme), **confettis**, **étoiles** qui
+  tombent une à une, **sons** synthétisés (bouton Son sur l'accueil) ;
+- **Un décor par mode** : guirlande de fanions (drapeaux), table de
+  cartographe (pays), confettis de peinture (couleurs), rayures de peintre
+  (recolorier), radar (villes), ciel étoilé (capitales) ;
+- détails : drapeaux qui ondulent, réponses en étiquettes de valise,
+  silhouette en pièce de puzzle qui s'encliquette, cartes postales et tampon
+  « BON ! », pots de peinture et gouttes, boussole qui tourne ;
+- **carte en direct** dans les villes mystère : les villes de départ, et un
+  cercle de distance tracé à chaque ville proposée (la réponse et les cercles
+  des villes de départ restent cachés) ; avion en papier sur la carte de fin ;
+- respect de `prefers-reduced-motion`.
+Pas fait : globe 3D, musique.
+
 ## Les données et leurs licences (*à vérifier avant reprise*)
 
 | Donnée | Source envisagée | Conditions à noter |

@@ -1,0 +1,151 @@
+/* À la carte ! — le côté fun : décors par mode, mascotte, animations. Licence GPL-3.0-or-later. */
+
+/* ===== Décors par mode (fond + motif + couleur de titre) ===== */
+body { transition: background-color .4s; background-attachment: fixed; }
+body[data-mode="accueil"] {
+  background-color: var(--creme);
+  background-image: radial-gradient(circle at 12% 8%, rgba(30,144,255,.18) 0 90px, transparent 91px),
+                    radial-gradient(circle at 92% 30%, rgba(255,152,0,.16) 0 70px, transparent 71px),
+                    radial-gradient(circle at 8% 78%, rgba(52,199,89,.16) 0 80px, transparent 81px);
+}
+body[data-mode="drapeaux"] {
+  background-color: #D7ECFF;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='132' height='40'%3E%3Cpath d='M0 3Q33 15 66 3T132 3' fill='none' stroke='%230B3D91' stroke-width='2'/%3E%3Cpath d='M6 7l16 2-8 22z' fill='%23FF9800'/%3E%3Cpath d='M28 9l16 0-8 22z' fill='%231E90FF'/%3E%3Cpath d='M50 9l16-1-8 22z' fill='%2334C759'/%3E%3Cpath d='M72 7l16 2-8 22z' fill='%23FF5C8A'/%3E%3Cpath d='M94 9l16 0-8 22z' fill='%23FFD54A'/%3E%3C/svg%3E");
+  background-repeat: repeat-x; background-position: top left; background-size: 132px 40px;
+}
+body[data-mode="pays"] {
+  background-color: #F3E3B8;
+  background-image: linear-gradient(rgba(11,61,145,.09) 1px, transparent 1px), linear-gradient(90deg, rgba(11,61,145,.09) 1px, transparent 1px);
+  background-size: 34px 34px;
+}
+body[data-mode="couleurs"] {
+  background-color: #FFE9C7;
+  background-image: radial-gradient(circle at 3% 24%, #FF9800 0 9px, transparent 10px), radial-gradient(circle at 97% 38%, #1E90FF 0 7px, transparent 8px),
+    radial-gradient(circle at 96% 78%, #34C759 0 9px, transparent 10px), radial-gradient(circle at 4% 62%, #FF5C8A 0 8px, transparent 9px),
+    radial-gradient(circle at 52% 97%, #FFD54A 0 10px, transparent 11px);
+}
+body[data-mode="recolorier"] {
+  background-color: #FFF3D6;
+  background-image: repeating-linear-gradient(115deg, rgba(255,152,0,.13) 0 22px, transparent 22px 54px, rgba(30,144,255,.12) 54px 76px, transparent 76px 108px);
+}
+body[data-mode="villes"] {
+  background-color: #CFE8F7;
+  background-image: repeating-radial-gradient(circle at 88% 6%, rgba(11,61,145,.13) 0 2px, transparent 2px 48px);
+}
+body[data-mode="capitales"] {
+  background-color: #BFD9F5;
+  background-image: radial-gradient(circle, rgba(255,255,255,.9) 0 1.5px, transparent 2px), radial-gradient(circle, rgba(255,255,255,.7) 0 1px, transparent 1.5px);
+  background-size: 60px 60px, 37px 37px; background-position: 0 0, 18px 22px;
+}
+
+/* ===== Accueil ===== */
+.haut { position: relative; text-align: center; padding-top: 6px; }
+.haut .logo { position: relative; z-index: 2; margin-top: 14px; width: min(68%, 310px); animation: flotte 4s ease-in-out infinite; }
+.globe-tourne { position: absolute; left: 50%; top: -6px; width: 240px; margin-left: -120px; z-index: 1; opacity: .9; }
+.continents { animation: tourne 16s linear infinite; }
+.mascotte-accueil { position: absolute; right: 0; bottom: -10px; width: 74px; z-index: 3; animation: saut 2.6s ease-in-out infinite; transform-origin: bottom center; }
+.slogan { margin-top: 14px; }
+@keyframes tourne { to { transform: translateX(-100px); } }
+@keyframes flotte { 50% { transform: translateY(-5px) rotate(-.6deg); } }
+@keyframes saut { 0%, 70%, 100% { transform: translateY(0) scale(1, 1); } 78% { transform: translateY(3px) scale(1.05, .93); } 88% { transform: translateY(-12px) scale(.96, 1.05); } }
+
+.modes { position: relative; gap: 14px; }
+.modes::before { content: ""; position: absolute; left: 34px; top: 20px; bottom: 20px; border-left: 4px dashed rgba(11,61,145,.28); z-index: 0; }
+.mode { position: relative; z-index: 1; flex-direction: row; align-items: center; gap: 14px; transition: transform .15s; }
+.mode:nth-child(even) { margin-left: 18px; }
+.mode:nth-child(odd) { margin-right: 18px; }
+.mode:hover:not(:disabled) { transform: translateY(-2px) rotate(-.4deg); }
+.mode-icone { width: 48px; height: 48px; flex: none; background: rgba(255,255,255,.2); border-radius: 50%; padding: 6px; filter: drop-shadow(0 2px 0 rgba(0,0,0,.18)); }
+.mode-texte { display: flex; flex-direction: column; }
+#son { margin-top: 10px; font-size: .95rem; }
+
+/* ===== Mascotte, bulle, série, confettis ===== */
+.bouche { display: none; }
+.humeur-content .b-content, .bulle.content .b-content, .bulle.triste .b-triste, .bulle.ravi .b-ravi { display: inline; }
+.bulle:not(.content):not(.triste):not(.ravi) .b-content { display: inline; }
+.bulle {
+  position: fixed; left: 50%; bottom: calc(14px + env(safe-area-inset-bottom)); z-index: 30; transform: translate(-50%, 140%);
+  display: flex; align-items: center; gap: 8px; background: #fff; border: 3px solid var(--bleu-fonce); border-radius: 40px;
+  padding: 4px 18px 4px 6px; font-weight: 800; box-shadow: 0 6px 18px rgba(11,61,145,.3); pointer-events: none;
+  transition: transform .28s cubic-bezier(.3, 1.6, .5, 1); color: var(--texte); max-width: calc(100vw - 24px);
+}
+.bulle.montre { transform: translate(-50%, 0); }
+.mascotte-bulle { width: 52px; height: 52px; }
+.bulle.ravi .mascotte-bulle { animation: saute-vite .4s ease-in-out 3; }
+.bulle.triste .mascotte-bulle { animation: secoue .4s ease-in-out; }
+@keyframes saute-vite { 50% { transform: translateY(-8px); } }
+@keyframes secoue { 25% { transform: rotate(-9deg); } 75% { transform: rotate(9deg); } }
+
+.serie {
+  position: fixed; top: 10px; right: max(12px, calc(50vw - 270px)); z-index: 20; background: #fff; border: 3px solid var(--orange);
+  border-radius: 24px; padding: 2px 12px 2px 6px; display: flex; align-items: center; gap: 2px; font-weight: 800; font-size: .9rem; box-shadow: var(--ombre);
+}
+.serie svg { width: 24px; height: 24px; }
+.serie.saute { animation: saute-vite .35s ease-out; }
+body[data-mode="accueil"] .serie { display: none; }
+#confettis { position: fixed; inset: 0; width: 100%; height: 100%; z-index: 40; pointer-events: none; }
+
+/* ===== Étoiles animées ===== */
+.grandes-etoiles .e, .etoiles .e { display: inline-block; }
+.grandes-etoiles .e:not(.vide) { animation: etoile-pop .55s cubic-bezier(.3, 1.7, .5, 1) both; animation-delay: calc(var(--i) * .3s + .15s); }
+.grandes-etoiles .e.vide { opacity: .55; }
+@keyframes etoile-pop { 0% { transform: scale(0) rotate(-140deg); opacity: 0; } 100% { transform: scale(1) rotate(0); opacity: 1; } }
+.ecran.actif { animation: entre .25s ease-out; }
+@keyframes entre { from { opacity: 0; transform: translateY(10px); } }
+
+/* ===== Drapeaux : onde, étiquettes de valise ===== */
+body[data-mode="drapeaux"] #drap-img, body[data-mode="couleurs"] .grille-drapeaux img {
+  animation: onde 3.2s ease-in-out infinite; transform-origin: left center;
+}
+#drap-img { position: relative; }
+@keyframes onde { 0%, 100% { transform: perspective(700px) rotateY(-3deg) skewY(-.4deg); } 50% { transform: perspective(700px) rotateY(3deg) skewY(.6deg); } }
+body[data-mode="drapeaux"] .choix button, body[data-mode="pays"] .choix button {
+  position: relative; border-radius: 34px 14px 14px 34px; padding-left: 34px; text-align: left; transition: transform .12s;
+}
+body[data-mode="drapeaux"] .choix button::before, body[data-mode="pays"] .choix button::before {
+  content: ""; position: absolute; left: 11px; top: 50%; width: 14px; height: 14px; margin-top: -7px; border-radius: 50%;
+  background: var(--creme); border: 3px solid var(--bleu-vif); box-shadow: inset 0 1px 2px rgba(0,0,0,.25);
+}
+body[data-mode="drapeaux"] .choix button:hover:not(:disabled), body[data-mode="pays"] .choix button:hover:not(:disabled) { transform: translateY(-2px) rotate(-1deg); }
+.choix button.bon { animation: bon-pop .5s ease-out; }
+.choix button.faux { animation: secoue .4s ease-in-out; }
+@keyframes bon-pop { 40% { transform: scale(1.08); } }
+
+/* ===== Pays : table de cartographe, pièce de puzzle ===== */
+.forme { background: #F7EBC8; border: 10px solid #B7864B; border-radius: 16px; box-shadow: var(--ombre), inset 0 0 22px rgba(120, 80, 20, .25);
+  background-image: linear-gradient(rgba(11,61,145,.07) 1px, transparent 1px), linear-gradient(90deg, rgba(11,61,145,.07) 1px, transparent 1px); background-size: 26px 26px; }
+.forme svg path { stroke: #fff; stroke-width: 1.4; filter: drop-shadow(1.5px 2.5px 1.5px rgba(11,42,99,.45)); }
+.forme.revele svg { animation: encliquette .55s ease-out; }
+@keyframes encliquette { 0% { transform: scale(1.12) rotate(6deg); } 60% { transform: scale(.96); } 100% { transform: scale(1); } }
+
+/* ===== Les bonnes couleurs : cartes postales et tampons ===== */
+.grille-drapeaux button { border: 8px solid #fff; border-radius: 6px; box-shadow: 0 5px 12px rgba(11,42,99,.3); transform: rotate(var(--r, 0deg)); transition: transform .2s; }
+.grille-drapeaux button:hover:not(:disabled) { transform: rotate(0deg) scale(1.04); }
+.grille-drapeaux button::before { content: ""; position: absolute; right: 8px; bottom: 8px; width: 28px; height: 28px; border-radius: 50%; border: 2px dashed rgba(11,42,99,.35); z-index: 2; }
+.grille-drapeaux button.bon { border-color: #fff; outline: 4px solid var(--vert); outline-offset: -4px; }
+.grille-drapeaux button.bon::after { content: "BON !"; width: auto; height: auto; top: 50%; right: auto; left: 50%; transform: translate(-50%, -50%) rotate(-14deg);
+  background: rgba(255,255,255,.88); color: #1d8f3d; border: 4px solid #1d8f3d; border-radius: 10px; padding: 2px 12px; font-family: "Baloo 2", sans-serif; font-size: 1.5rem; animation: tampon .35s ease-out; }
+@keyframes tampon { 0% { transform: translate(-50%, -50%) rotate(-14deg) scale(2.4); opacity: 0; } 100% { transform: translate(-50%, -50%) rotate(-14deg) scale(1); opacity: 1; } }
+.grille-drapeaux button.faux { opacity: .55; filter: grayscale(.4); }
+
+/* ===== Recolorier : pots de peinture et gouttes ===== */
+.palette { gap: 12px 8px; padding-top: 8px; }
+.palette button { position: relative; border-radius: 6px 6px 18px 18px; border: 3px solid rgba(11,42,99,.55); margin-top: 6px; transition: transform .12s; }
+.palette button::before { content: ""; position: absolute; left: 8%; right: 8%; top: -9px; height: 12px; border-radius: 50%; background: rgba(0,0,0,.2); border: 2px solid rgba(11,42,99,.5); }
+.palette button:hover:not(:disabled) { transform: translateY(-3px) rotate(-2deg); }
+.pastille { border-radius: 50% 0 50% 50%; transform: rotate(-45deg); }
+.pastille.choisie { transform: rotate(-45deg) scale(1.15); }
+.pastille.ok::after, .pastille.ko::after { transform: rotate(45deg); }
+#rec-img { transition: filter .25s; }
+#rec-img.pop { animation: bon-pop .35s ease-out; }
+
+/* ===== Villes : boussole et mini-carte ===== */
+.boussole { display: inline-block; width: 26px; height: 26px; vertical-align: middle; margin-left: 6px; transition: transform .6s cubic-bezier(.3, 1.6, .5, 1); }
+.carte-zone .anneau-neuf { stroke-dasharray: 1; stroke-dashoffset: 1; animation: trace 1s ease-out forwards; }
+@keyframes trace { to { stroke-dashoffset: 0; } }
+#mini-carte { margin: 6px 0 12px; }
+.avion { filter: drop-shadow(0 1px 1px rgba(0,0,0,.35)); }
+
+@media (prefers-reduced-motion: reduce) {
+  .haut .logo, .mascotte-accueil, .continents, body[data-mode] #drap-img, .grille-drapeaux img, .ecran.actif { animation: none !important; }
+}

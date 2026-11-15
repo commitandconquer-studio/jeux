@@ -91,4 +91,7 @@ for (const nom of ["carte-france", "carte-monde"]) {
   const f = JSON.parse(fs.readFileSync(path.join(dossier, nom + ".json"), "utf8"));
   assert(f.d.startsWith("M") && f.d.length > 10000, nom);
 }
+assert.strictEqual((C.etoilesHtml(2).match(/class="e"/g) || []).length, 2);
+assert.strictEqual((C.etoilesHtml(2).match(/class="e vide"/g) || []).length, 1);
+assert.strictEqual((C.etoilesHtml(0).match(/vide/g) || []).length, 3);
 console.log("Tous les tests passent.");

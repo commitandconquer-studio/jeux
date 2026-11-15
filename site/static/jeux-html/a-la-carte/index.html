@@ -10,34 +10,83 @@
 <link rel="icon" href="img/icone-192.png">
 <link rel="apple-touch-icon" href="img/icone-192.png">
 <link rel="stylesheet" href="css/style.css">
+<link rel="stylesheet" href="css/fun.css">
 </head>
-<body>
+<body data-mode="accueil">
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <linearGradient id="g-globe" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#4BB4FF"/><stop offset="1" stop-color="#0B3D91"/></linearGradient>
+    <symbol id="mascotte" viewBox="0 0 100 100">
+      <circle cx="50" cy="52" r="42" fill="url(#g-globe)" stroke="#0B2A63" stroke-width="3"/>
+      <path d="M22 40c6-10 16-12 22-8 4 3 2 9-3 11-6 2-9 8-15 6-4-2-6-5-4-9zM58 62c8-3 16 1 18 8 1 6-5 11-12 10-7-1-11-5-9-10 1-3 1-6 3-8zM60 28c5-4 13-3 16 2 2 4-2 8-8 8-6 0-11-5-8-10z" fill="#34C759" opacity=".85"/>
+      <path d="M24 26c4-12 16-18 28-17 12 1 22 8 26 18-10-6-22-9-32-8-9 0-17 3-22 7z" fill="#FF9800" stroke="#0B2A63" stroke-width="2.5"/>
+      <circle cx="50" cy="9" r="4" fill="#FF9800" stroke="#0B2A63" stroke-width="2"/>
+      <g class="yeux">
+        <circle cx="37" cy="48" r="9" fill="#fff" stroke="#0B2A63" stroke-width="2"/>
+        <circle cx="63" cy="48" r="9" fill="#fff" stroke="#0B2A63" stroke-width="2"/>
+        <circle class="pupille" cx="39" cy="50" r="4.2" fill="#0B2A63"/>
+        <circle class="pupille" cx="65" cy="50" r="4.2" fill="#0B2A63"/>
+      </g>
+      <circle cx="26" cy="62" r="5.5" fill="#FF9800" opacity=".55"/>
+      <circle cx="74" cy="62" r="5.5" fill="#FF9800" opacity=".55"/>
+      <path class="bouche b-content" d="M38 64q12 14 24 0" fill="none" stroke="#0B2A63" stroke-width="3.5" stroke-linecap="round"/>
+      <path class="bouche b-triste" d="M39 74q11-12 22 0" fill="none" stroke="#0B2A63" stroke-width="3.5" stroke-linecap="round"/>
+      <path class="bouche b-ravi" d="M37 63q13 22 26 0z" fill="#0B2A63" stroke="#0B2A63" stroke-width="2" stroke-linejoin="round"/>
+    </symbol>
+    <symbol id="i-drapeau" viewBox="0 0 48 48"><path d="M12 6v38" stroke="#fff" stroke-width="4" stroke-linecap="round"/><path d="M14 8c8-5 14 5 24 0v18c-10 5-16-5-24 0z" fill="#fff"/></symbol>
+    <symbol id="i-pays" viewBox="0 0 48 48"><path d="M10 14l8-6 10 2 8 6-2 10 4 8-10 6-10-4-8 2 2-10-4-8z" fill="#fff"/></symbol>
+    <symbol id="i-couleurs" viewBox="0 0 48 48"><path d="M24 5c10 0 19 7 19 16 0 6-5 7-9 7-4 0-5 3-3 6 2 4-2 9-8 9C12 43 5 35 5 24 5 13 13 5 24 5z" fill="#fff"/><circle cx="15" cy="22" r="3.5" fill="#FF9800"/><circle cx="23" cy="14" r="3.5" fill="#1E90FF"/><circle cx="33" cy="17" r="3.5" fill="#34C759"/></symbol>
+    <symbol id="i-recolorier" viewBox="0 0 48 48"><path d="M10 18h28l-3 22a3 3 0 0 1-3 3H16a3 3 0 0 1-3-3z" fill="#fff"/><ellipse cx="24" cy="18" rx="14" ry="5" fill="#FFD54A"/><path d="M14 18c0-8 20-8 20 0" fill="none" stroke="#fff" stroke-width="3"/></symbol>
+    <symbol id="i-villes" viewBox="0 0 48 48"><path d="M24 4c8 0 14 6 14 14 0 10-14 26-14 26S10 28 10 18C10 10 16 4 24 4z" fill="#fff"/><circle cx="24" cy="18" r="5.5" fill="#FF9800"/></symbol>
+    <symbol id="i-capitales" viewBox="0 0 48 48"><path d="M4 22L44 5 31 43l-9-14z" fill="#fff"/><path d="M22 29l22-24" stroke="#1E90FF" stroke-width="2.5"/></symbol>
+  </defs>
+</svg>
 <div id="app">
 
   <!-- Accueil -->
   <section id="accueil" class="ecran actif">
-    <img class="logo" src="img/logo.png" alt="À la carte !" width="900" height="590">
+    <div class="haut">
+      <svg class="globe-tourne" viewBox="0 0 100 100" aria-hidden="true">
+        <defs><clipPath id="rond"><circle cx="50" cy="50" r="46"/></clipPath></defs>
+        <circle cx="50" cy="50" r="46" fill="#4BB4FF"/>
+        <g clip-path="url(#rond)"><g class="continents">
+          <path id="cont" d="M-10 30c8-12 20-10 26-2 4 6 12 4 14 12 2 8-6 12-10 20-4 8-12 8-14 0-2-8-14-6-16-14zM40 62c6-4 14 0 16 8 2 8-4 14-10 14s-10-8-6-14zM64 22c8-6 18-4 22 4 3 6-3 12-10 12-6 0-10-4-14-6-3-4-1-8 2-10zM70 52c8-2 14 4 12 12-2 6-8 8-12 4-4-4-4-12 0-16z" fill="#34C759"/>
+          <use href="#cont" x="100"/>
+        </g></g>
+        <circle cx="50" cy="50" r="46" fill="none" stroke="#0B2A63" stroke-width="3"/>
+        <ellipse cx="34" cy="30" rx="16" ry="9" fill="#fff" opacity=".25" transform="rotate(-30 34 30)"/>
+      </svg>
+      <img class="logo" src="img/logo.png" alt="À la carte !" width="900" height="590">
+      <svg class="mascotte-accueil humeur-content" viewBox="0 0 100 100" aria-hidden="true"><use href="#mascotte"/></svg>
+    </div>
     <p class="slogan">Le jeu qui vous fait découvrir le monde.</p>
     <div class="modes">
       <button class="mode mode-drapeaux" data-mode="drapeaux">
-        <span class="mode-titre">Drapeaux</span><span class="mode-sous" id="etoiles-drapeaux"></span>
+        <svg class="mode-icone"><use href="#i-drapeau"/></svg>
+        <span class="mode-texte"><span class="mode-titre">Drapeaux</span><span class="mode-sous" id="etoiles-drapeaux"></span></span>
       </button>
       <button class="mode mode-pays" data-mode="pays">
-        <span class="mode-titre">Pays</span><span class="mode-sous" id="etoiles-pays"></span>
+        <svg class="mode-icone"><use href="#i-pays"/></svg>
+        <span class="mode-texte"><span class="mode-titre">Pays</span><span class="mode-sous" id="etoiles-pays"></span></span>
       </button>
       <button class="mode mode-couleurs" data-mode="couleurs">
-        <span class="mode-titre">Les bonnes couleurs</span><span class="mode-sous" id="etoiles-couleurs"></span>
+        <svg class="mode-icone"><use href="#i-couleurs"/></svg>
+        <span class="mode-texte"><span class="mode-titre">Les bonnes couleurs</span><span class="mode-sous" id="etoiles-couleurs"></span></span>
       </button>
       <button class="mode mode-recolorier" data-mode="recolorier">
-        <span class="mode-titre">Recolorier</span><span class="mode-sous" id="etoiles-recolorier"></span>
+        <svg class="mode-icone"><use href="#i-recolorier"/></svg>
+        <span class="mode-texte"><span class="mode-titre">Recolorier</span><span class="mode-sous" id="etoiles-recolorier"></span></span>
       </button>
       <button class="mode mode-villes" data-mode="villes">
-        <span class="mode-titre">Villes mystère</span><span class="mode-sous" id="etoiles-villes"></span>
+        <svg class="mode-icone"><use href="#i-villes"/></svg>
+        <span class="mode-texte"><span class="mode-titre">Villes mystère</span><span class="mode-sous" id="etoiles-villes"></span></span>
       </button>
       <button class="mode mode-capitales" data-mode="capitales">
-        <span class="mode-titre">Capitales mystère</span><span class="mode-sous" id="etoiles-capitales"></span>
+        <svg class="mode-icone"><use href="#i-capitales"/></svg>
+        <span class="mode-texte"><span class="mode-titre">Capitales mystère</span><span class="mode-sous" id="etoiles-capitales"></span></span>
       </button>
     </div>
+    <button id="son" class="lien" aria-pressed="true">Son : oui</button>
     <p class="pied">Gratuit, sans publicité, sans compte. Tes étoiles restent sur cet appareil.<br>
       <a href="https://commitandconquer.fr/" target="_blank" rel="noopener">Commit &amp; Conquer</a> · logiciel libre GPL-3.0</p>
   </section>
@@ -65,6 +114,7 @@
       <ul id="suggestions" role="listbox" hidden></ul>
     </div>
     <p id="message" class="message" role="status"></p>
+    <div id="mini-carte" class="carte-zone" hidden></div>
     <ul id="essais" class="essais"></ul>
     <button id="abandon" class="lien">Donne-moi la réponse</button>
   </section>
@@ -139,8 +189,12 @@
   </section>
 
 </div>
+<canvas id="confettis" hidden aria-hidden="true"></canvas>
+<div id="serie" class="serie" hidden aria-live="polite"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2c1 5-4 6-4 11a6 6 0 0 0 12 0c0-3-2-4-3-7-1 2-2 3-3 3 1-3 0-5-2-7z" fill="#FF9800"/><path d="M12 12c2 2 3 3 3 5a3 3 0 0 1-6 0c0-2 2-3 3-5z" fill="#FFD54A"/></svg><b id="serie-n">0</b> de suite</div>
+<div id="bulle" class="bulle" aria-live="polite"><svg class="mascotte-bulle" viewBox="0 0 100 100" aria-hidden="true"><use href="#mascotte"/></svg><span id="bulle-texte"></span></div>
 <noscript><p style="padding:2rem">Ce jeu a besoin de JavaScript.</p></noscript>
 <script src="js/commun.js"></script>
+<script src="js/fun.js"></script>
 <script src="js/ville.js"></script>
 <script src="js/drapeau.js"></script>
 <script src="js/pays.js"></script>

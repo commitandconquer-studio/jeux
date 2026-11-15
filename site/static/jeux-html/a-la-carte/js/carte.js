@@ -46,30 +46,33 @@ const Carte = (() => {
    * Dessine la carte dans `conteneur`.
    * cible : la ville cherchée ; refs : les trois villes de départ ; essais : les villes proposées.
    */
-  async function dessiner(conteneur, { cible, refs, essais }) {
+  async function dessiner(conteneur, { cible, refs, essais, secret = false, jeuCarte = "france" }) {
     const FRANCE = [-9, 40, 12, 52.5];
     const autres = refs.concat(essais.map(e => e.ville).filter(v => v !== cible && !refs.includes(v)));
-    const nom = choisirCarte([cible, ...autres], FRANCE);
+    // En mode « secret » (pendant la partie), la ville cherchée n'est ni dessinée ni utilisée pour cadrer.
+    const visibles = secret ? autres : [cible, ...autres];
+    const centre = secret ? refs[0] : cible;
+    const nom = secret && jeuCarte === "monde" ? "monde" : choisirCarte(visibles, FRANCE);
     const donnees = await fond(nom);
     const monde = nom === "monde";
 
     // Longitudes ramenées autour de la cible (pour les cartes qui passent la ligne de changement de date).
-    const L = v => cible.lon + (monde ? ecartLon(v.lon, cible.lon) : v.lon - cible.lon);
-    const lats = [cible, ...autres].map(v => v.lat);
+    const L = v => centre.lon + (monde ? ecartLon(v.lon, centre.lon) : v.lon - centre.lon);
+    const lats = visibles.map(v => v.lat);
     const latMoy = lats.reduce((a, b) => a + b, 0) / lats.length;
     const kx = Math.max(0.45, Math.cos(rad(monde ? latMoy : 46.5)));
     const px = v => L(v) * kx, py = v => -v.lat;
 
     // Cadre : tous les points, avec une marge et une taille minimale, en 4:3.
-    const xs = [cible, ...autres].map(px), ys = [cible, ...autres].map(py);
-    const minLarg = (monde ? 30 : 3) * kx;
+    const xs = visibles.map(px), ys = visibles.map(py);
+    const minLarg = (monde ? (secret ? 70 : 30) : (secret ? 5 : 3)) * kx;
     let w = Math.max(Math.max(...xs) - Math.min(...xs), minLarg) * 1.3;
     let h = Math.max(Math.max(...ys) - Math.min(...ys), minLarg * 0.75) * 1.3;
     if (w / h > 4 / 3) h = w * 3 / 4; else w = h * 4 / 3;
     const cx = (Math.max(...xs) + Math.min(...xs)) / 2, cy = (Math.max(...ys) + Math.min(...ys)) / 2;
     let vx = cx - w / 2;
     // On élargit vers la droite si un nom de ville dépasse du cadre.
-    const toutes = [cible, ...autres];
+    const toutes = visibles;
     for (let i = 0; i < 4; i++) {
       const u0 = w / 100;
       const fin = Math.max(...toutes.map(v => px(v) + u0 * (2 + v.n.length * 1.75)));
@@ -94,18 +97,25 @@ const Carte = (() => {
     // (la cible est à lon réelle ; L(cible) = cible.lon, donc aucun décalage n'est nécessaire.)
 
     const u = w / 100;           // unité de dessin : 1 % de la largeur
-    // Cercles de distance autour des villes de départ.
-    refs.forEach(r => {
-      const d = Commun.distance(r, cible);
+    // Cercles de distance : autour des villes de départ (à la fin), ou des villes proposées (pendant la partie).
+    const anneau = (v, d, attrs) => {
       let chemin = "", precedent = null;
-      cercle(r, d).forEach(({ lat, dlon }) => {
-        const x = (L(r) + dlon) * kx, y = -lat;
+      cercle(v, d).forEach(({ lat, dlon }) => {
+        const x = (L(v) + dlon) * kx, y = -lat;
         chemin += (precedent === null || Math.abs(dlon - precedent) > 180 ? "M" : "L") + x.toFixed(3) + " " + y.toFixed(3);
         precedent = dlon;
       });
-      el("path", { d: chemin, fill: "none", stroke: "#1E90FF", "stroke-width": "1.6", "stroke-dasharray": "6 5",
-        "vector-effect": "non-scaling-stroke", opacity: ".8" }, svg);
-    });
+      el("path", { d: chemin, fill: "none", "vector-effect": "non-scaling-stroke", ...attrs }, svg);
+    };
+    if (secret) {
+      const proposes = essais.filter(e => !e.gagne);
+      proposes.forEach((e, i) => anneau(e.ville, e.dist, {
+        stroke: "#E07B00", "stroke-width": "2", opacity: ".85", pathLength: "1",
+        class: i === proposes.length - 1 ? "anneau-neuf" : "",
+      }));
+    } else {
+      refs.forEach(r => anneau(r, Commun.distance(r, cible), { stroke: "#1E90FF", "stroke-width": "1.6", "stroke-dasharray": "6 5", opacity: ".8" }));
+    }
 
     // Flèches vers la réponse.
     const couleurs = { ref: "#0B3D91", essai: "#E07B00" };
@@ -122,8 +132,10 @@ const Carte = (() => {
       el("line", { x1, y1, x2: x2 - dx / n * arret, y2: y2 - dy / n * arret, stroke: couleurs[type],
         "stroke-width": u * 0.5, "marker-end": `url(#pointe-${type})` }, svg);
     };
-    refs.forEach(v => fleche(v, "ref"));
-    essais.filter(e => !e.gagne).forEach(e => fleche(e.ville, "essai"));
+    if (!secret) {
+      refs.forEach(v => fleche(v, "ref"));
+      essais.filter(e => !e.gagne).forEach(e => fleche(e.ville, "essai"));
+    }
 
     // Villes et noms.
     const point = (v, couleur, r, nomVille, gras) => {
@@ -135,7 +147,16 @@ const Carte = (() => {
     };
     refs.forEach(v => point(v, couleurs.ref, 1.1, v.n, false));
     essais.filter(e => !e.gagne).forEach(e => point(e.ville, couleurs.essai, 1.1, e.ville.n, false));
-    point(cible, "#34C759", 1.7, cible.n, true);
+    if (!secret) {
+      point(cible, "#34C759", 1.7, cible.n, true);
+      // Un avion en papier file vers la réponse.
+      const a = refs[0], x1 = px(a), y1 = py(a), x2 = px(cible), y2 = py(cible);
+      const avion = el("g", { class: "avion" }, svg);
+      el("path", { d: `M${-u * 1.8} ${-u * 1.3}L${u * 2.2} 0L${-u * 1.8} ${u * 1.3}L${-u * 1.1} 0Z`, fill: "#fff", stroke: "#0B2A63", "stroke-width": u * 0.25, "stroke-linejoin": "round" }, avion);
+      el("path", { d: `M${-u * 1.1} 0L${u * 2.2} 0`, stroke: "#0B2A63", "stroke-width": u * 0.2 }, avion);
+      el("animateMotion", { dur: "3.2s", repeatCount: "indefinite", rotate: "auto", path: `M${x1} ${y1}L${x2} ${y2}`,
+        keyPoints: "0;1;1", keyTimes: "0;0.85;1", calcMode: "linear" }, avion);
+    }
 
     conteneur.innerHTML = "";
     conteneur.appendChild(svg);

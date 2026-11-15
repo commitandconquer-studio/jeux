@@ -60,7 +60,7 @@ const Commun = (() => {
     ecrire(s);
   }
   function etoilesHtml(n, max = 3) {
-    return "★".repeat(n) + `<span class="vide">${"★".repeat(max - n)}</span>`;
+    return Array.from({ length: max }, (_, i) => `<span class="e${i < n ? "" : " vide"}" style="--i:${i}">★</span>`).join("");
   }
 
   return { distance, cap, fleche, pointCardinal, normaliser, km, etoilesDe, noter, etoilesHtml };

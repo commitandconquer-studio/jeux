@@ -11,6 +11,7 @@
     const r = M.resume();
     $("fin-titre").textContent = "Partie terminée";
     $("fin-etoiles").innerHTML = Commun.etoilesHtml(r.etoiles);
+    Fun.finPartie(r.etoiles);
     $("fin-texte").textContent = `${r.bonnes} bonne${s(r.bonnes)} réponse${s(r.bonnes)} sur ${r.sur}. ` +
       (r.etoiles >= 2 ? "Tu peux passer au niveau suivant." : "Fais 7 bonnes réponses pour 2 étoiles et débloquer la suite.");
     $("fin-suite").textContent = "Rejouer ce niveau";
@@ -23,6 +24,7 @@
   /* ===================== Les bonnes couleurs ===================== */
   async function lancerCouleurs(id) {
     $("cou-titre").textContent = "Chargement…";
+    Fun.nouvellePartie();
     A.montrer("cou");
     try { await BonnesCouleurs.demarrer(id); }
     catch (e) { alert("Les données n'ont pas pu être chargées."); A.afficherNiveaux("couleurs"); return; }
@@ -43,6 +45,7 @@
     q.options.forEach((o, i) => {
       const b = document.createElement("button");
       b.innerHTML = `<img src="${o.url}" alt="Drapeau, proposition ${i + 1}">`;
+      b.style.setProperty("--r", (Math.random() * 5 - 2.5).toFixed(1) + "deg");   // cartes postales posées de travers
       b.addEventListener("click", () => repondreCouleurs(i));
       choix.appendChild(b);
     });
@@ -52,6 +55,7 @@
     const { q } = BonnesCouleurs;
     if (q.fini) return;
     const ok = BonnesCouleurs.repondre(i);
+    Fun.reponse(ok);
     [...$("cou-choix").children].forEach((b, k) => {
       b.disabled = true;
       if (q.options[k].vrai) b.classList.add("bon"); else if (k === i) b.classList.add("faux");
@@ -75,13 +79,18 @@
 
   async function lancerRec(id) {
     $("rec-titre").textContent = "Chargement…";
+    Fun.nouvellePartie();
     A.montrer("rec");
     try { await Recolorier.demarrer(id); }
     catch (e) { alert("Les données n'ont pas pu être chargées."); A.afficherNiveaux("recolorier"); return; }
     await afficherRec();
   }
 
-  async function majImage() { $("rec-img").src = await Recolorier.image(); }
+  async function majImage() {
+    const img = $("rec-img");
+    img.src = await Recolorier.image();
+    img.classList.remove("pop"); void img.offsetWidth; img.classList.add("pop");
+  }
 
   function dessinerPastilles() {
     const { q, niveau } = Recolorier;
@@ -138,6 +147,7 @@
       return;
     }
     const detail = Recolorier.valider();
+    Fun.reponse(q.bonne);
     [...$("rec-pastilles").children].forEach((b, i) => b.classList.add(detail[i] ? "ok" : "ko"));
     [...$("rec-palette").children].forEach(b => { b.disabled = true; });
     $("rec-img").src = await Recolorier.imageVraie();
