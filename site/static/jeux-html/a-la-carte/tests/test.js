@@ -60,4 +60,17 @@ const formes = JSON.parse(fs.readFileSync(path.join(dossier, "formes.json"), "ut
 const jouables = pays.filter(p => formes[p.code] && formes[p.code].s >= 0.45);
 assert(jouables.length >= 150, "silhouettes jouables : " + jouables.length);
 for (const p of jouables) assert(/^M[\d. LZM-]+Z$/.test(formes[p.code].d), "tracé " + p.code);
+const { Teinte, BonnesCouleurs, Recolorier } = require("../js/couleurs.js");
+assert.strictEqual(Teinte.decaler("#ffffff", 90, 0.06), "#ffffff", "le blanc ne bouge pas");
+assert.strictEqual(Teinte.decaler("#000000", 90), "#000000");
+assert.strictEqual(Teinte.decaler("#808080", 90), "#808080");
+assert.notStrictEqual(Teinte.decaler("#ce1126", 120), "#ce1126");
+assert.strictEqual(Teinte.decaler("#ce1126", 0), "#ce1126".replace("#ce1126", Teinte.decaler("#ce1126", 0)));
+assert(Teinte.ecart("#ce1126", "#d01028") < Teinte.ecart("#ce1126", "#1e50b4"));
+assert.strictEqual(Teinte.plusProche("#e4002b", [{ hex: "#1E50B4" }, { hex: "#CE1126" }]), 1);
+assert.strictEqual(BonnesCouleurs.NIVEAUX.length, 4);
+assert.strictEqual(Recolorier.NIVEAUX.length, 4);
+const coul = JSON.parse(fs.readFileSync(path.join(dossier, "couleurs.json"), "utf8"));
+for (const p of pays) assert(Array.isArray(coul[p.code]), "couleurs " + p.code);
+assert(pays.filter(p => coul[p.code].length >= 1 && coul[p.code].length <= 2).length > 80, "assez de drapeaux simples");
 console.log("Tous les tests passent.");

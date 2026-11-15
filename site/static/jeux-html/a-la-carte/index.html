@@ -25,6 +25,12 @@
       <button class="mode mode-pays" data-mode="pays">
         <span class="mode-titre">Pays</span><span class="mode-sous" id="etoiles-pays"></span>
       </button>
+      <button class="mode mode-couleurs" data-mode="couleurs">
+        <span class="mode-titre">Les bonnes couleurs</span><span class="mode-sous" id="etoiles-couleurs"></span>
+      </button>
+      <button class="mode mode-recolorier" data-mode="recolorier">
+        <span class="mode-titre">Recolorier</span><span class="mode-sous" id="etoiles-recolorier"></span>
+      </button>
       <button class="mode mode-villes" data-mode="villes">
         <span class="mode-titre">Villes mystère</span><span class="mode-sous" id="etoiles-villes"></span>
       </button>
@@ -58,6 +64,36 @@
     <p id="message" class="message" role="status"></p>
     <ul id="essais" class="essais"></ul>
     <button id="abandon" class="lien">Donne-moi la réponse</button>
+  </section>
+
+  <!-- Les bonnes couleurs : choisir le drapeau aux vraies couleurs -->
+  <section id="cou" class="ecran">
+    <header class="barre">
+      <button class="retour" data-retour="niveaux" aria-label="Quitter la partie">←</button>
+      <h1 id="cou-titre">Les bonnes couleurs</h1><span id="cou-compteur" class="compteur"></span>
+    </header>
+    <div class="progression"><div id="cou-barre" class="barre-prog"></div></div>
+    <p class="consigne">Quel est le drapeau de <b id="cou-pays"></b> avec ses vraies couleurs ?</p>
+    <div id="cou-choix" class="grille-drapeaux"></div>
+    <p id="cou-retour" class="message" role="status"></p>
+    <button id="cou-suite" class="bouton" hidden>Suivant</button>
+  </section>
+
+  <!-- Recolorier : redonner ses couleurs au drapeau -->
+  <section id="rec" class="ecran">
+    <header class="barre">
+      <button class="retour" data-retour="niveaux" aria-label="Quitter la partie">←</button>
+      <h1 id="rec-titre">Recolorier</h1><span id="rec-compteur" class="compteur"></span>
+    </header>
+    <div class="progression"><div id="rec-barre" class="barre-prog"></div></div>
+    <p class="consigne">Redonne ses vraies couleurs au drapeau de <b id="rec-pays"></b>.</p>
+    <div class="drap-zone"><img id="rec-img" alt="Drapeau à recolorier" width="320" height="240"></div>
+    <p class="aide-rec" id="rec-aide">Touche une couleur du drapeau, puis choisis sa nouvelle couleur.</p>
+    <div id="rec-pastilles" class="pastilles"></div>
+    <div id="rec-palette" class="palette"></div>
+    <p id="rec-retour" class="message" role="status"></p>
+    <button id="rec-valider" class="bouton">Valider</button>
+    <button id="rec-suite" class="bouton" hidden>Suivant</button>
   </section>
 
   <!-- Partie : drapeaux -->
@@ -101,6 +137,8 @@
 <script src="js/ville.js"></script>
 <script src="js/drapeau.js"></script>
 <script src="js/pays.js"></script>
+<script src="js/couleurs.js"></script>
 <script src="js/app.js"></script>
+<script src="js/app-couleurs.js"></script>
 </body>
 </html>

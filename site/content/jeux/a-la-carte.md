@@ -9,7 +9,7 @@ icone = "a-la-carte"
 code = "site/static/jeux-html/a-la-carte"
 commandes = ["Souris ou doigt : choisir une réponse", "Clavier : taper le nom, flèches pour choisir, Entrée pour valider", "Hors ligne : installable comme une application depuis le navigateur"]
 chiffres = [
-  { n = "3", t = "modes de jeu" },
+  { n = "5", t = "modes de jeu" },
   { n = "4", t = "niveaux chacun" },
   { n = "196", t = "pays" },
   { n = "334", t = "villes de France" },
@@ -23,6 +23,12 @@ Le drapeau d'abord tel quel, avec quatre propositions. Puis avec des **couleurs 
 
 ## Devine le pays
 Une **silhouette** de pays à reconnaître : normale, puis **tournée** d'un angle au hasard, puis **retournée** comme dans un miroir.
+
+## Les bonnes couleurs
+On vous donne un pays et **quatre drapeaux** dont les couleurs sont fausses, sauf un. À vous de retrouver le vrai ! Au niveau facile, les couleurs sont très différentes ; au niveau expert, elles sont presque les mêmes.
+
+## Recolorier
+Le drapeau d'un pays est colorié n'importe comment : **redonnez-lui ses vraies couleurs** avec la palette. Facile avec deux couleurs, expert avec des nuances fines.
 
 ## La ville mystère
 Le jeu choisit une ville de France. Il vous donne **trois villes** et leur **distance** à la ville cherchée. Vous tapez le nom d'une ville : si ce n'est pas la bonne, vous obtenez sa distance (et une flèche vers la bonne, aux niveaux faciles), un indice de plus pour déduire la réponse. Autant d'essais que nécessaire, avec un bouton « Donne-moi la réponse ». Les parties portent sur les **préfectures** puis les **sous-préfectures**.

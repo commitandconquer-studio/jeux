@@ -3,7 +3,7 @@
 Mini-jeux de géographie en français, en **HTML** (mobile et web). Idée
 d'Olivier, novembre 2026.
 
-> **État (15 novembre 2026) : les trois modes codés, à tester par Olivier.**
+> **État (15 novembre 2026) : les cinq modes codés, à tester par Olivier.**
 > Dans `site/static/jeux-html/a-la-carte/` : accueil, **ville mystère**
 > jouable sur les préfectures et sous-préfectures de France (4 niveaux,
 > étoiles, déblocage, hors ligne) **Devine le pays** (163 silhouettes Natural Earth simplifiées par
@@ -115,6 +115,21 @@ d'octets par pays).
   Aucune au niveau Expert.
 - Le **tracé des trois cercles de distance** sur une carte est une
   option d'affichage à étudier après la première version.
+
+### Mode 4 : Les bonnes couleurs (ajout d'Olivier)
+
+On donne un pays et quatre drapeaux dont les couleurs sont fausses, sauf un :
+le joueur choisit celui qui a les **vraies couleurs**. L'écart de teinte des
+faux drapeaux diminue avec le niveau (facile : 100 à 170°, expert : 10 à 16°,
+avec un léger écart de luminosité). Le blanc, le noir et les gris ne bougent pas.
+
+### Mode 5 : Recolorier (ajout d'Olivier)
+
+Le drapeau d'un pays est colorié à tort ; le joueur redonne leurs couleurs à
+chaque couleur du drapeau avec une palette (8 couleurs aux niveaux facile et
+moyen, 13 nuances ensuite). Facile : drapeaux à 2 couleurs ; moyen : 3 ;
+difficile : 4 ; expert : 3 ou 4. La bonne réponse est la couleur de la palette
+la plus proche (distance CIE Lab) de la vraie couleur.
 
 ## Les données et leurs licences (*à vérifier avant reprise*)
 

@@ -32,7 +32,7 @@
     for (const [mode, m] of Object.entries(MODES)) {
       const niv = m.niveaux();
       const n = niv.reduce((s, v) => s + Commun.etoilesDe(mode, v.id), 0);
-      $("etoiles-" + mode).textContent = n ? `${n} / ${niv.length * 3} ★` : (mode === "villes" ? "3 villes par partie" : mode === "pays" ? "10 silhouettes par partie" : "10 drapeaux par partie");
+      $("etoiles-" + mode).textContent = n ? `${n} / ${niv.length * 3} ★` : (m.accueil || (mode === "villes" ? "3 villes par partie" : mode === "pays" ? "10 silhouettes par partie" : "10 drapeaux par partie"));
     }
   }
 
@@ -54,7 +54,7 @@
       b.disabled = !ouvert;
       b.innerHTML = `<span class="corps"><b>${n.nom}</b><small>${ouvert ? n.texte : "Fais 2 étoiles au niveau précédent"}</small></span>` +
         `<span class="etoiles" role="img" aria-label="${e} étoile${e > 1 ? "s" : ""} sur 3">${ouvert ? Commun.etoilesHtml(e) : "🔒"}</span>`;
-      b.addEventListener("click", () => (mode === "villes" ? lancerVille : lancerDrapeau)(n.id));
+      b.addEventListener("click", () => (m.lancer || (mode === "villes" ? lancerVille : lancerDrapeau))(n.id));
       conteneur.appendChild(b);
     });
     montrer("niveaux");
@@ -313,6 +313,13 @@
   document.querySelector(".mode-villes").addEventListener("click", () => afficherNiveaux("villes"));
   document.querySelector(".mode-drapeaux").addEventListener("click", () => afficherNiveaux("drapeaux"));
   document.querySelector(".mode-pays").addEventListener("click", () => afficherNiveaux("pays"));
+
+  // Les autres modes (js/app-couleurs.js) s'inscrivent ici.
+  window.AppAPI = {
+    MODES, montrer, majAccueil, afficherNiveaux,
+    boutonMode(mode) { document.querySelector(".mode-" + mode).addEventListener("click", () => afficherNiveaux(mode)); },
+    suite(f) { actionSuite = f; },
+  };
 
   majAccueil();
   if ("serviceWorker" in navigator) navigator.serviceWorker.register("sw.js").catch(() => {});
